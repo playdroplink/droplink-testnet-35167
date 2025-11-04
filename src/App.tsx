@@ -12,7 +12,7 @@ import Followers from "./pages/Followers";
 import Wallet from "./pages/Wallet";
 import Profile from "./pages/Profile";
 import AISupport from "./pages/AISupport";
-import { Auth } from "./components/Auth";
+import PiAuth from "./pages/PiAuth";
 import { SplashScreen } from "./components/SplashScreen";
 
 const queryClient = new QueryClient();
@@ -45,7 +45,7 @@ const App = () => {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/auth" element={<Auth />} />
+            <Route path="/auth" element={<PiAuth />} />
             <Route path="/subscription" element={<Subscription />} />
             <Route path="/followers" element={<Followers />} />
             <Route path="/wallet" element={<Wallet />} />

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { usePi } from "@/contexts/PiContext";
 
 interface Plan {
   name: string;
@@ -64,6 +65,7 @@ const plans: Plan[] = [
 
 const Subscription = () => {
   const navigate = useNavigate();
+  const { createPayment } = usePi();
   const [loading, setLoading] = useState(false);
   const [isYearly, setIsYearly] = useState(true);
   const [currentPlan, setCurrentPlan] = useState<string>("Free");
@@ -114,44 +116,29 @@ const Subscription = () => {
 
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast.error("Please log in to subscribe");
+      if (!profileId) {
+        toast.error("Profile not found. Please log in.");
         navigate("/auth");
         return;
       }
 
-      if (!profileId) {
-        toast.error("Profile not found");
-        return;
-      }
+      toast.info("Initiating Pi payment...");
+      
+      await createPayment(
+        piAmount,
+        `${planName} ${isYearly ? 'Yearly' : 'Monthly'} Subscription`,
+        {
+          subscriptionPlan: planName,
+          billingPeriod: isYearly ? 'yearly' : 'monthly',
+          profileId: profileId,
+        }
+      );
 
-      const endDate = new Date();
-      if (isYearly) {
-        endDate.setFullYear(endDate.getFullYear() + 1);
-      } else {
-        endDate.setMonth(endDate.getMonth() + 1);
-      }
-
-      const { error } = await supabase
-        .from("subscriptions")
-        .insert({
-          profile_id: profileId,
-          plan_type: planName.toLowerCase(),
-          billing_period: isYearly ? "yearly" : "monthly",
-          pi_amount: piAmount,
-          end_date: endDate.toISOString(),
-          status: "active",
-        });
-
-      if (error) throw error;
-
-      toast.success(`Subscribed to ${planName} plan! Please send ${piAmount} Pi to complete activation.`);
+      toast.success(`Successfully subscribed to ${planName} plan!`);
       await loadSubscriptionData();
     } catch (error) {
       console.error("Subscription error:", error);
-      toast.error("Failed to process subscription");
+      toast.error("Failed to process subscription. Please try again.");
     } finally {
       setLoading(false);
     }
