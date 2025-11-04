@@ -65,7 +65,7 @@ const plans: Plan[] = [
 
 const Subscription = () => {
   const navigate = useNavigate();
-  const { createPayment } = usePi();
+  const { createPayment, piUser, isAuthenticated } = usePi();
   const [loading, setLoading] = useState(false);
   const [isYearly, setIsYearly] = useState(true);
   const [currentPlan, setCurrentPlan] = useState<string>("Free");
@@ -74,20 +74,25 @@ const Subscription = () => {
 
   useEffect(() => {
     loadSubscriptionData();
-  }, []);
+  }, [piUser]);
 
   const loadSubscriptionData = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!isAuthenticated || !piUser) {
+        console.log("Not authenticated, skipping subscription load");
+        return;
+      }
+
+      console.log("Loading subscription for Pi user:", piUser.username);
 
       const { data: profile } = await supabase
         .from("profiles")
         .select("*")
-        .eq("user_id", user.id)
-        .single();
+        .eq("username", piUser.username)
+        .maybeSingle();
 
       if (profile) {
+        console.log("Profile found:", profile.id);
         setProfileId(profile.id);
         
         const { data: sub } = await supabase
@@ -99,9 +104,14 @@ const Subscription = () => {
           .maybeSingle();
 
         if (sub && new Date(sub.end_date) > new Date()) {
+          console.log("Active subscription found:", sub.plan_type);
           setSubscription(sub);
           setCurrentPlan(sub.plan_type.charAt(0).toUpperCase() + sub.plan_type.slice(1));
+        } else {
+          console.log("No active subscription, defaulting to Free");
         }
+      } else {
+        console.log("No profile found for user:", piUser.username);
       }
     } catch (error) {
       console.error("Error loading subscription:", error);
@@ -114,27 +124,34 @@ const Subscription = () => {
       return;
     }
 
+    if (!isAuthenticated || !piUser) {
+      toast.error("Please sign in with Pi Network first");
+      navigate("/auth");
+      return;
+    }
+
     setLoading(true);
     try {
       if (!profileId) {
-        toast.error("Profile not found. Please log in.");
-        navigate("/auth");
+        toast.error("Profile not found. Please complete your profile setup first.");
+        navigate("/");
         return;
       }
 
-      toast.info("Initiating Pi payment...");
+      console.log("Initiating Pi payment for", planName, "plan:", piAmount, "Pi");
+      toast.info("Opening Pi payment dialog...");
       
       await createPayment(
         piAmount,
-        `${planName} ${isYearly ? 'Yearly' : 'Monthly'} Subscription`,
+        `Droplink ${planName} ${isYearly ? 'Yearly' : 'Monthly'} Subscription`,
         {
-          subscriptionPlan: planName,
+          subscriptionPlan: planName.toLowerCase(),
           billingPeriod: isYearly ? 'yearly' : 'monthly',
           profileId: profileId,
         }
       );
 
-      toast.success(`Successfully subscribed to ${planName} plan!`);
+      toast.success(`Successfully subscribed to ${planName} plan! 🎉`);
       await loadSubscriptionData();
     } catch (error) {
       console.error("Subscription error:", error);

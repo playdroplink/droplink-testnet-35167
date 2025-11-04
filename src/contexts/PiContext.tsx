@@ -78,6 +78,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
 
       const auth = await window.Pi.authenticate(scopes, onIncompletePaymentFound);
       
+      console.log("Pi Auth - User authenticated:", auth.user.username);
       setPiUser(auth.user);
       setAccessToken(auth.accessToken);
       
@@ -85,6 +86,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem("pi_user", JSON.stringify(auth.user));
       localStorage.setItem("pi_access_token", auth.accessToken);
 
+      console.log("Pi Auth - Syncing with backend...");
       // Verify and sync with backend
       const { data: functionData, error: functionError } = await supabase.functions.invoke("pi-auth", {
         body: { accessToken: auth.accessToken, username: auth.user.username, uid: auth.user.uid }
@@ -96,7 +98,8 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      toast.success(`Welcome, ${auth.user.username}!`);
+      console.log("Pi Auth - Backend sync successful");
+      toast.success(`Welcome back, @${auth.user.username}! 👋`);
     } catch (error: any) {
       console.error("Pi authentication error:", error);
       toast.error(error.message || "Authentication failed");

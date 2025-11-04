@@ -10,9 +10,12 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { ArrowLeft, Bot, Sparkles } from "lucide-react";
 import { useActiveSubscription } from "@/hooks/useActiveSubscription";
+import { PlanGate } from "@/components/PlanGate";
+import { usePi } from "@/contexts/PiContext";
 
 const AISupport = () => {
   const navigate = useNavigate();
+  const { piUser, isAuthenticated } = usePi();
   const [profileId, setProfileId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -25,14 +28,12 @@ const AISupport = () => {
 
   useEffect(() => {
     loadProfile();
-  }, []);
+  }, [piUser]);
 
   const loadProfile = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast.error("Please sign in");
+      if (!isAuthenticated || !piUser) {
+        toast.error("Please sign in with Pi Network");
         navigate("/auth");
         return;
       }
@@ -40,8 +41,8 @@ const AISupport = () => {
       const { data: profile } = await supabase
         .from("profiles")
         .select("id")
-        .eq("user_id", user.id)
-        .single();
+        .eq("username", piUser.username)
+        .maybeSingle();
 
       if (profile) {
         setProfileId(profile.id);
@@ -131,13 +132,15 @@ const AISupport = () => {
               AI Support Assistant
             </h1>
             <p className="text-muted-foreground mt-1">
-              Configure your AI-powered customer support assistant
+              Configure your AI-powered customer support assistant (Pro plan feature)
             </p>
           </div>
         </div>
 
-        {/* Enable/Disable AI */}
-        <Card className="p-6">
+        {/* Gate the entire AI Support feature for Pro users only */}
+        <PlanGate minPlan="pro">
+          {/* Enable/Disable AI */}
+          <Card className="p-6">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
@@ -251,6 +254,7 @@ const AISupport = () => {
             <li>• You can update these settings anytime to improve responses</li>
           </ul>
         </Card>
+        </PlanGate>
       </div>
     </div>
   );

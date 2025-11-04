@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Wallet as WalletIcon, Coins, Gift, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { usePi } from "@/contexts/PiContext";
 
 interface Transaction {
   id: string;
@@ -18,6 +19,7 @@ interface Transaction {
 
 const Wallet = () => {
   const navigate = useNavigate();
+  const { piUser, isAuthenticated } = usePi();
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,21 +27,20 @@ const Wallet = () => {
 
   useEffect(() => {
     loadWalletData();
-  }, []);
+  }, [piUser]);
 
   const loadWalletData = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate("/");
+      if (!isAuthenticated || !piUser) {
+        navigate("/auth");
         return;
       }
 
       const { data: profile } = await supabase
         .from("profiles")
         .select("id")
-        .eq("user_id", user.id)
-        .single();
+        .eq("username", piUser.username)
+        .maybeSingle();
 
       if (!profile) {
         toast.error("Profile not found");
@@ -219,7 +220,7 @@ const Wallet = () => {
       </Card>
 
       <div className="mt-6 text-center">
-        <Button variant="outline" onClick={() => navigate("/dashboard")}>
+        <Button variant="outline" onClick={() => navigate("/")}>
           Back to Dashboard
         </Button>
       </div>
