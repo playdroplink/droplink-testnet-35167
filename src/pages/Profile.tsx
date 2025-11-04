@@ -9,9 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { ArrowLeft, Upload, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { usePi } from "@/contexts/PiContext";
 
 const Profile = () => {
   const navigate = useNavigate();
+  const { piUser, isAuthenticated } = usePi();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -27,9 +29,7 @@ const Profile = () => {
 
   const loadProfile = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
+      if (!isAuthenticated || !piUser) {
         navigate("/auth");
         return;
       }
@@ -37,7 +37,7 @@ const Profile = () => {
       const { data: profile, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("username", piUser.username)
         .maybeSingle();
 
       if (error && error.code !== "PGRST116") {
@@ -76,10 +76,8 @@ const Profile = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast.error("You must be logged in");
+      if (!isAuthenticated || !piUser) {
+        toast.error("You must be logged in with Pi");
         navigate("/auth");
         return;
       }
@@ -105,7 +103,7 @@ const Profile = () => {
           description: profileData.description,
           logo: profileData.logo,
         })
-        .eq("user_id", user.id);
+        .eq("username", piUser.username);
 
       if (error) {
         if (error.code === "23505") {

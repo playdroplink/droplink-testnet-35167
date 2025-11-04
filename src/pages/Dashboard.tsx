@@ -15,6 +15,7 @@ import { PiWalletManager } from "@/components/PiWalletManager";
 import { PiAdBanner } from "@/components/PiAdBanner";
 import { AdGatedFeature } from "@/components/AdGatedFeature";
 import { supabase } from "@/integrations/supabase/client";
+import { usePi } from "@/contexts/PiContext";
 import { Switch } from "@/components/ui/switch";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -101,6 +102,7 @@ interface ProfileData {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { piUser, isAuthenticated, signOut: piSignOut } = usePi();
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -147,25 +149,27 @@ const Dashboard = () => {
 
   const checkAuthAndLoadProfile = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
+      // Check Pi authentication
+      if (!isAuthenticated || !piUser) {
         navigate("/auth");
         return;
       }
 
-      // Load profile from database
+      console.log("Loading profile for Pi user:", piUser.username);
+
+      // Load profile from database using Pi username
       const { data: profileData, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("user_id", user.id)
-        .single();
+        .eq("username", piUser.username)
+        .maybeSingle();
 
-      if (error && error.code !== "PGRST116") { // PGRST116 = not found
+      if (error) {
         console.error("Error loading profile:", error);
       }
 
       if (profileData) {
+        console.log("Profile loaded:", profileData.id);
         setProfileId(profileData.id);
         
         // Load products
@@ -240,10 +244,9 @@ const Dashboard = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast.error("You must be logged in");
+      if (!isAuthenticated || !piUser) {
+        toast.error("You must be logged in with Pi");
+        navigate("/auth");
         return;
       }
 
@@ -251,6 +254,8 @@ const Dashboard = () => {
         toast.error("Store URL is required");
         return;
       }
+
+      console.log("Saving profile for Pi user:", piUser.username);
 
       // Validate and sanitize store URL
       const sanitizedUrl = profile.storeUrl
@@ -263,9 +268,8 @@ const Dashboard = () => {
         setProfile({ ...profile, storeUrl: sanitizedUrl });
       }
 
-      // Save or update profile
+      // Save or update profile (use Pi username as unique identifier)
       const profilePayload = {
-        user_id: user.id,
         username: sanitizedUrl,
         business_name: profile.businessName,
         description: profile.description,
@@ -294,18 +298,27 @@ const Dashboard = () => {
           .update(profilePayload)
           .eq("id", profileId);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Update error:", error);
+          throw error;
+        }
+        console.log("Profile updated successfully");
       } else {
-        // Insert new profile
+        // Insert new profile (should have been created by pi-auth)
+        // But if not, create it now
         const { data, error } = await supabase
           .from("profiles")
-          .insert([profilePayload])
+          .upsert([profilePayload], { onConflict: "username" })
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error("Insert error:", error);
+          throw error;
+        }
         currentProfileId = data.id;
         setProfileId(data.id);
+        console.log("Profile created:", data.id);
       }
 
       // Save products
@@ -366,7 +379,7 @@ const Dashboard = () => {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await piSignOut();
     navigate("/auth");
   };
 
