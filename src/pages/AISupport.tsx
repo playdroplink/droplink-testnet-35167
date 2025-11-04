@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { ArrowLeft, Bot, Sparkles } from "lucide-react";
+import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 
 const AISupport = () => {
   const navigate = useNavigate();
