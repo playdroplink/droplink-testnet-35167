@@ -12,6 +12,8 @@ import { DesignCustomizer } from "@/components/DesignCustomizer";
 import { CustomLinksManager } from "@/components/CustomLinksManager";
 import { DonationWallet } from "@/components/DonationWallet";
 import { PiWalletManager } from "@/components/PiWalletManager";
+import { PiAdBanner } from "@/components/PiAdBanner";
+import { AdGatedFeature } from "@/components/AdGatedFeature";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -523,6 +525,9 @@ const Dashboard = () => {
 
               {/* Profile Tab */}
               <TabsContent value="profile" className="space-y-8">
+                {/* Pi Ad Banner for free users */}
+                <PiAdBanner />
+                
                 <div>
                   <h2 className="text-lg font-semibold mb-6">Business details</h2>
               
@@ -968,14 +973,16 @@ const Dashboard = () => {
 
               {/* Analytics Tab */}
               <TabsContent value="analytics" className="pb-8">
-                {profileId ? (
-                  <Analytics profileId={profileId} />
-                ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Save your profile first to see analytics</p>
-                  </div>
-                )}
+                <AdGatedFeature featureName="Analytics">
+                  {profileId ? (
+                    <Analytics profileId={profileId} />
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>Save your profile first to see analytics</p>
+                    </div>
+                  )}
+                </AdGatedFeature>
               </TabsContent>
             </Tabs>
           </div>

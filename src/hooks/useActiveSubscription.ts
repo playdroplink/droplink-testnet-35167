@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { usePi } from "@/contexts/PiContext";
 
 export type PlanType = "free" | "premium" | "pro";
 
@@ -11,6 +12,7 @@ interface ActiveSubscription {
 }
 
 export const useActiveSubscription = (): ActiveSubscription => {
+  const { piUser } = usePi();
   const [plan, setPlan] = useState<PlanType>("free");
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -19,16 +21,22 @@ export const useActiveSubscription = (): ActiveSubscription => {
   useEffect(() => {
     const load = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { setLoading(false); return; }
+        // Use Pi username to find profile
+        if (!piUser?.username) {
+          setLoading(false);
+          return;
+        }
 
         const { data: profile } = await supabase
           .from("profiles")
           .select("id")
-          .eq("user_id", user.id)
+          .eq("username", piUser.username)
           .maybeSingle();
 
-        if (!profile?.id) { setLoading(false); return; }
+        if (!profile?.id) {
+          setLoading(false);
+          return;
+        }
 
         const { data: sub } = await supabase
           .from("subscriptions")
@@ -55,7 +63,7 @@ export const useActiveSubscription = (): ActiveSubscription => {
     };
 
     load();
-  }, []);
+  }, [piUser]);
 
   return { plan, expiresAt, status, loading };
 };

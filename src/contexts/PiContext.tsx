@@ -11,6 +11,15 @@ declare global {
         onIncompletePaymentFound: (payment: any) => void
       ) => Promise<{ accessToken: string; user: { uid: string; username: string } }>;
       createPayment: (paymentData: any, callbacks: any) => Promise<any>;
+      Ads: {
+        requestAd: (adType: "interstitial" | "rewarded") => Promise<{ result: "AD_LOADED" | "AD_NETWORK_ERROR" | "AD_NOT_AVAILABLE" | "ADS_NOT_SUPPORTED" }>;
+        showAd: (adType: "interstitial" | "rewarded") => Promise<{ 
+          type: "interstitial" | "rewarded";
+          result: "AD_CLOSED" | "AD_REWARDED" | "AD_DISPLAY_ERROR" | "AD_NETWORK_ERROR" | "AD_NOT_AVAILABLE" | "ADS_NOT_SUPPORTED" | "USER_UNAUTHENTICATED";
+          adId?: string;
+        }>;
+        isAdReady: (adType: "interstitial" | "rewarded") => Promise<{ ready: boolean }>;
+      };
     };
   }
 }
@@ -23,6 +32,8 @@ interface PiContextType {
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
   createPayment: (amount: number, memo: string, metadata: any) => Promise<unknown>;
+  showRewardedAd: () => Promise<boolean>;
+  showInterstitialAd: () => Promise<boolean>;
 }
 
 const PiContext = createContext<PiContextType | undefined>(undefined);
@@ -154,6 +165,67 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const showRewardedAd = async (): Promise<boolean> => {
+    if (!window.Pi) {
+      toast.error("Pi SDK not available. Please open in Pi Browser.");
+      return false;
+    }
+
+    try {
+      // Check if ad is ready
+      const isReadyResponse = await window.Pi.Ads.isAdReady("rewarded");
+      
+      if (!isReadyResponse.ready) {
+        // Request ad if not ready
+        const requestResponse = await window.Pi.Ads.requestAd("rewarded");
+        if (requestResponse.result !== "AD_LOADED") {
+          toast.error("Ad could not be loaded. Please try again.");
+          return false;
+        }
+      }
+
+      // Show the ad
+      const showResponse = await window.Pi.Ads.showAd("rewarded");
+      
+      if (showResponse.result === "AD_REWARDED") {
+        return true;
+      } else if (showResponse.result === "AD_CLOSED") {
+        toast.info("Please watch the full ad to continue");
+        return false;
+      } else {
+        toast.error("Ad could not be displayed");
+        return false;
+      }
+    } catch (error: any) {
+      console.error("Rewarded ad error:", error);
+      toast.error(error.message || "Failed to show ad");
+      return false;
+    }
+  };
+
+  const showInterstitialAd = async (): Promise<boolean> => {
+    if (!window.Pi) {
+      return true; // Allow access if Pi SDK not available
+    }
+
+    try {
+      const isReadyResponse = await window.Pi.Ads.isAdReady("interstitial");
+      
+      if (!isReadyResponse.ready) {
+        const requestResponse = await window.Pi.Ads.requestAd("interstitial");
+        if (requestResponse.result !== "AD_LOADED") {
+          return true; // Allow access if ad couldn't load
+        }
+      }
+
+      await window.Pi.Ads.showAd("interstitial");
+      return true;
+    } catch (error: any) {
+      console.error("Interstitial ad error:", error);
+      return true; // Allow access on error
+    }
+  };
+
   const value = {
     piUser,
     accessToken,
@@ -162,6 +234,8 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     signIn,
     signOut,
     createPayment,
+    showRewardedAd,
+    showInterstitialAd,
   };
 
   return <PiContext.Provider value={value}>{children}</PiContext.Provider>;

@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { FollowersSection } from "@/components/FollowersSection";
 import { GiftDialog } from "@/components/GiftDialog";
 import { AIChatWidget } from "@/components/AIChatWidget";
+import { PiAdBanner } from "@/components/PiAdBanner";
 import {
   Twitter,
   Instagram,
@@ -403,6 +404,9 @@ const PublicBio = () => {
       style={{ backgroundColor: profile.theme.backgroundColor }}
     >
       <div className="w-full max-w-2xl space-y-8 py-12">
+        {/* Pi Ad Banner for free plan users */}
+        <PiAdBanner />
+        
         {/* Logo and Business Info */}
         <div className="text-center space-y-4">
           {profile.logo && (
