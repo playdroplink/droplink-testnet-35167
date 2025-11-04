@@ -11,6 +11,7 @@ import { Analytics } from "@/components/Analytics";
 import { DesignCustomizer } from "@/components/DesignCustomizer";
 import { CustomLinksManager } from "@/components/CustomLinksManager";
 import { DonationWallet } from "@/components/DonationWallet";
+import { PiWalletManager } from "@/components/PiWalletManager";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -92,6 +93,8 @@ interface ProfileData {
   };
   hasPremium?: boolean;
   showShareButton?: boolean;
+  piWalletAddress?: string;
+  piDonationMessage?: string;
 }
 
 const Dashboard = () => {
@@ -132,6 +135,8 @@ const Dashboard = () => {
     },
     hasPremium: false,
     showShareButton: true,
+    piWalletAddress: "",
+    piDonationMessage: "Send me a coffee ☕",
   });
 
   useEffect(() => {
@@ -208,6 +213,8 @@ const Dashboard = () => {
           },
           hasPremium: profileData.has_premium || false,
           showShareButton: (profileData as any).show_share_button !== false,
+          piWalletAddress: (profileData as any).pi_wallet_address || "",
+          piDonationMessage: (profileData as any).pi_donation_message || "Send me a coffee ☕",
         });
       }
     } catch (error) {
@@ -757,6 +764,31 @@ const Dashboard = () => {
               <DonationWallet
                 wallets={profile.wallets}
                 onChange={(wallets) => setProfile({ ...profile, wallets })}
+              />
+            </div>
+
+            {/* Pi Network Wallet */}
+            <div className="border-t pt-6">
+              <PiWalletManager
+                piWalletAddress={profile.piWalletAddress}
+                donationMessage={profile.piDonationMessage}
+                onSave={async (address, message) => {
+                  setProfile({ 
+                    ...profile, 
+                    piWalletAddress: address,
+                    piDonationMessage: message 
+                  });
+                  // Save immediately to database
+                  if (profileId) {
+                    await supabase
+                      .from("profiles")
+                      .update({
+                        pi_wallet_address: address,
+                        pi_donation_message: message,
+                      })
+                      .eq("id", profileId);
+                  }
+                }}
               />
             </div>
 

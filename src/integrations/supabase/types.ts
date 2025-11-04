@@ -297,6 +297,8 @@ export type Database = {
           has_premium: boolean | null
           id: string
           logo: string | null
+          pi_donation_message: string | null
+          pi_wallet_address: string | null
           show_share_button: boolean | null
           social_links: Json | null
           theme_settings: Json | null
@@ -314,6 +316,8 @@ export type Database = {
           has_premium?: boolean | null
           id?: string
           logo?: string | null
+          pi_donation_message?: string | null
+          pi_wallet_address?: string | null
           show_share_button?: boolean | null
           social_links?: Json | null
           theme_settings?: Json | null
@@ -331,6 +335,8 @@ export type Database = {
           has_premium?: boolean | null
           id?: string
           logo?: string | null
+          pi_donation_message?: string | null
+          pi_wallet_address?: string | null
           show_share_button?: boolean | null
           social_links?: Json | null
           theme_settings?: Json | null
@@ -340,6 +346,56 @@ export type Database = {
           youtube_video_url?: string | null
         }
         Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          auto_renew: boolean
+          billing_period: string
+          created_at: string
+          end_date: string
+          id: string
+          pi_amount: number
+          plan_type: string
+          profile_id: string
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          auto_renew?: boolean
+          billing_period: string
+          created_at?: string
+          end_date: string
+          id?: string
+          pi_amount?: number
+          plan_type: string
+          profile_id: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          auto_renew?: boolean
+          billing_period?: string
+          created_at?: string
+          end_date?: string
+          id?: string
+          pi_amount?: number
+          plan_type?: string
+          profile_id?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_wallets: {
         Row: {
@@ -378,7 +434,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_active_subscription: {
+        Args: { p_profile_id: string }
+        Returns: {
+          billing_period: string
+          end_date: string
+          plan_type: string
+          status: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
