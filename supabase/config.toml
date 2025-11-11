@@ -1,13 +1,1 @@
-project_id = "vgpritjvraprxqairgsp"
-
-[functions.ai-chat]
-verify_jwt = false
-
-[functions.pi-auth]
-verify_jwt = false
-
-[functions.pi-payment-approve]
-verify_jwt = false
-
-[functions.pi-payment-complete]
-verify_jwt = false
+project_id = "lxyzuyayzqjzposadsyz"
