@@ -43,8 +43,13 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("Profile update error:", error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ 
+        success: false,
+        error: errorMessage,
+        details: error instanceof Error ? error.stack : undefined
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400 

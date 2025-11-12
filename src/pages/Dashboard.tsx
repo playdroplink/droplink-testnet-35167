@@ -14,6 +14,8 @@ import { DonationWallet } from "@/components/DonationWallet";
 import { PiWalletManager } from "@/components/PiWalletManager";
 import { PiAdBanner } from "@/components/PiAdBanner";
 import { AdGatedFeature } from "@/components/AdGatedFeature";
+import { PlanGate } from "@/components/PlanGate";
+import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { usePi } from "@/contexts/PiContext";
 import { Switch } from "@/components/ui/switch";
@@ -104,12 +106,14 @@ interface ProfileData {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { piUser, isAuthenticated, signOut: piSignOut } = usePi();
+  const { plan, loading: subscriptionLoading } = useActiveSubscription();
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(true);
   const [showQRCode, setShowQRCode] = useState(false);
+  const [hasCheckedSubscription, setHasCheckedSubscription] = useState(false);
   const [profile, setProfile] = useState<ProfileData>({
     logo: "",
     businessName: "",
@@ -148,6 +152,46 @@ const Dashboard = () => {
   useEffect(() => {
     checkAuthAndLoadProfile();
   }, []);
+
+  // Redirect new users to subscription page if they haven't selected a plan
+  useEffect(() => {
+    const checkSubscription = async () => {
+      if (!isAuthenticated || !piUser || subscriptionLoading || hasCheckedSubscription) return;
+      
+      try {
+        // Check if user has any subscription (even free counts as a selection)
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("username", piUser.username)
+          .maybeSingle();
+
+        if (profile?.id) {
+          const { data: sub } = await supabase
+            .from("subscriptions")
+            .select("id")
+            .eq("profile_id", profile.id)
+            .limit(1)
+            .maybeSingle();
+
+          // If no subscription record exists, redirect to subscription page
+          if (!sub) {
+            const hasSeenSubscription = sessionStorage.getItem(`seen_subscription_${piUser.username}`);
+            if (!hasSeenSubscription) {
+              navigate("/subscription");
+              sessionStorage.setItem(`seen_subscription_${piUser.username}`, "true");
+            }
+          }
+        }
+        setHasCheckedSubscription(true);
+      } catch (error) {
+        console.error("Error checking subscription:", error);
+        setHasCheckedSubscription(true);
+      }
+    };
+
+    checkSubscription();
+  }, [isAuthenticated, piUser, subscriptionLoading, hasCheckedSubscription, navigate]);
 
   const checkAuthAndLoadProfile = async () => {
     try {
@@ -352,24 +396,51 @@ const Dashboard = () => {
       let currentProfileId = profileId;
 
       // Use profile-update edge function to bypass RLS
-      const { data: functionData, error: functionError } = await supabase.functions.invoke("profile-update", {
-        body: { 
-          username: piUser.username,
-          profileData: profilePayload
-        }
-      });
+      try {
+        const { data: functionData, error: functionError } = await supabase.functions.invoke("profile-update", {
+          body: { 
+            username: piUser.username,
+            profileData: profilePayload
+          }
+        });
 
-      if (functionError) {
-        console.error("Profile update error:", functionError);
-        throw functionError;
-      }
-
-      if (functionData?.data) {
-        currentProfileId = functionData.data.id;
-        if (!profileId) {
-          setProfileId(currentProfileId);
+        if (functionError) {
+          console.error("Profile update error:", functionError);
+          // Try direct update as fallback
+          if (profileId) {
+            const { error: directError } = await supabase
+              .from("profiles")
+              .update(profilePayload)
+              .eq("id", profileId);
+            
+            if (directError) {
+              throw directError;
+            }
+          } else {
+            throw functionError;
+          }
+        } else if (functionData?.data) {
+          currentProfileId = functionData.data.id;
+          if (!profileId) {
+            setProfileId(currentProfileId);
+          }
+          console.log("Profile updated successfully");
         }
-        console.log("Profile updated successfully");
+      } catch (edgeError: any) {
+        console.error("Edge function error, trying direct update:", edgeError);
+        // Fallback to direct update if edge function fails
+        if (profileId) {
+          const { error: directError } = await supabase
+            .from("profiles")
+            .update(profilePayload)
+            .eq("id", profileId);
+          
+          if (directError) {
+            throw directError;
+          }
+        } else {
+          throw edgeError;
+        }
       }
 
       // Save products
@@ -702,20 +773,22 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* YouTube Video URL */}
-              <div className="mb-6">
-                <Label htmlFor="youtube-video" className="mb-3 block">YouTube Video</Label>
-                <Input
-                  id="youtube-video"
-                  value={profile.youtubeVideoUrl}
-                  onChange={(e) => setProfile({ ...profile, youtubeVideoUrl: e.target.value })}
-                  placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
-                  className="bg-input-bg"
-                />
-                <p className="text-xs text-muted-foreground mt-2">
-                  Add a YouTube video to showcase your business or products
-                </p>
-              </div>
+              {/* YouTube Video URL - Premium/Pro only */}
+              <PlanGate minPlan="premium">
+                <div className="mb-6">
+                  <Label htmlFor="youtube-video" className="mb-3 block">YouTube Video</Label>
+                  <Input
+                    id="youtube-video"
+                    value={profile.youtubeVideoUrl}
+                    onChange={(e) => setProfile({ ...profile, youtubeVideoUrl: e.target.value })}
+                    placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
+                    className="bg-input-bg"
+                  />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Add a YouTube video to showcase your business or products
+                  </p>
+                </div>
+              </PlanGate>
             </div>
 
             {/* Social Links */}
@@ -844,46 +917,52 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Custom Links */}
-            <div className="border-t pt-6">
-              <CustomLinksManager
-                links={profile.customLinks}
-                onChange={(links) => setProfile({ ...profile, customLinks: links })}
-              />
-            </div>
+            {/* Custom Links - Premium/Pro only */}
+            <PlanGate minPlan="premium">
+              <div className="border-t pt-6">
+                <CustomLinksManager
+                  links={profile.customLinks}
+                  onChange={(links) => setProfile({ ...profile, customLinks: links })}
+                />
+              </div>
+            </PlanGate>
 
-            {/* Donation Wallets */}
-            <div className="border-t pt-6">
-              <DonationWallet
-                wallets={profile.wallets}
-                onChange={(wallets) => setProfile({ ...profile, wallets })}
-              />
-            </div>
+            {/* Donation Wallets - Premium/Pro only */}
+            <PlanGate minPlan="premium">
+              <div className="border-t pt-6">
+                <DonationWallet
+                  wallets={profile.wallets}
+                  onChange={(wallets) => setProfile({ ...profile, wallets })} 
+                />
+              </div>
+            </PlanGate>
 
-            {/* Pi Network Wallet */}
-            <div className="border-t pt-6">
-              <PiWalletManager
-                piWalletAddress={profile.piWalletAddress}
-                donationMessage={profile.piDonationMessage}
-                onSave={async (address, message) => {
-                  setProfile({ 
-                    ...profile, 
-                    piWalletAddress: address,
-                    piDonationMessage: message 
-                  });
-                  // Save immediately to database
-                  if (profileId) {
-                    await supabase
-                      .from("profiles")
-                      .update({
-                        pi_wallet_address: address,
-                        pi_donation_message: message,
-                      })
-                      .eq("id", profileId);
-                  }
-                }}
-              />
-            </div>
+            {/* Pi Network Wallet - Premium/Pro only */}
+            <PlanGate minPlan="premium">
+              <div className="border-t pt-6">
+                <PiWalletManager
+                  piWalletAddress={profile.piWalletAddress}
+                  donationMessage={profile.piDonationMessage}
+                  onSave={async (address, message) => {
+                    setProfile({ 
+                      ...profile, 
+                      piWalletAddress: address,
+                      piDonationMessage: message 
+                    });
+                    // Save immediately to database
+                    if (profileId) {
+                      await supabase
+                        .from("profiles")
+                        .update({
+                          pi_wallet_address: address,
+                          pi_donation_message: message,
+                        })
+                        .eq("id", profileId);
+                    }
+                  }}
+                />
+              </div>
+            </PlanGate>
 
             {/* Share Button Settings */}
             <div className="border-t pt-6">
@@ -905,9 +984,10 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Theme Customization */}
-            <div className="border-t pt-6">
-              <h2 className="text-lg font-semibold mb-6">Theme Customization</h2>
+            {/* Theme Customization - Premium/Pro only */}
+            <PlanGate minPlan="premium">
+              <div className="border-t pt-6">
+                <h2 className="text-lg font-semibold mb-6">Theme Customization</h2>
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="primary-color" className="mb-3 block">Primary Color</Label>
@@ -952,11 +1032,13 @@ const Dashboard = () => {
                   </select>
                 </div>
               </div>
-            </div>
+              </div>
+            </PlanGate>
 
-            {/* Digital Products */}
-            <div>
-              <h2 className="text-lg font-semibold mb-6">Digital Products</h2>
+            {/* Digital Products - Premium/Pro only */}
+            <PlanGate minPlan="premium">
+              <div>
+                <h2 className="text-lg font-semibold mb-6">Digital Products</h2>
               <div className="space-y-4">
                 {profile.products.map((product, index) => (
                   <div key={product.id} className="p-4 bg-card border border-border rounded-lg space-y-3">
@@ -1032,7 +1114,8 @@ const Dashboard = () => {
                   Add Product
                 </Button>
               </div>
-            </div>
+              </div>
+            </PlanGate>
 
                 {/* Action Buttons */}
                 <div className="flex gap-4 pt-4 pb-8">
@@ -1043,20 +1126,22 @@ const Dashboard = () => {
                 </div>
               </TabsContent>
 
-              {/* Design Tab */}
+              {/* Design Tab - Premium/Pro only */}
               <TabsContent value="design" className="space-y-6">
-                <DesignCustomizer 
-                  theme={profile.theme}
-                  onThemeChange={(newTheme) => setProfile({ ...profile, theme: newTheme })}
-                />
-                
-                {/* Save Button */}
-                <div className="flex gap-4 pt-4 pb-8 border-t">
-                  <Button variant="outline" className="flex-1">Cancel</Button>
-                  <Button onClick={handleSave} className="flex-1" disabled={saving}>
-                    {saving ? "Saving..." : "Save changes"}
-                  </Button>
-                </div>
+                <PlanGate minPlan="premium">
+                  <DesignCustomizer 
+                    theme={profile.theme}
+                    onThemeChange={(newTheme) => setProfile({ ...profile, theme: newTheme })}
+                  />
+                  
+                  {/* Save Button */}
+                  <div className="flex gap-4 pt-4 pb-8 border-t">
+                    <Button variant="outline" className="flex-1">Cancel</Button>
+                    <Button onClick={handleSave} className="flex-1" disabled={saving}>
+                      {saving ? "Saving..." : "Save changes"}
+                    </Button>
+                  </div>
+                </PlanGate>
               </TabsContent>
 
               {/* Analytics Tab */}

@@ -119,11 +119,6 @@ const Subscription = () => {
   };
 
   const handleSubscribe = async (planName: string, piAmount: number) => {
-    if (planName === "Free") {
-      toast.info("You're already on the Free plan");
-      return;
-    }
-
     if (!isAuthenticated || !piUser) {
       toast.error("Please sign in with Pi Network first");
       navigate("/auth");
@@ -132,10 +127,106 @@ const Subscription = () => {
 
     setLoading(true);
     try {
-      if (!profileId) {
-        toast.error("Profile not found. Please complete your profile setup first.");
+      // For free plan, create subscription directly without payment
+      if (planName === "Free") {
+        // Get or create profile
+        let currentProfileId = profileId;
+        
+        if (!currentProfileId) {
+          // Create profile if it doesn't exist
+          const { data: existingProfile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("username", piUser.username)
+            .maybeSingle();
+
+          if (existingProfile) {
+            currentProfileId = existingProfile.id;
+          } else {
+            // Create profile using edge function
+            const { data: functionData, error: functionError } = await supabase.functions.invoke("pi-auth", {
+              body: { 
+                accessToken: localStorage.getItem("pi_access_token") || "",
+                username: piUser.username,
+                uid: piUser.uid
+              }
+            });
+
+            if (functionError || !functionData?.profileId) {
+              throw new Error("Failed to create profile");
+            }
+            currentProfileId = functionData.profileId;
+          }
+        }
+
+        // Create free subscription
+        const endDate = new Date();
+        endDate.setFullYear(endDate.getFullYear() + 100); // Free plan never expires
+
+        const { error: subError } = await supabase
+          .from("subscriptions")
+          .insert({
+            profile_id: currentProfileId,
+            plan_type: "free",
+            billing_period: "monthly",
+            pi_amount: 0,
+            start_date: new Date().toISOString(),
+            end_date: endDate.toISOString(),
+            status: "active",
+            auto_renew: false,
+          });
+
+        if (subError) {
+          // If subscription already exists, update it
+          if (subError.code === "23505") {
+            await supabase
+              .from("subscriptions")
+              .update({
+                plan_type: "free",
+                status: "active",
+                end_date: endDate.toISOString(),
+              })
+              .eq("profile_id", currentProfileId)
+              .eq("plan_type", "free");
+          } else {
+            throw subError;
+          }
+        }
+
+        toast.success("Free plan activated! 🎉");
+        await loadSubscriptionData();
         navigate("/");
         return;
+      }
+
+      // For paid plans, ensure profile exists first
+      let currentProfileId = profileId;
+      
+      if (!currentProfileId) {
+        // Create profile if it doesn't exist
+        const { data: existingProfile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("username", piUser.username)
+          .maybeSingle();
+
+        if (existingProfile) {
+          currentProfileId = existingProfile.id;
+        } else {
+          // Create profile using edge function
+          const { data: functionData, error: functionError } = await supabase.functions.invoke("pi-auth", {
+            body: { 
+              accessToken: localStorage.getItem("pi_access_token") || "",
+              username: piUser.username,
+              uid: piUser.uid
+            }
+          });
+
+          if (functionError || !functionData?.profileId) {
+            throw new Error("Failed to create profile. Please try again.");
+          }
+          currentProfileId = functionData.profileId;
+        }
       }
 
       console.log("Initiating Pi payment for", planName, "plan:", piAmount, "Pi");
@@ -147,15 +238,16 @@ const Subscription = () => {
         {
           subscriptionPlan: planName.toLowerCase(),
           billingPeriod: isYearly ? 'yearly' : 'monthly',
-          profileId: profileId,
+          profileId: currentProfileId,
         }
       );
 
       toast.success(`Successfully subscribed to ${planName} plan! 🎉`);
       await loadSubscriptionData();
-    } catch (error) {
+      navigate("/");
+    } catch (error: any) {
       console.error("Subscription error:", error);
-      toast.error("Failed to process subscription. Please try again.");
+      toast.error(error.message || "Failed to process subscription. Please try again.");
     } finally {
       setLoading(false);
     }

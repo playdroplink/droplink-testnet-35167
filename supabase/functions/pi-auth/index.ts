@@ -56,35 +56,60 @@ serve(async (req) => {
       const email = `pi-${username}@pi-network.local`;
       const randomPassword = crypto.randomUUID();
       
-      const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-        email,
-        password: randomPassword,
-        email_confirm: true,
-        user_metadata: {
-          pi_username: username,
-          pi_uid: uid,
-        },
-      });
+      try {
+        const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+          email,
+          password: randomPassword,
+          email_confirm: true,
+          user_metadata: {
+            pi_username: username,
+            pi_uid: uid,
+          },
+        });
 
-      if (authError) {
-        if (authError.message.includes("already registered") || authError.message.includes("User already registered")) {
-          // User already exists, try to find them
-          const { data: existingUsers } = await supabase.auth.admin.listUsers();
-          const existingUser = existingUsers?.users?.find(u => u.email === email);
-          if (existingUser) {
-            userId = existingUser.id;
-            console.log("Found existing auth user for Pi user:", userId);
+        if (authError) {
+          // Check if user already exists
+          if (authError.message.includes("already registered") || 
+              authError.message.includes("User already registered") ||
+              authError.message.includes("already exists") ||
+              authError.message.includes("duplicate")) {
+            try {
+              // Try to find existing user by listing users with pagination
+              const { data: existingUsers, error: listError } = await supabase.auth.admin.listUsers({
+                page: 1,
+                perPage: 1000
+              });
+              
+              if (!listError && existingUsers?.users) {
+                const existingUser = existingUsers.users.find(u => u.email === email);
+                if (existingUser) {
+                  userId = existingUser.id;
+                  console.log("Found existing auth user for Pi user:", userId);
+                } else {
+                  console.warn("User email exists but not found in list - continuing without userId");
+                }
+              } else if (listError) {
+                console.error("Error listing users:", listError);
+                // Continue without userId - profile can be created without it
+              }
+            } catch (lookupError) {
+              console.error("Exception during user lookup:", lookupError);
+              // Continue without userId - profile can be created without it
+            }
+          } else {
+            console.error("Auth user creation error:", authError.message);
+            // Continue without auth user if creation fails - profile can still be created
           }
-        } else {
-          console.error("Auth user creation error:", authError);
-          // Continue without auth user if creation fails
+        } else if (authUser?.user) {
+          userId = authUser.user.id;
+          console.log("Created auth user for Pi user:", userId);
         }
-      } else if (authUser?.user) {
-        userId = authUser.user.id;
-        console.log("Created auth user for Pi user:", userId);
+      } catch (authException) {
+        console.error("Exception during auth user creation:", authException);
+        // Continue without userId - profile can be created without it
       }
 
-      // Create new profile with user_id
+      // Create new profile with user_id (can be null)
       const { data: newProfile, error: profileError } = await supabase
         .from("profiles")
         .insert({
@@ -96,9 +121,16 @@ serve(async (req) => {
         .select()
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Profile creation error:", profileError);
+        throw new Error(`Failed to create profile: ${profileError.message}`);
+      }
+      
+      if (!newProfile || !newProfile.id) {
+        throw new Error("Profile creation failed - no profile ID returned");
+      }
+      
       profileId = newProfile.id;
-
       console.log("Created new profile:", profileId);
     }
 
@@ -116,8 +148,17 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("Pi auth error:", error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorDetails = error instanceof Error ? error.stack : String(error);
+    
+    console.error("Error details:", errorDetails);
+    
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ 
+        success: false,
+        error: errorMessage,
+        details: process.env.DENO_ENV === 'development' ? errorDetails : undefined
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400 
