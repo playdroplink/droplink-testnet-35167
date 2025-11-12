@@ -5,7 +5,7 @@ import { toast } from "sonner";
 declare global {
   interface Window {
     Pi: {
-      init: (config: { version: string; sandbox?: boolean }) => void;
+      init: (config: { version: string; sandbox?: boolean }) => void; // sandbox is optional, not used in production
       authenticate: (
         scopes: string[],
         onIncompletePaymentFound: (payment: any) => void
@@ -44,21 +44,41 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initialize Pi SDK
-    if (window.Pi) {
-      window.Pi.init({ version: "2.0", sandbox: false });
-    }
+    try {
+      // Initialize Pi SDK for production (no sandbox parameter)
+      if (typeof window !== 'undefined' && window.Pi) {
+        try {
+          // Production: just use version, no sandbox parameter
+          window.Pi.init({ version: "2.0" });
+        } catch (initError) {
+          console.warn("Pi SDK initialization error (non-critical):", initError);
+        }
+      }
 
-    // Check for existing session
-    const storedUser = localStorage.getItem("pi_user");
-    const storedToken = localStorage.getItem("pi_access_token");
-    
-    if (storedUser && storedToken) {
-      setPiUser(JSON.parse(storedUser));
-      setAccessToken(storedToken);
+      // Check for existing session
+      try {
+        const storedUser = localStorage.getItem("pi_user");
+        const storedToken = localStorage.getItem("pi_access_token");
+        
+        if (storedUser && storedToken) {
+          try {
+            setPiUser(JSON.parse(storedUser));
+            setAccessToken(storedToken);
+          } catch (parseError) {
+            console.warn("Error parsing stored user data:", parseError);
+            // Clear invalid data
+            localStorage.removeItem("pi_user");
+            localStorage.removeItem("pi_access_token");
+          }
+        }
+      } catch (storageError) {
+        console.warn("Error accessing localStorage:", storageError);
+      }
+    } catch (error) {
+      console.error("PiProvider initialization error:", error);
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   }, []);
 
   const signIn = async () => {

@@ -125,15 +125,20 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Pi API error:", response.status, errorText);
+      const errorMessage = `Failed to complete payment: ${response.status} ${errorText}`;
       
       // Update idempotency record
-      await supabase
-        .from('payment_idempotency')
-        .update({ status: 'failed' })
-        .eq('payment_id', paymentId);
+      try {
+        await supabase
+          .from('payment_idempotency')
+          .update({ status: 'failed' })
+          .eq('payment_id', paymentId);
+      } catch (idempotencyError) {
+        // Log but don't throw - payment failure is more important
+        console.error("Error updating idempotency:", idempotencyError);
+      }
       
-      throw new Error(`Failed to complete payment: ${errorText}`);
+      throw new Error(errorMessage);
     }
 
     const paymentData = await response.json();
@@ -177,7 +182,8 @@ serve(async (req) => {
         });
 
       if (subError) {
-        console.error("Subscription creation error:", subError);
+        // Log error but don't fail payment - subscription can be fixed later
+        console.error("Subscription creation error (non-critical):", JSON.stringify(subError));
       }
     }
 
@@ -190,11 +196,19 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error("Payment completion error:", error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorDetails = error instanceof Error ? error.stack : String(error);
+    
+    // Log error with details (but don't expose stack in production)
+    console.error("Payment completion error:", errorMessage);
+    if (Deno.env.get('DENO_ENV') === 'development') {
+      console.error("Error details:", errorDetails);
+    }
+    
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error' 
+        error: errorMessage
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

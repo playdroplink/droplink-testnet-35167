@@ -105,8 +105,14 @@ interface ProfileData {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { piUser, isAuthenticated, signOut: piSignOut } = usePi();
-  const { plan, loading: subscriptionLoading } = useActiveSubscription();
+  
+  // Hooks must be called unconditionally
+  const piContext = usePi();
+  const { piUser, isAuthenticated, signOut: piSignOut, loading: piLoading } = piContext;
+  
+  const subscription = useActiveSubscription();
+  const { plan, loading: subscriptionLoading } = subscription;
+  
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -150,8 +156,11 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
-    checkAuthAndLoadProfile();
-  }, []);
+    // Wait for Pi context to be ready
+    if (!piLoading) {
+      checkAuthAndLoadProfile();
+    }
+  }, [piLoading]);
 
   // Redirect new users to subscription page if they haven't selected a plan
   useEffect(() => {
@@ -196,6 +205,10 @@ const Dashboard = () => {
   const checkAuthAndLoadProfile = async () => {
     try {
       // Check Pi authentication
+      if (piLoading) {
+        return; // Still loading
+      }
+      
       if (!isAuthenticated || !piUser) {
         navigate("/auth");
         return;
