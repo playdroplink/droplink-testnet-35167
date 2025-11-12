@@ -237,8 +237,35 @@ const Dashboard = () => {
 
         const socialLinks = profileData.social_links as any;
         const themeSettings = profileData.theme_settings as any;
-        const cryptoWallets = (profileData as any).crypto_wallets as any;
-        const bankDetails = (profileData as any).bank_details as any;
+        
+        // Load financial data from secure endpoint
+        let financialData = {
+          pi_wallet_address: "",
+          pi_donation_message: "Send me a coffee ☕",
+          crypto_wallets: {},
+          bank_details: {},
+        };
+        
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.access_token) {
+            const { data: finData, error: finError } = await supabase.functions.invoke("financial-data", {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${session.access_token}`
+              }
+            });
+            
+            if (!finError && finData?.data) {
+              financialData = finData.data;
+            }
+          }
+        } catch (error) {
+          console.error("Error loading financial data:", error);
+        }
+        
+        const cryptoWallets = financialData.crypto_wallets as any;
+        const bankDetails = financialData.bank_details as any;
         
         const loadedProfile = {
           logo: profileData.logo || "",
@@ -277,13 +304,23 @@ const Dashboard = () => {
           },
           hasPremium: profileData.has_premium || false,
           showShareButton: (profileData as any).show_share_button !== false,
-          piWalletAddress: (profileData as any).pi_wallet_address || "",
-          piDonationMessage: (profileData as any).pi_donation_message || "Send me a coffee ☕",
+          piWalletAddress: financialData.pi_wallet_address || "",
+          piDonationMessage: financialData.pi_donation_message || "Send me a coffee ☕",
         };
         
         setProfile(loadedProfile);
-        // Save to localStorage
-        localStorage.setItem(`profile_${piUser.username}`, JSON.stringify(loadedProfile));
+        // Save to localStorage with metadata
+        try {
+          const profileToStore = {
+            ...loadedProfile,
+            lastSynced: new Date().toISOString(),
+            profileId: profileData.id
+          };
+          localStorage.setItem(`profile_${piUser.username}`, JSON.stringify(profileToStore));
+          localStorage.setItem(`profile_backup_${piUser.username}`, JSON.stringify(profileToStore));
+        } catch (e) {
+          console.error("Error saving to localStorage:", e);
+        }
       } else {
         // Auto-create profile with Pi username
         console.log("Profile not found, auto-creating with Pi username:", piUser.username);
@@ -322,8 +359,18 @@ const Dashboard = () => {
           piDonationMessage: "Send me a coffee ☕",
         };
         setProfile(defaultProfile);
-        // Save to localStorage
-        localStorage.setItem(`profile_${piUser.username}`, JSON.stringify(defaultProfile));
+        // Save to localStorage with metadata
+        try {
+          const profileToStore = {
+            ...defaultProfile,
+            lastSynced: new Date().toISOString(),
+            profileId: null
+          };
+          localStorage.setItem(`profile_${piUser.username}`, JSON.stringify(profileToStore));
+          localStorage.setItem(`profile_backup_${piUser.username}`, JSON.stringify(profileToStore));
+        } catch (e) {
+          console.error("Error saving to localStorage:", e);
+        }
         toast.info("Profile auto-created with your Pi username");
       }
     } catch (error) {
@@ -331,6 +378,47 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper to count active social links
+  const countActiveSocialLinks = () => {
+    return Object.values(profile.socialLinks).filter(link => link && link.trim() !== "").length;
+  };
+
+  // Handle social link change with free plan limitation
+  const handleSocialLinkChange = (platform: keyof typeof profile.socialLinks, value: string) => {
+    if (plan === "free") {
+      const currentCount = countActiveSocialLinks();
+      const currentValue = profile.socialLinks[platform];
+      const isAdding = value.trim() !== "" && currentValue.trim() === "";
+      const isRemoving = value.trim() === "" && currentValue.trim() !== "";
+      
+      // If adding a new link and already have one, clear all others first
+      if (isAdding && currentCount >= 1) {
+        toast.info("Free plan allows only 1 social link. Clearing other links...");
+        const clearedLinks = {
+          twitter: "",
+          instagram: "",
+          youtube: "",
+          tiktok: "",
+          facebook: "",
+          linkedin: "",
+          twitch: "",
+          website: "",
+        };
+        setProfile({
+          ...profile,
+          socialLinks: { ...clearedLinks, [platform]: value }
+        });
+        return;
+      }
+    }
+    
+    // Normal update
+    setProfile({
+      ...profile,
+      socialLinks: { ...profile.socialLinks, [platform]: value }
+    });
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -371,6 +459,27 @@ const Dashboard = () => {
         setProfile({ ...profile, storeUrl: sanitizedUrl });
       }
 
+      // For free plan, ensure only one social link is saved
+      let socialLinksToSave = profile.socialLinks;
+      if (plan === "free") {
+        const activeLinks = Object.entries(profile.socialLinks).filter(([_, url]) => url && url.trim() !== "");
+        if (activeLinks.length > 1) {
+          // Keep only the first active link
+          const clearedLinks = {
+            twitter: "",
+            instagram: "",
+            youtube: "",
+            tiktok: "",
+            facebook: "",
+            linkedin: "",
+            twitch: "",
+            website: "",
+          };
+          socialLinksToSave = { ...clearedLinks, [activeLinks[0][0]]: activeLinks[0][1] };
+          toast.warning("Free plan allows only 1 social link. Only the first link was saved.");
+        }
+      }
+
       // Save or update profile (use Pi username as unique identifier)
       const profilePayload = {
         username: sanitizedUrl,
@@ -379,28 +488,31 @@ const Dashboard = () => {
         email: profile.email || null,
         logo: profile.logo,
         youtube_video_url: profile.youtubeVideoUrl,
-        social_links: profile.socialLinks,
+        social_links: socialLinksToSave,
         show_share_button: profile.showShareButton,
         theme_settings: {
           ...profile.theme,
           customLinks: profile.customLinks,
         },
-        crypto_wallets: {
-          wallets: profile.wallets.crypto,
-        },
-        bank_details: {
-          accounts: profile.wallets.bank,
-        },
+        // Financial data is saved separately via secure endpoint
       };
 
       let currentProfileId = profileId;
 
       // Use profile-update edge function to bypass RLS
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          throw new Error("Not authenticated");
+        }
+
         const { data: functionData, error: functionError } = await supabase.functions.invoke("profile-update", {
           body: { 
             username: piUser.username,
             profileData: profilePayload
+          },
+          headers: {
+            Authorization: `Bearer ${session.access_token}`
           }
         });
 
@@ -469,9 +581,40 @@ const Dashboard = () => {
         }
       }
 
+      // Save financial data via secure endpoint
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          await supabase.functions.invoke("financial-data", {
+            method: "PUT",
+            body: {
+              crypto_wallets: { wallets: profile.wallets.crypto },
+              bank_details: { accounts: profile.wallets.bank },
+            },
+            headers: {
+              Authorization: `Bearer ${session.access_token}`
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error saving financial data:", error);
+      }
+
       // Save to localStorage
       if (piUser) {
-        localStorage.setItem(`profile_${piUser.username}`, JSON.stringify(profile));
+        // Save to localStorage for persistence (enhanced sync)
+        try {
+          const profileToStore = {
+            ...profile,
+            lastSynced: new Date().toISOString(),
+            profileId: currentProfileId
+          };
+          localStorage.setItem(`profile_${piUser.username}`, JSON.stringify(profileToStore));
+          // Also store a backup
+          localStorage.setItem(`profile_backup_${piUser.username}`, JSON.stringify(profileToStore));
+        } catch (storageError) {
+          console.error("Error saving to localStorage:", storageError);
+        }
       }
 
       toast.success("Profile saved successfully!");
@@ -561,6 +704,12 @@ const Dashboard = () => {
                     <User className="w-4 h-4" />
                     Profile
                   </Button>
+                  <PlanGate minPlan="premium">
+                    <Button onClick={() => navigate("/domain")} variant="outline" size="sm" className="w-full justify-start gap-2">
+                      <Globe className="w-4 h-4" />
+                      Custom Domain
+                    </Button>
+                  </PlanGate>
                   <Button onClick={() => navigate("/ai-support")} variant="outline" size="sm" className="w-full justify-start gap-2">
                     <Bot className="w-4 h-4" />
                     AI Support
@@ -612,6 +761,17 @@ const Dashboard = () => {
                 <User className="w-4 h-4" />
                 Profile
               </Button>
+              <PlanGate minPlan="premium">
+                <Button 
+                  onClick={() => navigate("/domain")} 
+                  variant="outline" 
+                  size="sm" 
+                  className="hidden lg:flex gap-2"
+                >
+                  <Globe className="w-4 h-4" />
+                  Domain
+                </Button>
+              </PlanGate>
               <Button 
                 onClick={() => navigate("/ai-support")} 
                 variant="outline" 
@@ -793,7 +953,30 @@ const Dashboard = () => {
 
             {/* Social Links */}
             <div>
-              <h2 className="text-lg font-semibold mb-6">Social links</h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold">Social links</h2>
+                {plan === "free" && (
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                    Free: 1 link only
+                  </span>
+                )}
+              </div>
+              {plan === "free" && (
+                <div className="mb-4 p-3 bg-muted/50 rounded-lg border border-border">
+                  <p className="text-sm text-muted-foreground">
+                    Free plan allows only <strong>1 social link</strong>. Choose your preferred platform below.
+                    <br />
+                    <Button 
+                      variant="link" 
+                      size="sm" 
+                      className="p-0 h-auto text-primary mt-1"
+                      onClick={() => navigate("/subscription")}
+                    >
+                      Upgrade to Premium/Pro for unlimited links →
+                    </Button>
+                  </p>
+                </div>
+              )}
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center">
@@ -801,12 +984,10 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={profile.socialLinks.twitter}
-                    onChange={(e) => setProfile({
-                      ...profile,
-                      socialLinks: { ...profile.socialLinks, twitter: e.target.value }
-                    })}
+                    onChange={(e) => handleSocialLinkChange("twitter", e.target.value)}
                     placeholder="https://x.com/"
                     className="bg-input-bg flex-1"
+                    disabled={plan === "free" && countActiveSocialLinks() >= 1 && !profile.socialLinks.twitter}
                   />
                 </div>
 
@@ -816,12 +997,10 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={profile.socialLinks.instagram}
-                    onChange={(e) => setProfile({
-                      ...profile,
-                      socialLinks: { ...profile.socialLinks, instagram: e.target.value }
-                    })}
+                    onChange={(e) => handleSocialLinkChange("instagram", e.target.value)}
                     placeholder="https://instagram.com/"
                     className="bg-input-bg flex-1"
+                    disabled={plan === "free" && countActiveSocialLinks() >= 1 && !profile.socialLinks.instagram}
                   />
                 </div>
 
@@ -831,12 +1010,10 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={profile.socialLinks.youtube}
-                    onChange={(e) => setProfile({
-                      ...profile,
-                      socialLinks: { ...profile.socialLinks, youtube: e.target.value }
-                    })}
+                    onChange={(e) => handleSocialLinkChange("youtube", e.target.value)}
                     placeholder="https://youtube.com/@"
                     className="bg-input-bg flex-1"
+                    disabled={plan === "free" && countActiveSocialLinks() >= 1 && !profile.socialLinks.youtube}
                   />
                 </div>
 
@@ -846,12 +1023,10 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={profile.socialLinks.tiktok}
-                    onChange={(e) => setProfile({
-                      ...profile,
-                      socialLinks: { ...profile.socialLinks, tiktok: e.target.value }
-                    })}
+                    onChange={(e) => handleSocialLinkChange("tiktok", e.target.value)}
                     placeholder="https://tiktok.com/@"
                     className="bg-input-bg flex-1"
+                    disabled={plan === "free" && countActiveSocialLinks() >= 1 && !profile.socialLinks.tiktok}
                   />
                 </div>
 
@@ -861,12 +1036,10 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={profile.socialLinks.facebook}
-                    onChange={(e) => setProfile({
-                      ...profile,
-                      socialLinks: { ...profile.socialLinks, facebook: e.target.value }
-                    })}
+                    onChange={(e) => handleSocialLinkChange("facebook", e.target.value)}
                     placeholder="https://facebook.com/"
                     className="bg-input-bg flex-1"
+                    disabled={plan === "free" && countActiveSocialLinks() >= 1 && !profile.socialLinks.facebook}
                   />
                 </div>
 
@@ -876,12 +1049,10 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={profile.socialLinks.linkedin}
-                    onChange={(e) => setProfile({
-                      ...profile,
-                      socialLinks: { ...profile.socialLinks, linkedin: e.target.value }
-                    })}
+                    onChange={(e) => handleSocialLinkChange("linkedin", e.target.value)}
                     placeholder="https://linkedin.com/in/"
                     className="bg-input-bg flex-1"
+                    disabled={plan === "free" && countActiveSocialLinks() >= 1 && !profile.socialLinks.linkedin}
                   />
                 </div>
 
@@ -891,12 +1062,10 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={profile.socialLinks.twitch}
-                    onChange={(e) => setProfile({
-                      ...profile,
-                      socialLinks: { ...profile.socialLinks, twitch: e.target.value }
-                    })}
+                    onChange={(e) => handleSocialLinkChange("twitch", e.target.value)}
                     placeholder="https://twitch.tv/"
                     className="bg-input-bg flex-1"
+                    disabled={plan === "free" && countActiveSocialLinks() >= 1 && !profile.socialLinks.twitch}
                   />
                 </div>
 
@@ -906,12 +1075,10 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={profile.socialLinks.website}
-                    onChange={(e) => setProfile({
-                      ...profile,
-                      socialLinks: { ...profile.socialLinks, website: e.target.value }
-                    })}
+                    onChange={(e) => handleSocialLinkChange("website", e.target.value)}
                     placeholder="Enter website URL"
                     className="bg-input-bg flex-1"
+                    disabled={plan === "free" && countActiveSocialLinks() >= 1 && !profile.socialLinks.website}
                   />
                 </div>
               </div>
@@ -949,15 +1116,30 @@ const Dashboard = () => {
                       piWalletAddress: address,
                       piDonationMessage: message 
                     });
-                    // Save immediately to database
-                    if (profileId) {
-                      await supabase
-                        .from("profiles")
-                        .update({
+                    // Save via secure financial data endpoint
+                    try {
+                      const { data: { session } } = await supabase.auth.getSession();
+                      if (!session?.access_token) {
+                        toast.error("Please sign in to save wallet data");
+                        return;
+                      }
+
+                      const { data, error } = await supabase.functions.invoke("financial-data", {
+                        method: "PUT",
+                        body: {
                           pi_wallet_address: address,
                           pi_donation_message: message,
-                        })
-                        .eq("id", profileId);
+                        },
+                        headers: {
+                          Authorization: `Bearer ${session.access_token}`
+                        }
+                      });
+
+                      if (error) throw error;
+                      toast.success("Wallet data saved successfully");
+                    } catch (error: any) {
+                      console.error("Error saving wallet data:", error);
+                      toast.error(error.message || "Failed to save wallet data");
                     }
                   }}
                 />

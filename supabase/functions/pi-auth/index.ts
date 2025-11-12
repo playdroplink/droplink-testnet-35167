@@ -30,7 +30,7 @@ serve(async (req) => {
     }
 
     const piUserData = await piResponse.json();
-    console.log("Pi user verified:", piUserData);
+    console.log("Pi user verified:", JSON.stringify(piUserData));
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -89,15 +89,16 @@ serve(async (req) => {
                   console.warn("User email exists but not found in list - continuing without userId");
                 }
               } else if (listError) {
-                console.error("Error listing users:", listError);
+                console.error("Error listing users:", JSON.stringify(listError));
                 // Continue without userId - profile can be created without it
               }
             } catch (lookupError) {
-              console.error("Exception during user lookup:", lookupError);
+              const errorMsg = lookupError instanceof Error ? lookupError.message : String(lookupError);
+              console.error("Exception during user lookup:", errorMsg);
               // Continue without userId - profile can be created without it
             }
           } else {
-            console.error("Auth user creation error:", authError.message);
+            console.error("Auth user creation error:", authError.message || JSON.stringify(authError));
             // Continue without auth user if creation fails - profile can still be created
           }
         } else if (authUser?.user) {
@@ -105,7 +106,8 @@ serve(async (req) => {
           console.log("Created auth user for Pi user:", userId);
         }
       } catch (authException) {
-        console.error("Exception during auth user creation:", authException);
+        const errorMsg = authException instanceof Error ? authException.message : String(authException);
+        console.error("Exception during auth user creation:", errorMsg);
         // Continue without userId - profile can be created without it
       }
 
@@ -122,8 +124,9 @@ serve(async (req) => {
         .single();
 
       if (profileError) {
-        console.error("Profile creation error:", profileError);
-        throw new Error(`Failed to create profile: ${profileError.message}`);
+        const errorMsg = profileError.message || JSON.stringify(profileError);
+        console.error("Profile creation error:", errorMsg);
+        throw new Error(`Failed to create profile: ${errorMsg}`);
       }
       
       if (!newProfile || !newProfile.id) {
@@ -147,17 +150,23 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error("Pi auth error:", error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const errorDetails = error instanceof Error ? error.stack : String(error);
     
-    console.error("Error details:", errorDetails);
+    console.error("Pi auth error:", errorMessage);
+    if (errorDetails) {
+      console.error("Error details:", errorDetails);
+    }
+    
+    // Check if we're in development mode (Deno environment)
+    const isDevelopment = Deno.env.get('DENO_ENV') === 'development' || 
+                          Deno.env.get('ENVIRONMENT') === 'development';
     
     return new Response(
       JSON.stringify({ 
         success: false,
         error: errorMessage,
-        details: process.env.DENO_ENV === 'development' ? errorDetails : undefined
+        details: isDevelopment ? errorDetails : undefined
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

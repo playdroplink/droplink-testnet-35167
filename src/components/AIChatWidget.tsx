@@ -58,12 +58,22 @@ export const AIChatWidget = ({ profileId }: AIChatWidgetProps) => {
     setLoading(true);
 
     try {
+      // Get auth token for JWT
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error("Please sign in to use AI chat");
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("ai-chat", {
         body: {
           profileId,
           message: userMessage,
           sessionId,
         },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
       });
 
       if (error) {

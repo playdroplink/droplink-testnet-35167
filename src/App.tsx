@@ -15,6 +15,7 @@ import AISupport from "./pages/AISupport";
 import PiAuth from "./pages/PiAuth";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import CustomDomain from "./pages/CustomDomain";
 import { SplashScreen } from "./components/SplashScreen";
 
 const queryClient = new QueryClient();
@@ -55,6 +56,7 @@ const App = () => {
             <Route path="/ai-support" element={<AISupport />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/domain" element={<CustomDomain />} />
             <Route path="/:username" element={<PublicBio />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

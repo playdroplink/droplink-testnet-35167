@@ -12,22 +12,52 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new Error('Missing or invalid authorization header');
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+    // Verify JWT and get user
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      throw new Error('Invalid or expired token');
+    }
+
     const { username, profileData } = await req.json();
 
     if (!username || !profileData) {
       throw new Error("Missing required fields");
     }
 
-    // Initialize Supabase client with service role
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Verify profile ownership
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const serviceSupabase = createClient(supabaseUrl, serviceKey);
+    
+    const { data: profile, error: profileError } = await serviceSupabase
+      .from('profiles')
+      .select('id, user_id')
+      .eq('username', username)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (profileError || !profile) {
+      throw new Error('Profile not found or access denied');
+    }
 
     // Update profile using service role (bypasses RLS)
-    const { data, error } = await supabase
+    const { data, error } = await serviceSupabase
       .from("profiles")
-      .update(profileData)
-      .eq("username", username)
+      .update({
+        ...profileData,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", profile.id)
       .select()
       .single();
 

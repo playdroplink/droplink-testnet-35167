@@ -205,8 +205,31 @@ const PublicBio = () => {
 
       const socialLinks = profileData.social_links as any;
       const themeSettings = profileData.theme_settings as any;
-      const cryptoWallets = (profileData as any).crypto_wallets as any;
-      const bankDetails = (profileData as any).bank_details as any;
+      
+      // Load financial data from secure table (public read access)
+      let financialData = {
+        pi_wallet_address: null,
+        pi_donation_message: "Send me a coffee ☕",
+        crypto_wallets: {},
+        bank_details: {},
+      };
+      
+      try {
+        const { data: finData } = await supabase
+          .from("profile_financial_data")
+          .select("*")
+          .eq("profile_id", profileData.id)
+          .maybeSingle();
+        
+        if (finData) {
+          financialData = finData;
+        }
+      } catch (error) {
+        console.error("Error loading financial data:", error);
+      }
+      
+      const cryptoWallets = financialData.crypto_wallets as any;
+      const bankDetails = financialData.bank_details as any;
 
       setProfile({
         logo: profileData.logo || "",

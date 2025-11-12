@@ -135,19 +135,38 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         onReadyForServerApproval: async (paymentId: string) => {
           console.log("Payment ready for approval:", paymentId);
           try {
+            // Get auth token for JWT
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) {
+              throw new Error("Not authenticated");
+            }
+
             const { error } = await supabase.functions.invoke("pi-payment-approve", {
-              body: { paymentId }
+              body: { paymentId },
+              headers: {
+                Authorization: `Bearer ${session.access_token}`
+              }
             });
             if (error) throw error;
           } catch (error) {
             console.error("Approval error:", error);
+            throw error;
           }
         },
         onReadyForServerCompletion: async (paymentId: string, txid: string) => {
           console.log("Payment ready for completion:", paymentId, txid);
           try {
+            // Get auth token for JWT
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) {
+              throw new Error("Not authenticated");
+            }
+
             const { data, error } = await supabase.functions.invoke("pi-payment-complete", {
-              body: { paymentId, txid, metadata }
+              body: { paymentId, txid, metadata },
+              headers: {
+                Authorization: `Bearer ${session.access_token}`
+              }
             });
             if (error) throw error;
             toast.success("Payment completed successfully!");
@@ -180,29 +199,68 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       return false;
     }
 
+    if (!isAuthenticated || !piUser) {
+      toast.error("Please sign in with Pi Network first");
+      return false;
+    }
+
     try {
+      // Ensure Pi SDK is initialized
+      if (!window.Pi.Ads) {
+        toast.error("Pi Ads not available. Please ensure you're using Pi Browser.");
+        return false;
+      }
+
+      // Request ad first (this ensures ad is loaded)
+      const requestResponse = await window.Pi.Ads.requestAd("rewarded");
+      
+      if (requestResponse.result === "AD_NETWORK_ERROR") {
+        toast.error("Ad network error. Please try again later.");
+        return false;
+      }
+      
+      if (requestResponse.result === "AD_NOT_AVAILABLE") {
+        toast.info("No ads available at the moment. Please try again later.");
+        return false;
+      }
+      
+      if (requestResponse.result === "ADS_NOT_SUPPORTED") {
+        toast.info("Ads are not supported in this environment.");
+        return false;
+      }
+      
+      if (requestResponse.result !== "AD_LOADED") {
+        toast.error("Ad could not be loaded. Please try again.");
+        return false;
+      }
+
+      // Wait a bit for ad to be ready
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       // Check if ad is ready
       const isReadyResponse = await window.Pi.Ads.isAdReady("rewarded");
-      
       if (!isReadyResponse.ready) {
-        // Request ad if not ready
-        const requestResponse = await window.Pi.Ads.requestAd("rewarded");
-        if (requestResponse.result !== "AD_LOADED") {
-          toast.error("Ad could not be loaded. Please try again.");
-          return false;
-        }
+        toast.error("Ad is not ready yet. Please try again.");
+        return false;
       }
 
       // Show the ad
       const showResponse = await window.Pi.Ads.showAd("rewarded");
       
       if (showResponse.result === "AD_REWARDED") {
+        toast.success("Thank you for watching! Access granted.");
         return true;
       } else if (showResponse.result === "AD_CLOSED") {
         toast.info("Please watch the full ad to continue");
         return false;
+      } else if (showResponse.result === "AD_DISPLAY_ERROR") {
+        toast.error("Ad display error. Please try again.");
+        return false;
+      } else if (showResponse.result === "USER_UNAUTHENTICATED") {
+        toast.error("Please sign in with Pi Network");
+        return false;
       } else {
-        toast.error("Ad could not be displayed");
+        toast.error(`Ad error: ${showResponse.result}`);
         return false;
       }
     } catch (error: any) {
