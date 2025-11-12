@@ -15,37 +15,80 @@ serve(async (req) => {
   }
 
   try {
-    const { accessToken, username, uid } = await req.json();
+    // Validate request body
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch (parseError) {
+      throw new Error("Invalid request body - must be valid JSON");
+    }
 
-    if (!accessToken || !username || !uid) {
-      throw new Error("Missing required fields");
+    const { accessToken, username, uid } = requestBody;
+
+    // Validate required fields
+    if (!accessToken || typeof accessToken !== 'string') {
+      throw new Error("Missing or invalid accessToken");
+    }
+    if (!username || typeof username !== 'string' || username.trim() === '') {
+      throw new Error("Missing or invalid username");
+    }
+    if (!uid || typeof uid !== 'string') {
+      throw new Error("Missing or invalid uid");
+    }
+
+    // Sanitize username (lowercase, alphanumeric and hyphens only)
+    const sanitizedUsername = username.toLowerCase().trim().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    if (sanitizedUsername !== username.toLowerCase().trim()) {
+      console.warn(`Username sanitized from "${username}" to "${sanitizedUsername}"`);
     }
 
     // Verify the access token with Pi API
-    const piResponse = await fetch("https://api.minepi.com/v2/me", {
-      headers: {
-        "Authorization": `Bearer ${accessToken}`,
-      },
-    });
+    let piUserData;
+    try {
+      const piResponse = await fetch("https://api.minepi.com/v2/me", {
+        headers: {
+          "Authorization": `Bearer ${accessToken}`,
+        },
+      });
 
-    if (!piResponse.ok) {
-      throw new Error("Invalid Pi access token");
+      if (!piResponse.ok) {
+        const errorText = await piResponse.text();
+        console.error("Pi API error:", piResponse.status, errorText);
+        throw new Error(`Invalid Pi access token: ${piResponse.status}`);
+      }
+
+      piUserData = await piResponse.json();
+      console.log("Pi user verified:", JSON.stringify(piUserData));
+    } catch (piError) {
+      const errorMsg = piError instanceof Error ? piError.message : String(piError);
+      console.error("Pi API verification failed:", errorMsg);
+      throw new Error(`Failed to verify Pi access token: ${errorMsg}`);
     }
 
-    const piUserData = await piResponse.json();
-    console.log("Pi user verified:", JSON.stringify(piUserData));
+    // Validate environment variables
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl) {
+      throw new Error("SUPABASE_URL environment variable not set");
+    }
+    if (!supabaseKey) {
+      throw new Error("SUPABASE_SERVICE_ROLE_KEY environment variable not set");
+    }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Check if profile exists with this Pi username
-    const { data: existingProfile } = await supabase
+    // Check if profile exists with this Pi username (use sanitized username)
+    const { data: existingProfile, error: profileCheckError } = await supabase
       .from("profiles")
       .select("*")
-      .eq("username", username)
+      .eq("username", sanitizedUsername)
       .maybeSingle();
+
+    if (profileCheckError) {
+      console.error("Error checking for existing profile:", JSON.stringify(profileCheckError));
+      throw new Error(`Database error: ${profileCheckError.message}`);
+    }
 
     let profileId: string;
     let userId: string | null = null;
@@ -53,10 +96,11 @@ serve(async (req) => {
     if (existingProfile) {
       profileId = existingProfile.id;
       userId = existingProfile.user_id;
+      console.log("Existing profile found:", profileId);
     } else {
       // Create Supabase auth user for Pi user
       // Use a unique email format and random password
-      const email = `pi-${username}@pi-network.local`;
+      const email = `pi-${sanitizedUsername}@pi-network.local`;
       const randomPassword = crypto.randomUUID();
       
       try {
@@ -124,8 +168,8 @@ serve(async (req) => {
           .from("profiles")
           .insert({
             user_id: userId,
-            username: username,
-            business_name: username,
+            username: sanitizedUsername,
+            business_name: sanitizedUsername,
             description: "",
           })
           .select()
@@ -139,29 +183,45 @@ serve(async (req) => {
 
       if (profileError) {
         // Check if it's a duplicate username error
-        if (profileError.code === "23505" || profileError.message?.includes("duplicate") || profileError.message?.includes("unique")) {
+        const isDuplicateError = profileError.code === "23505" || 
+                                 profileError.message?.includes("duplicate") || 
+                                 profileError.message?.includes("unique") ||
+                                 profileError.message?.includes("violates unique constraint");
+        
+        if (isDuplicateError) {
           console.log("Profile already exists with this username, fetching it...");
           // Profile already exists, fetch it
-          const { data: existingProfileByUsername } = await supabase
+          const { data: existingProfileByUsername, error: fetchError } = await supabase
             .from("profiles")
             .select("*")
-            .eq("username", username)
+            .eq("username", sanitizedUsername)
             .maybeSingle();
+          
+          if (fetchError) {
+            console.error("Error fetching existing profile:", JSON.stringify(fetchError));
+            throw new Error(`Failed to fetch existing profile: ${fetchError.message}`);
+          }
           
           if (existingProfileByUsername) {
             profileId = existingProfileByUsername.id;
             // Update user_id if it was null
             if (!existingProfileByUsername.user_id && userId) {
-              await supabase
+              const { error: updateError } = await supabase
                 .from("profiles")
                 .update({ user_id: userId })
                 .eq("id", profileId);
+              
+              if (updateError) {
+                console.warn("Failed to update user_id:", JSON.stringify(updateError));
+                // Don't throw - profile exists, that's what matters
+              }
             }
             console.log("Using existing profile:", profileId);
           } else {
+            // Race condition - profile was deleted between check and insert
             const errorMsg = profileError.message || JSON.stringify(profileError);
-            console.error("Profile creation error:", errorMsg);
-            throw new Error(`Failed to create profile: ${errorMsg}`);
+            console.error("Profile creation error (duplicate but not found):", errorMsg);
+            throw new Error(`Failed to create profile: Profile conflict detected. Please try again.`);
           }
         } else {
           const errorMsg = profileError.message || JSON.stringify(profileError);
@@ -176,11 +236,18 @@ serve(async (req) => {
       }
     }
 
+    // Ensure profileId is set
+    if (!profileId) {
+      throw new Error("Profile ID is missing - this should not happen");
+    }
+
+    // Return success response with profile information
     return new Response(
       JSON.stringify({ 
         success: true, 
         profileId,
-        username 
+        username: sanitizedUsername,
+        userId: userId || null
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
