@@ -120,6 +120,7 @@ const Dashboard = () => {
   const [showPreview, setShowPreview] = useState(true);
   const [showQRCode, setShowQRCode] = useState(false);
   const [hasCheckedSubscription, setHasCheckedSubscription] = useState(false);
+  const [displayUsername, setDisplayUsername] = useState<string | null>(null);
   const [profile, setProfile] = useState<ProfileData>({
     logo: "",
     businessName: "",
@@ -204,20 +205,40 @@ const Dashboard = () => {
 
   const checkAuthAndLoadProfile = async () => {
     try {
-      // Check Pi authentication
+      // Check Pi authentication OR Supabase session (for Gmail/email users)
       if (piLoading) {
         return; // Still loading
       }
       
-      if (!isAuthenticated || !piUser) {
+      // Check for Supabase session (Gmail/email users)
+      const { data: { session } } = await supabase.auth.getSession();
+      const supabaseUser = session?.user;
+      
+      // Determine user identifier
+      let userIdentifier: string | null = null;
+      let isPiUser = false;
+      
+      if (isAuthenticated && piUser) {
+        // Pi Network user
+        userIdentifier = piUser.username;
+        isPiUser = true;
+        setDisplayUsername(piUser.username);
+        console.log("Loading profile for Pi user:", piUser.username);
+      } else if (supabaseUser) {
+        // Gmail/Email user
+        userIdentifier = supabaseUser.email?.split("@")[0] || supabaseUser.id.slice(0, 8);
+        isPiUser = false;
+        setDisplayUsername(supabaseUser.email?.split("@")[0] || null);
+        console.log("Loading profile for email user:", supabaseUser.email);
+      } else {
+        // No authentication
         navigate("/auth");
         return;
       }
 
-      console.log("Loading profile for Pi user:", piUser.username);
-
       // Try to load from localStorage first
-      const storedProfile = localStorage.getItem(`profile_${piUser.username}`);
+      const storageKey = isPiUser ? `profile_${userIdentifier}` : `profile_email_${supabaseUser?.id}`;
+      const storedProfile = localStorage.getItem(storageKey);
       if (storedProfile) {
         try {
           const parsed = JSON.parse(storedProfile);
@@ -227,12 +248,54 @@ const Dashboard = () => {
         }
       }
 
-      // Load profile from database using Pi username
-      const { data: profileData, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("username", piUser.username)
-        .maybeSingle();
+      // Load profile from database
+      let profileData;
+      let error;
+      
+      if (isPiUser && piUser) {
+        // Pi user - load by username
+        const result = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("username", piUser.username)
+          .maybeSingle();
+        profileData = result.data;
+        error = result.error;
+      } else if (supabaseUser) {
+        // Email/Gmail user - load by user_id
+        const result = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", supabaseUser.id)
+          .maybeSingle();
+        profileData = result.data;
+        error = result.error;
+        
+        // If no profile exists, create one
+        if (!profileData && !error) {
+          const emailUsername = supabaseUser.email?.split("@")[0] || `user-${supabaseUser.id.slice(0, 8)}`;
+          const sanitizedUsername = emailUsername.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+          
+          const { data: newProfile, error: createError } = await supabase
+            .from("profiles")
+            .insert({
+              user_id: supabaseUser.id,
+              username: sanitizedUsername,
+              business_name: sanitizedUsername,
+              description: "",
+              email: supabaseUser.email || "",
+            })
+            .select()
+            .single();
+          
+          if (createError) {
+            console.error("Error creating profile for email user:", createError);
+          } else if (newProfile) {
+            profileData = newProfile;
+            console.log("Created profile for email user:", newProfile.id);
+          }
+        }
+      }
 
       if (error) {
         console.error("Error loading profile:", error);
@@ -295,12 +358,14 @@ const Dashboard = () => {
         const cryptoWallets = financialData.crypto_wallets as any;
         const bankDetails = financialData.bank_details as any;
         
+        const displayName = isPiUser && piUser ? piUser.username : (supabaseUser?.email?.split("@")[0] || "user");
+        
         const loadedProfile = {
           logo: profileData.logo || "",
-          businessName: profileData.business_name || piUser.username,
-          storeUrl: profileData.username || piUser.username,
+          businessName: profileData.business_name || displayName,
+          storeUrl: profileData.username || displayName,
           description: profileData.description || "",
-          email: (profileData as any).email || "",
+          email: (profileData as any).email || supabaseUser?.email || "",
           youtubeVideoUrl: (profileData as any).youtube_video_url || "",
           socialLinks: socialLinks || {
             twitter: "",
@@ -337,27 +402,29 @@ const Dashboard = () => {
         };
         
         setProfile(loadedProfile);
-        // Save to localStorage with metadata
+          // Save to localStorage with metadata
         try {
           const profileToStore = {
             ...loadedProfile,
             lastSynced: new Date().toISOString(),
             profileId: profileData.id
           };
-          localStorage.setItem(`profile_${piUser.username}`, JSON.stringify(profileToStore));
-          localStorage.setItem(`profile_backup_${piUser.username}`, JSON.stringify(profileToStore));
+          const storageKey = isPiUser ? `profile_${userIdentifier}` : `profile_email_${supabaseUser?.id}`;
+          localStorage.setItem(storageKey, JSON.stringify(profileToStore));
+          localStorage.setItem(`${storageKey}_backup`, JSON.stringify(profileToStore));
         } catch (e) {
           console.error("Error saving to localStorage:", e);
         }
       } else {
-        // Auto-create profile with Pi username
-        console.log("Profile not found, auto-creating with Pi username:", piUser.username);
+        // Auto-create profile
+        const defaultName = isPiUser && piUser ? piUser.username : (supabaseUser?.email?.split("@")[0] || "user");
+        console.log("Profile not found, auto-creating with name:", defaultName);
         const defaultProfile = {
           logo: "",
-          businessName: piUser.username,
-          storeUrl: piUser.username,
+          businessName: defaultName,
+          storeUrl: defaultName,
           description: "",
-          email: "",
+          email: supabaseUser?.email || "",
           youtubeVideoUrl: "",
           socialLinks: {
             twitter: "",
@@ -394,12 +461,13 @@ const Dashboard = () => {
             lastSynced: new Date().toISOString(),
             profileId: null
           };
-          localStorage.setItem(`profile_${piUser.username}`, JSON.stringify(profileToStore));
-          localStorage.setItem(`profile_backup_${piUser.username}`, JSON.stringify(profileToStore));
+          const storageKey = isPiUser ? `profile_${userIdentifier}` : `profile_email_${supabaseUser?.id}`;
+          localStorage.setItem(storageKey, JSON.stringify(profileToStore));
+          localStorage.setItem(`${storageKey}_backup`, JSON.stringify(profileToStore));
         } catch (e) {
           console.error("Error saving to localStorage:", e);
         }
-        toast.info("Profile auto-created with your Pi username");
+        toast.info(`Profile auto-created with your ${isPiUser ? 'Pi username' : 'email'}`);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -463,10 +531,17 @@ const Dashboard = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Check for authentication (Pi or Supabase session)
+      const { data: { session } } = await supabase.auth.getSession();
+      const supabaseUser = session?.user;
+      
       if (!isAuthenticated || !piUser) {
-        toast.error("You must be logged in with Pi");
-        navigate("/auth");
-        return;
+        // Check if user is authenticated via Supabase (Gmail/email)
+        if (!supabaseUser) {
+          toast.error("You must be logged in");
+          navigate("/auth");
+          return;
+        }
       }
 
       if (!profile.storeUrl) {
@@ -474,7 +549,9 @@ const Dashboard = () => {
         return;
       }
 
-      console.log("Saving profile for Pi user:", piUser.username);
+      const isPiUser = isAuthenticated && piUser;
+      const username = isPiUser ? piUser.username : (supabaseUser?.email?.split("@")[0] || supabaseUser?.id.slice(0, 8));
+      console.log(`Saving profile for ${isPiUser ? 'Pi' : 'email'} user:`, username);
 
       // Validate and sanitize store URL
       const sanitizedUrl = profile.storeUrl
@@ -533,10 +610,10 @@ const Dashboard = () => {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.access_token) {
-          // Use edge function with JWT
+          // Use edge function with JWT (works for both Pi and email users)
           const { data: functionData, error: functionError } = await supabase.functions.invoke("profile-update", {
             body: { 
-              username: piUser.username,
+              username: username,
               profileData: profilePayload
             },
             headers: {
@@ -567,26 +644,55 @@ const Dashboard = () => {
             console.log("Profile updated successfully via edge function");
           }
         } else {
-          // No Supabase session - use direct update or create profile via pi-auth
+          // No Supabase session - use direct update or create profile
           if (!profileId) {
-            // Create profile first via pi-auth
-            const accessToken = localStorage.getItem("pi_access_token");
-            if (accessToken) {
-              const { data: functionData, error: functionError } = await supabase.functions.invoke("pi-auth", {
-                body: { 
-                  accessToken: accessToken,
-                  username: piUser.username,
-                  uid: piUser.uid
-                }
-              });
+            if (isPiUser && piUser) {
+              // Pi user - create profile via pi-auth
+              const accessToken = localStorage.getItem("pi_access_token");
+              if (accessToken) {
+                const { data: functionData, error: functionError } = await supabase.functions.invoke("pi-auth", {
+                  body: { 
+                    accessToken: accessToken,
+                    username: piUser.username,
+                    uid: piUser.uid
+                  }
+                });
 
-              if (functionError || !functionData?.profileId) {
-                throw new Error("Failed to create profile. Please try signing in again.");
+                if (functionError || !functionData?.profileId) {
+                  throw new Error("Failed to create profile. Please try signing in again.");
+                }
+                currentProfileId = functionData.profileId;
+                setProfileId(currentProfileId);
+              } else {
+                throw new Error("Please sign in with Pi Network to save your profile");
               }
-              currentProfileId = functionData.profileId;
-              setProfileId(currentProfileId);
+            } else if (supabaseUser) {
+              // Email user - create profile directly
+              const emailUsername = supabaseUser.email?.split("@")[0] || `user-${supabaseUser.id.slice(0, 8)}`;
+              const sanitizedUsername = emailUsername.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+              
+              const { data: newProfile, error: createError } = await supabase
+                .from("profiles")
+                .insert({
+                  user_id: supabaseUser.id,
+                  username: sanitizedUsername,
+                  business_name: sanitizedUsername,
+                  description: "",
+                  email: supabaseUser.email || "",
+                })
+                .select()
+                .single();
+              
+              if (createError) {
+                throw new Error(`Failed to create profile: ${createError.message}`);
+              }
+              
+              if (newProfile) {
+                currentProfileId = newProfile.id;
+                setProfileId(currentProfileId);
+              }
             } else {
-              throw new Error("Please sign in with Pi Network to save your profile");
+              throw new Error("Please sign in to save your profile");
             }
           }
 
@@ -671,20 +777,20 @@ const Dashboard = () => {
       }
 
       // Save to localStorage
-      if (piUser) {
-        // Save to localStorage for persistence (enhanced sync)
-        try {
-          const profileToStore = {
-            ...profile,
-            lastSynced: new Date().toISOString(),
-            profileId: currentProfileId
-          };
-          localStorage.setItem(`profile_${piUser.username}`, JSON.stringify(profileToStore));
-          // Also store a backup
-          localStorage.setItem(`profile_backup_${piUser.username}`, JSON.stringify(profileToStore));
-        } catch (storageError) {
-          console.error("Error saving to localStorage:", storageError);
-        }
+      try {
+        const profileToStore = {
+          ...profile,
+          lastSynced: new Date().toISOString(),
+          profileId: currentProfileId
+        };
+        const storageKey = isPiUser && piUser 
+          ? `profile_${piUser.username}` 
+          : `profile_email_${supabaseUser?.id}`;
+        localStorage.setItem(storageKey, JSON.stringify(profileToStore));
+        // Also store a backup
+        localStorage.setItem(`${storageKey}_backup`, JSON.stringify(profileToStore));
+      } catch (storageError) {
+        console.error("Error saving to localStorage:", storageError);
       }
 
       toast.success("Profile saved successfully!");
@@ -736,8 +842,8 @@ const Dashboard = () => {
       <header className="border-b border-border px-4 lg:px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-semibold text-sky-500">Droplink</h1>
-          {piUser && (
-            <span className="text-sm text-muted-foreground">@{piUser.username}</span>
+          {displayUsername && (
+            <span className="text-sm text-muted-foreground">@{displayUsername}</span>
           )}
         </div>
         <div className="flex items-center gap-2 lg:gap-4">

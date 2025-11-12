@@ -1,28 +1,53 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePi } from "@/contexts/PiContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import droplinkLogo from "@/assets/droplink-logo.png";
 
 const PiAuth = () => {
   const navigate = useNavigate();
   const { isAuthenticated, loading, signIn, piUser } = usePi();
+  const [emailLoading, setEmailLoading] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated && piUser) {
-      navigate("/");
-    }
+    // Check if user is already authenticated (Pi or Gmail)
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        navigate("/");
+        return;
+      }
+      
+      if (isAuthenticated && piUser) {
+        navigate("/");
+      }
+    };
+    
+    checkAuth();
   }, [isAuthenticated, piUser, navigate]);
 
-  const handleSignIn = async () => {
+  const handlePiSignIn = async () => {
     try {
       await signIn();
     } catch (error: any) {
       console.error("Sign in error:", error);
       toast.error(error.message || "Failed to sign in");
+    }
+  };
+
+  const handleEmailSignIn = async () => {
+    setEmailLoading(true);
+    try {
+      // Redirect to email auth page or show email form
+      navigate("/email-auth");
+    } catch (error: any) {
+      console.error("Email sign in error:", error);
+      toast.error(error.message || "Failed to sign in with email");
+      setEmailLoading(false);
     }
   };
 
@@ -54,8 +79,9 @@ const PiAuth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Pi Network Sign In */}
           <Button 
-            onClick={handleSignIn} 
+            onClick={handlePiSignIn} 
             className="w-full" 
             size="lg"
             disabled={loading}
@@ -67,6 +93,39 @@ const PiAuth = () => {
               </>
             ) : (
               "Sign in with Pi Network"
+            )}
+          </Button>
+
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Or continue with
+              </span>
+            </div>
+          </div>
+
+          {/* Email Sign In */}
+          <Button 
+            onClick={handleEmailSignIn} 
+            variant="outline"
+            className="w-full" 
+            size="lg"
+            disabled={emailLoading}
+          >
+            {emailLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              <>
+                <Mail className="w-4 h-4 mr-2" />
+                Continue with Email
+              </>
             )}
           </Button>
 
