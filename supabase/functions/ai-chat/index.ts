@@ -1,5 +1,9 @@
+/// <reference path="../.types/deno.d.ts" />
+// @ts-ignore - Deno runtime types (available at runtime)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @ts-ignore - ESM module (available at runtime)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+// @ts-ignore - Deno module (available at runtime)
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
