@@ -144,18 +144,31 @@ const Subscription = () => {
             currentProfileId = existingProfile.id;
           } else {
             // Create profile using edge function
+            const accessToken = localStorage.getItem("pi_access_token");
+            if (!accessToken) {
+              throw new Error("Please sign in with Pi Network first");
+            }
+
             const { data: functionData, error: functionError } = await supabase.functions.invoke("pi-auth", {
               body: { 
-                accessToken: localStorage.getItem("pi_access_token") || "",
+                accessToken: accessToken,
                 username: piUser.username,
                 uid: piUser.uid
               }
             });
 
-            if (functionError || !functionData?.profileId) {
-              throw new Error("Failed to create profile");
+            if (functionError) {
+              const errorMsg = functionError.message || JSON.stringify(functionError);
+              console.error("Profile creation error:", errorMsg);
+              throw new Error(`Failed to create profile: ${errorMsg}`);
             }
+
+            if (!functionData?.success || !functionData?.profileId) {
+              throw new Error("Failed to create profile. Please try again.");
+            }
+            
             currentProfileId = functionData.profileId;
+            setProfileId(currentProfileId);
           }
         }
 
@@ -214,18 +227,31 @@ const Subscription = () => {
           currentProfileId = existingProfile.id;
         } else {
           // Create profile using edge function
+          const accessToken = localStorage.getItem("pi_access_token");
+          if (!accessToken) {
+            throw new Error("Please sign in with Pi Network first");
+          }
+
           const { data: functionData, error: functionError } = await supabase.functions.invoke("pi-auth", {
             body: { 
-              accessToken: localStorage.getItem("pi_access_token") || "",
+              accessToken: accessToken,
               username: piUser.username,
               uid: piUser.uid
             }
           });
 
-          if (functionError || !functionData?.profileId) {
+          if (functionError) {
+            const errorMsg = functionError.message || JSON.stringify(functionError);
+            console.error("Profile creation error:", errorMsg);
+            throw new Error(`Failed to create profile: ${errorMsg}`);
+          }
+
+          if (!functionData?.success || !functionData?.profileId) {
             throw new Error("Failed to create profile. Please try again.");
           }
+          
           currentProfileId = functionData.profileId;
+          setProfileId(currentProfileId);
         }
       }
 

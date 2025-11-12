@@ -112,29 +112,65 @@ serve(async (req) => {
       }
 
       // Create new profile with user_id (can be null)
-      const { data: newProfile, error: profileError } = await supabase
-        .from("profiles")
-        .insert({
-          user_id: userId,
-          username: username,
-          business_name: username,
-          description: "",
-        })
-        .select()
-        .single();
+      // Try to create profile, handle duplicate username errors
+      let newProfile;
+      let profileError;
+      
+      try {
+        const result = await supabase
+          .from("profiles")
+          .insert({
+            user_id: userId,
+            username: username,
+            business_name: username,
+            description: "",
+          })
+          .select()
+          .single();
+        
+        newProfile = result.data;
+        profileError = result.error;
+      } catch (insertError) {
+        profileError = insertError;
+      }
 
       if (profileError) {
-        const errorMsg = profileError.message || JSON.stringify(profileError);
-        console.error("Profile creation error:", errorMsg);
-        throw new Error(`Failed to create profile: ${errorMsg}`);
-      }
-      
-      if (!newProfile || !newProfile.id) {
+        // Check if it's a duplicate username error
+        if (profileError.code === "23505" || profileError.message?.includes("duplicate") || profileError.message?.includes("unique")) {
+          console.log("Profile already exists with this username, fetching it...");
+          // Profile already exists, fetch it
+          const { data: existingProfileByUsername } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("username", username)
+            .maybeSingle();
+          
+          if (existingProfileByUsername) {
+            profileId = existingProfileByUsername.id;
+            // Update user_id if it was null
+            if (!existingProfileByUsername.user_id && userId) {
+              await supabase
+                .from("profiles")
+                .update({ user_id: userId })
+                .eq("id", profileId);
+            }
+            console.log("Using existing profile:", profileId);
+          } else {
+            const errorMsg = profileError.message || JSON.stringify(profileError);
+            console.error("Profile creation error:", errorMsg);
+            throw new Error(`Failed to create profile: ${errorMsg}`);
+          }
+        } else {
+          const errorMsg = profileError.message || JSON.stringify(profileError);
+          console.error("Profile creation error:", errorMsg);
+          throw new Error(`Failed to create profile: ${errorMsg}`);
+        }
+      } else if (newProfile && newProfile.id) {
+        profileId = newProfile.id;
+        console.log("Created new profile:", profileId);
+      } else {
         throw new Error("Profile creation failed - no profile ID returned");
       }
-      
-      profileId = newProfile.id;
-      console.log("Created new profile:", profileId);
     }
 
     return new Response(

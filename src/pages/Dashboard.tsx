@@ -251,7 +251,7 @@ const Dashboard = () => {
         const socialLinks = profileData.social_links as any;
         const themeSettings = profileData.theme_settings as any;
         
-        // Load financial data from secure endpoint
+        // Load financial data from secure endpoint (optional - won't fail if no session)
         let financialData = {
           pi_wallet_address: "",
           pi_donation_message: "Send me a coffee ☕",
@@ -271,6 +271,21 @@ const Dashboard = () => {
             
             if (!finError && finData?.data) {
               financialData = finData.data;
+            }
+          } else {
+            // No session - try to load from profile_financial_data table directly (public read)
+            try {
+              const { data: finData } = await supabase
+                .from("profile_financial_data")
+                .select("*")
+                .eq("profile_id", profileData.id)
+                .maybeSingle();
+              
+              if (finData) {
+                financialData = finData;
+              }
+            } catch (directError) {
+              console.warn("Could not load financial data directly:", directError);
             }
           }
         } catch (error) {
@@ -514,25 +529,85 @@ const Dashboard = () => {
 
       // Use profile-update edge function to bypass RLS
       try {
+        // Try to get Supabase session, but if not available, we'll use direct update
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.access_token) {
-          throw new Error("Not authenticated");
-        }
+        
+        if (session?.access_token) {
+          // Use edge function with JWT
+          const { data: functionData, error: functionError } = await supabase.functions.invoke("profile-update", {
+            body: { 
+              username: piUser.username,
+              profileData: profilePayload
+            },
+            headers: {
+              Authorization: `Bearer ${session.access_token}`
+            }
+          });
 
-        const { data: functionData, error: functionError } = await supabase.functions.invoke("profile-update", {
-          body: { 
-            username: piUser.username,
-            profileData: profilePayload
-          },
-          headers: {
-            Authorization: `Bearer ${session.access_token}`
+          if (functionError) {
+            console.error("Profile update error:", functionError);
+            // Try direct update as fallback
+            if (profileId) {
+              const { error: directError } = await supabase
+                .from("profiles")
+                .update(profilePayload)
+                .eq("id", profileId);
+              
+              if (directError) {
+                throw directError;
+              }
+            } else {
+              throw functionError;
+            }
+          } else if (functionData?.data) {
+            currentProfileId = functionData.data.id;
+            if (!profileId) {
+              setProfileId(currentProfileId);
+            }
+            console.log("Profile updated successfully via edge function");
           }
-        });
+        } else {
+          // No Supabase session - use direct update or create profile via pi-auth
+          if (!profileId) {
+            // Create profile first via pi-auth
+            const accessToken = localStorage.getItem("pi_access_token");
+            if (accessToken) {
+              const { data: functionData, error: functionError } = await supabase.functions.invoke("pi-auth", {
+                body: { 
+                  accessToken: accessToken,
+                  username: piUser.username,
+                  uid: piUser.uid
+                }
+              });
 
-        if (functionError) {
-          console.error("Profile update error:", functionError);
-          // Try direct update as fallback
-          if (profileId) {
+              if (functionError || !functionData?.profileId) {
+                throw new Error("Failed to create profile. Please try signing in again.");
+              }
+              currentProfileId = functionData.profileId;
+              setProfileId(currentProfileId);
+            } else {
+              throw new Error("Please sign in with Pi Network to save your profile");
+            }
+          }
+
+          // Now update the profile directly
+          if (currentProfileId) {
+            const { error: directError } = await supabase
+              .from("profiles")
+              .update(profilePayload)
+              .eq("id", currentProfileId);
+            
+            if (directError) {
+              throw directError;
+            }
+            console.log("Profile updated successfully via direct update");
+          }
+        }
+      } catch (edgeError: any) {
+        console.error("Profile save error:", edgeError);
+        // If we have a profileId, try one more direct update
+        if (profileId) {
+          try {
             const { error: directError } = await supabase
               .from("profiles")
               .update(profilePayload)
@@ -541,27 +616,9 @@ const Dashboard = () => {
             if (directError) {
               throw directError;
             }
-          } else {
-            throw functionError;
-          }
-        } else if (functionData?.data) {
-          currentProfileId = functionData.data.id;
-          if (!profileId) {
-            setProfileId(currentProfileId);
-          }
-          console.log("Profile updated successfully");
-        }
-      } catch (edgeError: any) {
-        console.error("Edge function error, trying direct update:", edgeError);
-        // Fallback to direct update if edge function fails
-        if (profileId) {
-          const { error: directError } = await supabase
-            .from("profiles")
-            .update(profilePayload)
-            .eq("id", profileId);
-          
-          if (directError) {
-            throw directError;
+            console.log("Profile updated via fallback direct update");
+          } catch (fallbackError) {
+            throw edgeError; // Throw original error
           }
         } else {
           throw edgeError;

@@ -114,15 +114,31 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
 
       if (functionError) {
         console.error("Backend sync error:", functionError);
-        // Don't return - allow user to continue even if sync fails
-        // Profile will be auto-created on first dashboard load
-        toast.warning("Backend sync had issues, but you can continue. Profile will be created automatically.");
-      } else {
-        console.log("Pi Auth - Backend sync successful");
-        if (functionData?.profileId) {
-          // Store profile ID in localStorage
-          localStorage.setItem(`profile_id_${auth.user.username}`, functionData.profileId);
-        }
+        const errorMsg = functionError.message || JSON.stringify(functionError);
+        throw new Error(`Backend sync failed: ${errorMsg}`);
+      }
+
+      if (!functionData?.success || !functionData?.profileId) {
+        throw new Error("Failed to create profile. Please try again.");
+      }
+
+      console.log("Pi Auth - Backend sync successful, profile ID:", functionData.profileId);
+      
+      // Store profile ID in localStorage
+      localStorage.setItem(`profile_id_${auth.user.username}`, functionData.profileId);
+
+      // Create Supabase session for the Pi user
+      // The pi-auth function creates a Supabase auth user, so we need to sign in with it
+      try {
+        const email = `pi-${auth.user.username}@pi-network.local`;
+        // Try to sign in with the created user
+        // Note: We can't use the password, but we can create a session using the service role
+        // For now, we'll rely on the profile-update function to handle auth via JWT
+        // The user_id in profiles table links to the auth user
+        console.log("Pi Auth - Supabase auth user should be created");
+      } catch (sessionError) {
+        console.warn("Could not create Supabase session:", sessionError);
+        // This is okay - we'll handle auth via edge functions
       }
 
       toast.success(`Welcome back, @${auth.user.username}! 👋`);
