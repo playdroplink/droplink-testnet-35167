@@ -60,6 +60,7 @@ interface ProfileData {
   businessName: string;
   storeUrl: string;
   description: string;
+  email?: string;
   youtubeVideoUrl: string;
   socialLinks: {
     twitter: string;
@@ -114,6 +115,7 @@ const Dashboard = () => {
     businessName: "",
     storeUrl: "",
     description: "",
+    email: "",
     youtubeVideoUrl: "",
     socialLinks: {
       twitter: "",
@@ -157,6 +159,17 @@ const Dashboard = () => {
 
       console.log("Loading profile for Pi user:", piUser.username);
 
+      // Try to load from localStorage first
+      const storedProfile = localStorage.getItem(`profile_${piUser.username}`);
+      if (storedProfile) {
+        try {
+          const parsed = JSON.parse(storedProfile);
+          setProfile(parsed);
+        } catch (e) {
+          console.error("Error parsing stored profile:", e);
+        }
+      }
+
       // Load profile from database using Pi username
       const { data: profileData, error } = await supabase
         .from("profiles")
@@ -183,11 +196,12 @@ const Dashboard = () => {
         const cryptoWallets = (profileData as any).crypto_wallets as any;
         const bankDetails = (profileData as any).bank_details as any;
         
-        setProfile({
+        const loadedProfile = {
           logo: profileData.logo || "",
-          businessName: profileData.business_name || "",
-          storeUrl: profileData.username || "",
+          businessName: profileData.business_name || piUser.username,
+          storeUrl: profileData.username || piUser.username,
           description: profileData.description || "",
+          email: (profileData as any).email || "",
           youtubeVideoUrl: (profileData as any).youtube_video_url || "",
           socialLinks: socialLinks || {
             twitter: "",
@@ -221,7 +235,52 @@ const Dashboard = () => {
           showShareButton: (profileData as any).show_share_button !== false,
           piWalletAddress: (profileData as any).pi_wallet_address || "",
           piDonationMessage: (profileData as any).pi_donation_message || "Send me a coffee ☕",
-        });
+        };
+        
+        setProfile(loadedProfile);
+        // Save to localStorage
+        localStorage.setItem(`profile_${piUser.username}`, JSON.stringify(loadedProfile));
+      } else {
+        // Auto-create profile with Pi username
+        console.log("Profile not found, auto-creating with Pi username:", piUser.username);
+        const defaultProfile = {
+          logo: "",
+          businessName: piUser.username,
+          storeUrl: piUser.username,
+          description: "",
+          email: "",
+          youtubeVideoUrl: "",
+          socialLinks: {
+            twitter: "",
+            instagram: "",
+            youtube: "",
+            tiktok: "",
+            facebook: "",
+            linkedin: "",
+            twitch: "",
+            website: "",
+          },
+          customLinks: [],
+          theme: {
+            primaryColor: "#3b82f6",
+            backgroundColor: "#000000",
+            iconStyle: "rounded",
+            buttonStyle: "filled",
+          },
+          products: [],
+          wallets: {
+            crypto: [],
+            bank: [],
+          },
+          hasPremium: false,
+          showShareButton: true,
+          piWalletAddress: "",
+          piDonationMessage: "Send me a coffee ☕",
+        };
+        setProfile(defaultProfile);
+        // Save to localStorage
+        localStorage.setItem(`profile_${piUser.username}`, JSON.stringify(defaultProfile));
+        toast.info("Profile auto-created with your Pi username");
       }
     } catch (error) {
       console.error("Error:", error);
@@ -273,6 +332,7 @@ const Dashboard = () => {
         username: sanitizedUrl,
         business_name: profile.businessName,
         description: profile.description,
+        email: profile.email || null,
         logo: profile.logo,
         youtube_video_url: profile.youtubeVideoUrl,
         social_links: profile.socialLinks,
@@ -291,34 +351,25 @@ const Dashboard = () => {
 
       let currentProfileId = profileId;
 
-      if (profileId) {
-        // Update existing profile
-        const { error } = await supabase
-          .from("profiles")
-          .update(profilePayload)
-          .eq("id", profileId);
+      // Use profile-update edge function to bypass RLS
+      const { data: functionData, error: functionError } = await supabase.functions.invoke("profile-update", {
+        body: { 
+          username: piUser.username,
+          profileData: profilePayload
+        }
+      });
 
-        if (error) {
-          console.error("Update error:", error);
-          throw error;
+      if (functionError) {
+        console.error("Profile update error:", functionError);
+        throw functionError;
+      }
+
+      if (functionData?.data) {
+        currentProfileId = functionData.data.id;
+        if (!profileId) {
+          setProfileId(currentProfileId);
         }
         console.log("Profile updated successfully");
-      } else {
-        // Insert new profile (should have been created by pi-auth)
-        // But if not, create it now
-        const { data, error } = await supabase
-          .from("profiles")
-          .upsert([profilePayload], { onConflict: "username" })
-          .select()
-          .single();
-
-        if (error) {
-          console.error("Insert error:", error);
-          throw error;
-        }
-        currentProfileId = data.id;
-        setProfileId(data.id);
-        console.log("Profile created:", data.id);
       }
 
       // Save products
@@ -345,6 +396,11 @@ const Dashboard = () => {
 
           if (error) throw error;
         }
+      }
+
+      // Save to localStorage
+      if (piUser) {
+        localStorage.setItem(`profile_${piUser.username}`, JSON.stringify(profile));
       }
 
       toast.success("Profile saved successfully!");
@@ -396,6 +452,9 @@ const Dashboard = () => {
       <header className="border-b border-border px-4 lg:px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-semibold text-sky-500">Droplink</h1>
+          {piUser && (
+            <span className="text-sm text-muted-foreground">@{piUser.username}</span>
+          )}
         </div>
         <div className="flex items-center gap-2 lg:gap-4">
           {isMobile ? (
@@ -591,6 +650,22 @@ const Dashboard = () => {
                   placeholder="Enter business name"
                   className="bg-input-bg"
                 />
+              </div>
+
+              {/* Email */}
+              <div className="mb-6">
+                <Label htmlFor="email" className="mb-3 block">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={profile.email || ""}
+                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                  placeholder="your@email.com"
+                  className="bg-input-bg"
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Your email will be used to save preferences and for important notifications
+                </p>
               </div>
 
               {/* Store URL */}

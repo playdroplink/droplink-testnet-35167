@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { usePi } from "@/contexts/PiContext";
 import { Loader2, Wallet } from "lucide-react";
 import { toast } from "sonner";
+import droplinkLogo from "@/assets/droplink-logo.png";
 
 const PiAuth = () => {
   const navigate = useNavigate();
@@ -41,8 +42,12 @@ const PiAuth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <Wallet className="w-8 h-8 text-primary" />
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+              <img 
+                src={droplinkLogo} 
+                alt="Droplink" 
+                className="w-full h-full object-contain p-2"
+              />
             </div>
           </div>
           <CardTitle className="text-2xl">Welcome to Droplink</CardTitle>
@@ -89,12 +94,17 @@ const PiAuth = () => {
             </p>
           </div>
 
-          <div className="pt-4 border-t">
+          <div className="pt-4 border-t space-y-2">
             <p className="text-xs text-center text-muted-foreground">
               Please open this app in Pi Browser to use Pi authentication.
               <br />
               Your Pi username will be used as your unique identifier.
             </p>
+            <div className="flex justify-center gap-4 text-xs">
+              <a href="/terms" className="text-primary hover:underline">Terms</a>
+              <span className="text-muted-foreground">•</span>
+              <a href="/privacy" className="text-primary hover:underline">Privacy</a>
+            </div>
           </div>
         </CardContent>
       </Card>

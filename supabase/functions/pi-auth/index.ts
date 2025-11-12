@@ -45,14 +45,50 @@ serve(async (req) => {
       .maybeSingle();
 
     let profileId: string;
+    let userId: string | null = null;
 
     if (existingProfile) {
       profileId = existingProfile.id;
+      userId = existingProfile.user_id;
     } else {
-      // Create new profile
+      // Create Supabase auth user for Pi user
+      // Use a unique email format and random password
+      const email = `pi-${username}@pi-network.local`;
+      const randomPassword = crypto.randomUUID();
+      
+      const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+        email,
+        password: randomPassword,
+        email_confirm: true,
+        user_metadata: {
+          pi_username: username,
+          pi_uid: uid,
+        },
+      });
+
+      if (authError) {
+        if (authError.message.includes("already registered") || authError.message.includes("User already registered")) {
+          // User already exists, try to find them
+          const { data: existingUsers } = await supabase.auth.admin.listUsers();
+          const existingUser = existingUsers?.users?.find(u => u.email === email);
+          if (existingUser) {
+            userId = existingUser.id;
+            console.log("Found existing auth user for Pi user:", userId);
+          }
+        } else {
+          console.error("Auth user creation error:", authError);
+          // Continue without auth user if creation fails
+        }
+      } else if (authUser?.user) {
+        userId = authUser.user.id;
+        console.log("Created auth user for Pi user:", userId);
+      }
+
+      // Create new profile with user_id
       const { data: newProfile, error: profileError } = await supabase
         .from("profiles")
         .insert({
+          user_id: userId,
           username: username,
           business_name: username,
           description: "",

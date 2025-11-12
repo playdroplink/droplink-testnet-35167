@@ -94,11 +94,17 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
 
       if (functionError) {
         console.error("Backend sync error:", functionError);
-        toast.error("Failed to sync with backend");
-        return;
+        // Don't return - allow user to continue even if sync fails
+        // Profile will be auto-created on first dashboard load
+        toast.warning("Backend sync had issues, but you can continue. Profile will be created automatically.");
+      } else {
+        console.log("Pi Auth - Backend sync successful");
+        if (functionData?.profileId) {
+          // Store profile ID in localStorage
+          localStorage.setItem(`profile_id_${auth.user.username}`, functionData.profileId);
+        }
       }
 
-      console.log("Pi Auth - Backend sync successful");
       toast.success(`Welcome back, @${auth.user.username}! 👋`);
     } catch (error: any) {
       console.error("Pi authentication error:", error);
