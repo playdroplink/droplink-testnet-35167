@@ -164,11 +164,21 @@ const CustomDomain = () => {
                     className="flex-1"
                     disabled={saving}
                   />
-                  <Button onClick={handleSaveDomain} disabled={saving || !domain.trim()}>
+                  <Button 
+                    onClick={handleSaveDomain} 
+                    disabled={saving || !domain.trim()}
+                    variant="default"
+                    size="default"
+                  >
                     {saving ? "Saving..." : "Save"}
                   </Button>
                   {currentDomain && (
-                    <Button variant="outline" onClick={handleRemoveDomain} disabled={saving}>
+                    <Button 
+                      variant="outline" 
+                      onClick={handleRemoveDomain} 
+                      disabled={saving}
+                      size="default"
+                    >
                       Remove
                     </Button>
                   )}
@@ -250,7 +260,7 @@ const CustomDomain = () => {
                   If you're having trouble connecting your domain, check your registrar's documentation or contact support.
                 </p>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" asChild>
+                  <Button variant="outline" size="default" asChild>
                     <a href="/ai-support" target="_blank" rel="noopener noreferrer">
                       <Info className="w-4 h-4 mr-2" />
                       Get Help

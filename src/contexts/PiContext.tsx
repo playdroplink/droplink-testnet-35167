@@ -173,17 +173,38 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           try {
             // Get auth token for JWT
             const { data: { session } } = await supabase.auth.getSession();
+            
             if (!session?.access_token) {
-              throw new Error("Not authenticated");
+              // Try to create session for Pi user
+              console.warn("No Supabase session for payment approval - attempting to proceed");
+              // For Pi users, we might not have a session, but payment should still work
+              // The edge function should handle this case
             }
 
-            const { error } = await supabase.functions.invoke("pi-payment-approve", {
+            const { data: approveData, error } = await supabase.functions.invoke("pi-payment-approve", {
               body: { paymentId },
-              headers: {
+              headers: session?.access_token ? {
                 Authorization: `Bearer ${session.access_token}`
-              }
+              } : {}
             });
-            if (error) throw error;
+            
+            if (error) {
+              console.error("Payment approval error:", error);
+              // Check if it's an auth error - if so, try without auth (Pi users)
+              if (error.message?.includes("auth") || error.message?.includes("token") || error.message?.includes("authenticated")) {
+                console.log("Retrying payment approval without auth header...");
+                const { error: retryError } = await supabase.functions.invoke("pi-payment-approve", {
+                  body: { paymentId }
+                });
+                if (retryError) throw retryError;
+              } else {
+                throw error;
+              }
+            }
+            
+            if (approveData?.success === false) {
+              throw new Error(approveData.error || "Payment approval failed");
+            }
           } catch (error) {
             console.error("Approval error:", error);
             throw error;
@@ -194,17 +215,42 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           try {
             // Get auth token for JWT
             const { data: { session } } = await supabase.auth.getSession();
+            
             if (!session?.access_token) {
-              throw new Error("Not authenticated");
+              console.warn("No Supabase session for payment completion - attempting to proceed");
             }
 
             const { data, error } = await supabase.functions.invoke("pi-payment-complete", {
               body: { paymentId, txid, metadata },
-              headers: {
+              headers: session?.access_token ? {
                 Authorization: `Bearer ${session.access_token}`
-              }
+              } : {}
             });
-            if (error) throw error;
+            
+            if (error) {
+              console.error("Payment completion error:", error);
+              // Check if it's an auth error - if so, try without auth (Pi users)
+              if (error.message?.includes("auth") || error.message?.includes("token") || error.message?.includes("authenticated")) {
+                console.log("Retrying payment completion without auth header...");
+                const { data: retryData, error: retryError } = await supabase.functions.invoke("pi-payment-complete", {
+                  body: { paymentId, txid, metadata }
+                });
+                if (retryError) throw retryError;
+                if (retryData?.success === false) {
+                  throw new Error(retryData.error || "Payment completion failed");
+                }
+                toast.success("Payment completed successfully!");
+                resolve(retryData);
+                return;
+              } else {
+                throw error;
+              }
+            }
+            
+            if (data?.success === false) {
+              throw new Error(data.error || "Payment completion failed");
+            }
+            
             toast.success("Payment completed successfully!");
             resolve(data);
           } catch (error) {

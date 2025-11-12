@@ -622,7 +622,57 @@ const Dashboard = () => {
           });
 
           if (functionError) {
-            console.error("Profile update error:", functionError);
+            console.error("Profile update error (edge function):", functionError);
+            // Try direct update as fallback
+            if (profileId) {
+              console.log("Falling back to direct database update...");
+              const { error: directError } = await supabase
+                .from("profiles")
+                .update(profilePayload)
+                .eq("id", profileId);
+              
+              if (directError) {
+                console.error("Direct update error:", directError);
+                throw directError;
+              }
+              console.log("Profile updated successfully via direct update (fallback)");
+            } else {
+              // No profile ID - try to find profile first
+              if (isPiUser && piUser) {
+                const { data: existingProfile } = await supabase
+                  .from("profiles")
+                  .select("id")
+                  .eq("username", piUser.username)
+                  .maybeSingle();
+                
+                if (existingProfile) {
+                  const { error: directError } = await supabase
+                    .from("profiles")
+                    .update(profilePayload)
+                    .eq("id", existingProfile.id);
+                  
+                  if (directError) {
+                    throw directError;
+                  }
+                  currentProfileId = existingProfile.id;
+                  setProfileId(currentProfileId);
+                  console.log("Profile updated successfully via direct update (found profile)");
+                } else {
+                  throw functionError;
+                }
+              } else {
+                throw functionError;
+              }
+            }
+          } else if (functionData?.data) {
+            currentProfileId = functionData.data.id;
+            if (!profileId) {
+              setProfileId(currentProfileId);
+            }
+            console.log("Profile updated successfully via edge function");
+          } else if (functionData?.success === false) {
+            // Edge function returned error in response
+            console.error("Edge function returned error:", functionData.error);
             // Try direct update as fallback
             if (profileId) {
               const { error: directError } = await supabase
@@ -633,15 +683,10 @@ const Dashboard = () => {
               if (directError) {
                 throw directError;
               }
+              console.log("Profile updated successfully via direct update (fallback from function error)");
             } else {
-              throw functionError;
+              throw new Error(functionData.error || "Profile update failed");
             }
-          } else if (functionData?.data) {
-            currentProfileId = functionData.data.id;
-            if (!profileId) {
-              setProfileId(currentProfileId);
-            }
-            console.log("Profile updated successfully via edge function");
           }
         } else {
           // No Supabase session - use direct update or create profile
@@ -760,20 +805,63 @@ const Dashboard = () => {
       // Save financial data via secure endpoint
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (session?.access_token) {
-          await supabase.functions.invoke("financial-data", {
+        if (session?.access_token && currentProfileId) {
+          const { data: finData, error: finError } = await supabase.functions.invoke("financial-data", {
             method: "PUT",
             body: {
               crypto_wallets: { wallets: profile.wallets.crypto },
               bank_details: { accounts: profile.wallets.bank },
+              pi_wallet_address: profile.piWalletAddress || null,
+              pi_donation_message: profile.piDonationMessage || "Send me a coffee ☕",
             },
             headers: {
               Authorization: `Bearer ${session.access_token}`
             }
           });
+          
+          if (finError) {
+            console.warn("Financial data save error (non-critical):", finError);
+            // Try direct save as fallback
+            try {
+              await supabase
+                .from("profile_financial_data")
+                .upsert({
+                  profile_id: currentProfileId,
+                  crypto_wallets: { wallets: profile.wallets.crypto },
+                  bank_details: { accounts: profile.wallets.bank },
+                  pi_wallet_address: profile.piWalletAddress || null,
+                  pi_donation_message: profile.piDonationMessage || "Send me a coffee ☕",
+                }, {
+                  onConflict: 'profile_id'
+                });
+            } catch (directFinError) {
+              console.warn("Direct financial data save also failed:", directFinError);
+            }
+          } else {
+            console.log("Financial data saved successfully");
+          }
+        } else if (currentProfileId) {
+          // No session but we have profile ID - try direct save
+          try {
+            await supabase
+              .from("profile_financial_data")
+              .upsert({
+                profile_id: currentProfileId,
+                crypto_wallets: { wallets: profile.wallets.crypto },
+                bank_details: { accounts: profile.wallets.bank },
+                pi_wallet_address: profile.piWalletAddress || null,
+                pi_donation_message: profile.piDonationMessage || "Send me a coffee ☕",
+              }, {
+                onConflict: 'profile_id'
+              });
+            console.log("Financial data saved directly (no session)");
+          } catch (directFinError) {
+            console.warn("Direct financial data save failed:", directFinError);
+          }
         }
       } catch (error) {
         console.error("Error saving financial data:", error);
+        // Don't throw - financial data is optional
       }
 
       // Save to localStorage

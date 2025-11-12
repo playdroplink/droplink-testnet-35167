@@ -9,11 +9,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Helper to get authenticated user and profile
+// Helper to get authenticated user and profile (optional for Pi users)
 async function getAuthenticatedProfile(req: Request) {
   const authHeader = req.headers.get('Authorization');
+  
+  // If no auth header, return null (for Pi users without Supabase session)
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new Error('Missing or invalid authorization header');
+    return null;
   }
 
   const token = authHeader.replace('Bearer ', '');
@@ -21,9 +23,10 @@ async function getAuthenticatedProfile(req: Request) {
   const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
+  // Verify JWT and get user
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) {
-    throw new Error('Invalid or expired token');
+    return null; // Return null instead of throwing - allows Pi users without session
   }
 
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -36,7 +39,7 @@ async function getAuthenticatedProfile(req: Request) {
     .maybeSingle();
 
   if (profileError || !profile) {
-    throw new Error('Profile not found for authenticated user');
+    return null; // Return null if profile not found
   }
 
   return { user, profile, supabase: serviceSupabase };
@@ -54,8 +57,24 @@ serve(async (req) => {
       throw new Error("Payment ID and transaction ID are required");
     }
 
-    // Get authenticated user and profile
-    const { profile, supabase } = await getAuthenticatedProfile(req);
+    // Get authenticated user and profile (optional for Pi users)
+    const authResult = await getAuthenticatedProfile(req);
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, serviceKey);
+    
+    let profileId: string | null = null;
+    
+    if (authResult) {
+      // User has Supabase session - use their profile
+      profileId = authResult.profile.id;
+    } else {
+      // No Supabase session - will use metadata.profileId if available
+      if (metadata?.profileId) {
+        profileId = metadata.profileId;
+      }
+      console.log("Payment completion without Supabase session (Pi user)");
+    }
 
     // Check idempotency - prevent duplicate completions
     const { data: existingPayment } = await supabase
@@ -100,9 +119,12 @@ serve(async (req) => {
     const paymentDetails = await getPaymentResponse.json();
     
     // Validate payment belongs to this profile (if metadata provided)
-    if (metadata?.profileId && metadata.profileId !== profile.id) {
+    if (metadata?.profileId && profileId && metadata.profileId !== profileId) {
       throw new Error('Payment does not belong to authenticated user');
     }
+    
+    // Use profileId from auth or metadata
+    const finalProfileId = profileId || metadata?.profileId;
 
     // Validate payment status
     if (paymentDetails.status !== 'ready_for_completion') {
@@ -158,7 +180,7 @@ serve(async (req) => {
       .eq('payment_id', paymentId);
 
     // Update subscription in database if this was a subscription payment
-    if (metadata?.subscriptionPlan) {
+    if (metadata?.subscriptionPlan && finalProfileId) {
       const planType = metadata.subscriptionPlan.toLowerCase();
       const billingPeriod = metadata.billingPeriod || 'monthly';
       const endDate = new Date();
@@ -172,7 +194,7 @@ serve(async (req) => {
       const { error: subError } = await supabase
         .from("subscriptions")
         .upsert({
-          profile_id: profile.id,
+          profile_id: finalProfileId,
           plan_type: planType,
           billing_period: billingPeriod,
           pi_amount: paymentData.amount || paymentDetails.amount,

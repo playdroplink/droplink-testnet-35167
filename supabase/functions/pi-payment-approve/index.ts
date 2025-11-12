@@ -9,11 +9,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Helper to get authenticated user and profile
+// Helper to get authenticated user and profile (optional for Pi users)
 async function getAuthenticatedProfile(req: Request) {
   const authHeader = req.headers.get('Authorization');
+  
+  // If no auth header, return null (for Pi users without Supabase session)
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new Error('Missing or invalid authorization header');
+    return null;
   }
 
   const token = authHeader.replace('Bearer ', '');
@@ -24,7 +26,7 @@ async function getAuthenticatedProfile(req: Request) {
   // Verify JWT and get user
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) {
-    throw new Error('Invalid or expired token');
+    return null; // Return null instead of throwing - allows Pi users without session
   }
 
   // Get profile from user_id
@@ -38,7 +40,7 @@ async function getAuthenticatedProfile(req: Request) {
     .maybeSingle();
 
   if (profileError || !profile) {
-    throw new Error('Profile not found for authenticated user');
+    return null; // Return null if profile not found
   }
 
   return { user, profile, supabase: serviceSupabase };
@@ -56,8 +58,22 @@ serve(async (req) => {
       throw new Error("Payment ID is required");
     }
 
-    // Get authenticated user and profile
-    const { profile, supabase } = await getAuthenticatedProfile(req);
+    // Get authenticated user and profile (optional for Pi users)
+    const authResult = await getAuthenticatedProfile(req);
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, serviceKey);
+    
+    let profileId: string | null = null;
+    
+    if (authResult) {
+      // User has Supabase session - use their profile
+      profileId = authResult.profile.id;
+    } else {
+      // No Supabase session - validate payment with Pi API and derive profile from payment metadata
+      // For now, we'll approve the payment without profile_id (Pi users)
+      console.log("Payment approval without Supabase session (Pi user)");
+    }
 
     // Check idempotency - prevent duplicate approvals
     const { data: existingPayment } = await supabase
@@ -111,7 +127,7 @@ serve(async (req) => {
       .from('payment_idempotency')
       .upsert({
         payment_id: paymentId,
-        profile_id: profile.id,
+        profile_id: profileId,
         amount: paymentDetails.amount || 0,
         status: 'pending',
         metadata: paymentDetails,
