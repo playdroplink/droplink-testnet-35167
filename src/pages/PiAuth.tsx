@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePi } from "@/contexts/PiContext";
-import { Loader2, Wallet } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import droplinkLogo from "@/assets/droplink-logo.png";
 
@@ -42,13 +42,11 @@ const PiAuth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-              <img 
-                src={droplinkLogo} 
-                alt="Droplink" 
-                className="w-full h-full object-contain p-2"
-              />
-            </div>
+            <img 
+              src={droplinkLogo} 
+              alt="Droplink" 
+              className="w-16 h-16 object-contain"
+            />
           </div>
           <CardTitle className="text-2xl">Welcome to Droplink</CardTitle>
           <CardDescription>
@@ -68,10 +66,7 @@ const PiAuth = () => {
                 Connecting...
               </>
             ) : (
-              <>
-                <Wallet className="w-4 h-4 mr-2" />
-                Sign in with Pi Network
-              </>
+              "Sign in with Pi Network"
             )}
           </Button>
 
