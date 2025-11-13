@@ -164,135 +164,134 @@ const CustomDomain = () => {
         )}
 
         <Card className={!isPremiumPlan ? "opacity-75" : ""}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="w-5 h-5" />
-                Connect Your Domain
-              </CardTitle>
-              <CardDescription>
-                Connect your custom domain (e.g., from GoDaddy, Hostinger, etc.) to your Droplink profile
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Domain Input */}
-              <div className="space-y-2">
-                <Label htmlFor="domain">Custom Domain</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="domain"
-                    value={domain}
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="w-5 h-5" />
+              Connect Your Domain
+            </CardTitle>
+            <CardDescription>
+              Connect your custom domain (e.g., from GoDaddy, Hostinger, etc.) to your Droplink profile
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Domain Input */}
+            <div className="space-y-2">
+              <Label htmlFor="domain">Custom Domain</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="domain"
+                  value={domain}
                   onChange={(e) => setDomain(e.target.value)}
-                    placeholder="example.com"
-                    className="flex-1"
+                  placeholder="example.com"
+                  className="flex-1"
                   disabled={saving || !isPremiumPlan}
-                  />
-                  <Button 
-                    onClick={handleSaveDomain} 
+                />
+                <Button 
+                  onClick={handleSaveDomain} 
                   disabled={saving || !domain.trim() || !isPremiumPlan}
-                    variant="default"
+                  variant="default"
+                  size="default"
+                >
+                  {saving ? "Saving..." : "Save"}
+                </Button>
+                {currentDomain && (
+                  <Button 
+                    variant="outline" 
+                    onClick={handleRemoveDomain} 
+                    disabled={saving || !isPremiumPlan}
                     size="default"
                   >
-                    {saving ? "Saving..." : "Save"}
+                    Remove
                   </Button>
-                  {currentDomain && (
-                    <Button 
-                      variant="outline" 
-                      onClick={handleRemoveDomain} 
-                    disabled={saving || !isPremiumPlan}
-                      size="default"
-                    >
-                      Remove
-                    </Button>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Enter your domain without http:// or https:// (e.g., example.com)
-                </p>
+                )}
               </div>
+              <p className="text-xs text-muted-foreground">
+                Enter your domain without http:// or https:// (e.g., example.com)
+              </p>
+            </div>
 
-              {/* Current Domain Status */}
-              {currentDomain && (
-                <Alert>
-                  <Globe className="h-4 w-4" />
-                  <AlertDescription>
-                    <strong>Current domain:</strong> {currentDomain}
-                    {verificationStatus === "pending" && (
-                      <span className="ml-2 text-yellow-600">(Verification pending)</span>
-                    )}
-                    {verificationStatus === "verified" && (
-                      <span className="ml-2 text-green-600">(Verified)</span>
-                    )}
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {/* DNS Configuration Instructions */}
-              {currentDomain && (
-                <div className="space-y-4 p-4 bg-muted/50 rounded-lg border">
-                  <h3 className="font-semibold flex items-center gap-2">
-                    <Info className="w-4 h-4" />
-                    DNS Configuration Instructions
-                  </h3>
-                  <div className="space-y-3 text-sm">
-                    <div>
-                      <p className="font-medium mb-1">For GoDaddy, Hostinger, Namecheap, etc.:</p>
-                      <ol className="list-decimal list-inside space-y-1 ml-2 text-muted-foreground">
-                        <li>Log in to your domain registrar</li>
-                        <li>Go to DNS Management / DNS Settings</li>
-                        <li>Add a CNAME record:</li>
-                        <ul className="list-disc list-inside ml-4 mt-1">
-                          <li><strong>Type:</strong> CNAME</li>
-                          <li><strong>Name/Host:</strong> @ or your subdomain (e.g., www)</li>
-                          <li><strong>Value/Target:</strong> droplink-mainnet.lovable.app</li>
-                          <li><strong>TTL:</strong> 3600 (or default)</li>
-                        </ul>
-                        <li>Save the DNS record</li>
-                        <li>Wait 24-48 hours for DNS propagation</li>
-                      </ol>
-                    </div>
-                    <div className="mt-4 p-3 bg-background rounded border">
-                      <p className="font-medium mb-2">Example CNAME Record:</p>
-                      <code className="text-xs block">
-                        @ CNAME droplink-mainnet.lovable.app
-                      </code>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Or for subdomain: www CNAME droplink-mainnet.lovable.app
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* .pi Domain Coming Soon */}
-              <Alert className="border-primary/50 bg-primary/5">
-                <AlertCircle className="h-4 w-4 text-primary" />
+            {/* Current Domain Status */}
+            {currentDomain && (
+              <Alert>
+                <Globe className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>.pi Domain Support Coming Soon!</strong>
-                  <br />
-                  <span className="text-sm text-muted-foreground">
-                    We're working on native .pi domain support. Stay tuned for updates!
-                  </span>
+                  <strong>Current domain:</strong> {currentDomain}
+                  {verificationStatus === "pending" && (
+                    <span className="ml-2 text-yellow-600">(Verification pending)</span>
+                  )}
+                  {verificationStatus === "verified" && (
+                    <span className="ml-2 text-green-600">(Verified)</span>
+                  )}
                 </AlertDescription>
               </Alert>
+            )}
 
-              {/* Help Section */}
-              <div className="pt-4 border-t">
-                <h3 className="font-semibold mb-2">Need Help?</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  If you're having trouble connecting your domain, check your registrar's documentation or contact support.
-                </p>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="default" asChild>
-                    <a href="/ai-support" target="_blank" rel="noopener noreferrer">
-                      <Info className="w-4 h-4 mr-2" />
-                      Get Help
-                    </a>
-                  </Button>
+            {/* DNS Configuration Instructions */}
+            {currentDomain && (
+              <div className="space-y-4 p-4 bg-muted/50 rounded-lg border">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Info className="w-4 h-4" />
+                  DNS Configuration Instructions
+                </h3>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <p className="font-medium mb-1">For GoDaddy, Hostinger, Namecheap, etc.:</p>
+                    <ol className="list-decimal list-inside space-y-1 ml-2 text-muted-foreground">
+                      <li>Log in to your domain registrar</li>
+                      <li>Go to DNS Management / DNS Settings</li>
+                      <li>Add a CNAME record:</li>
+                      <ul className="list-disc list-inside ml-4 mt-1">
+                        <li><strong>Type:</strong> CNAME</li>
+                        <li><strong>Name/Host:</strong> @ or your subdomain (e.g., www)</li>
+                        <li><strong>Value/Target:</strong> droplink-mainnet.lovable.app</li>
+                        <li><strong>TTL:</strong> 3600 (or default)</li>
+                      </ul>
+                      <li>Save the DNS record</li>
+                      <li>Wait 24-48 hours for DNS propagation</li>
+                    </ol>
+                  </div>
+                  <div className="mt-4 p-3 bg-background rounded border">
+                    <p className="font-medium mb-2">Example CNAME Record:</p>
+                    <code className="text-xs block">
+                      @ CNAME droplink-mainnet.lovable.app
+                    </code>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Or for subdomain: www CNAME droplink-mainnet.lovable.app
+                    </p>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-      </div>
+            )}
+
+            {/* .pi Domain Coming Soon */}
+            <Alert className="border-primary/50 bg-primary/5">
+              <AlertCircle className="h-4 w-4 text-primary" />
+              <AlertDescription>
+                <strong>.pi Domain Support Coming Soon!</strong>
+                <br />
+                <span className="text-sm text-muted-foreground">
+                  We're working on native .pi domain support. Stay tuned for updates!
+                </span>
+              </AlertDescription>
+            </Alert>
+
+            {/* Help Section */}
+            <div className="pt-4 border-t">
+              <h3 className="font-semibold mb-2">Need Help?</h3>
+              <p className="text-sm text-muted-foreground mb-3">
+                If you're having trouble connecting your domain, check your registrar's documentation or contact support.
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="default" asChild>
+                  <a href="/ai-support" target="_blank" rel="noopener noreferrer">
+                    <Info className="w-4 h-4 mr-2" />
+                    Get Help
+                  </a>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

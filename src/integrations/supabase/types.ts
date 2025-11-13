@@ -14,7 +14,186 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          id: string
+          user_id: string | null
+          username: string
+          business_name: string | null
+          description: string | null
+          email: string | null
+          logo: string | null
+          youtube_video_url: string | null
+          social_links: Json | null
+          show_share_button: boolean | null
+          theme_settings: Json | null
+          custom_domain: string | null
+          has_premium: boolean | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          username: string
+          business_name?: string | null
+          description?: string | null
+          email?: string | null
+          logo?: string | null
+          youtube_video_url?: string | null
+          social_links?: Json | null
+          show_share_button?: boolean | null
+          theme_settings?: Json | null
+          custom_domain?: string | null
+          has_premium?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          username?: string
+          business_name?: string | null
+          description?: string | null
+          email?: string | null
+          logo?: string | null
+          youtube_video_url?: string | null
+          social_links?: Json | null
+          show_share_button?: boolean | null
+          theme_settings?: Json | null
+          custom_domain?: string | null
+          has_premium?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          id: string
+          profile_id: string
+          plan_type: string
+          billing_period: string | null
+          pi_amount: number | null
+          start_date: string | null
+          end_date: string | null
+          status: string | null
+          auto_renew: boolean | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          plan_type: string
+          billing_period?: string | null
+          pi_amount?: number | null
+          start_date?: string | null
+          end_date?: string | null
+          status?: string | null
+          auto_renew?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          plan_type?: string
+          billing_period?: string | null
+          pi_amount?: number | null
+          start_date?: string | null
+          end_date?: string | null
+          status?: string | null
+          auto_renew?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_profile_id_fkey"
+            columns: ["profile_id"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      products: {
+        Row: {
+          id: string
+          profile_id: string
+          title: string
+          price: string
+          description: string | null
+          file_url: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          title: string
+          price: string
+          description?: string | null
+          file_url?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          title?: string
+          price?: string
+          description?: string | null
+          file_url?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_profile_id_fkey"
+            columns: ["profile_id"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      profile_financial_data: {
+        Row: {
+          profile_id: string
+          pi_wallet_address: string | null
+          pi_donation_message: string | null
+          crypto_wallets: Json | null
+          bank_details: Json | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          profile_id: string
+          pi_wallet_address?: string | null
+          pi_donation_message?: string | null
+          crypto_wallets?: Json | null
+          bank_details?: Json | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          profile_id?: string
+          pi_wallet_address?: string | null
+          pi_donation_message?: string | null
+          crypto_wallets?: Json | null
+          bank_details?: Json | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_financial_data_profile_id_fkey"
+            columns: ["profile_id"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
