@@ -324,19 +324,22 @@ const Dashboard = () => {
         
         try {
           const { data: { session } } = await supabase.auth.getSession();
-          if (session?.access_token) {
+          const piAccessToken = localStorage.getItem("pi_access_token");
+          if (session?.access_token || (isPiUser && piUser && piAccessToken)) {
+            const headers: Record<string, string> = session?.access_token 
+              ? { Authorization: `Bearer ${session.access_token}` }
+              : { "X-Pi-Access-Token": piAccessToken as string };
+
             const { data: finData, error: finError } = await supabase.functions.invoke("financial-data", {
               method: "GET",
-              headers: {
-                Authorization: `Bearer ${session.access_token}`
-              }
+              headers
             });
             
             if (!finError && finData?.data) {
               financialData = finData.data;
             }
           } else {
-            // No session - try to load from profile_financial_data table directly (public read)
+            // No session or Pi token - try to load from table directly (if allowed)
             try {
               const { data: finData } = await supabase
                 .from("profile_financial_data")
@@ -606,98 +609,67 @@ const Dashboard = () => {
 
       // Use profile-update edge function to bypass RLS
       try {
-        // Try to get Supabase session, but if not available, we'll use direct update
         const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session?.access_token) {
-          // Use edge function with JWT (works for both Pi and email users)
-          const { data: functionData, error: functionError } = await supabase.functions.invoke("profile-update", {
-            body: { 
-              username: username,
-              profileData: profilePayload
-            },
-            headers: {
-              Authorization: `Bearer ${session.access_token}`
-            }
-          });
+        const piAccessToken = localStorage.getItem("pi_access_token");
+        const headers: Record<string, string> = {};
+        const functionBody: any = {
+          username,
+          profileData: profilePayload,
+        };
 
-          if (functionError) {
-            console.error("Profile update error (edge function):", functionError);
-            // Try direct update as fallback
-            if (profileId) {
-              console.log("Falling back to direct database update...");
-              const { error: directError } = await supabase
-                .from("profiles")
-                .update(profilePayload)
-                .eq("id", profileId);
-              
-              if (directError) {
-                console.error("Direct update error:", directError);
-                throw directError;
-              }
-              console.log("Profile updated successfully via direct update (fallback)");
-            } else {
-              // No profile ID - try to find profile first
-              if (isPiUser && piUser) {
-                const { data: existingProfile } = await supabase
-                  .from("profiles")
-                  .select("id")
-                  .eq("username", piUser.username)
-                  .maybeSingle();
-                
-                if (existingProfile) {
-                  const { error: directError } = await supabase
-                    .from("profiles")
-                    .update(profilePayload)
-                    .eq("id", existingProfile.id);
-                  
-                  if (directError) {
-                    throw directError;
-                  }
-                  currentProfileId = existingProfile.id;
-                  setProfileId(currentProfileId);
-                  console.log("Profile updated successfully via direct update (found profile)");
-                } else {
-                  throw functionError;
-                }
-              } else {
-                throw functionError;
-              }
-            }
-          } else if (functionData?.data) {
-            currentProfileId = functionData.data.id;
+        if (session?.access_token) {
+          headers.Authorization = `Bearer ${session.access_token}`;
+        } else if (isPiUser && piUser && piAccessToken) {
+          headers["X-Pi-Access-Token"] = piAccessToken;
+          functionBody.piAccessToken = piAccessToken;
+        }
+
+        const invokeProfileUpdate = async () => {
+          const { data: fnData, error: fnError } = await supabase.functions.invoke("profile-update", {
+            body: functionBody,
+            headers: Object.keys(headers).length ? headers : undefined,
+          });
+          return { fnData, fnError };
+        };
+
+        let updateHandled = false;
+        let fnErrorDetails: any = null;
+
+        if (Object.keys(headers).length > 0) {
+          const { fnData, fnError } = await invokeProfileUpdate();
+          if (fnError) {
+            fnErrorDetails = fnError;
+            console.error("Profile update error (edge function):", fnError);
+          } else if (fnData?.success === false) {
+            fnErrorDetails = fnData.error || "Profile update failed";
+            console.error("Edge function returned error:", fnData.error);
+          } else if (fnData?.data) {
+            currentProfileId = fnData.data.id;
             if (!profileId) {
               setProfileId(currentProfileId);
             }
             console.log("Profile updated successfully via edge function");
-          } else if (functionData?.success === false) {
-            // Edge function returned error in response
-            console.error("Edge function returned error:", functionData.error);
-            // Try direct update as fallback
-            if (profileId) {
-              const { error: directError } = await supabase
-                .from("profiles")
-                .update(profilePayload)
-                .eq("id", profileId);
-              
-              if (directError) {
-                throw directError;
-              }
-              console.log("Profile updated successfully via direct update (fallback from function error)");
-            } else {
-              throw new Error(functionData.error || "Profile update failed");
-            }
+            updateHandled = true;
           }
-        } else {
-          // No Supabase session - use direct update or create profile
-          if (!profileId) {
+        }
+
+        if (!updateHandled) {
+          // Ensure profile exists before retrying
+          if (!currentProfileId) {
             if (isPiUser && piUser) {
-              // Pi user - create profile via pi-auth
-              const accessToken = localStorage.getItem("pi_access_token");
-              if (accessToken) {
+              const { data: existingProfile } = await supabase
+                .from("profiles")
+                .select("id")
+                .eq("username", piUser.username)
+                .maybeSingle();
+
+              if (existingProfile) {
+                currentProfileId = existingProfile.id;
+                setProfileId(existingProfile.id);
+              } else if (piAccessToken) {
                 const { data: functionData, error: functionError } = await supabase.functions.invoke("pi-auth", {
                   body: { 
-                    accessToken: accessToken,
+                    accessToken: piAccessToken,
                     username: piUser.username,
                     uid: piUser.uid
                   }
@@ -712,7 +684,6 @@ const Dashboard = () => {
                 throw new Error("Please sign in with Pi Network to save your profile");
               }
             } else if (supabaseUser) {
-              // Email user - create profile directly
               const emailUsername = supabaseUser.email?.split("@")[0] || `user-${supabaseUser.id.slice(0, 8)}`;
               const sanitizedUsername = emailUsername.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
               
@@ -741,17 +712,41 @@ const Dashboard = () => {
             }
           }
 
-          // Now update the profile directly
-          if (currentProfileId) {
+          if (!updateHandled && Object.keys(headers).length > 0) {
+            const { fnData: retryData, fnError: retryError } = await invokeProfileUpdate();
+            if (retryError) {
+              console.error("Profile update retry error:", retryError);
+              fnErrorDetails = retryError;
+            } else if (retryData?.success === false) {
+              console.error("Edge function retry returned error:", retryData.error);
+              fnErrorDetails = retryData.error || "Profile update failed";
+            } else if (retryData?.data) {
+              currentProfileId = retryData.data.id;
+              if (!profileId) {
+                setProfileId(currentProfileId);
+              }
+              console.log("Profile updated successfully via edge function (retry)");
+              updateHandled = true;
+            }
+          }
+
+          if (!updateHandled && currentProfileId && session?.access_token) {
+            console.log("Falling back to direct database update...");
             const { error: directError } = await supabase
               .from("profiles")
               .update(profilePayload)
               .eq("id", currentProfileId);
             
             if (directError) {
+              console.error("Direct update error:", directError);
               throw directError;
             }
             console.log("Profile updated successfully via direct update");
+            updateHandled = true;
+          }
+
+          if (!updateHandled) {
+            throw new Error(typeof fnErrorDetails === "string" ? fnErrorDetails : "Profile update failed");
           }
         }
       } catch (edgeError: any) {
@@ -968,12 +963,10 @@ const Dashboard = () => {
                     <User className="w-4 h-4" />
                     Profile
                   </Button>
-                  <PlanGate minPlan="premium">
-                    <Button onClick={() => navigate("/domain")} variant="outline" size="sm" className="w-full justify-start gap-2">
-                      <Globe className="w-4 h-4" />
-                      Custom Domain
-                    </Button>
-                  </PlanGate>
+                  <Button onClick={() => navigate("/domain")} variant="outline" size="sm" className="w-full justify-start gap-2">
+                    <Globe className="w-4 h-4" />
+                    Custom Domain
+                  </Button>
                   <Button onClick={() => navigate("/ai-support")} variant="outline" size="sm" className="w-full justify-start gap-2">
                     <Bot className="w-4 h-4" />
                     AI Support
@@ -1025,17 +1018,15 @@ const Dashboard = () => {
                 <User className="w-4 h-4" />
                 Profile
               </Button>
-              <PlanGate minPlan="premium">
-                <Button 
-                  onClick={() => navigate("/domain")} 
-                  variant="outline" 
-                  size="sm" 
-                  className="hidden lg:flex gap-2"
-                >
-                  <Globe className="w-4 h-4" />
-                  Domain
-                </Button>
-              </PlanGate>
+              <Button 
+                onClick={() => navigate("/domain")} 
+                variant="outline" 
+                size="sm" 
+                className="hidden lg:flex gap-2"
+              >
+                <Globe className="w-4 h-4" />
+                Domain
+              </Button>
               <Button 
                 onClick={() => navigate("/ai-support")} 
                 variant="outline" 

@@ -9,35 +9,25 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-  try {
-    // Verify authentication
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new Error('Missing or invalid authorization header');
-    }
+const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+const serviceSupabase = createClient(supabaseUrl, supabaseServiceKey);
 
+async function getAuthorizedProfile(req: Request, body?: any) {
+  const authHeader = req.headers.get('Authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.replace('Bearer ', '');
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     if (authError || !user) {
       throw new Error('Invalid or expired token');
     }
 
-    // Get profile for user
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const serviceSupabase = createClient(supabaseUrl, serviceKey);
-    
     const { data: profile, error: profileError } = await serviceSupabase
       .from('profiles')
-      .select('id')
+      .select('id, username')
       .eq('user_id', user.id)
       .maybeSingle();
 
@@ -45,9 +35,55 @@ serve(async (req) => {
       throw new Error('Profile not found');
     }
 
+    return profile;
+  }
+
+  const piAccessToken = req.headers.get('x-pi-access-token') || body?.piAccessToken;
+  if (piAccessToken) {
+    const piResponse = await fetch('https://api.minepi.com/v2/me', {
+      headers: {
+        'Authorization': `Bearer ${piAccessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!piResponse.ok) {
+      throw new Error('Failed to validate Pi access token');
+    }
+
+    const piData = await piResponse.json();
+    const piUsername = piData?.username;
+
+    if (!piUsername) {
+      throw new Error('Pi user data missing username');
+    }
+
+    const { data: profile, error: profileError } = await serviceSupabase
+      .from('profiles')
+      .select('id, username')
+      .eq('username', piUsername)
+      .maybeSingle();
+
+    if (profileError || !profile) {
+      throw new Error('Profile not found for Pi user');
+    }
+
+    return profile;
+  }
+
+  throw new Error('Missing or invalid authorization header');
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
     const method = req.method;
     
     if (method === 'GET') {
+      const profile = await getAuthorizedProfile(req);
       // Read financial data
       const { data: financialData, error } = await serviceSupabase
         .from('profile_financial_data')
@@ -75,6 +111,7 @@ serve(async (req) => {
     } else if (method === 'PUT' || method === 'POST') {
       // Update financial data
       const body = await req.json();
+      const profile = await getAuthorizedProfile(req, body);
       
       const { data: financialData, error } = await serviceSupabase
         .from('profile_financial_data')
