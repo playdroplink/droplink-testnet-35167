@@ -123,6 +123,28 @@ serve(async (req) => {
     }
 
     // Record payment attempt for idempotency
+    const metadata = paymentDetails?.metadata || {};
+
+    if (!profileId && metadata?.profileId) {
+      profileId = metadata.profileId as string;
+    }
+
+    // If still no profileId, attempt to resolve by username if provided
+    if (!profileId && metadata?.username) {
+      const { data: profileByUsername } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', metadata.username as string)
+        .maybeSingle();
+      if (profileByUsername) {
+        profileId = profileByUsername.id;
+      }
+    }
+
+    if (!profileId) {
+      throw new Error('Unable to determine profile for payment');
+    }
+
     await supabase
       .from('payment_idempotency')
       .upsert({

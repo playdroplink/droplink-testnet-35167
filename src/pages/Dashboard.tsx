@@ -800,7 +800,14 @@ const Dashboard = () => {
       // Save financial data via secure endpoint
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (session?.access_token && currentProfileId) {
+        const piAccessToken = localStorage.getItem("pi_access_token");
+        const shouldUsePiToken = !session?.access_token && isPiUser && piUser && piAccessToken;
+
+        if ((session?.access_token || shouldUsePiToken) && currentProfileId) {
+          const headers: Record<string, string> = session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : { "X-Pi-Access-Token": piAccessToken as string };
+
           const { data: finData, error: finError } = await supabase.functions.invoke("financial-data", {
             method: "PUT",
             body: {
@@ -809,9 +816,7 @@ const Dashboard = () => {
               pi_wallet_address: profile.piWalletAddress || null,
               pi_donation_message: profile.piDonationMessage || "Send me a coffee ☕",
             },
-            headers: {
-              Authorization: `Bearer ${session.access_token}`
-            }
+            headers
           });
           
           if (finError) {

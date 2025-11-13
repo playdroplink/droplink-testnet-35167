@@ -10,12 +10,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePi } from "@/contexts/PiContext";
 import { toast } from "sonner";
 import { useActiveSubscription } from "@/hooks/useActiveSubscription";
-import { PlanGate } from "@/components/PlanGate";
 
 const CustomDomain = () => {
   const navigate = useNavigate();
   const { piUser, isAuthenticated } = usePi();
   const { plan } = useActiveSubscription();
+  const isPremiumPlan = plan === "premium" || plan === "pro";
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -53,6 +53,11 @@ const CustomDomain = () => {
   };
 
   const handleSaveDomain = async () => {
+    if (!isPremiumPlan) {
+      toast.error("Upgrade to Premium to connect a custom domain.");
+      return;
+    }
+
     if (!domain.trim()) {
       toast.error("Please enter a domain");
       return;
@@ -94,6 +99,11 @@ const CustomDomain = () => {
   };
 
   const handleRemoveDomain = async () => {
+    if (!isPremiumPlan) {
+      toast.error("Upgrade to Premium to manage custom domains.");
+      return;
+    }
+
     setSaving(true);
     try {
       if (!profileId) return;
@@ -139,9 +149,21 @@ const CustomDomain = () => {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto p-4 lg:p-8">
-        <PlanGate minPlan="premium">
-          <Card>
+      <div className="max-w-4xl mx-auto p-4 lg:p-8 space-y-4">
+        {!isPremiumPlan && (
+          <Alert className="border-primary/40 bg-primary/5">
+            <AlertCircle className="h-4 w-4 text-primary" />
+            <AlertDescription>
+              <strong>Custom domains are a Premium feature.</strong>
+              <br />
+              <span className="text-sm text-muted-foreground">
+                Upgrade to Premium or Pro to connect your own domain. While you're on the Free plan, you can review the setup steps below.
+              </span>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <Card className={!isPremiumPlan ? "opacity-75" : ""}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Globe className="w-5 h-5" />
@@ -159,14 +181,14 @@ const CustomDomain = () => {
                   <Input
                     id="domain"
                     value={domain}
-                    onChange={(e) => setDomain(e.target.value)}
+                  onChange={(e) => setDomain(e.target.value)}
                     placeholder="example.com"
                     className="flex-1"
-                    disabled={saving}
+                  disabled={saving || !isPremiumPlan}
                   />
                   <Button 
                     onClick={handleSaveDomain} 
-                    disabled={saving || !domain.trim()}
+                  disabled={saving || !domain.trim() || !isPremiumPlan}
                     variant="default"
                     size="default"
                   >
@@ -176,7 +198,7 @@ const CustomDomain = () => {
                     <Button 
                       variant="outline" 
                       onClick={handleRemoveDomain} 
-                      disabled={saving}
+                    disabled={saving || !isPremiumPlan}
                       size="default"
                     >
                       Remove
@@ -270,7 +292,7 @@ const CustomDomain = () => {
               </div>
             </CardContent>
           </Card>
-        </PlanGate>
+      </div>
       </div>
     </div>
   );
