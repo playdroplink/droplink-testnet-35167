@@ -144,7 +144,12 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         // This is okay - we'll handle auth via edge functions
       }
 
-      toast.success(`Welcome back, @${auth.user.username}! 👋`);
+      // Show appropriate message based on whether profile is new or existing
+      if (functionData.isNewProfile) {
+        toast.success(`Profile auto-created with your Pi username`);
+      } else {
+        toast.success(`Welcome back, @${auth.user.username}! 👋`);
+      }
     } catch (error: any) {
       console.error("Pi authentication error:", error);
       toast.error(error.message || "Authentication failed");
@@ -156,9 +161,25 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     setPiUser(null);
     setAccessToken(null);
-    localStorage.removeItem("pi_user");
-    localStorage.removeItem("pi_access_token");
-    toast.success("Signed out successfully");
+    
+    // Clear all Pi-related data from localStorage
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('pi_') || key.startsWith('profile_id_'))) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    
+    // Sign out from Supabase if there's a session
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.warn("Error signing out from Supabase:", error);
+    }
+    
+    toast.info("Signed out successfully");
   };
 
   const createPayment = async (amount: number, memo: string, metadata: any) => {
