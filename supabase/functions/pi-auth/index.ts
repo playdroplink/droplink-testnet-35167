@@ -94,6 +94,7 @@ serve(async (req) => {
 
     let profileId: string;
     let userId: string | null = null;
+    let isNewProfile = false; // Track if profile was newly created
 
     if (existingProfile) {
       profileId = existingProfile.id;
@@ -235,6 +236,7 @@ serve(async (req) => {
         }
       } else if (newProfile && newProfile.id) {
         profileId = newProfile.id;
+        isNewProfile = true; // Mark as new profile
         console.log("Created new profile:", profileId);
       } else {
         throw new Error("Profile creation failed - no profile ID returned");
@@ -252,7 +254,8 @@ serve(async (req) => {
         success: true, 
         profileId,
         username: sanitizedUsername,
-        userId: userId || null
+        userId: userId || null,
+        isNewProfile: isNewProfile
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
