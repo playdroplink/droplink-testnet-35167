@@ -339,20 +339,14 @@ const Dashboard = () => {
               financialData = finData.data;
             }
           } else {
-            // No session or Pi token - try to load from table directly (if allowed)
-            try {
-              const { data: finData } = await supabase
-                .from("profile_financial_data")
-                .select("*")
-                .eq("profile_id", profileData.id)
-                .maybeSingle();
-              
-              if (finData) {
-                financialData = finData;
-              }
-            } catch (directError) {
-              console.warn("Could not load financial data directly:", directError);
-            }
+            // No session or Pi token - load from profiles table directly
+            // Note: Financial data is stored in profiles table (pi_wallet_address, bank_details, crypto_wallets)
+            financialData = {
+              pi_wallet_address: profileData.pi_wallet_address,
+              pi_donation_message: profileData.pi_donation_message || "Send me a coffee ☕",
+              crypto_wallets: profileData.crypto_wallets || {},
+              bank_details: profileData.bank_details || {},
+            };
           }
         } catch (error) {
           console.error("Error loading financial data:", error);
@@ -821,42 +815,25 @@ const Dashboard = () => {
           
           if (finError) {
             console.warn("Financial data save error (non-critical):", finError);
-            // Try direct save as fallback
-            try {
-              await supabase
-                .from("profile_financial_data")
-                .upsert({
-                  profile_id: currentProfileId,
-                  crypto_wallets: { wallets: profile.wallets.crypto },
-                  bank_details: { accounts: profile.wallets.bank },
-                  pi_wallet_address: profile.piWalletAddress || null,
-                  pi_donation_message: profile.piDonationMessage || "Send me a coffee ☕",
-                }, {
-                  onConflict: 'profile_id'
-                });
-            } catch (directFinError) {
-              console.warn("Direct financial data save also failed:", directFinError);
-            }
+            // Financial data is now stored directly in profiles table
           } else {
             console.log("Financial data saved successfully");
           }
         } else if (currentProfileId) {
-          // No session but we have profile ID - try direct save
+          // No session but we have profile ID - save to profiles table directly
           try {
             await supabase
-              .from("profile_financial_data")
-              .upsert({
-                profile_id: currentProfileId,
-                crypto_wallets: { wallets: profile.wallets.crypto },
-                bank_details: { accounts: profile.wallets.bank },
+              .from("profiles")
+              .update({
                 pi_wallet_address: profile.piWalletAddress || null,
                 pi_donation_message: profile.piDonationMessage || "Send me a coffee ☕",
-              }, {
-                onConflict: 'profile_id'
-              });
+                crypto_wallets: { wallets: profile.wallets.crypto },
+                bank_details: { accounts: profile.wallets.bank },
+              })
+              .eq("id", currentProfileId);
             console.log("Financial data saved directly (no session)");
           } catch (directFinError) {
-            console.warn("Direct financial data save failed:", directFinError);
+            console.warn("Direct profile update failed:", directFinError);
           }
         }
       } catch (error) {

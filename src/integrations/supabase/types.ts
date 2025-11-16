@@ -243,6 +243,47 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_idempotency: {
+        Row: {
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          payment_id: string
+          profile_id: string | null
+          status: string
+          txid: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_id: string
+          profile_id?: string | null
+          status?: string
+          txid?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_id?: string
+          profile_id?: string | null
+          status?: string
+          txid?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_idempotency_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           created_at: string

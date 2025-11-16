@@ -36,14 +36,15 @@ const CustomDomain = () => {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("id, custom_domain")
+        .select("id")
         .eq("username", piUser.username)
         .maybeSingle();
 
       if (profile) {
         setProfileId(profile.id);
-        setCurrentDomain((profile as any).custom_domain || null);
-        setDomain((profile as any).custom_domain || "");
+        // Note: custom_domain column doesn't exist in current schema
+        // setCurrentDomain((profile as any).custom_domain || null);
+        // setDomain((profile as any).custom_domain || "");
       }
     } catch (error) {
       console.error("Error loading domain settings:", error);
@@ -78,18 +79,23 @@ const CustomDomain = () => {
       }
 
       // Save domain to profile
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          custom_domain: domain.trim(),
-        })
-        .eq("id", profileId);
+      // Note: custom_domain column doesn't exist in current schema
+      // const { error } = await supabase
+      //   .from("profiles")
+      //   .update({
+      //     custom_domain: domain.trim(),
+      //   })
+      //   .eq("id", profileId);
 
-      if (error) throw error;
+      // if (error) throw error;
 
-      setCurrentDomain(domain.trim());
-      toast.success("Domain saved! Please configure DNS settings below.");
-      setVerificationStatus("pending");
+      // Placeholder - domain functionality not yet implemented
+      toast.info("Custom domain feature is not yet available");
+      return;
+
+      // setCurrentDomain(domain.trim());
+      // toast.success("Domain saved! Please configure DNS settings below.");
+      // setVerificationStatus("pending");
     } catch (error: any) {
       console.error("Error saving domain:", error);
       toast.error(error.message || "Failed to save domain");
@@ -108,19 +114,23 @@ const CustomDomain = () => {
     try {
       if (!profileId) return;
 
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          custom_domain: null,
-        })
-        .eq("id", profileId);
+      // Note: custom_domain column doesn't exist in current schema
+      // const { error } = await supabase
+      //   .from("profiles")
+      //   .update({
+      //     custom_domain: null,
+      //   })
+      //   .eq("id", profileId);
 
-      if (error) throw error;
+      // if (error) throw error;
 
-      setCurrentDomain(null);
-      setDomain("");
-      setVerificationStatus(null);
-      toast.success("Domain removed");
+      toast.info("Custom domain feature is not yet available");
+      return;
+
+      // setCurrentDomain(null);
+      // setDomain("");
+      // setVerificationStatus(null);
+      // toast.success("Domain removed");
     } catch (error: any) {
       console.error("Error removing domain:", error);
       toast.error("Failed to remove domain");

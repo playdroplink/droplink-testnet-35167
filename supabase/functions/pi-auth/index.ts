@@ -1,4 +1,3 @@
-/// <reference path="../.types/deno.d.ts" />
 // @ts-ignore - Deno runtime types (available at runtime)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // @ts-ignore - ESM module (available at runtime)
@@ -186,10 +185,11 @@ serve(async (req) => {
 
       if (profileError) {
         // Check if it's a duplicate username error
-        const isDuplicateError = profileError.code === "23505" || 
-                                 profileError.message?.includes("duplicate") || 
-                                 profileError.message?.includes("unique") ||
-                                 profileError.message?.includes("violates unique constraint");
+        const errorObj = profileError as any;
+        const isDuplicateError = errorObj?.code === "23505" || 
+                                 errorObj?.message?.includes("duplicate") || 
+                                 errorObj?.message?.includes("unique") ||
+                                 errorObj?.message?.includes("violates unique constraint");
         
         if (isDuplicateError) {
           console.log("Profile already exists with this username, fetching it...");
@@ -222,12 +222,14 @@ serve(async (req) => {
             console.log("Using existing profile:", profileId);
           } else {
             // Race condition - profile was deleted between check and insert
-            const errorMsg = profileError.message || JSON.stringify(profileError);
+            const errorObj = profileError as any;
+            const errorMsg = errorObj?.message || JSON.stringify(profileError);
             console.error("Profile creation error (duplicate but not found):", errorMsg);
             throw new Error(`Failed to create profile: Profile conflict detected. Please try again.`);
           }
         } else {
-          const errorMsg = profileError.message || JSON.stringify(profileError);
+          const errorObj = profileError as any;
+          const errorMsg = errorObj?.message || JSON.stringify(profileError);
           console.error("Profile creation error:", errorMsg);
           throw new Error(`Failed to create profile: ${errorMsg}`);
         }
