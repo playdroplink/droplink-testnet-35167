@@ -130,7 +130,6 @@ const EmailAuth = () => {
             username: sanitizedUsername,
             business_name: sanitizedUsername,
             description: "",
-            email: user.email,
           });
 
         if (profileError) {
