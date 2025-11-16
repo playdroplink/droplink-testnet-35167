@@ -87,7 +87,10 @@ serve(async (req) => {
 
     if (profileCheckError) {
       console.error("Error checking for existing profile:", JSON.stringify(profileCheckError));
-      throw new Error(`Database error: ${profileCheckError.message}`);
+      const errorMsg = profileCheckError && typeof profileCheckError === 'object' && 'message' in profileCheckError 
+        ? String((profileCheckError as any).message) 
+        : 'Unknown database error';
+      throw new Error(`Database error: ${errorMsg}`);
     }
 
     let profileId: string;

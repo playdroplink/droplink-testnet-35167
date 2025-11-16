@@ -14,184 +14,419 @@ export type Database = {
   }
   public: {
     Tables: {
-      profiles: {
+      ai_chat_messages: {
         Row: {
-          id: string
-          user_id: string | null
-          username: string
-          business_name: string | null
-          description: string | null
-          email: string | null
-          logo: string | null
-          youtube_video_url: string | null
-          social_links: Json | null
-          show_share_button: boolean | null
-          theme_settings: Json | null
-          custom_domain: string | null
-          has_premium: boolean | null
+          content: string
           created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          user_id?: string | null
-          username: string
-          business_name?: string | null
-          description?: string | null
-          email?: string | null
-          logo?: string | null
-          youtube_video_url?: string | null
-          social_links?: Json | null
-          show_share_button?: boolean | null
-          theme_settings?: Json | null
-          custom_domain?: string | null
-          has_premium?: boolean | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          user_id?: string | null
-          username?: string
-          business_name?: string | null
-          description?: string | null
-          email?: string | null
-          logo?: string | null
-          youtube_video_url?: string | null
-          social_links?: Json | null
-          show_share_button?: boolean | null
-          theme_settings?: Json | null
-          custom_domain?: string | null
-          has_premium?: boolean | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      subscriptions: {
-        Row: {
           id: string
           profile_id: string
-          plan_type: string
-          billing_period: string | null
-          pi_amount: number | null
-          start_date: string | null
-          end_date: string | null
-          status: string | null
-          auto_renew: boolean | null
-          created_at: string | null
-          updated_at: string | null
+          role: string
+          session_id: string
         }
         Insert: {
+          content: string
+          created_at?: string | null
           id?: string
           profile_id: string
-          plan_type: string
-          billing_period?: string | null
-          pi_amount?: number | null
-          start_date?: string | null
-          end_date?: string | null
-          status?: string | null
-          auto_renew?: boolean | null
-          created_at?: string | null
-          updated_at?: string | null
+          role: string
+          session_id: string
         }
         Update: {
+          content?: string
+          created_at?: string | null
           id?: string
           profile_id?: string
-          plan_type?: string
-          billing_period?: string | null
-          pi_amount?: number | null
-          start_date?: string | null
-          end_date?: string | null
-          status?: string | null
-          auto_renew?: boolean | null
+          role?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_chat_messages_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_support_config: {
+        Row: {
+          business_info: string | null
+          created_at: string | null
+          custom_instructions: string | null
+          enabled: boolean | null
+          faqs: string | null
+          id: string
+          profile_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          business_info?: string | null
           created_at?: string | null
+          custom_instructions?: string | null
+          enabled?: boolean | null
+          faqs?: string | null
+          id?: string
+          profile_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          business_info?: string | null
+          created_at?: string | null
+          custom_instructions?: string | null
+          enabled?: boolean | null
+          faqs?: string | null
+          id?: string
+          profile_id?: string
           updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "subscriptions_profile_id_fkey"
+            foreignKeyName: "ai_support_config_profile_id_fkey"
             columns: ["profile_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
         ]
+      }
+      analytics: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          location_city: string | null
+          location_country: string | null
+          profile_id: string
+          user_agent: string | null
+          visitor_ip: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          location_city?: string | null
+          location_country?: string | null
+          profile_id: string
+          user_agent?: string | null
+          visitor_ip?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          location_city?: string | null
+          location_country?: string | null
+          profile_id?: string
+          user_agent?: string | null
+          visitor_ip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      followers: {
+        Row: {
+          created_at: string
+          follower_profile_id: string
+          following_profile_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_profile_id: string
+          following_profile_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          follower_profile_id?: string
+          following_profile_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "followers_follower_profile_id_fkey"
+            columns: ["follower_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "followers_following_profile_id_fkey"
+            columns: ["following_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gift_transactions: {
+        Row: {
+          created_at: string
+          drop_tokens_spent: number
+          gift_id: string
+          id: string
+          receiver_profile_id: string
+          sender_profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          drop_tokens_spent: number
+          gift_id: string
+          id?: string
+          receiver_profile_id: string
+          sender_profile_id: string
+        }
+        Update: {
+          created_at?: string
+          drop_tokens_spent?: number
+          gift_id?: string
+          id?: string
+          receiver_profile_id?: string
+          sender_profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_transactions_gift_id_fkey"
+            columns: ["gift_id"]
+            isOneToOne: false
+            referencedRelation: "gifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_transactions_receiver_profile_id_fkey"
+            columns: ["receiver_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_transactions_sender_profile_id_fkey"
+            columns: ["sender_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gifts: {
+        Row: {
+          created_at: string
+          drop_token_cost: number
+          icon: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          drop_token_cost: number
+          icon: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          drop_token_cost?: number
+          icon?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       products: {
         Row: {
-          id: string
-          profile_id: string
-          title: string
-          price: string
+          created_at: string
           description: string | null
           file_url: string | null
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
+          id: string
+          image: string | null
+          price: string
           profile_id: string
           title: string
-          price: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
           description?: string | null
           file_url?: string | null
-          created_at?: string | null
-          updated_at?: string | null
+          id?: string
+          image?: string | null
+          price: string
+          profile_id: string
+          title: string
+          updated_at?: string
         }
         Update: {
-          id?: string
-          profile_id?: string
-          title?: string
-          price?: string
+          created_at?: string
           description?: string | null
           file_url?: string | null
-          created_at?: string | null
-          updated_at?: string | null
+          id?: string
+          image?: string | null
+          price?: string
+          profile_id?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "products_profile_id_fkey"
             columns: ["profile_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
-      profile_financial_data: {
+      profiles: {
         Row: {
-          profile_id: string
-          pi_wallet_address: string | null
-          pi_donation_message: string | null
-          crypto_wallets: Json | null
           bank_details: Json | null
-          created_at: string | null
-          updated_at: string | null
+          business_name: string
+          created_at: string
+          crypto_wallets: Json | null
+          description: string | null
+          has_premium: boolean | null
+          id: string
+          logo: string | null
+          pi_donation_message: string | null
+          pi_wallet_address: string | null
+          show_share_button: boolean | null
+          social_links: Json | null
+          theme_settings: Json | null
+          updated_at: string
+          user_id: string | null
+          username: string
+          youtube_video_url: string | null
         }
         Insert: {
-          profile_id: string
-          pi_wallet_address?: string | null
-          pi_donation_message?: string | null
-          crypto_wallets?: Json | null
           bank_details?: Json | null
-          created_at?: string | null
-          updated_at?: string | null
+          business_name: string
+          created_at?: string
+          crypto_wallets?: Json | null
+          description?: string | null
+          has_premium?: boolean | null
+          id?: string
+          logo?: string | null
+          pi_donation_message?: string | null
+          pi_wallet_address?: string | null
+          show_share_button?: boolean | null
+          social_links?: Json | null
+          theme_settings?: Json | null
+          updated_at?: string
+          user_id?: string | null
+          username: string
+          youtube_video_url?: string | null
         }
         Update: {
-          profile_id?: string
-          pi_wallet_address?: string | null
-          pi_donation_message?: string | null
-          crypto_wallets?: Json | null
           bank_details?: Json | null
-          created_at?: string | null
-          updated_at?: string | null
+          business_name?: string
+          created_at?: string
+          crypto_wallets?: Json | null
+          description?: string | null
+          has_premium?: boolean | null
+          id?: string
+          logo?: string | null
+          pi_donation_message?: string | null
+          pi_wallet_address?: string | null
+          show_share_button?: boolean | null
+          social_links?: Json | null
+          theme_settings?: Json | null
+          updated_at?: string
+          user_id?: string | null
+          username?: string
+          youtube_video_url?: string | null
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          auto_renew: boolean
+          billing_period: string
+          created_at: string
+          end_date: string
+          id: string
+          pi_amount: number
+          plan_type: string
+          profile_id: string
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          auto_renew?: boolean
+          billing_period: string
+          created_at?: string
+          end_date: string
+          id?: string
+          pi_amount?: number
+          plan_type: string
+          profile_id: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          auto_renew?: boolean
+          billing_period?: string
+          created_at?: string
+          end_date?: string
+          id?: string
+          pi_amount?: number
+          plan_type?: string
+          profile_id?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "profile_financial_data_profile_id_fkey"
+            foreignKeyName: "subscriptions_profile_id_fkey"
             columns: ["profile_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
+        ]
+      }
+      user_wallets: {
+        Row: {
+          created_at: string
+          drop_tokens: number
+          id: string
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          drop_tokens?: number
+          id?: string
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          drop_tokens?: number
+          id?: string
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_wallets_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
@@ -199,7 +434,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_active_subscription: {
+        Args: { p_profile_id: string }
+        Returns: {
+          billing_period: string
+          end_date: string
+          plan_type: string
+          status: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
