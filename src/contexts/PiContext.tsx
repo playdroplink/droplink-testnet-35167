@@ -42,6 +42,9 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   const [piUser, setPiUser] = useState<{ uid: string; username: string } | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Derived state: user is authenticated if we have a Pi user and access token
+  const isAuthenticated = !!piUser && !!accessToken;
 
   useEffect(() => {
     try {

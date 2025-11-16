@@ -215,15 +215,13 @@ const PublicBio = () => {
       };
       
       try {
-        const { data: finData } = await supabase
-          .from("profile_financial_data")
-          .select("*")
-          .eq("profile_id", profileData.id)
-          .maybeSingle();
-        
-        if (finData) {
-          financialData = finData;
-        }
+        // Financial data is stored directly in profiles table
+        financialData = {
+          pi_wallet_address: profileData.pi_wallet_address,
+          pi_donation_message: profileData.pi_donation_message || "Send me a coffee ☕",
+          crypto_wallets: profileData.crypto_wallets || {},
+          bank_details: profileData.bank_details || {},
+        };
       } catch (error) {
         console.error("Error loading financial data:", error);
       }
