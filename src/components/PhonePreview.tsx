@@ -1,12 +1,4 @@
 import { 
-  Twitter, 
-  Instagram, 
-  Youtube, 
-  Music, 
-  Facebook, 
-  Linkedin, 
-  Twitch, 
-  Globe,
   User,
   ShoppingBag,
   Mail,
@@ -17,8 +9,18 @@ import {
   Heart,
   Star,
   Zap,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Globe
 } from "lucide-react";
+import { 
+  FaTwitter, 
+  FaInstagram, 
+  FaYoutube, 
+  FaSpotify, 
+  FaFacebook, 
+  FaLinkedin, 
+  FaTwitch
+} from "react-icons/fa";
 
 interface ProfileData {
   logo: string;
@@ -69,13 +71,13 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
   const buttonStyle = profile.theme?.buttonStyle || 'filled';
 
   const socialLinkData = [
-    { key: 'twitter', icon: Twitter, url: profile.socialLinks.twitter },
-    { key: 'instagram', icon: Instagram, url: profile.socialLinks.instagram },
-    { key: 'youtube', icon: Youtube, url: profile.socialLinks.youtube },
-    { key: 'tiktok', icon: Music, url: profile.socialLinks.tiktok },
-    { key: 'facebook', icon: Facebook, url: profile.socialLinks.facebook },
-    { key: 'linkedin', icon: Linkedin, url: profile.socialLinks.linkedin },
-    { key: 'twitch', icon: Twitch, url: profile.socialLinks.twitch },
+    { key: 'twitter', icon: FaTwitter, url: profile.socialLinks.twitter },
+    { key: 'instagram', icon: FaInstagram, url: profile.socialLinks.instagram },
+    { key: 'youtube', icon: FaYoutube, url: profile.socialLinks.youtube },
+    { key: 'tiktok', icon: FaSpotify, url: profile.socialLinks.tiktok },
+    { key: 'facebook', icon: FaFacebook, url: profile.socialLinks.facebook },
+    { key: 'linkedin', icon: FaLinkedin, url: profile.socialLinks.linkedin },
+    { key: 'twitch', icon: FaTwitch, url: profile.socialLinks.twitch },
     { key: 'website', icon: Globe, url: profile.socialLinks.website },
   ].filter(link => link.url);
 
@@ -165,7 +167,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
             <div className="w-full">
               <div className="relative pb-[56.25%] h-0 overflow-hidden rounded-lg bg-white/10">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Youtube className="w-8 h-8 text-white/50" />
+                  <FaYoutube className="w-8 h-8 text-white/50" />
                 </div>
               </div>
             </div>

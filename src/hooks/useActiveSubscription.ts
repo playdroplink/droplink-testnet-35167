@@ -9,6 +9,9 @@ interface ActiveSubscription {
   expiresAt: Date | null;
   status: string | null;
   loading: boolean;
+  subscription: any | null;
+  isLoading: boolean;
+  isActive: boolean;
 }
 
 export const useActiveSubscription = (): ActiveSubscription => {
@@ -18,6 +21,9 @@ export const useActiveSubscription = (): ActiveSubscription => {
     expiresAt: null, // No expiration
     status: "active",
     loading: false,
+    subscription: null,
+    isLoading: false,
+    isActive: true,
   };
   
   /* Original subscription logic disabled - all features unlocked

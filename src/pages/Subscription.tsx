@@ -15,6 +15,7 @@ interface Plan {
   yearlyPrice: number;
   features: string[];
   popular?: boolean;
+  savings?: string;
 }
 
 const plans: Plan[] = [
@@ -23,42 +24,65 @@ const plans: Plan[] = [
     monthlyPrice: 0,
     yearlyPrice: 0,
     features: [
-      "1 link only",
-      "1 social link",
-      "Pi Ad Network enabled",
-      "Droplink watermark",
-      "No analytics",
-      "No YouTube links",
-      "No Pi tips",
+      "1 bio page link",
+      "1 social media link",
+      "Basic QR code sharing",
+      "DropLink watermark",
+      "Limited customization",
+      "Community support only",
+      "Basic analytics (views only)",
     ],
   },
   {
     name: "Premium",
     monthlyPrice: 10,
-    yearlyPrice: 100,
+    yearlyPrice: 96, // 20% discount
     features: [
-      "Unlimited links",
-      "Unlimited social links",
-      "YouTube link support",
-      "Pi tips wallet",
-      "No watermark",
-      "No ads",
-      "No analytics",
-      "No AI support",
+      "Unlimited bio page links",
+      "Unlimited social media links",
+      "YouTube video integration",
+      "Pi Network wallet tips",
+      "Custom themes & colors",
+      "Remove DropLink watermark",
+      "Advanced analytics dashboard",
+      "Priority email support",
+      "Custom domain support",
+      "Ad-free experience",
     ],
     popular: true,
   },
   {
     name: "Pro",
-    monthlyPrice: 30,
-    yearlyPrice: 300,
+    monthlyPrice: 20,
+    yearlyPrice: 192, // 20% discount
     features: [
       "Everything in Premium",
-      "Full analytics with location data",
-      "AI support chatbot",
-      "Watch ads for rewards",
-      "Priority support",
-      "API access",
+      "AI-powered analytics insights",
+      "Advanced visitor tracking",
+      "Location-based analytics",
+      "A/B testing for links",
+      "API access for integrations",
+      "White-label solutions",
+      "24/7 priority support",
+      "Bulk link management",
+      "Export analytics data",
+    ],
+  },
+  {
+    name: "Enterprise",
+    monthlyPrice: 30,
+    yearlyPrice: 288, // 20% discount
+    features: [
+      "Everything in Pro",
+      "Multi-team collaboration",
+      "Advanced security features",
+      "Custom integrations",
+      "Dedicated account manager",
+      "SLA guarantee (99.9% uptime)",
+      "Custom feature development",
+      "Advanced compliance tools",
+      "Unlimited API calls",
+      "Phone support",
     ],
   },
 ];
@@ -71,6 +95,8 @@ const Subscription = () => {
   const [currentPlan, setCurrentPlan] = useState<string>("Free");
   const [subscription, setSubscription] = useState<any>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [subscriptionDaysLeft, setSubscriptionDaysLeft] = useState<number | null>(null);
+  const [isExpiringSoon, setIsExpiringSoon] = useState(false);
 
   useEffect(() => {
     loadSubscriptionData();
@@ -107,8 +133,17 @@ const Subscription = () => {
           console.log("Active subscription found:", sub.plan_type);
           setSubscription(sub);
           setCurrentPlan(sub.plan_type.charAt(0).toUpperCase() + sub.plan_type.slice(1));
+          
+          // Calculate days left
+          const endDate = new Date(sub.end_date);
+          const now = new Date();
+          const daysLeft = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          setSubscriptionDaysLeft(daysLeft);
+          setIsExpiringSoon(daysLeft <= 7);
         } else {
           console.log("No active subscription, defaulting to Free");
+          setSubscriptionDaysLeft(null);
+          setIsExpiringSoon(false);
         }
       } else {
         console.log("No profile found for user:", piUser.username);

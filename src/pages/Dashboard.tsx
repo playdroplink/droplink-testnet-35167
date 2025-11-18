@@ -24,8 +24,10 @@ import { UserPreferencesManager } from "@/components/UserPreferencesManager";
 import { AboutModal } from "@/components/AboutModal";
 import { FutureFeaturesDashboard } from "@/components/FutureFeaturesDashboard";
 import { DropTokenManager } from "@/components/DropTokenManager";
-import PiAdNetwork from "@/components/PiAdNetwork";
+import PiAdNetwork from "../components/PiAdNetwork";
 import PiPayments from "@/components/PiPayments";
+import SubscriptionStatus from "@/components/SubscriptionStatus";
+import VotingSystem from "@/components/VotingSystem";
 import {
   Drawer,
   DrawerClose,
@@ -61,9 +63,20 @@ import {
   Info,
   Sparkles,
   Coins,
+  TrendingUp,
   PlayCircle,
   CreditCard,
+  Crown,
 } from "lucide-react";
+import { 
+  FaTwitter, 
+  FaInstagram, 
+  FaYoutube, 
+  FaSpotify, 
+  FaFacebook, 
+  FaLinkedin, 
+  FaTwitch
+} from "react-icons/fa";
 import { toast } from "sonner";
 import { QRCodeDialog } from "@/components/QRCodeDialog";
 import PiDataManager from "@/components/PiDataManager";
@@ -1125,8 +1138,8 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border px-4 lg:px-6 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+      <header className="bg-white/95 backdrop-blur-sm border-b border-gray-200 px-4 lg:px-6 py-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-semibold text-sky-500">Droplink</h1>
           {displayUsername && (
@@ -1299,10 +1312,10 @@ const Dashboard = () => {
 
       <div className="flex flex-col lg:flex-row h-[calc(100vh-73px)]">
         {/* Editor Panel */}
-        <div className={`flex-1 overflow-y-auto p-4 lg:p-8 ${showPreview ? 'hidden lg:block' : 'block'}`}>
+        <div className={`flex-1 overflow-y-auto p-4 lg:p-8 bg-white/80 backdrop-blur-sm m-2 rounded-xl shadow-sm border border-gray-100 ${showPreview ? 'hidden lg:block' : 'block'}`}>
           <div className="max-w-2xl mx-auto">
             <Tabs defaultValue="profile" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 mb-6">
+              <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 lg:grid-cols-9 mb-6 overflow-x-auto">
                 <TabsTrigger value="profile" className="text-xs sm:text-sm">
                   <Settings className="w-4 h-4 mr-1 lg:mr-2" />
                   <span className="hidden sm:inline">Profile</span>
@@ -1311,32 +1324,40 @@ const Dashboard = () => {
                   <Palette className="w-4 h-4 mr-1 lg:mr-2" />
                   <span className="hidden sm:inline">Design</span>
                 </TabsTrigger>
-                <TabsTrigger value="analytics" className="text-xs sm:text-sm hidden lg:flex">
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  Analytics
+                <TabsTrigger value="analytics" className="text-xs sm:text-sm flex">
+                  <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="hidden sm:inline">Analytics</span>
                 </TabsTrigger>
-                <TabsTrigger value="features" className="text-xs sm:text-sm hidden lg:flex">
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Features
+                <TabsTrigger value="features" className="text-xs sm:text-sm flex">
+                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="hidden sm:inline">Features</span>
                 </TabsTrigger>
-                <TabsTrigger value="drop-tokens" className="text-xs sm:text-sm hidden lg:flex">
-                  <Coins className="w-4 h-4 mr-2" />
-                  DROP
+                <TabsTrigger value="drop-tokens" className="text-xs sm:text-sm flex">
+                  <Coins className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="hidden sm:inline">DROP</span>
                 </TabsTrigger>
-                <TabsTrigger value="ad-network" className="text-xs sm:text-sm hidden lg:flex">
-                  <PlayCircle className="w-4 h-4 mr-2" />
-                  Watch Ads
+                <TabsTrigger value="ad-network" className="text-xs sm:text-sm flex">
+                  <PlayCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="hidden sm:inline">Ads</span>
                 </TabsTrigger>
-                <TabsTrigger value="payments" className="text-xs sm:text-sm hidden lg:flex">
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Payments
+                <TabsTrigger value="payments" className="text-xs sm:text-sm flex">
+                  <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="hidden sm:inline">Pay</span>
                 </TabsTrigger>
-                <TabsTrigger value="preferences" className="text-xs sm:text-sm hidden lg:flex">
-                  <User className="w-4 h-4 mr-2" />
-                  Settings
+                <TabsTrigger value="subscription" className="text-xs sm:text-sm flex">
+                  <Crown className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="hidden sm:inline">Sub</span>
+                </TabsTrigger>
+                <TabsTrigger value="voting" className="text-xs sm:text-sm flex">
+                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="hidden sm:inline">Vote</span>
+                </TabsTrigger>
+                <TabsTrigger value="preferences" className="text-xs sm:text-sm flex">
+                  <User className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="hidden sm:inline">Settings</span>
                 </TabsTrigger>
                 {isAuthenticated && (
-                  <TabsTrigger value="pi-data" className="text-xs sm:text-sm hidden lg:flex">
+                  <TabsTrigger value="pi-data" className="text-xs sm:text-sm flex">
                     <Bot className="w-4 h-4 mr-2" />
                     Pi Data
                   </TabsTrigger>
@@ -1940,6 +1961,16 @@ const Dashboard = () => {
                 <PiPayments />
               </TabsContent>
 
+              {/* Subscription Tab */}
+              <TabsContent value="subscription" className="pb-8">
+                <SubscriptionStatus />
+              </TabsContent>
+
+              {/* Voting Tab */}
+              <TabsContent value="voting" className="pb-8">
+                <VotingSystem />
+              </TabsContent>
+
               {/* User Preferences Tab */}
               <TabsContent value="preferences" className="pb-8">
                 <UserPreferencesManager />
@@ -1956,7 +1987,7 @@ const Dashboard = () => {
         </div>
 
         {/* Preview Panel */}
-        <div className={`lg:w-[400px] xl:w-[500px] bg-card border-l border-border p-6 lg:p-8 flex flex-col items-center ${
+        <div className={`lg:w-[400px] xl:w-[500px] bg-white/90 backdrop-blur-sm border-l border-gray-200 p-6 lg:p-8 flex flex-col items-center shadow-sm ${
           showPreview ? 'flex' : 'hidden lg:flex'
         }`}>
           <div className="mb-4 flex items-center justify-between w-full">
