@@ -1,1 +1,149 @@
-import { useState, useEffect } from "react";\nimport { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";\nimport { Button } from "@/components/ui/button";\nimport { Input } from "@/components/ui/input";\nimport { QRCodeSVG } from "qrcode.react";\nimport { Copy, Share2, QrCode, ExternalLink, Users } from "lucide-react";\nimport { toast } from "sonner";\nimport { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";\n\ninterface ShareStoreProps {\n  username: string;\n  businessName: string;\n  followersCount?: number;\n}\n\nexport const ShareStore = ({ username, businessName, followersCount = 0 }: ShareStoreProps) => {\n  const [storeUrl, setStoreUrl] = useState(\"\");\n  const [showQR, setShowQR] = useState(false);\n\n  useEffect(() => {\n    if (username) {\n      setStoreUrl(`${window.location.origin}/u/${username}`);\n    }\n  }, [username]);\n\n  const handleCopyUrl = () => {\n    navigator.clipboard.writeText(storeUrl);\n    toast.success(\"Store URL copied to clipboard!\");\n  };\n\n  const handleShare = async () => {\n    if (navigator.share) {\n      try {\n        await navigator.share({\n          title: `${businessName} - Digital Store`,\n          text: `Check out ${businessName}'s amazing digital store!`,\n          url: storeUrl,\n        });\n      } catch (error) {\n        // User cancelled sharing, fallback to copy\n        handleCopyUrl();\n      }\n    } else {\n      // Fallback to copy for browsers without Web Share API\n      handleCopyUrl();\n    }\n  };\n\n  const handleVisitStore = () => {\n    window.open(storeUrl, \"_blank\");\n  };\n\n  if (!username) {\n    return null;\n  }\n\n  return (\n    <Card className=\"border-primary/20\">\n      <CardHeader className=\"pb-3\">\n        <CardTitle className=\"flex items-center gap-2 text-lg\">\n          <Share2 className=\"w-5 h-5\" />\n          Share Your Store\n        </CardTitle>\n      </CardHeader>\n      <CardContent className=\"space-y-4\">\n        {/* Store URL Display */}\n        <div className=\"space-y-2\">\n          <label className=\"text-sm font-medium text-muted-foreground\">\n            Your Store URL\n          </label>\n          <div className=\"flex gap-2\">\n            <Input\n              value={storeUrl}\n              readOnly\n              className=\"font-mono text-sm\"\n              onClick={(e) => e.currentTarget.select()}\n            />\n            <Button size=\"sm\" variant=\"outline\" onClick={handleCopyUrl}>\n              <Copy className=\"w-4 h-4\" />\n            </Button>\n          </div>\n        </div>\n\n        {/* Stats */}\n        <div className=\"flex items-center gap-4 p-3 bg-muted/50 rounded-lg\">\n          <div className=\"flex items-center gap-2\">\n            <Users className=\"w-4 h-4 text-primary\" />\n            <span className=\"text-sm\">\n              <span className=\"font-bold\">{followersCount}</span> followers\n            </span>\n          </div>\n          <div className=\"text-sm text-muted-foreground\">\n            Share to grow your community!\n          </div>\n        </div>\n\n        {/* Action Buttons */}\n        <div className=\"grid grid-cols-3 gap-2\">\n          <Button onClick={handleShare} variant=\"default\" size=\"sm\">\n            <Share2 className=\"w-4 h-4 mr-1\" />\n            Share\n          </Button>\n          \n          <Dialog open={showQR} onOpenChange={setShowQR}>\n            <DialogTrigger asChild>\n              <Button variant=\"outline\" size=\"sm\">\n                <QrCode className=\"w-4 h-4 mr-1\" />\n                QR\n              </Button>\n            </DialogTrigger>\n            <DialogContent className=\"sm:max-w-md\">\n              <DialogHeader>\n                <DialogTitle>Store QR Code</DialogTitle>\n              </DialogHeader>\n              <div className=\"flex flex-col items-center space-y-4\">\n                <div className=\"p-4 bg-white rounded-lg\">\n                  <QRCodeSVG value={storeUrl} size={200} />\n                </div>\n                <p className=\"text-sm text-muted-foreground text-center\">\n                  Scan to visit {businessName}\n                </p>\n                <Button onClick={handleCopyUrl} className=\"w-full\">\n                  <Copy className=\"w-4 h-4 mr-2\" />\n                  Copy URL\n                </Button>\n              </div>\n            </DialogContent>\n          </Dialog>\n\n          <Button onClick={handleVisitStore} variant=\"outline\" size=\"sm\">\n            <ExternalLink className=\"w-4 h-4 mr-1\" />\n            Visit\n          </Button>\n        </div>\n\n        {/* Marketing Tips */}\n        <div className=\"text-xs text-muted-foreground space-y-1\">\n          <p className=\"font-medium\">💡 Marketing Tips:</p>\n          <ul className=\"list-disc list-inside space-y-0.5 ml-2\">\n            <li>Add this URL to your social media bios</li>\n            <li>Share on Twitter, Instagram, TikTok</li>\n            <li>Print the QR code on business cards</li>\n            <li>Include in email signatures</li>\n          </ul>\n        </div>\n      </CardContent>\n    </Card>\n  );\n};
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { QRCodeSVG } from "qrcode.react";
+import { Copy, Share2, QrCode, ExternalLink, Users } from "lucide-react";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
+interface ShareStoreProps {
+  username: string;
+  businessName: string;
+  followersCount?: number;
+}
+
+export const ShareStore = ({ username, businessName, followersCount = 0 }: ShareStoreProps) => {
+  const [storeUrl, setStoreUrl] = useState("");
+  const [showQR, setShowQR] = useState(false);
+
+  useEffect(() => {
+    if (username) {
+      setStoreUrl(`${window.location.origin}/u/${username}`);
+    }
+  }, [username]);
+
+  const handleCopyUrl = () => {
+    navigator.clipboard.writeText(storeUrl);
+    toast.success("Store URL copied to clipboard!");
+  };
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${businessName} - Digital Store`,
+          text: `Check out ${businessName}'s amazing digital store!`,
+          url: storeUrl,
+        });
+      } catch (error) {
+        // User cancelled sharing, fallback to copy
+        handleCopyUrl();
+      }
+    } else {
+      // Fallback to copy for browsers without Web Share API
+      handleCopyUrl();
+    }
+  };
+
+  const handleVisitStore = () => {
+    window.open(storeUrl, "_blank");
+  };
+
+  if (!username) {
+    return null;
+  }
+
+  return (
+    <Card className="border-primary/20">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Share2 className="w-5 h-5" />
+          Share Your Store
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Store URL Display */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">
+            Your Store URL
+          </label>
+          <div className="flex gap-2">
+            <Input
+              value={storeUrl}
+              readOnly
+              className="font-mono text-sm"
+              onClick={(e) => e.currentTarget.select()}
+            />
+            <Button size="sm" variant="outline" onClick={handleCopyUrl}>
+              <Copy className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-primary" />
+            <span className="text-sm">
+              <span className="font-bold">{followersCount}</span> followers
+            </span>
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Share to grow your community!
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="grid grid-cols-3 gap-2">
+          <Button onClick={handleShare} variant="default" size="sm">
+            <Share2 className="w-4 h-4 mr-1" />
+            Share
+          </Button>
+          
+          <Dialog open={showQR} onOpenChange={setShowQR}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <QrCode className="w-4 h-4 mr-1" />
+                QR
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Store QR Code</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col items-center space-y-4">
+                <div className="p-4 bg-white rounded-lg">
+                  <QRCodeSVG value={storeUrl} size={200} />
+                </div>
+                <p className="text-sm text-muted-foreground text-center">
+                  Scan to visit {businessName}
+                </p>
+                <Button onClick={handleCopyUrl} className="w-full">
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy URL
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Button onClick={handleVisitStore} variant="outline" size="sm">
+            <ExternalLink className="w-4 h-4 mr-1" />
+            Visit
+          </Button>
+        </div>
+
+        {/* Marketing Tips */}
+        <div className="text-xs text-muted-foreground space-y-1">
+          <p className="font-medium">💡 Marketing Tips:</p>
+          <ul className="list-disc list-inside space-y-0.5 ml-2">
+            <li>Add this URL to your social media bios</li>
+            <li>Share on Twitter, Instagram, TikTok</li>
+            <li>Print the QR code on business cards</li>
+            <li>Include in email signatures</li>
+          </ul>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};

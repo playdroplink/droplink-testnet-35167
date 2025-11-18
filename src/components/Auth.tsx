@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Mail } from "lucide-react";
 import { toast } from "sonner";
 
 export const Auth = () => {
@@ -16,21 +18,59 @@ export const Auth = () => {
 
   useEffect(() => {
     // Check if user is already logged in
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        navigate("/");
+    const checkAuthStatus = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          console.log("User already authenticated, redirecting to dashboard");
+          navigate("/dashboard", { replace: true });
+        }
+      } catch (error) {
+        console.error("Auth check error:", error);
       }
-    });
+    };
+    
+    checkAuthStatus();
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        navigate("/");
+      console.log("Auth state changed:", event, session?.user?.email);
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        toast.success("Successfully signed in!");
+        navigate("/dashboard", { replace: true });
+      } else if (event === 'SIGNED_OUT') {
+        console.log("User signed out, staying on auth page");
+        // Clear any remaining state
+        localStorage.clear();
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  const handleGoogleAuth = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      });
+
+      if (error) {
+        toast.error(`Google sign-in failed: ${error.message}`);
+        return;
+      }
+
+      // OAuth will redirect automatically
+    } catch (error: any) {
+      toast.error("Google sign-in failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,7 +147,31 @@ export const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleAuth} className="space-y-4">
+          {/* Google OAuth Button */}
+          <div className="space-y-4">
+            <Button 
+              onClick={handleGoogleAuth} 
+              variant="outline" 
+              className="w-full" 
+              disabled={loading}
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              Continue with Google
+            </Button>
+            
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator className="w-full" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or continue with email
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleAuth} className="space-y-4 mt-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input

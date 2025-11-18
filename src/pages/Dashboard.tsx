@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePi } from "@/contexts/PiContext";
 import { Switch } from "@/components/ui/switch";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { performCompleteSignOut } from "@/lib/auth-utils";
 import {
   Drawer,
   DrawerClose,
@@ -1088,8 +1089,17 @@ const Dashboard = () => {
   };
 
   const handleLogout = async () => {
-    await piSignOut();
-    navigate("/auth");
+    try {
+      console.log("🚪 Initiating logout...");
+      
+      // Use comprehensive sign-out utility
+      await performCompleteSignOut();
+      
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force navigation even if logout has errors
+      window.location.href = "/auth";
+    }
   };
 
   if (loading) {

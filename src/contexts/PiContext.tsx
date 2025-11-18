@@ -270,15 +270,34 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
 
   // Sign Out
   const signOut = async () => {
-    localStorage.removeItem('pi_access_token');
-    localStorage.removeItem('pi_user');
-    setAccessToken(null);
-    setPiUser(null);
-    
-    toast("You have been signed out successfully.", {
-      description: "Signed Out",
-      duration: 3000,
-    });
+    try {
+      // Clear Pi Network authentication
+      localStorage.removeItem('pi_access_token');
+      localStorage.removeItem('pi_user');
+      setAccessToken(null);
+      setPiUser(null);
+      
+      // Clear Supabase authentication (for Gmail/email users)
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Supabase sign out error:', error);
+        // Still proceed with logout even if Supabase logout fails
+      }
+      
+      // Clear any additional local storage items
+      localStorage.removeItem('supabase.auth.token');
+      
+      toast("You have been signed out successfully.", {
+        description: "Signed Out",
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast("Signed out (with some errors)", {
+        description: "Please refresh if issues persist",
+        duration: 3000,
+      });
+    }
   };
 
   // Create Payment

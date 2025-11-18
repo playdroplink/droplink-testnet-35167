@@ -17,6 +17,7 @@ import EmailAuth from "./pages/EmailAuth";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import CustomDomain from "./pages/CustomDomain";
+import ProfileDebug from "./pages/ProfileDebug";
 import { SplashScreen } from "./components/SplashScreen";
 
 const queryClient = new QueryClient();
@@ -64,6 +65,7 @@ const App = () => {
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/domain" element={<CustomDomain />} />
+            <Route path="/debug" element={<ProfileDebug />} />
             <Route path="/u/:username" element={<PublicBio />} />
             <Route path="/profile/:username" element={<PublicBio />} />
             <Route path="/:username" element={<PublicBio />} />
