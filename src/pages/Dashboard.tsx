@@ -145,6 +145,7 @@ const Dashboard = () => {
   const [hasCheckedSubscription, setHasCheckedSubscription] = useState(false);
   const [displayUsername, setDisplayUsername] = useState<string | null>(null);
   const [hasSupabaseSession, setHasSupabaseSession] = useState(false);
+  const [showAboutModal, setShowAboutModal] = useState(false);
 
   // Check for Supabase session on mount
   useEffect(() => {
@@ -1139,180 +1140,221 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
-      <header className="bg-white/95 backdrop-blur-sm border-b border-gray-200 px-4 lg:px-6 py-4 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-4">
-          <h1 className="text-xl font-semibold text-sky-500">Droplink</h1>
-          {displayUsername && (
-            <span className="text-sm text-muted-foreground">@{displayUsername}</span>
-          )}
-        </div>
-        <div className="flex items-center gap-2 lg:gap-4">
-          {isMobile ? (
-            <Drawer>
-              <DrawerTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Menu className="w-4 h-4" />
+      <header className="bg-white border-b border-gray-200 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <h1 className="text-lg sm:text-xl font-semibold text-sky-500">DropLink</h1>
+            {displayUsername && (
+              <span className="text-xs sm:text-sm text-muted-foreground hidden sm:inline">@{displayUsername}</span>
+            )}
+          </div>
+          <div className="flex items-center gap-1 sm:gap-2 lg:gap-4">
+            {isMobile ? (
+              <Drawer>
+                <DrawerTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9 w-9 sm:h-10 sm:w-auto sm:px-3">
+                    <Menu className="w-4 h-4" />
+                    <span className="hidden sm:inline ml-2">Menu</span>
+                  </Button>
+                </DrawerTrigger>
+                <DrawerContent className="bg-white">
+                  <DrawerHeader>
+                    <DrawerTitle className="text-lg font-semibold">DropLink Menu</DrawerTitle>
+                    <DrawerDescription>Quick actions and settings</DrawerDescription>
+                  </DrawerHeader>
+                  <div className="p-4 space-y-3 max-h-[70vh] overflow-y-auto">
+                    {/* Profile & Share Section */}
+                    <div className="space-y-2">
+                      <h3 className="font-medium text-sm text-gray-700 px-2">Profile & Share</h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button onClick={handleShowQRCode} variant="outline" size="sm" className="justify-start gap-2 h-12">
+                          <QrCode className="w-4 h-4" />
+                          QR Code
+                        </Button>
+                        <Button onClick={handleCopyLink} variant="outline" size="sm" className="justify-start gap-2 h-12">
+                          <Share2 className="w-4 h-4" />
+                          Share
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Navigation Section */}
+                    <div className="space-y-2">
+                      <h3 className="font-medium text-sm text-gray-700 px-2">Navigation</h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button onClick={() => navigate("/followers")} variant="outline" size="sm" className="justify-start gap-2 h-12">
+                          <Users className="w-4 h-4" />
+                          Followers
+                        </Button>
+                        <Button onClick={() => navigate("/wallet")} variant="outline" size="sm" className="justify-start gap-2 h-12">
+                          <Wallet className="w-4 h-4" />
+                          Wallet
+                        </Button>
+                        <Button onClick={() => navigate("/profile")} variant="outline" size="sm" className="justify-start gap-2 h-12">
+                          <User className="w-4 h-4" />
+                          Profile
+                        </Button>
+                        <Button onClick={() => navigate("/domain")} variant="outline" size="sm" className="justify-start gap-2 h-12">
+                          <Globe className="w-4 h-4" />
+                          Domain
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Settings Section */}
+                    <div className="space-y-2">
+                      <h3 className="font-medium text-sm text-gray-700 px-2">Settings</h3>
+                      <div className="space-y-2">
+                        <Button
+                          onClick={() => setShowPreview(!showPreview)}
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start gap-2 h-12"
+                        >
+                          {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {showPreview ? 'Hide Preview' : 'Show Preview'}
+                        </Button>
+                        <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                          <span className="text-sm font-medium">Theme</span>
+                          <ThemeToggle />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Pi Network Section */}
+                    {hasSupabaseSession && !isAuthenticated && (
+                      <div className="space-y-2">
+                        <h3 className="font-medium text-sm text-gray-700 px-2">Pi Network</h3>
+                        <Button 
+                          onClick={() => navigate("/auth")} 
+                          variant="default" 
+                          size="sm"
+                          className="w-full justify-start gap-2 h-12"
+                        >
+                          <Wallet className="w-4 h-4" />
+                          Connect Pi Network
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Support & Help Section */}
+                    <div className="space-y-2">
+                      <h3 className="font-medium text-sm text-gray-700 px-2">Support & Help</h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button onClick={() => navigate("/ai-support")} variant="outline" size="sm" className="justify-start gap-2 h-12">
+                          <Bot className="w-4 h-4" />
+                          AI Support
+                        </Button>
+                        <Button
+                          onClick={() => setShowAboutModal(true)}
+                          variant="outline"
+                          size="sm"
+                          className="justify-start gap-2 h-12"
+                        >
+                          <Info className="w-4 h-4" />
+                          About
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Subscription Section */}
+                    <div className="space-y-2">
+                      <h3 className="font-medium text-sm text-gray-700 px-2">Subscription</h3>
+                      <Button onClick={() => navigate("/subscription")} variant="default" size="sm" className="w-full justify-start gap-2 h-12">
+                        <Crown className="w-4 h-4" />
+                        Upgrade Plan
+                      </Button>
+                    </div>
+
+                    {/* Account Section */}
+                    <div className="space-y-2 pt-2 border-t border-gray-200">
+                      <Button onClick={handleLogout} variant="destructive" size="sm" className="w-full justify-start gap-2 h-12">
+                        <LogOut className="w-4 h-4" />
+                        Sign Out
+                      </Button>
+                    </div>
+                  </div>
+                </DrawerContent>
+              </Drawer>
+            ) : (
+              <>
+                <Button onClick={handleShowQRCode} variant="outline" size="sm" className="hidden sm:flex gap-2">
+                  <QrCode className="w-4 h-4" />
+                  QR Code
                 </Button>
-              </DrawerTrigger>
-              <DrawerContent>
-                <DrawerHeader>
-                  <DrawerTitle>Menu</DrawerTitle>
-                  <DrawerDescription>Quick actions and settings</DrawerDescription>
-                </DrawerHeader>
-                <div className="p-4 space-y-2">
-                  <Button onClick={handleShowQRCode} variant="outline" size="sm" className="w-full justify-start gap-2">
-                    <QrCode className="w-4 h-4" />
-                    QR Code
-                  </Button>
-                  <Button onClick={handleCopyLink} variant="outline" size="sm" className="w-full justify-start gap-2">
-                    <Share2 className="w-4 h-4" />
-                    Share
-                  </Button>
-                  <Button onClick={() => navigate("/followers")} variant="outline" size="sm" className="w-full justify-start gap-2">
-                    <Users className="w-4 h-4" />
-                    Followers
-                  </Button>
-                  <Button onClick={() => navigate("/wallet")} variant="outline" size="sm" className="w-full justify-start gap-2">
-                    <Wallet className="w-4 h-4" />
-                    Wallet
-                  </Button>
-                  <Button onClick={() => navigate("/profile")} variant="outline" size="sm" className="w-full justify-start gap-2">
-                    <User className="w-4 h-4" />
-                    Profile
-                  </Button>
-                  <Button onClick={() => navigate("/domain")} variant="outline" size="sm" className="w-full justify-start gap-2">
-                    <Globe className="w-4 h-4" />
-                    Custom Domain
-                  </Button>
-                  <Button onClick={() => navigate("/ai-support")} variant="outline" size="sm" className="w-full justify-start gap-2">
-                    <Bot className="w-4 h-4" />
-                    AI Support
-                  </Button>
-                  <AboutModal>
-                    <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-                      <Info className="w-4 h-4" />
-                      About DropLink
-                    </Button>
-                  </AboutModal>
-                  <Button onClick={() => navigate("/subscription")} variant="outline" size="sm" className="w-full justify-start gap-2">
-                    <Wallet className="w-4 h-4" />
-                    Upgrade
-                  </Button>
-                  {/* Pi Auth Button for Email Users */}
-                  {hasSupabaseSession && !isAuthenticated && (
-                    <Button onClick={() => navigate("/auth")} variant="outline" size="sm" className="w-full justify-start gap-2">
-                      <Wallet className="w-4 h-4" />
-                      Connect Pi
-                    </Button>
-                  )}
-                  <DrawerClose asChild>
-                    <Button variant="ghost" size="sm" className="w-full">Close</Button>
-                  </DrawerClose>
-                </div>
-              </DrawerContent>
-            </Drawer>
-          ) : (
-            <>
-              <Button onClick={handleShowQRCode} variant="outline" size="sm" className="hidden sm:flex gap-2">
-                <QrCode className="w-4 h-4" />
-                QR Code
-              </Button>
-              <Button onClick={handleCopyLink} variant="outline" size="sm" className="hidden sm:flex gap-2">
-                <Share2 className="w-4 h-4" />
-                Share
-              </Button>
-              <Button 
-                onClick={() => navigate("/followers")} 
-                variant="outline" 
-                size="sm" 
-                className="hidden md:flex gap-2"
-              >
-                <Users className="w-4 h-4" />
-                Followers
-              </Button>
-              <Button 
-                onClick={() => navigate("/wallet")} 
-                variant="outline" 
-                size="sm" 
-                className="hidden md:flex gap-2"
-              >
-                <Wallet className="w-4 h-4" />
-                Wallet
-              </Button>
-              <Button 
-                onClick={() => navigate("/profile")} 
-                variant="outline" 
-                size="sm" 
-                className="hidden lg:flex gap-2"
-              >
-                <User className="w-4 h-4" />
-                Profile
-              </Button>
-              <Button 
-                onClick={() => navigate("/domain")} 
-                variant="outline" 
-                size="sm" 
-                className="hidden lg:flex gap-2"
-              >
-                <Globe className="w-4 h-4" />
-                Domain
-              </Button>
-              <Button 
-                onClick={() => navigate("/ai-support")} 
-                variant="outline" 
-                size="sm" 
-                className="hidden lg:flex gap-2"
-              >
-                <Bot className="w-4 h-4" />
-                AI Support
-              </Button>
-              <Button 
-                onClick={() => navigate("/subscription")} 
-                variant="outline" 
-                size="sm" 
-                className="hidden md:flex"
-              >
-                Upgrade
-              </Button>
-              <AboutModal>
-                <Button variant="outline" size="sm" className="hidden lg:flex gap-2">
+                <Button onClick={handleCopyLink} variant="outline" size="sm" className="hidden sm:flex gap-2">
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </Button>
+                <Button 
+                  onClick={() => navigate("/followers")} 
+                  variant="outline" 
+                  size="sm" 
+                  className="hidden md:flex gap-2"
+                >
+                  <Users className="w-4 h-4" />
+                  Followers
+                </Button>
+                <Button 
+                  onClick={() => navigate("/wallet")} 
+                  variant="outline" 
+                  size="sm" 
+                  className="hidden md:flex gap-2"
+                >
+                  <Wallet className="w-4 h-4" />
+                  Wallet
+                </Button>
+                <Button 
+                  onClick={() => navigate("/subscription")} 
+                  variant="outline" 
+                  size="sm" 
+                  className="hidden md:flex"
+                >
+                  Upgrade
+                </Button>
+                <Button
+                  onClick={() => setShowAboutModal(true)}
+                  variant="outline"
+                  size="sm"
+                  className="hidden lg:flex gap-2"
+                >
                   <Info className="w-4 h-4" />
                   About
                 </Button>
-              </AboutModal>
-            </>
-          )}
-          <Button 
-            onClick={() => setShowPreview(!showPreview)} 
-            variant="outline" 
-            size="sm"
-            className="lg:hidden"
-          >
-            {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          </Button>
-          <ThemeToggle />
-          <Button onClick={handleLogout} variant="ghost" size="sm">
-            <LogOut className="w-4 h-4" />
-          </Button>
-          
-          {/* Pi Auth Button for Email Users */}
-          {hasSupabaseSession && !isAuthenticated && (
-            <Button 
-              onClick={() => navigate("/auth")} 
-              variant="outline" 
-              size="sm"
-              className="gap-2"
-            >
-              <Wallet className="w-4 h-4" />
-              Connect Pi
-            </Button>
-          )}
+                <Button 
+                  onClick={() => setShowPreview(!showPreview)} 
+                  variant="outline" 
+                  size="sm"
+                  className="lg:hidden"
+                >
+                  {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </Button>
+                <ThemeToggle />
+                <Button onClick={handleLogout} variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50">
+                  <LogOut className="w-4 h-4" />
+                </Button>
+                
+                {/* Pi Auth Button for Email Users */}
+                {hasSupabaseSession && !isAuthenticated && (
+                  <Button 
+                    onClick={() => navigate("/auth")} 
+                    variant="outline" 
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <Wallet className="w-4 h-4" />
+                    Connect Pi
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </header>
 
       <div className="flex flex-col lg:flex-row h-[calc(100vh-73px)]">
         {/* Editor Panel */}
-        <div className={`flex-1 overflow-y-auto p-4 lg:p-8 bg-white/80 backdrop-blur-sm m-2 rounded-xl shadow-sm border border-gray-100 ${showPreview ? 'hidden lg:block' : 'block'}`}>
+        <div className={`flex-1 overflow-y-auto p-4 lg:p-8 bg-white m-2 rounded-xl shadow-sm border border-gray-100 ${showPreview ? 'hidden lg:block' : 'block'}`}>
           <div className="max-w-2xl mx-auto">
             <Tabs defaultValue="profile" className="w-full">
               <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 lg:grid-cols-9 mb-6 overflow-x-auto">
@@ -1918,9 +1960,13 @@ const Dashboard = () => {
                   />
                   
                   {/* Save Button */}
-                  <div className="flex gap-4 pt-4 pb-8 border-t">
+                  <div className="flex gap-4 pt-4 pb-8 border-t bg-background sticky bottom-0">
                     <Button variant="outline" className="flex-1">Cancel</Button>
-                    <Button onClick={handleSave} className="flex-1" disabled={saving}>
+                    <Button 
+                      onClick={handleSave} 
+                      className="flex-1 bg-primary hover:bg-primary/90" 
+                      disabled={saving}
+                    >
                       {saving ? "Saving..." : "Save changes"}
                     </Button>
                   </div>
@@ -1987,7 +2033,7 @@ const Dashboard = () => {
         </div>
 
         {/* Preview Panel */}
-        <div className={`lg:w-[400px] xl:w-[500px] bg-white/90 backdrop-blur-sm border-l border-gray-200 p-6 lg:p-8 flex flex-col items-center shadow-sm ${
+        <div className={`lg:w-[400px] xl:w-[500px] bg-white border-l border-gray-200 p-6 lg:p-8 flex flex-col items-center shadow-sm ${
           showPreview ? 'flex' : 'hidden lg:flex'
         }`}>
           <div className="mb-4 flex items-center justify-between w-full">
@@ -2014,6 +2060,12 @@ const Dashboard = () => {
         onOpenChange={setShowPiWalletQR}
         url={piWalletQrData}
         username="Pi-Wallet"
+      />
+
+      {/* About Modal */}
+      <AboutModal
+        open={showAboutModal}
+        onOpenChange={setShowAboutModal}
       />
     </div>
   );

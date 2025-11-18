@@ -214,7 +214,7 @@ const VotingSystem: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card className="bg-white/95 backdrop-blur-sm shadow-md border border-gray-200">
+      <Card className="bg-white shadow-md border border-gray-200">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
@@ -236,7 +236,7 @@ const VotingSystem: React.FC = () => {
 
       {/* Add Feature Form */}
       {showAddFeature && (
-        <Card className="bg-white/95 backdrop-blur-sm shadow-md border border-gray-200">
+        <Card className="bg-white shadow-md border border-gray-200">
           <CardHeader>
             <CardTitle>Submit Feature Request</CardTitle>
           </CardHeader>
@@ -288,7 +288,7 @@ const VotingSystem: React.FC = () => {
             : 0;
 
           return (
-            <Card key={feature.id} className="border-l-4 border-l-primary bg-white/95 backdrop-blur-sm shadow-md border border-gray-200">
+            <Card key={feature.id} className="border-l-4 border-l-primary bg-white shadow-md border border-gray-200">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">

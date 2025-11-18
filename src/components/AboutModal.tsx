@@ -18,83 +18,91 @@ import {
   Twitter,
   Mail,
   Award,
-  TrendingUp
+  TrendingUp,
+  Play,
+  Building,
+  Crown,
+  Network
 } from "lucide-react";
 
 interface AboutModalProps {
   children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export const AboutModal = ({ children }: AboutModalProps) => {
-  const [open, setOpen] = useState(false);
+export const AboutModal = ({ children, open: externalOpen, onOpenChange }: AboutModalProps) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  
+  // Use external state if provided, otherwise use internal state
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
 
   const appInfo = {
     name: "DropLink",
     version: "2.1.0",
     buildDate: new Date().toLocaleDateString(),
-    description: "The ultimate Pi Network-powered bio link platform for creators and businesses"
+    description: "The ultimate Pi Network-powered bio link platform powered by Mrwain Organization",
+    organization: "Mrwain Organization",
+    founder: "Mrwain"
+  };
+
+  const organizationInfo = {
+    name: "Mrwain Organization",
+    founder: "Mrwain",
+    mission: "Empowering the Pi Network ecosystem through innovative decentralized applications and tools",
+    vision: "Building the future of Web3 social media and creator economy on Pi Network",
+    established: "2024",
+    focus: "Pi Network Development, Creator Economy, Decentralized Social Media"
   };
 
   const features = [
     {
       icon: <Zap className="w-5 h-5 text-yellow-500" />,
-      title: "Pi Network Integration",
-      description: "Earn Pi coins through profile views, donations, and engagement"
+      title: "Pi Network Integration", 
+      description: "Seamlessly integrated with Pi Network mainnet for authentic Web3 experience"
     },
     {
       icon: <Globe className="w-5 h-5 text-blue-500" />,
-      title: "Custom Bio Pages",
-      description: "Beautiful, responsive bio pages with custom domains"
+      title: "Pi Domain System",
+      description: "Get your custom .pi domain for professional bio pages on Pi Network"
     },
     {
       icon: <Users className="w-5 h-5 text-green-500" />,
-      title: "Social Features",
-      description: "Followers, comments, gifts, and community interaction"
+      title: "Creator Economy",
+      description: "Monetize your content through Pi payments, tips, and premium subscriptions"
     },
     {
       icon: <Shield className="w-5 h-5 text-purple-500" />,
-      title: "Advanced Analytics",
-      description: "Track visits, engagement, earnings, and performance"
+      title: "Secure & Decentralized",
+      description: "Built on Pi Network's secure blockchain infrastructure"
     },
     {
-      icon: <Code className="w-5 h-5 text-orange-500" />,
-      title: "AI-Powered Support",
-      description: "Smart assistance and automated optimization"
+      icon: <Network className="w-5 h-5 text-orange-500" />,
+      title: "Pi Ecosystem Hub",
+      description: "Connect with the entire Pi Network community and ecosystem"
     },
     {
       icon: <Heart className="w-5 h-5 text-red-500" />,
-      title: "Creator Economy",
-      description: "Monetize your content through Pi Network ecosystem"
+      title: "Community Driven",
+      description: "Built by Pi Pioneers, for Pi Pioneers"
     }
   ];
 
-  const team = [
-    {
-      name: "DropLink Dev Team",
-      role: "Core Development",
-      description: "Building the future of decentralized bio links"
-    },
-    {
-      name: "Pi Network Community",
-      role: "Beta Testers & Feedback",
-      description: "Helping shape the platform through real usage"
-    }
+  const piNetworkFeatures = [
+    "Native Pi wallet integration",
+    "Pi-to-Pi instant payments", 
+    "Pi Network authentication",
+    "Custom .pi domain names",
+    "Pi ecosystem interoperability",
+    "Mainnet Pi transactions"
   ];
 
   const stats = [
-    { label: "Active Users", value: "10K+", icon: <Users className="w-4 h-4" /> },
-    { label: "Pi Earned", value: "50K+", icon: <Zap className="w-4 h-4" /> },
-    { label: "Bio Pages", value: "25K+", icon: <Globe className="w-4 h-4" /> },
-    { label: "Profile Views", value: "1M+", icon: <TrendingUp className="w-4 h-4" /> }
-  ];
-
-  const roadmapHighlights = [
-    "Advanced AI content generation",
-    "NFT marketplace integration",
-    "Multi-language support",
-    "Mobile app release",
-    "Enterprise features",
-    "Cross-chain crypto support"
+    { label: "Pi Pioneers", value: "15K+", icon: <Users className="w-4 h-4" /> },
+    { label: "Pi Transactions", value: "75K+", icon: <Zap className="w-4 h-4" /> },
+    { label: "Pi Domains", value: "5K+", icon: <Globe className="w-4 h-4" /> },
+    { label: "Pi Earned", value: "250K+", icon: <Crown className="w-4 h-4" /> }
   ];
 
   return (
@@ -110,11 +118,12 @@ export const AboutModal = ({ children }: AboutModalProps) => {
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 text-2xl">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center text-white font-bold">
               D
             </div>
             {appInfo.name}
             <Badge variant="secondary">v{appInfo.version}</Badge>
+            <Badge variant="outline" className="text-orange-600 border-orange-600">Pi Network</Badge>
           </DialogTitle>
           <DialogDescription className="text-base">
             {appInfo.description}
@@ -122,35 +131,110 @@ export const AboutModal = ({ children }: AboutModalProps) => {
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* App Info */}
-          <Card>
+          {/* Demo Video */}
+          <Card className="bg-gradient-to-r from-orange-50 to-purple-50 border-orange-200">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Info className="w-5 h-5" />
-                Application Information
+                <Play className="w-5 h-5 text-orange-500" />
+                Watch DropLink Demo
               </CardTitle>
+              <CardDescription>
+                See DropLink in action and learn how it powers the Pi Network ecosystem
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div className="aspect-video rounded-lg overflow-hidden bg-black">
+                <iframe 
+                  width="100%" 
+                  height="100%" 
+                  src="https://www.youtube.com/embed/9NANXmay6k0" 
+                  title="DropLink Demo - Pi Network Bio Links Platform"
+                  frameBorder="0" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  allowFullScreen
+                  className="w-full h-full"
+                />
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Badge variant="secondary">
+                  <Zap className="w-3 h-3 mr-1" />
+                  Pi Network Demo
+                </Badge>
+                <Badge variant="secondary">
+                  <Globe className="w-3 h-3 mr-1" />
+                  .pi Domain
+                </Badge>
+                <Badge variant="secondary">
+                  <Crown className="w-3 h-3 mr-1" />
+                  Creator Economy
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Organization Info */}
+          <Card className="border-orange-200 bg-gradient-to-r from-orange-50/50 to-purple-50/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building className="w-5 h-5 text-orange-500" />
+                About Mrwain Organization
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-muted-foreground">Version</p>
-                  <p className="font-medium">{appInfo.version}</p>
+                  <h4 className="font-semibold mb-2 text-orange-600">Our Mission</h4>
+                  <p className="text-sm text-muted-foreground">{organizationInfo.mission}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Build Date</p>
-                  <p className="font-medium">{appInfo.buildDate}</p>
+                  <h4 className="font-semibold mb-2 text-purple-600">Our Vision</h4>
+                  <p className="text-sm text-muted-foreground">{organizationInfo.vision}</p>
+                </div>
+              </div>
+              <Separator />
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Founded By</p>
+                  <p className="font-medium text-orange-600">{organizationInfo.founder}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Platform</p>
-                  <p className="font-medium">Pi Network</p>
+                  <p className="text-muted-foreground">Established</p>
+                  <p className="font-medium">{organizationInfo.established}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Status</p>
-                  <Badge variant="outline" className="text-green-600 border-green-600">
-                    <div className="w-2 h-2 rounded-full bg-green-600 mr-2" />
-                    Active
-                  </Badge>
+                  <p className="text-muted-foreground">Focus</p>
+                  <p className="font-medium">{organizationInfo.focus}</p>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Pi Network Integration */}
+          <Card className="border-purple-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Network className="w-5 h-5 text-purple-500" />
+                Pi Network Integration
+              </CardTitle>
+              <CardDescription>
+                DropLink is fully aligned with Pi Network's vision and ecosystem
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-4">
+                {piNetworkFeatures.map((feature, index) => (
+                  <div key={index} className="flex items-center gap-2 text-sm">
+                    <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                    {feature}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                <p className="text-sm text-purple-700">
+                  <strong>Pi Domain System:</strong> DropLink enables users to get custom .pi domains, 
+                  creating a unified identity across the Pi Network ecosystem. Your bio page becomes 
+                  your gateway to the Pi-powered web.
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -160,17 +244,20 @@ export const AboutModal = ({ children }: AboutModalProps) => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
-                Platform Statistics
+                Pi Network Statistics
               </CardTitle>
+              <CardDescription>
+                Growing the Pi ecosystem together
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {stats.map((stat) => (
-                  <div key={stat.label} className="text-center p-4 rounded-lg bg-muted/50">
-                    <div className="flex justify-center mb-2 text-blue-500">
+                  <div key={stat.label} className="text-center p-4 rounded-lg bg-gradient-to-br from-orange-50 to-purple-50 border border-orange-200">
+                    <div className="flex justify-center mb-2 text-orange-500">
                       {stat.icon}
                     </div>
-                    <div className="text-2xl font-bold">{stat.value}</div>
+                    <div className="text-2xl font-bold text-purple-600">{stat.value}</div>
                     <div className="text-sm text-muted-foreground">{stat.label}</div>
                   </div>
                 ))}
@@ -183,13 +270,13 @@ export const AboutModal = ({ children }: AboutModalProps) => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Star className="w-5 h-5" />
-                Key Features
+                Platform Features
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-4">
                 {features.map((feature, index) => (
-                  <div key={index} className="flex gap-3 p-3 rounded-lg border">
+                  <div key={index} className="flex gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
                     <div className="mt-1">{feature.icon}</div>
                     <div>
                       <h4 className="font-medium">{feature.title}</h4>
@@ -201,71 +288,64 @@ export const AboutModal = ({ children }: AboutModalProps) => {
             </CardContent>
           </Card>
 
-          {/* Roadmap Highlights */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Award className="w-5 h-5" />
-                Coming Soon
-              </CardTitle>
-              <CardDescription>
-                Exciting features in development
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-2">
-                {roadmapHighlights.map((item, index) => (
-                  <div key={index} className="flex items-center gap-2 text-sm">
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Team */}
+          {/* Founder & Team */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5" />
-                Our Team
+                Leadership & Team
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {team.map((member, index) => (
-                  <div key={index}>
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
-                        {member.name.charAt(0)}
-                      </div>
-                      <div>
-                        <h4 className="font-medium">{member.name}</h4>
-                        <p className="text-sm text-blue-600">{member.role}</p>
-                        <p className="text-sm text-muted-foreground">{member.description}</p>
-                      </div>
-                    </div>
-                    {index < team.length - 1 && <Separator className="mt-4" />}
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-gradient-to-r from-orange-50 to-purple-50 border border-orange-200">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                    M
                   </div>
-                ))}
+                  <div>
+                    <h4 className="font-semibold text-lg">Mrwain</h4>
+                    <p className="text-sm text-orange-600 font-medium">Founder & Lead Developer</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Pioneering Pi Network development with a vision to empower creators and build 
+                      the decentralized social economy. Leading the charge in Pi ecosystem innovation.
+                    </p>
+                  </div>
+                </div>
+                <Separator />
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center text-white font-bold text-sm">
+                    P
+                  </div>
+                  <div>
+                    <h4 className="font-medium">Pi Network Community</h4>
+                    <p className="text-sm text-blue-600">Beta Testers & Contributors</p>
+                    <p className="text-sm text-muted-foreground">
+                      Thousands of Pi Pioneers helping shape DropLink through feedback and real-world usage
+                    </p>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Contact & Links */}
+          {/* Contact & Pi Network */}
           <Card>
             <CardHeader>
               <CardTitle>Connect With Us</CardTitle>
               <CardDescription>
-                Join our community and stay updated
+                Join the Pi Network ecosystem and DropLink community
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" className="gap-2 hover:bg-orange-50 hover:border-orange-300">
+                  <Network className="w-4 h-4" />
+                  Pi Network
+                  <ExternalLink className="w-3 h-3" />
+                </Button>
                 <Button variant="outline" size="sm" className="gap-2">
-                  <Github className="w-4 h-4" />
-                  GitHub
+                  <Globe className="w-4 h-4" />
+                  Get .pi Domain
                   <ExternalLink className="w-3 h-3" />
                 </Button>
                 <Button variant="outline" size="sm" className="gap-2">
@@ -278,24 +358,19 @@ export const AboutModal = ({ children }: AboutModalProps) => {
                   Support
                   <ExternalLink className="w-3 h-3" />
                 </Button>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Zap className="w-4 h-4" />
-                  Pi Network
-                  <ExternalLink className="w-3 h-3" />
-                </Button>
               </div>
             </CardContent>
           </Card>
 
           {/* Legal */}
           <div className="text-center text-sm text-muted-foreground space-y-2">
-            <p>© 2024 DropLink. Built for the Pi Network ecosystem.</p>
+            <p>© 2024 DropLink by Mrwain Organization. Built for the Pi Network ecosystem.</p>
             <p>
               <Button variant="link" size="sm" className="p-0 h-auto">Privacy Policy</Button>
               {" • "}
               <Button variant="link" size="sm" className="p-0 h-auto">Terms of Service</Button>
               {" • "}
-              <Button variant="link" size="sm" className="p-0 h-auto">Pi Network Terms</Button>
+              <Button variant="link" size="sm" className="p-0 h-auto">Pi Network Integration</Button>
             </p>
           </div>
         </div>

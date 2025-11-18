@@ -32,7 +32,7 @@ serve(async (req) => {
       )
     }
 
-    // Validate Pi testnet address format (basic check)
+    // Validate Pi mainnet address format (basic check)
     if (!recipientAddress.startsWith('G') || recipientAddress.length !== 56) {
       return new Response(
         JSON.stringify({ error: 'Invalid Pi wallet address format' }),

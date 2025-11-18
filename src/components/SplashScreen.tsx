@@ -43,7 +43,7 @@ export const SplashScreen = ({ onLoadingComplete }: SplashScreenProps) => {
 
         {/* Progress */}
         <div className="w-64 space-y-2">
-          <Progress value={progress} className="h-1 bg-white/20" />
+          <Progress value={progress} className="h-1 bg-muted" />
           <p className="text-center text-white font-semibold text-lg">{progress}%</p>
         </div>
 

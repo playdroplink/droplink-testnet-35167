@@ -183,7 +183,7 @@ const Wallet = () => {
         <CardContent className="text-center">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Pi Network DROP Balance */}
-            <div className="bg-white/20 backdrop-blur rounded-lg p-6">
+            <div className="bg-card border border-border rounded-lg p-6">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Droplets className="w-6 h-6 text-white" />
                 <span className="text-white font-medium">Pi Network</span>
@@ -207,7 +207,7 @@ const Wallet = () => {
             </div>
 
             {/* Legacy Platform Balance */}
-            <div className="bg-white/20 backdrop-blur rounded-lg p-6">
+            <div className="bg-card border border-border rounded-lg p-6">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Coins className="w-6 h-6 text-white" />
                 <span className="text-white font-medium">Platform</span>

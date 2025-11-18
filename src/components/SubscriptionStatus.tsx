@@ -188,7 +188,7 @@ const SubscriptionStatus: React.FC = () => {
   const isExpired = daysLeft !== null && daysLeft <= 0;
 
   return (
-    <Card className={`bg-white/95 backdrop-blur-sm shadow-md border border-gray-200 ${planInfo.color} transition-all duration-200`}>
+    <Card className={`bg-white shadow-md border border-gray-200 ${planInfo.color} transition-all duration-200`}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
@@ -209,7 +209,7 @@ const SubscriptionStatus: React.FC = () => {
       
       <CardContent className="space-y-4">
         {/* User Info */}
-        <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg">
+        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
           <Pi className="h-6 w-6 text-blue-600" />
           <div>
             <p className="font-medium">Connected as: {piUser?.username}</p>
@@ -255,7 +255,7 @@ const SubscriptionStatus: React.FC = () => {
         </div>
 
         {/* Plan Features */}
-        <div className="bg-white/50 p-3 rounded-lg">
+        <div className="bg-muted p-3 rounded-lg">
           <div className="flex items-center justify-between mb-2">
             <h4 className="font-medium">Plan Features:</h4>
             {planInfo.priceMonthly && (
@@ -332,7 +332,7 @@ const SubscriptionStatus: React.FC = () => {
 
         {/* Quick Stats */}
         {subscription && subscription.plan_type !== 'free' && (
-          <div className="text-xs text-muted-foreground bg-white/30 p-2 rounded">
+          <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
             <p>Subscription ID: {subscription.id?.slice(0, 8)}...</p>
             <p>Started: {new Date(subscription.start_date).toLocaleDateString()}</p>
             <p>Auto-renew: {subscription.auto_renew ? 'Enabled' : 'Disabled'}</p>

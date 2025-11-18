@@ -135,12 +135,9 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       try {
         if (typeof window !== 'undefined' && window.Pi) {
           // Initialize Pi SDK for mainnet (production)
-          await window.Pi.init({ 
-            version: "2.0",
-            sandbox: false // Production mainnet mode
-          });
-          
-          console.log("Pi SDK initialized successfully (Mainnet Mode Enabled)");
+        await window.Pi.init({
+          version: "2.0"
+        });          console.log("Pi SDK initialized successfully (Mainnet Mode Enabled)");
           setIsInitialized(true);
           
           // Check ad network support
@@ -749,7 +746,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const response = await fetch(`https://api.testnet.minepi.com/accounts/${targetWallet}`);
+      const response = await fetch(`https://api.mainnet.minepi.com/accounts/${targetWallet}`);
       
       if (response.ok) {
         const accountData = await response.json();

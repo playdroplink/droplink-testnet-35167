@@ -434,7 +434,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
           </div>
           
           {currentWalletAddress && (
-            <div className="bg-white/20 backdrop-blur rounded-lg p-3 mb-4">
+            <div className="bg-card border border-border rounded-lg p-3 mb-4">
               <div className="flex items-center gap-2 justify-center">
                 <code className="text-xs text-white/90">
                   {currentWalletAddress.slice(0, 6)}...{currentWalletAddress.slice(-6)}
@@ -443,7 +443,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
                   variant="ghost" 
                   size="sm"
                   onClick={() => copyAddress(currentWalletAddress)}
-                  className="h-6 w-6 p-0 text-white hover:bg-white/20"
+                  className="h-6 w-6 p-0 text-foreground hover:bg-muted"
                 >
                   <Copy className="h-3 w-3" />
                 </Button>
@@ -451,7 +451,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
                   variant="ghost" 
                   size="sm"
                   onClick={() => generateQRCode(currentWalletAddress)}
-                  className="h-6 w-6 p-0 text-white hover:bg-white/20"
+                  className="h-6 w-6 p-0 text-foreground hover:bg-muted"
                 >
                   <QrCode className="h-3 w-3" />
                 </Button>
@@ -601,7 +601,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
                     <Alert>
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>
-                        To send tokens, you need to import your Pi Testnet private key.
+                        To send tokens, you need to import your Pi Mainnet private key.
                         <Button 
                           variant="link" 
                           className="p-0 h-auto font-normal underline ml-1"
@@ -673,7 +673,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
               <div className="space-y-2">
                 <Label>Network</Label>
                 <Badge variant={isMainnetMode ? "default" : "secondary"}>
-                  {isMainnetMode ? 'Pi Mainnet' : 'Pi Testnet'}
+                  Pi Mainnet
                 </Badge>
               </div>
               
@@ -781,7 +781,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
               Import Private Key
             </DialogTitle>
             <DialogDescription>
-              Import your Pi Testnet private key to enable sending tokens
+              Import your Pi Mainnet private key to enable sending tokens
             </DialogDescription>
           </DialogHeader>
           
@@ -811,7 +811,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
             </div>
             
             <div className="bg-muted p-3 rounded text-xs space-y-2">
-              <p className="font-semibold">How to get your Pi Testnet private key:</p>
+              <p className="font-semibold">How to get your Pi Mainnet private key:</p>
               <ol className="list-decimal list-inside space-y-1 ml-2">
                 <li>Open Pi Wallet app</li>
                 <li>Go to wallet settings</li>
@@ -860,7 +860,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
           
           <Button variant="outline" className="w-full justify-start" asChild>
             <a 
-              href={`https://api.testnet.minepi.com/assets?asset_code=${DROP_TOKEN.code}&asset_issuer=${DROP_TOKEN.issuer}`}
+              href={`https://api.mainnet.minepi.com/assets?asset_code=${DROP_TOKEN.code}&asset_issuer=${DROP_TOKEN.issuer}`}
               target="_blank"
               rel="noopener noreferrer"
             >

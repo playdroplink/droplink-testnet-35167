@@ -92,7 +92,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
       };
     } else if (buttonStyle === 'minimal') {
       return {
-        className: `${baseStyles} bg-white/10 text-white backdrop-blur-sm`,
+        className: `${baseStyles} bg-muted text-foreground border border-border`,
         style: {}
       };
     } else {
@@ -142,7 +142,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
       <div className="h-full overflow-y-auto pt-8 px-6 pb-6">
         <div className="flex flex-col items-center text-center space-y-6">
           {/* Logo */}
-          <div className="w-20 h-20 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden">
+          <div className="w-20 h-20 rounded-2xl bg-muted border border-border flex items-center justify-center overflow-hidden">
             {profile.logo ? (
               <img src={profile.logo} alt="Logo" className="w-full h-full object-cover" />
             ) : (
@@ -165,7 +165,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
           {/* YouTube Video */}
           {profile.youtubeVideoUrl && extractYouTubeVideoId(profile.youtubeVideoUrl) && (
             <div className="w-full">
-              <div className="relative pb-[56.25%] h-0 overflow-hidden rounded-lg bg-white/10">
+              <div className="relative pb-[56.25%] h-0 overflow-hidden rounded-lg bg-muted">
                 <div className="absolute inset-0 flex items-center justify-center">
                   <FaYoutube className="w-8 h-8 text-white/50" />
                 </div>
@@ -217,7 +217,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
               {profile.products.slice(0, 2).map((product) => (
                 <div 
                   key={product.id}
-                  className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-3 text-left"
+                  className="bg-muted border border-border rounded-xl p-3 text-left"
                 >
                   <div className="flex justify-between items-start mb-1">
                     <h4 className="text-xs font-semibold text-white truncate">{product.title || "Untitled"}</h4>

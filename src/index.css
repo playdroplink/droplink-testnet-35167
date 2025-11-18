@@ -95,10 +95,10 @@ All colors MUST be HSL.
   }
 
   .glass {
-    @apply backdrop-blur-md bg-white/10 dark:bg-black/10 border border-white/20 dark:border-white/10;
+    @apply border border-border bg-background/95 shadow-xl;
   }
 
   .glass-card {
-    @apply backdrop-blur-lg bg-white/60 dark:bg-black/40 border border-white/30 dark:border-white/20 shadow-xl;
+    @apply border border-border bg-card shadow-xl;
   }
 }
