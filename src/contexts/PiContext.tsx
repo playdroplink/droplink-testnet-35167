@@ -9,6 +9,11 @@ interface PiUser {
   wallet_address?: string;
 }
 
+interface DropTokenBalance {
+  balance: string;
+  hasTrustline: boolean;
+}
+
 interface AuthResult {
   accessToken: string;
   user: PiUser;
@@ -62,6 +67,7 @@ interface PiContextType {
   isInitialized: boolean;
   adNetworkSupported: boolean;
   error: string | null;
+  dropBalance: DropTokenBalance | null;
   
   // Authentication
   signIn: (scopes?: string[]) => Promise<void>;
@@ -72,6 +78,12 @@ interface PiContextType {
   
   // Payments  
   createPayment: (amount: number, memo: string, metadata?: any) => Promise<void>;
+  
+  // DROP Token Functions
+  checkDropBalance: () => Promise<DropTokenBalance | null>;
+  createDropTrustline: () => Promise<boolean>;
+  sendDropTokens: (recipient: string, amount: string) => Promise<string | null>;
+  requestDropTokens: (amount?: number) => Promise<boolean>;
   
   // Ads
   showRewardedAd: () => Promise<boolean>;
@@ -92,9 +104,17 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [adNetworkSupported, setAdNetworkSupported] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dropBalance, setDropBalance] = useState<DropTokenBalance | null>(null);
   
   // Derived state: user is authenticated if we have a Pi user and access token
   const isAuthenticated = !!piUser && !!accessToken;
+
+  // DROP Token Configuration
+  const DROP_TOKEN = {
+    code: 'DROP',
+    issuer: 'SB4I6DX4Y6PS7SAJW2SFUQZP3DAW5HE7RBAKISOMTVACARMFCMRBH46I',
+    distributor: 'SBS4OY37QMZ67U2WLWZQUUFUV2JOBKWCBFS7IZDOJV3NZPYC3OOZ4OIM'
+  };
 
   useEffect(() => {
     const initializePi = async () => {
@@ -581,6 +601,157 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Check DROP token balance
+  const checkDropBalance = async (): Promise<DropTokenBalance | null> => {
+    if (!piUser?.wallet_address) {
+      return null;
+    }
+
+    try {
+      const response = await fetch(`https://api.testnet.minepi.com/accounts/${piUser.wallet_address}`);
+      
+      if (response.ok) {
+        const accountData = await response.json();
+        
+        // Find DROP token balance
+        const dropBalance = accountData.balances?.find((bal: any) => 
+          bal.asset_code === DROP_TOKEN.code && 
+          bal.asset_issuer === DROP_TOKEN.issuer
+        );
+
+        const result: DropTokenBalance = {
+          balance: dropBalance ? dropBalance.balance : '0',
+          hasTrustline: !!dropBalance
+        };
+
+        setDropBalance(result);
+        return result;
+      }
+    } catch (error) {
+      console.error('Error checking DROP balance:', error);
+    }
+
+    return null;
+  };
+
+  // Create DROP token trustline
+  const createDropTrustline = async (): Promise<boolean> => {
+    if (!isAuthenticated || !window.Pi) {
+      toast("Please authenticate with Pi Network first", {
+        description: "Authentication Required",
+        duration: 5000,
+      });
+      return false;
+    }
+
+    try {
+      // In a real implementation, this would use Pi SDK to create trustline
+      // For now, we'll show instructions to the user
+      toast("Please add DROP token to your Pi Wallet", {
+        description: "Go to Tokens > Search for 'DROP' > Add to wallet",
+        duration: 8000,
+      });
+
+      // Simulate successful trustline creation
+      setTimeout(async () => {
+        await checkDropBalance();
+      }, 2000);
+
+      return true;
+    } catch (error) {
+      console.error('Error creating DROP trustline:', error);
+      toast("Failed to create trustline for DROP token", {
+        description: "Trustline Error",
+        duration: 5000,
+      });
+      return false;
+    }
+  };
+
+  // Send DROP tokens
+  const sendDropTokens = async (recipient: string, amount: string): Promise<string | null> => {
+    if (!isAuthenticated || !window.Pi) {
+      toast("Please authenticate with Pi Network first", {
+        description: "Authentication Required",
+        duration: 5000,
+      });
+      return null;
+    }
+
+    try {
+      // In a real implementation, this would create and sign a Stellar transaction
+      // For demonstration, we'll simulate the process
+      toast(`Sending ${amount} DROP tokens to ${recipient}`, {
+        description: "Transaction Processing",
+        duration: 5000,
+      });
+
+      // Simulate transaction hash
+      const txHash = `drop_tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Update balance after sending
+      setTimeout(async () => {
+        await checkDropBalance();
+      }, 3000);
+
+      return txHash;
+    } catch (error) {
+      console.error('Error sending DROP tokens:', error);
+      toast("Failed to send DROP tokens", {
+        description: "Transaction Error",
+        duration: 5000,
+      });
+      return null;
+    }
+  };
+
+  // Request DROP tokens from distributor
+  const requestDropTokens = async (amount: number = 100): Promise<boolean> => {
+    if (!isAuthenticated || !piUser?.wallet_address) {
+      toast("Please authenticate with Pi Network first", {
+        description: "Authentication Required",
+        duration: 5000,
+      });
+      return false;
+    }
+
+    try {
+      // Call backend function to distribute tokens
+      const { data, error } = await supabase.functions.invoke('distribute-drop-tokens', {
+        body: { 
+          recipientAddress: piUser.wallet_address,
+          amount: amount.toString()
+        },
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast(`Received ${amount} DROP tokens!`, {
+        description: "Tokens Distributed",
+        duration: 5000,
+      });
+
+      // Update balance
+      setTimeout(async () => {
+        await checkDropBalance();
+      }, 2000);
+
+      return true;
+    } catch (error) {
+      console.error('Error requesting DROP tokens:', error);
+      toast("Failed to request DROP tokens", {
+        description: "Distribution Error",
+        duration: 5000,
+      });
+      return false;
+    }
+  };
+
   const value: PiContextType = {
     piUser,
     accessToken,
@@ -589,10 +760,15 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     isInitialized,
     adNetworkSupported,
     error,
+    dropBalance,
     signIn,
     signOut,
     getPiUserProfile,
     createPayment,
+    checkDropBalance,
+    createDropTrustline,
+    sendDropTokens,
+    requestDropTokens,
     showRewardedAd,
     showInterstitialAd,
     isAdReady,

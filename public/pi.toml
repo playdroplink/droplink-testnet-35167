@@ -1,0 +1,57 @@
+# Pi Network Token Information File
+# This file must be hosted at: https://droplink.space/.well-known/pi.toml
+# Content-Type: text/plain
+
+# DROP Token Configuration for Pi Network
+[[CURRENCIES]]
+code="DROP"
+issuer="GBVTV77XFMDYSSVIG6ZGSRAGZ3S7KA4275YYLOLIROOD3Y3F3TH5U3EI"
+name="MRWAIN ORGANIZATION"
+desc="DropLink platform token - earn DROP by creating bio pages, sharing content, and engaging with the community. No intrinsic value, utility token for platform features."
+image="https://i.ibb.co/HTfyRcwm/Untitled-design-8-1.png"
+
+# Additional token metadata
+website="https://droplink.space"
+documentation="https://droplink.space/docs"
+support_email="support@droplink.space"
+
+# Token economics
+max_supply="100000000"
+initial_supply="100000000"
+circulating_supply="0"
+
+# Platform information
+platform_name="DropLink"
+platform_description="Create stunning bio pages and earn rewards"
+social_twitter="https://twitter.com/droplink"
+social_github="https://github.com/playdroplink"
+
+# Compliance and legal
+jurisdiction="Global"
+terms_of_service="https://droplink.space/terms"
+privacy_policy="https://droplink.space/privacy"
+
+# Technical specifications
+blockchain="Pi Network"
+network="Pi Testnet"
+token_standard="Stellar Asset"
+smart_contract_verified=true
+
+# Distribution information
+airdrop_eligible=true
+liquidity_pool_available=true
+staking_available=false
+farming_available=false
+
+# Use cases
+utilities=[
+  "Platform rewards",
+  "Premium features access", 
+  "Bio page customization",
+  "Analytics access",
+  "Early feature access",
+  "Community governance voting"
+]
+
+# Risk disclaimer
+risk_warning="This token is experimental and has no guarantee of value. Only participate if you understand the risks involved."

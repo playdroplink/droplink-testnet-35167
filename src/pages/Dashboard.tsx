@@ -23,6 +23,7 @@ import { performCompleteSignOut } from "@/lib/auth-utils";
 import { UserPreferencesManager } from "@/components/UserPreferencesManager";
 import { AboutModal } from "@/components/AboutModal";
 import { FutureFeaturesDashboard } from "@/components/FutureFeaturesDashboard";
+import { DropTokenManager } from "@/components/DropTokenManager";
 import {
   Drawer,
   DrawerClose,
@@ -57,6 +58,7 @@ import {
   Bot,
   Info,
   Sparkles,
+  Coins,
 } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodeDialog } from "@/components/QRCodeDialog";
@@ -1294,7 +1296,7 @@ const Dashboard = () => {
         <div className={`flex-1 overflow-y-auto p-4 lg:p-8 ${showPreview ? 'hidden lg:block' : 'block'}`}>
           <div className="max-w-2xl mx-auto">
             <Tabs defaultValue="profile" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 mb-6">
+              <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 mb-6">
                 <TabsTrigger value="profile" className="text-xs sm:text-sm">
                   <Settings className="w-4 h-4 mr-1 lg:mr-2" />
                   <span className="hidden sm:inline">Profile</span>
@@ -1310,6 +1312,10 @@ const Dashboard = () => {
                 <TabsTrigger value="features" className="text-xs sm:text-sm hidden lg:flex">
                   <Sparkles className="w-4 h-4 mr-2" />
                   Features
+                </TabsTrigger>
+                <TabsTrigger value="drop-tokens" className="text-xs sm:text-sm hidden lg:flex">
+                  <Coins className="w-4 h-4 mr-2" />
+                  DROP
                 </TabsTrigger>
                 <TabsTrigger value="preferences" className="text-xs sm:text-sm hidden lg:flex">
                   <User className="w-4 h-4 mr-2" />
@@ -1792,6 +1798,11 @@ const Dashboard = () => {
               {/* Future Features Tab */}
               <TabsContent value="features" className="pb-8">
                 <FutureFeaturesDashboard />
+              </TabsContent>
+
+              {/* DROP Token Tab */}
+              <TabsContent value="drop-tokens" className="pb-8">
+                <DropTokenManager piUser={piUser} piWallet={piUser?.wallet_address} />
               </TabsContent>
 
               {/* User Preferences Tab */}
