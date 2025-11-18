@@ -65,8 +65,8 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
     try {
       setIsLoading(true);
       
-      // Check Pi Mainnet for balance
-      const response = await fetch(`https://api.mainnet.minepi.com/accounts/${targetWallet}`);
+      // Check Pi Testnet for balance
+      const response = await fetch(`https://api.testnet.minepi.com/accounts/${targetWallet}`);
       
       if (response.ok) {
         const accountData = await response.json();
@@ -706,7 +706,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
               <Separator />
               
               <Button 
-                onClick={checkDropBalance}
+                onClick={() => checkDropBalance()}
                 variant="outline"
                 disabled={isLoading}
                 className="w-full"
@@ -860,7 +860,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
           
           <Button variant="outline" className="w-full justify-start" asChild>
             <a 
-              href={`https://api.mainnet.minepi.com/assets?asset_code=${DROP_TOKEN.code}&asset_issuer=${DROP_TOKEN.issuer}`}
+              href={`https://api.testnet.minepi.com/assets?asset_code=${DROP_TOKEN.code}&asset_issuer=${DROP_TOKEN.issuer}`}
               target="_blank"
               rel="noopener noreferrer"
             >

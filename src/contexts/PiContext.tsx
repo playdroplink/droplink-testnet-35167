@@ -137,7 +137,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           // Initialize Pi SDK for mainnet (production)
           await window.Pi.init({ 
             version: "2.0",
-            sandbox: false // Production mainnet mode
+            sandbox: true // Development testnet mode
           });
           
           console.log("Pi SDK initialized successfully (Mainnet Mode Enabled)");
@@ -160,7 +160,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           if (storedToken && storedUser) {
             try {
               // Verify token with Pi API
-              const response = await fetch('https://api.mainnet.minepi.com/v2/me', {
+              const response = await fetch('https://api.testnet.minepi.com/v2/me', {
                 headers: {
                   'Authorization': `Bearer ${storedToken}`
                 }
@@ -470,7 +470,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       const authResult = await window.Pi.authenticate(scopes, handleIncompletePayment);
       
       // Verify with Pi API
-      const response = await fetch('https://api.mainnet.minepi.com/v2/me', {
+      const response = await fetch('https://api.testnet.minepi.com/v2/me', {
         headers: {
           'Authorization': `Bearer ${authResult.accessToken}`
         }
@@ -749,7 +749,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const response = await fetch(`https://api.mainnet.minepi.com/accounts/${targetWallet}`);
+      const response = await fetch(`https://api.testnet.minepi.com/accounts/${targetWallet}`);
       
       if (response.ok) {
         const accountData = await response.json();

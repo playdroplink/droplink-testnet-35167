@@ -68,8 +68,8 @@
     }
   ],
   "env": {
-    "VITE_PI_NETWORK": "mainnet",
-    "VITE_API_URL": "https://api.mainnet.minepi.com",
+    "VITE_PI_NETWORK": "testnet",
+    "VITE_API_URL": "https://api.testnet.minepi.com",
     "VITE_DOMAIN": "droplink.space"
   }
 }

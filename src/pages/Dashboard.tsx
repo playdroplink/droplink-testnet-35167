@@ -104,7 +104,6 @@ interface ProfileData {
   }>;
   hasPremium?: boolean;
   showShareButton?: boolean;
-  piWalletAddress?: string;
   piDonationMessage?: string;
 }
 
