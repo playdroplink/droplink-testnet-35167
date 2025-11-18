@@ -103,7 +103,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
             sandbox: true // Always use sandbox mode
           });
           
-          console.log("Pi SDK initialized successfully");
+          console.log("Pi SDK initialized successfully (Sandbox Mode Enabled)");
           setIsInitialized(true);
           
           // Check ad network support

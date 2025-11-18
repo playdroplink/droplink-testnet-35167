@@ -179,23 +179,45 @@ const PublicBio = () => {
     }
 
     try {
-      // Fetch profile from database
+      // Direct table access (robust fallback)
+      console.log("Loading profile for username:", username);
+      
       const { data: profileData, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("username", username)
-        .single();
+        .maybeSingle();
 
-      if (error || !profileData) {
+      if (error) {
+        console.error("Database error:", error);
         setNotFound(true);
         setLoading(false);
         return;
       }
 
+      if (!profileData) {
+        console.log("No profile found for username:", username);
+        setNotFound(true);
+        setLoading(false);
+        return;
+      }
+
+      console.log("Profile loaded successfully:", profileData);
       setProfileId(profileData.id);
 
-      // Track page view
-      trackAnalytics(profileData.id, "view", {});
+      // Track page view (basic analytics)
+      try {
+        await supabase.from("analytics").insert({
+          profile_id: profileData.id,
+          event_type: "view",
+          event_data: { source: "public_share" },
+          user_agent: navigator.userAgent,
+        });
+        console.log("Analytics tracked");
+      } catch (trackError) {
+        console.log("Analytics tracking failed:", trackError);
+        // Silent fail - don't break the user experience
+      }
 
       // Fetch products for this profile
       const { data: productsData } = await supabase
@@ -233,7 +255,7 @@ const PublicBio = () => {
         logo: profileData.logo || "",
         businessName: profileData.business_name || "",
         description: profileData.description || "",
-        youtubeVideoUrl: (profileData as any).youtube_video_url || "",
+        youtubeVideoUrl: profileData.youtube_video_url || "",
         socialLinks: socialLinks || {
           twitter: "",
           instagram: "",
@@ -264,7 +286,7 @@ const PublicBio = () => {
         },
         username: profileData.username || "",
         hasPremium: profileData.has_premium || false,
-        showShareButton: (profileData as any).show_share_button !== false,
+        showShareButton: profileData.show_share_button !== false,
       });
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -460,30 +482,58 @@ const PublicBio = () => {
             <div className="flex gap-3 justify-center pt-4">
               <Button
                 onClick={handleFollow}
-                className={`${getIconStyle(profile.theme.iconStyle)} gap-2`}
-                style={isFollowing ? { backgroundColor: 'rgba(255, 255, 255, 0.1)' } : { backgroundColor: profile.theme.primaryColor }}
+                className={`${getIconStyle(profile.theme.iconStyle)} gap-2 px-6 py-3`}
+                style={isFollowing ? { 
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  border: `2px solid ${profile.theme.primaryColor}`
+                } : { 
+                  backgroundColor: profile.theme.primaryColor 
+                }}
                 variant={isFollowing ? "outline" : "default"}
               >
                 {isFollowing ? (
                   <>
-                    <UserMinus className="w-4 h-4" />
-                    Unfollow
+                    <UserMinus className="w-5 h-5" />
+                    Following
                   </>
                 ) : (
                   <>
-                    <UserPlus className="w-4 h-4" />
+                    <UserPlus className="w-5 h-5" />
                     Follow
                   </>
                 )}
               </Button>
               <Button
                 onClick={() => setShowGiftDialog(true)}
-                className={`${getIconStyle(profile.theme.iconStyle)} gap-2`}
-                style={{ backgroundColor: profile.theme.primaryColor }}
+                className={`${getIconStyle(profile.theme.iconStyle)} gap-2 px-6 py-3`}
+                style={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  border: `2px solid ${profile.theme.primaryColor}`
+                }}
+                variant="outline"
               >
-                <Gift className="w-4 h-4" />
-                Send Gift
+                <Gift className="w-5 h-5" />
+                Gift
               </Button>
+            </div>
+          )}
+
+          {/* Anonymous Follow Prompt */}
+          {!currentUserProfileId && (
+            <div className="flex justify-center pt-4">
+              <div className="text-center p-4 bg-white/5 rounded-lg border border-white/10">
+                <p className="text-sm text-gray-300 mb-3">
+                  Like this store? Follow to stay connected!
+                </p>
+                <Button
+                  onClick={() => window.location.href = "/"}
+                  className={`${getIconStyle(profile.theme.iconStyle)} gap-2`}
+                  style={{ backgroundColor: profile.theme.primaryColor }}
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Sign Up to Follow
+                </Button>
+              </div>
             </div>
           )}
         </div>

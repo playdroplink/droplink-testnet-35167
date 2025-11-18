@@ -12,11 +12,10 @@ export const PlanGate = ({
   minPlan: Exclude<PlanType, "free">; // premium or pro
   children: ReactNode;
 }) => {
-  // TEMPORARILY DISABLED - ALL FEATURES UNLOCKED FOR TESTING
-  // TODO: Re-enable plan gating after testing subscription workflow
+  // ALL FEATURES UNLOCKED - NO RESTRICTIONS
   return <>{children}</>;
   
-  /* Original plan gating logic - commented out for testing
+  /* Plan gating completely disabled - all features available
   const navigate = useNavigate();
   const { plan, loading, expiresAt } = useActiveSubscription();
 

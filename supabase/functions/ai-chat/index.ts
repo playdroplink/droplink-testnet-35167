@@ -152,20 +152,22 @@ serve(async (req) => {
 
     systemPrompt += `\n\nBe helpful, friendly, and professional. If you don't know something, be honest about it.`;
 
-    // Call OpenAI API
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is not configured');
+    // Call OpenRouter AI API
+    const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY');
+    if (!OPENROUTER_API_KEY) {
+      throw new Error('OPENROUTER_API_KEY is not configured');
     }
 
-    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    const aiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
+        'HTTP-Referer': Deno.env.get('SITE_URL') || 'https://droplink.vercel.app',
+        'X-Title': Deno.env.get('SITE_NAME') || 'Droplink',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'openrouter/sherlock-dash-alpha',
         messages: [
           { role: 'system', content: systemPrompt },
           ...messages,

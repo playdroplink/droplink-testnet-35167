@@ -279,6 +279,7 @@ const Dashboard = () => {
       // Determine user identifier
       let userIdentifier: string | null = null;
       let isPiUser = false;
+      let isNewUser = false;
       
       if (isAuthenticated && piUser) {
         // Pi Network user
@@ -330,6 +331,12 @@ const Dashboard = () => {
           .maybeSingle();
         profileData = result.data;
         error = result.error;
+        
+        // Check if this is a new Pi user
+        if (!profileData && !error) {
+          isNewUser = true;
+          console.log('New Pi user detected:', piUser.username);
+        }
       } else if (supabaseUser) {
         // Email/Gmail user - load by user_id
         const result = await supabase
@@ -339,6 +346,12 @@ const Dashboard = () => {
           .maybeSingle();
         profileData = result.data;
         error = result.error;
+        
+        // Check if this is a new email user
+        if (!profileData && !error) {
+          isNewUser = true;
+          console.log('New email user detected:', supabaseUser.email);
+        }
       }
 
       if (error) {
@@ -443,6 +456,13 @@ const Dashboard = () => {
         };
         
         setProfile(loadedProfile);
+        
+        // Welcome back existing users (only on first load of session)
+        if (!isNewUser && !sessionStorage.getItem(`welcomed_${profileData.id}`)) {
+          toast.success(`👋 Welcome back, ${loadedProfile.businessName}!`);
+          sessionStorage.setItem(`welcomed_${profileData.id}`, 'true');
+        }
+        
           // Save to localStorage with metadata
         try {
           const profileToStore = {
@@ -490,6 +510,7 @@ const Dashboard = () => {
             const emailUsername = supabaseUser.email?.split("@")[0] || `user-${supabaseUser.id.slice(0, 8)}`;
             const sanitizedUsername = emailUsername.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
             
+            console.log('Creating email user profile for:', sanitizedUsername);
             const { data: newProfile, error: createError } = await supabase
               .from("profiles")
               .insert({
@@ -504,6 +525,35 @@ const Dashboard = () => {
             
             if (createError) {
               console.error("Error creating email user profile:", createError);
+              // Check if it's a duplicate username error
+              if (createError.code === '23505') {
+                // Username conflict, try with a random suffix
+                const randomSuffix = Math.random().toString(36).substring(2, 8);
+                const uniqueUsername = `${sanitizedUsername}-${randomSuffix}`;
+                console.log('Username conflict, trying:', uniqueUsername);
+                
+                const { data: retryProfile, error: retryError } = await supabase
+                  .from("profiles")
+                  .insert({
+                    user_id: supabaseUser.id,
+                    username: uniqueUsername,
+                    business_name: sanitizedUsername,
+                    description: "",
+                    email: supabaseUser.email || "",
+                  })
+                  .select()
+                  .single();
+                  
+                if (retryError) {
+                  throw retryError;
+                } else if (retryProfile) {
+                  newProfileId = retryProfile.id;
+                  setProfileId(newProfileId);
+                  console.log("Created email user profile with unique username:", newProfileId);
+                }
+              } else {
+                throw createError;
+              }
             } else if (newProfile) {
               newProfileId = newProfile.id;
               setProfileId(newProfileId);
@@ -512,6 +562,45 @@ const Dashboard = () => {
           }
         } catch (dbError) {
           console.error("Database profile creation failed:", dbError);
+          // Show user-friendly error message
+          if (dbError.message?.includes('table') || dbError.message?.includes('relation') || dbError.message?.includes('does not exist')) {
+            toast.error('⚠️ Database setup required. Check console for setup instructions.');
+            console.log(`
+🗄️ DATABASE SETUP REQUIRED:
+            
+1. Go to Supabase Dashboard: https://app.supabase.com/
+2. Select project: idkjfuctyukspexmijvb  
+3. Go to SQL Editor
+4. Run the complete schema from: supabase/migrations/20251118000001_complete_database_schema.sql
+   
+   OR run this minimal SQL:
+   
+   CREATE TABLE IF NOT EXISTS public.profiles (
+       id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+       created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+       username TEXT UNIQUE NOT NULL,
+       pi_user_id TEXT,
+       business_name TEXT DEFAULT '',
+       email TEXT DEFAULT '',
+       description TEXT DEFAULT '',
+       has_premium BOOLEAN DEFAULT false,
+       pi_wallet_address TEXT DEFAULT ''
+   );
+   
+   ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+   CREATE POLICY "Public access" ON public.profiles FOR ALL USING (true);
+   GRANT ALL ON public.profiles TO anon, authenticated;
+
+5. Refresh the app after running the SQL.
+            `);
+          } else if (dbError.code === '23505') {
+            toast.error('Username already taken. Please try a different one.');
+          } else {
+            toast.error('Failed to create profile. Please try again.');
+          }
+          
+          // Don't block the app, continue with local profile
+          console.log('Continuing with local-only profile due to database error');
         }
         
         const defaultProfile = {
@@ -563,10 +652,20 @@ const Dashboard = () => {
           console.error("Error saving to localStorage:", e);
         }
         
-        if (newProfileId) {
-          toast.success(`Profile created successfully! Welcome ${defaultName}!`);
+        if (newProfileId && isNewUser) {
+          // Only show welcome message for genuinely new users with successful DB creation
+          toast.success(`🎉 Welcome to Droplink, ${defaultName}! Your store is ready!`);
+          // Show onboarding message
+          setTimeout(() => {
+            toast.info('💡 Tip: Customize your profile, add links, and share your unique URL!');
+          }, 2000);
+        } else if (newProfileId && !isNewUser) {
+          console.log('Profile restored for returning user');
+        } else if (isNewUser) {
+          // New user but no DB profile created - show different message
+          toast.info(`Profile created locally. ${isPiUser ? 'Pi username' : 'Email'} recognized!`);
         } else {
-          toast.info(`Profile auto-created with your ${isPiUser ? 'Pi username' : 'email'}`);
+          console.log('Using cached profile data');
         }
       }
     } catch (error) {

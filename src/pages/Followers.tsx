@@ -28,6 +28,7 @@ const Followers = () => {
   const [following, setFollowing] = useState<FollowerData[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
+  const [currentUsername, setCurrentUsername] = useState<string | null>(null);
 
   useEffect(() => {
     loadFollowData();
@@ -43,7 +44,7 @@ const Followers = () => {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("id")
+        .select("id, username")
         .eq("user_id", user.id)
         .single();
 
@@ -54,6 +55,7 @@ const Followers = () => {
       }
 
       setCurrentProfileId(profile.id);
+      setCurrentUsername(profile.username);
 
       // Load followers
       const { data: followersData, error: followersError } = await supabase
@@ -117,7 +119,31 @@ const Followers = () => {
     }
   };
 
-  const renderProfileCard = (profile: FollowerProfile, showUnfollow?: string) => (
+  const handleFollowUser = async (targetProfileId: string) => {
+    if (!currentProfileId) return;
+    
+    try {
+      const { error } = await supabase
+        .from("followers")
+        .insert({
+          follower_profile_id: currentProfileId,
+          following_profile_id: targetProfileId,
+        });
+
+      if (error) throw error;
+      toast.success("Started following!");
+      loadFollowData(); // Refresh data
+    } catch (error) {
+      console.error("Follow error:", error);
+      toast.error("Failed to follow user");
+    }
+  };
+
+  const isCurrentlyFollowing = (profileId: string) => {
+    return following.some(f => f.following_profile.id === profileId);
+  };
+
+  const renderProfileCard = (profile: FollowerProfile, showUnfollow?: string, isFollowerCard?: boolean) => (
     <Card key={profile.id} className="hover:shadow-lg transition-shadow">
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
@@ -151,17 +177,31 @@ const Followers = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => window.open(`/${profile.username}`, "_blank")}
+              onClick={() => window.open(`/u/${profile.username}`, "_blank")}
+              title="Visit Store"
             >
               <ExternalLink className="w-4 h-4" />
             </Button>
+            
+            {isFollowerCard && !isCurrentlyFollowing(profile.id) && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => handleFollowUser(profile.id)}
+                title="Follow Back"
+              >
+                <UserPlus className="w-4 h-4" />
+              </Button>
+            )}
+            
             {showUnfollow && (
               <Button
                 variant="destructive"
                 size="sm"
                 onClick={() => handleUnfollow(showUnfollow)}
+                title="Unfollow"
               >
-                Unfollow
+                <UserCheck className="w-4 h-4" />
               </Button>
             )}
           </div>
@@ -206,12 +246,52 @@ const Followers = () => {
               {followers.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No followers yet</p>
+                  <h3 className="text-lg font-semibold mb-2">No followers yet</h3>
+                  <p className="text-sm">Share your store URL to get followers:</p>
+                  {currentUsername && (
+                    <div className="mt-3 p-3 bg-muted rounded-lg">
+                      <p className="font-mono text-sm break-all">
+                        {window.location.origin}/u/{currentUsername}
+                      </p>
+                      <Button 
+                        size="sm" 
+                        className="mt-2"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/u/${currentUsername}`);
+                          toast.success("Store URL copied!");
+                        }}
+                      >
+                        Copy Store URL
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : (
-                followers.map((follower) =>
-                  renderProfileCard(follower.follower_profile as FollowerProfile)
-                )
+                <>
+                  <div className="text-center mb-4 p-3 bg-muted rounded-lg">
+                    <p className="text-sm text-muted-foreground mb-2">Your Store URL:</p>
+                    {currentUsername && (
+                      <>
+                        <p className="font-mono text-sm break-all mb-2">
+                          {window.location.origin}/u/{currentUsername}
+                        </p>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            navigator.clipboard.writeText(`${window.location.origin}/u/${currentUsername}`);
+                            toast.success("Store URL copied!");
+                          }}
+                        >
+                          Copy Store URL
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                  {followers.map((follower) =>
+                    renderProfileCard(follower.follower_profile as FollowerProfile, undefined, true)
+                  )}
+                </>
               )}
             </TabsContent>
 
@@ -219,7 +299,8 @@ const Followers = () => {
               {following.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <UserPlus className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Not following anyone yet</p>
+                  <h3 className="text-lg font-semibold mb-2">Not following anyone yet</h3>
+                  <p className="text-sm">Visit other stores and click the follow button to connect with creators!</p>
                 </div>
               ) : (
                 following.map((follow) =>
@@ -232,7 +313,7 @@ const Followers = () => {
       </Card>
 
       <div className="mt-6 text-center">
-        <Button variant="outline" onClick={() => navigate("/dashboard")}>
+        <Button variant="outline" onClick={() => navigate("/")}>
           Back to Dashboard
         </Button>
       </div>

@@ -6,6 +6,14 @@
   "devCommand": "npm run dev",
   "rewrites": [
     {
+      "source": "/u/([^/]+)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/profile/([^/]+)",
+      "destination": "/index.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
