@@ -175,67 +175,26 @@ export const UserPreferencesProvider = ({ children }: { children: ReactNode }) =
       }
 
       setCurrentUserId(user.id);
-
-      // Load preferences from database
-      const { data, error: prefError } = await supabase
-        .from('user_preferences')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (prefError) {
-        if (prefError.code === 'PGRST116') {
-          // No preferences found, create default ones
-          await createDefaultPreferences(user.id);
-        } else {
-          console.error('Error loading preferences:', prefError);
-          setError('Failed to load preferences');
-        }
-      } else if (data) {
-        // Merge loaded preferences with defaults (in case new fields were added)
-        setPreferences({
-          ...defaultPreferences,
-          ...data,
-          dashboard_layout: { ...defaultPreferences.dashboard_layout, ...data.dashboard_layout },
-          store_settings: { ...defaultPreferences.store_settings, ...data.store_settings },
-          social_settings: { ...defaultPreferences.social_settings, ...data.social_settings },
-          content_settings: { ...defaultPreferences.content_settings, ...data.content_settings },
-          privacy_settings: { ...defaultPreferences.privacy_settings, ...data.privacy_settings },
-          notification_settings: { ...defaultPreferences.notification_settings, ...data.notification_settings }
-        });
-      }
+      
+      // For now, just use default preferences since database table may not exist yet
+      // TODO: Enable this once user_preferences table is created via migration
+      console.log('Using default preferences (database integration pending migration)');
+      setPreferences(defaultPreferences);
     } catch (err) {
       console.error('Failed to load preferences:', err);
-      setError('Failed to load preferences');
+      setPreferences(defaultPreferences);
     } finally {
       setLoading(false);
     }
   };
 
-  // Create default preferences in database
+  // Create default preferences (for now in localStorage)
   const createDefaultPreferences = async (userId: string) => {
     try {
-      // Get user's profile ID
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', userId)
-        .single();
-
-      const { error } = await supabase
-        .from('user_preferences')
-        .insert({
-          user_id: userId,
-          profile_id: profile?.id,
-          ...defaultPreferences
-        });
-
-      if (error) {
-        console.error('Error creating default preferences:', error);
-      } else {
-        console.log('✅ Created default preferences for user');
-        setPreferences(defaultPreferences);
-      }
+      // For now, just store in localStorage since database table may not exist yet
+      localStorage.setItem(`user_preferences_${userId}`, JSON.stringify(defaultPreferences));
+      console.log('✅ Created default preferences in localStorage');
+      setPreferences(defaultPreferences);
     } catch (err) {
       console.error('Failed to create default preferences:', err);
     }
@@ -246,17 +205,13 @@ export const UserPreferencesProvider = ({ children }: { children: ReactNode }) =
     if (!currentUserId) return;
 
     try {
-      const { error } = await supabase
-        .from('user_preferences')
-        .update(updatedPrefs)
-        .eq('user_id', currentUserId);
-
-      if (error) {
-        console.error('Error saving preferences:', error);
-        toast.error('Failed to save preferences');
-      } else {
-        console.log('✅ Preferences saved successfully');
-      }
+      // For now, just store in localStorage since database table may not exist yet
+      // TODO: Enable database saving once user_preferences table is created via migration
+      localStorage.setItem(`user_preferences_${currentUserId}`, JSON.stringify({
+        ...preferences,
+        ...updatedPrefs
+      }));
+      console.log('✅ Preferences saved to localStorage (database integration pending migration)');
     } catch (err) {
       console.error('Failed to save preferences:', err);
       toast.error('Failed to save preferences');

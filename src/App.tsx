@@ -18,7 +18,6 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import CustomDomain from "./pages/CustomDomain";
 import ProfileDebug from "./pages/ProfileDebug";
-import { Homepage } from "./pages/Homepage";
 import { SplashScreen } from "./components/SplashScreen";
 
 const queryClient = new QueryClient();
@@ -55,8 +54,7 @@ const App = () => {
           }}
         >
           <Routes>
-            <Route path="/" element={<Homepage />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/" element={<Dashboard />} />
             <Route path="/auth" element={<PiAuth />} />
             <Route path="/email-auth" element={<EmailAuth />} />
             <Route path="/subscription" element={<Subscription />} />

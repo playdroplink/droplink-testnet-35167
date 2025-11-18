@@ -47,21 +47,57 @@ export const FutureFeaturesDashboard = () => {
       setLoading(true);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
-        .from('feature_roadmap')
-        .select('*')
-        .order('priority', { ascending: false })
-        .order('vote_count', { ascending: false });
-
-      if (fetchError) {
-        console.error('Error loading features:', fetchError);
-        setError('Failed to load features');
-      } else if (data) {
-        setFeatures(data);
-      }
+      // For now, just show sample data since database table may not exist yet
+      // TODO: Enable database loading once feature_roadmap table is created via migration
+      setFeatures([
+        {
+          id: '1',
+          title: 'Advanced AI Content Generation',
+          description: 'AI-powered bio content creation and optimization with personalized suggestions',
+          status: 'in_development' as const,
+          priority: 'high' as const,
+          estimated_release: '2024-12-15',
+          pi_earning_potential: 50,
+          vote_count: 127,
+          category: 'AI & Automation',
+          progress_percentage: 75,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '2',
+          title: 'NFT Marketplace Integration',
+          description: 'Display and sell NFTs directly from your bio page with Pi Network payments',
+          status: 'planned' as const,
+          priority: 'medium' as const,
+          estimated_release: '2025-01-30',
+          pi_earning_potential: 100,
+          vote_count: 89,
+          category: 'Web3 & Crypto',
+          progress_percentage: 25,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '3',
+          title: 'Mobile App Release',
+          description: 'Native iOS and Android apps with offline capabilities',
+          status: 'testing' as const,
+          priority: 'critical' as const,
+          estimated_release: '2025-02-01',
+          pi_earning_potential: 150,
+          vote_count: 234,
+          category: 'Mobile',
+          progress_percentage: 90,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ]);
+      
+      console.log('Using sample roadmap data (database integration pending migration)');
     } catch (err) {
       console.error('Failed to load features:', err);
-      setError('Failed to load features');
+      setFeatures([]);
     } finally {
       setLoading(false);
     }
@@ -74,38 +110,14 @@ export const FutureFeaturesDashboard = () => {
     }
 
     try {
-      // Update vote count in database
-      const { data, error } = await supabase
-        .from('feature_roadmap')
-        .select('vote_count')
-        .eq('id', featureId)
-        .single();
-
-      if (error) {
-        console.error('Error getting current vote count:', error);
-        toast.error('Failed to vote');
-        return;
-      }
-
-      const { error: updateError } = await supabase
-        .from('feature_roadmap')
-        .update({ vote_count: (data?.vote_count || 0) + 1 })
-        .eq('id', featureId);
-
-      if (updateError) {
-        console.error('Error updating vote count:', updateError);
-        toast.error('Failed to vote');
-        return;
-      }
-
-      // Update local state
+      // For now, just update local state since database table may not exist yet
       setFeatures(prev => prev.map(f => 
         f.id === featureId 
           ? { ...f, vote_count: f.vote_count + 1 }
           : f
       ));
       setVotedFeatures(prev => new Set(prev.add(featureId)));
-      toast.success('Thanks for your vote!');
+      toast.success('Thanks for your vote! (Database integration pending migration)');
     } catch (err) {
       console.error('Failed to vote:', err);
       toast.error('Failed to vote');

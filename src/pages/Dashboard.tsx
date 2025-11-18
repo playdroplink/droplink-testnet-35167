@@ -1294,7 +1294,7 @@ const Dashboard = () => {
         <div className={`flex-1 overflow-y-auto p-4 lg:p-8 ${showPreview ? 'hidden lg:block' : 'block'}`}>
           <div className="max-w-2xl mx-auto">
             <Tabs defaultValue="profile" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 mb-6">
+              <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 mb-6">
                 <TabsTrigger value="profile" className="text-xs sm:text-sm">
                   <Settings className="w-4 h-4 mr-1 lg:mr-2" />
                   <span className="hidden sm:inline">Profile</span>

@@ -28,6 +28,7 @@ export const UserPreferencesManager = () => {
   const {
     preferences,
     loading,
+    updatePreferences,
     updateTheme,
     updateColors,
     updateDashboardLayout,
