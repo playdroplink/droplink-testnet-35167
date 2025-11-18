@@ -20,6 +20,9 @@ import { usePi } from "@/contexts/PiContext";
 import { Switch } from "@/components/ui/switch";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { performCompleteSignOut } from "@/lib/auth-utils";
+import { UserPreferencesManager } from "@/components/UserPreferencesManager";
+import { AboutModal } from "@/components/AboutModal";
+import { FutureFeaturesDashboard } from "@/components/FutureFeaturesDashboard";
 import {
   Drawer,
   DrawerClose,
@@ -52,9 +55,12 @@ import {
   Users,
   User,
   Bot,
+  Info,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodeDialog } from "@/components/QRCodeDialog";
+import PiDataManager from "@/components/PiDataManager";
 import { useState as useQRState } from "react";
 
 interface ProfileData {
@@ -1161,6 +1167,12 @@ const Dashboard = () => {
                     <Bot className="w-4 h-4" />
                     AI Support
                   </Button>
+                  <AboutModal>
+                    <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+                      <Info className="w-4 h-4" />
+                      About DropLink
+                    </Button>
+                  </AboutModal>
                   <Button onClick={() => navigate("/subscription")} variant="outline" size="sm" className="w-full justify-start gap-2">
                     <Wallet className="w-4 h-4" />
                     Upgrade
@@ -1241,6 +1253,12 @@ const Dashboard = () => {
               >
                 Upgrade
               </Button>
+              <AboutModal>
+                <Button variant="outline" size="sm" className="hidden lg:flex gap-2">
+                  <Info className="w-4 h-4" />
+                  About
+                </Button>
+              </AboutModal>
             </>
           )}
           <Button 
@@ -1276,19 +1294,33 @@ const Dashboard = () => {
         <div className={`flex-1 overflow-y-auto p-4 lg:p-8 ${showPreview ? 'hidden lg:block' : 'block'}`}>
           <div className="max-w-2xl mx-auto">
             <Tabs defaultValue="profile" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-6">
+              <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 mb-6">
                 <TabsTrigger value="profile" className="text-xs sm:text-sm">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Profile
+                  <Settings className="w-4 h-4 mr-1 lg:mr-2" />
+                  <span className="hidden sm:inline">Profile</span>
                 </TabsTrigger>
                 <TabsTrigger value="design" className="text-xs sm:text-sm">
-                  <Palette className="w-4 h-4 mr-2" />
-                  Design
+                  <Palette className="w-4 h-4 mr-1 lg:mr-2" />
+                  <span className="hidden sm:inline">Design</span>
                 </TabsTrigger>
-                <TabsTrigger value="analytics" className="text-xs sm:text-sm">
+                <TabsTrigger value="analytics" className="text-xs sm:text-sm hidden lg:flex">
                   <BarChart3 className="w-4 h-4 mr-2" />
                   Analytics
                 </TabsTrigger>
+                <TabsTrigger value="features" className="text-xs sm:text-sm hidden lg:flex">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Features
+                </TabsTrigger>
+                <TabsTrigger value="preferences" className="text-xs sm:text-sm hidden lg:flex">
+                  <User className="w-4 h-4 mr-2" />
+                  Settings
+                </TabsTrigger>
+                {isAuthenticated && (
+                  <TabsTrigger value="pi-data" className="text-xs sm:text-sm hidden lg:flex">
+                    <Bot className="w-4 h-4 mr-2" />
+                    Pi Data
+                  </TabsTrigger>
+                )}
               </TabsList>
 
               {/* Profile Tab */}
@@ -1756,6 +1788,23 @@ const Dashboard = () => {
                   )}
                 </AdGatedFeature>
               </TabsContent>
+
+              {/* Future Features Tab */}
+              <TabsContent value="features" className="pb-8">
+                <FutureFeaturesDashboard />
+              </TabsContent>
+
+              {/* User Preferences Tab */}
+              <TabsContent value="preferences" className="pb-8">
+                <UserPreferencesManager />
+              </TabsContent>
+
+              {/* Pi Data Tab */}
+              {isAuthenticated && (
+                <TabsContent value="pi-data" className="pb-8">
+                  <PiDataManager />
+                </TabsContent>
+              )}
             </Tabs>
           </div>
         </div>

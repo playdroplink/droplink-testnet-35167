@@ -67,6 +67,9 @@ interface PiContextType {
   signIn: (scopes?: string[]) => Promise<void>;
   signOut: () => Promise<void>;
   
+  // User Data
+  getPiUserProfile: (username: string) => Promise<any | null>;
+  
   // Payments  
   createPayment: (amount: number, memo: string, metadata?: any) => Promise<void>;
   
@@ -134,6 +137,9 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
                 setAccessToken(storedToken);
                 setPiUser(userData);
                 console.log("Auto-authenticated with stored credentials");
+                
+                // Sync user data with Supabase
+                await syncExistingPiUser();
               } else {
                 // Token invalid, clear storage
                 localStorage.removeItem('pi_access_token');
@@ -188,27 +194,106 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  // Save user data to Supabaserom Supabase
+  const getPiUserProfile = async (username: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('username', username.toLowerCase())
+        .single();
+
+      if (error) {
+        console.error('Failed to get Pi user profile:', error);
+        return null;
+      }
+
+      return data;
+    } catch (err) {
+      console.error('Exception getting Pi user profile:', err);
+      return null;
+    }
+  };
+
+  // Check and sync existing Pi user with Supabase
+  const syncExistingPiUser = async () => {
+    const storedToken = localStorage.getItem('pi_access_token');
+    const storedUser = localStorage.getItem('pi_user');
+    
+    if (storedToken && storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        console.log('🔄 Syncing existing Pi user with Supabase:', userData.username);
+        
+        // Check if user data is already synced recently
+        const extendedUserData = localStorage.getItem('pi_user_extended');
+        if (extendedUserData) {
+          const parsed = JSON.parse(extendedUserData);
+          const lastSynced = new Date(parsed.lastSynced);
+          const now = new Date();
+          const hoursSinceSync = (now.getTime() - lastSynced.getTime()) / (1000 * 60 * 60);
+          
+          // If synced within last 24 hours, skip re-sync
+          if (hoursSinceSync < 24) {
+            console.log('✅ Pi user data recently synced, skipping');
+            return;
+          }
+        }
+        
+        // Re-sync user data
+        await saveUserToSupabase(userData, storedToken);
+      } catch (err) {
+        console.error('Failed to sync existing Pi user:', err);
+      }
+    }
+  };
+
   // Save user data to Supabase
   const saveUserToSupabase = async (piUser: PiUser, token: string) => {
     try {
-      const { error } = await supabase.functions.invoke('pi-auth', {
+      console.log('💾 Saving Pi user to Supabase:', { username: piUser.username, uid: piUser.uid });
+      
+      const { data, error } = await supabase.functions.invoke('pi-auth', {
         body: {
-          pi_user_id: piUser.uid,
+          accessToken: token,
           username: piUser.username,
-          wallet_address: piUser.wallet_address,
-        },
-        headers: {
-          'Authorization': `Bearer ${token}`
+          uid: piUser.uid,
+          wallet_address: piUser.wallet_address
         }
       });
 
       if (error) {
-        console.warn('Failed to save user to Supabase:', error);
+        console.error('❌ Failed to save Pi user to Supabase:', error);
+        toast('Warning: User data not saved to database', {
+          description: 'You may need to re-authenticate later',
+          duration: 5000,
+        });
       } else {
-        console.log('User saved to Supabase successfully');
+        console.log('✅ Pi user saved to Supabase successfully:', data);
+        
+        // Store additional metadata locally
+        const userData = {
+          ...piUser,
+          profileId: data?.profileId,
+          supabaseUserId: data?.userId,
+          isNewProfile: data?.isNewProfile,
+          lastSynced: new Date().toISOString()
+        };
+        localStorage.setItem('pi_user_extended', JSON.stringify(userData));
+        
+        if (data?.isNewProfile) {
+          toast('Profile created successfully!', {
+            description: 'Your Pi Network account is now linked to Droplink',
+            duration: 4000,
+          });
+        }
       }
     } catch (err) {
-      console.warn('Failed to save user to Supabase:', err);
+      console.error('❌ Exception saving Pi user to Supabase:', err);
+      toast('Warning: Could not sync user data', {
+        description: 'Please check your internet connection',
+        duration: 5000,
+      });
     }
   };
 
@@ -274,6 +359,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       // Clear Pi Network authentication
       localStorage.removeItem('pi_access_token');
       localStorage.removeItem('pi_user');
+      localStorage.removeItem('pi_user_extended'); // Clear extended user data
       setAccessToken(null);
       setPiUser(null);
       
@@ -505,6 +591,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     error,
     signIn,
     signOut,
+    getPiUserProfile,
     createPayment,
     showRewardedAd,
     showInterstitialAd,
