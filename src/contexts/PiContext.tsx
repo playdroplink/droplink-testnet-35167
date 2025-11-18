@@ -83,14 +83,14 @@ interface PiContextType {
   // User Data
   getPiUserProfile: (username: string) => Promise<any | null>;
   
+  // Payments
+  createPayment: (amount: number, memo: string, metadata?: any) => Promise<any>;
+  
   // Wallet Management
   setWalletAddress: (address: string) => Promise<void>;
   importWallet: (privateKey: string) => Promise<string | null>;
   switchToWallet: (address: string, type: 'pi_network' | 'imported') => void;
   getCurrentWalletAddress: () => string | null;
-  
-  // Payments  
-  createPayment: (amount: number, memo: string, metadata?: any) => Promise<void>;
   
   // DROP Token Functions
   checkDropBalance: (walletAddress?: string) => Promise<DropTokenBalance | null>;
@@ -137,7 +137,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           // Initialize Pi SDK for mainnet (production)
           await window.Pi.init({ 
             version: "2.0",
-            sandbox: true // Development testnet mode
+            sandbox: false // Production mainnet mode
           });
           
           console.log("Pi SDK initialized successfully (Mainnet Mode Enabled)");
@@ -160,7 +160,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           if (storedToken && storedUser) {
             try {
               // Verify token with Pi API
-              const response = await fetch('https://api.testnet.minepi.com/v2/me', {
+              const response = await fetch('https://api.mainnet.minepi.com/v2/me', {
                 headers: {
                   'Authorization': `Bearer ${storedToken}`
                 }

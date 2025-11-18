@@ -24,6 +24,8 @@ import { UserPreferencesManager } from "@/components/UserPreferencesManager";
 import { AboutModal } from "@/components/AboutModal";
 import { FutureFeaturesDashboard } from "@/components/FutureFeaturesDashboard";
 import { DropTokenManager } from "@/components/DropTokenManager";
+import PiAdNetwork from "@/components/PiAdNetwork";
+import PiPayments from "@/components/PiPayments";
 import {
   Drawer,
   DrawerClose,
@@ -59,6 +61,8 @@ import {
   Info,
   Sparkles,
   Coins,
+  PlayCircle,
+  CreditCard,
 } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodeDialog } from "@/components/QRCodeDialog";
@@ -1319,6 +1323,14 @@ const Dashboard = () => {
                   <Coins className="w-4 h-4 mr-2" />
                   DROP
                 </TabsTrigger>
+                <TabsTrigger value="ad-network" className="text-xs sm:text-sm hidden lg:flex">
+                  <PlayCircle className="w-4 h-4 mr-2" />
+                  Watch Ads
+                </TabsTrigger>
+                <TabsTrigger value="payments" className="text-xs sm:text-sm hidden lg:flex">
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  Payments
+                </TabsTrigger>
                 <TabsTrigger value="preferences" className="text-xs sm:text-sm hidden lg:flex">
                   <User className="w-4 h-4 mr-2" />
                   Settings
@@ -1916,6 +1928,16 @@ const Dashboard = () => {
               {/* DROP Token Tab */}
               <TabsContent value="drop-tokens" className="pb-8">
                 <DropTokenManager piUser={piUser} piWallet={piUser?.wallet_address} />
+              </TabsContent>
+
+              {/* Pi Ad Network Tab */}
+              <TabsContent value="ad-network" className="pb-8">
+                <PiAdNetwork />
+              </TabsContent>
+
+              {/* Pi Payments Tab */}
+              <TabsContent value="payments" className="pb-8">
+                <PiPayments />
               </TabsContent>
 
               {/* User Preferences Tab */}

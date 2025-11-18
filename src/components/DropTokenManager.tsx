@@ -65,8 +65,8 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
     try {
       setIsLoading(true);
       
-      // Check Pi Testnet for balance
-      const response = await fetch(`https://api.testnet.minepi.com/accounts/${targetWallet}`);
+      // Check Pi Mainnet for balance
+      const response = await fetch(`https://api.mainnet.minepi.com/accounts/${targetWallet}`);
       
       if (response.ok) {
         const accountData = await response.json();
