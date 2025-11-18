@@ -1,22 +1,26 @@
-# Welcome to your Lovable project
+# DropLink - Decentralized Link Management Platform
 
-## Project info
+A modern, AI-powered link management platform built with React, TypeScript, and Supabase, featuring Pi Network integration for cryptocurrency payments.
 
-**URL**: https://lovable.dev/projects/ed547f02-1974-4fdd-861c-11fa366f21cb
+## 🚀 Features
 
-## How can I edit this code?
+- **Personalized Bio Links**: Create custom landing pages with your links
+- **AI Support Chat**: Integrated AI assistant for user support
+- **Pi Network Integration**: Accept Pi cryptocurrency payments
+- **Custom Domains**: Use your own domain name
+- **Analytics**: Track link clicks and engagement
+- **Responsive Design**: Works on all devices
+- **Dark/Light Theme**: User-friendly interface
 
-There are several ways of editing your application.
+## 🛠️ Tech Stack
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/ed547f02-1974-4fdd-861c-11fa366f21cb) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **Frontend**: React 18 + TypeScript + Vite
+- **Styling**: Tailwind CSS + shadcn/ui components
+- **Backend**: Supabase (Database + Edge Functions)
+- **Deployment**: Vercel
+- **AI**: OpenAI GPT-4
+- **Authentication**: Supabase Auth
+- **Payments**: Pi Network SDK
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 

@@ -2,413 +2,496 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+// Pi Network Types
+interface PiUser {
+  uid: string;
+  username?: string;
+  wallet_address?: string;
+}
+
+interface AuthResult {
+  accessToken: string;
+  user: PiUser;
+}
+
+interface PaymentData {
+  amount: number;
+  memo: string;
+  metadata?: Record<string, any>;
+}
+
+interface PaymentCallbacks {
+  onReadyForServerApproval: (paymentId: string) => void;
+  onReadyForServerCompletion: (paymentId: string, txid: string) => void;
+  onCancel: (paymentId: string) => void;
+  onError: (error: Error, payment?: any) => void;
+}
+
+interface AdResponse {
+  type: 'interstitial' | 'rewarded';
+  result: 'AD_CLOSED' | 'AD_REWARDED' | 'AD_DISPLAY_ERROR' | 'AD_NETWORK_ERROR' | 'AD_NOT_AVAILABLE' | 'ADS_NOT_SUPPORTED' | 'USER_UNAUTHENTICATED';
+  adId?: string;
+}
+
 declare global {
   interface Window {
     Pi: {
-      init: (config: { version: string; sandbox?: boolean }) => void; // sandbox is optional, not used in production
+      init: (config: { version: string; sandbox?: boolean }) => Promise<void>;
       authenticate: (
         scopes: string[],
-        onIncompletePaymentFound: (payment: any) => void
-      ) => Promise<{ accessToken: string; user: { uid: string; username: string } }>;
-      createPayment: (paymentData: any, callbacks: any) => Promise<any>;
+        onIncompletePaymentFound?: (payment: any) => void
+      ) => Promise<AuthResult>;
+      createPayment: (paymentData: PaymentData, callbacks: PaymentCallbacks) => void;
+      nativeFeaturesList: () => Promise<string[]>;
+      openShareDialog: (title: string, message: string) => void;
+      openUrlInSystemBrowser: (url: string) => Promise<void>;
       Ads: {
-        requestAd: (adType: "interstitial" | "rewarded") => Promise<{ result: "AD_LOADED" | "AD_NETWORK_ERROR" | "AD_NOT_AVAILABLE" | "ADS_NOT_SUPPORTED" }>;
-        showAd: (adType: "interstitial" | "rewarded") => Promise<{ 
-          type: "interstitial" | "rewarded";
-          result: "AD_CLOSED" | "AD_REWARDED" | "AD_DISPLAY_ERROR" | "AD_NETWORK_ERROR" | "AD_NOT_AVAILABLE" | "ADS_NOT_SUPPORTED" | "USER_UNAUTHENTICATED";
-          adId?: string;
-        }>;
-        isAdReady: (adType: "interstitial" | "rewarded") => Promise<{ ready: boolean }>;
+        isAdReady: (adType: 'interstitial' | 'rewarded') => Promise<{ type: string; ready: boolean }>;
+        requestAd: (adType: 'interstitial' | 'rewarded') => Promise<{ type: string; result: string }>;
+        showAd: (adType: 'interstitial' | 'rewarded') => Promise<AdResponse>;
       };
     };
   }
 }
 
 interface PiContextType {
-  piUser: { uid: string; username: string } | null;
+  piUser: PiUser | null;
   accessToken: string | null;
   isAuthenticated: boolean;
   loading: boolean;
-  signIn: () => Promise<void>;
+  isInitialized: boolean;
+  adNetworkSupported: boolean;
+  error: string | null;
+  
+  // Authentication
+  signIn: (scopes?: string[]) => Promise<void>;
   signOut: () => Promise<void>;
-  createPayment: (amount: number, memo: string, metadata: any) => Promise<unknown>;
+  
+  // Payments  
+  createPayment: (amount: number, memo: string, metadata?: any) => Promise<void>;
+  
+  // Ads
   showRewardedAd: () => Promise<boolean>;
   showInterstitialAd: () => Promise<boolean>;
+  isAdReady: (adType: 'interstitial' | 'rewarded') => Promise<boolean>;
+  
+  // Utilities
+  shareContent: (title: string, message: string) => void;
+  openExternalUrl: (url: string) => Promise<void>;
 }
 
 const PiContext = createContext<PiContextType | undefined>(undefined);
 
 export const PiProvider = ({ children }: { children: ReactNode }) => {
-  const [piUser, setPiUser] = useState<{ uid: string; username: string } | null>(null);
+  const [piUser, setPiUser] = useState<PiUser | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [adNetworkSupported, setAdNetworkSupported] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Derived state: user is authenticated if we have a Pi user and access token
   const isAuthenticated = !!piUser && !!accessToken;
 
   useEffect(() => {
-    try {
-      // Initialize Pi SDK for production (no sandbox parameter)
-      if (typeof window !== 'undefined' && window.Pi) {
-        try {
-          // Production: just use version, no sandbox parameter
-          window.Pi.init({ version: "2.0" });
-        } catch (initError) {
-          console.warn("Pi SDK initialization error (non-critical):", initError);
-        }
-      }
-
-      // Check for existing session
+    const initializePi = async () => {
       try {
-        const storedUser = localStorage.getItem("pi_user");
-        const storedToken = localStorage.getItem("pi_access_token");
-        
-        if (storedUser && storedToken) {
+        if (typeof window !== 'undefined' && window.Pi) {
+          // Initialize Pi SDK for sandbox mode (testing)
+          await window.Pi.init({ 
+            version: "2.0",
+            sandbox: true // Always use sandbox mode
+          });
+          
+          console.log("Pi SDK initialized successfully");
+          setIsInitialized(true);
+          
+          // Check ad network support
           try {
-            setPiUser(JSON.parse(storedUser));
-            setAccessToken(storedToken);
-          } catch (parseError) {
-            console.warn("Error parsing stored user data:", parseError);
-            // Clear invalid data
-            localStorage.removeItem("pi_user");
-            localStorage.removeItem("pi_access_token");
+            const features = await window.Pi.nativeFeaturesList();
+            const adSupported = features.includes('ad_network');
+            setAdNetworkSupported(adSupported);
+            console.log("Ad Network Support:", adSupported);
+          } catch (err) {
+            console.warn('Failed to check native features:', err);
           }
+          
+          // Check for stored authentication
+          const storedToken = localStorage.getItem('pi_access_token');
+          const storedUser = localStorage.getItem('pi_user');
+          
+          if (storedToken && storedUser) {
+            try {
+              // Verify token with Pi API
+              const response = await fetch('https://api.minepi.com/v2/me', {
+                headers: {
+                  'Authorization': `Bearer ${storedToken}`
+                }
+              });
+              
+              if (response.ok) {
+                const userData = JSON.parse(storedUser);
+                setAccessToken(storedToken);
+                setPiUser(userData);
+                console.log("Auto-authenticated with stored credentials");
+              } else {
+                // Token invalid, clear storage
+                localStorage.removeItem('pi_access_token');
+                localStorage.removeItem('pi_user');
+              }
+            } catch (err) {
+              console.warn('Failed to verify stored token:', err);
+            }
+          }
+        } else {
+          console.warn("Pi SDK not available - loading script...");
+          // Load Pi SDK dynamically
+          const script = document.createElement('script');
+          script.src = 'https://sdk.minepi.com/pi-sdk.js';
+          script.async = true;
+          script.onload = () => {
+            console.log("Pi SDK script loaded");
+            // Retry initialization after script loads
+            setTimeout(initializePi, 1000);
+          };
+          document.head.appendChild(script);
         }
-      } catch (storageError) {
-        console.warn("Error accessing localStorage:", storageError);
+      } catch (err) {
+        console.error('Failed to initialize Pi SDK:', err);
+        // Don't set error in development to avoid blocking app
+        if (process.env.NODE_ENV !== 'development') {
+          setError('Failed to initialize Pi Network SDK');
+        }
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("PiProvider initialization error:", error);
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    // In development, add a timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.log('Pi SDK initialization timeout - continuing without Pi');
+        setLoading(false);
+        setError(null); // Clear any errors to allow app to continue
+      }
+    }, 2000); // Reduced timeout to 2 seconds
+    
+    initializePi().finally(() => clearTimeout(timeout));
   }, []);
 
-  const signIn = async () => {
-    try {
-      if (!window.Pi) {
-        toast.error("Pi SDK not loaded. Please open this app in Pi Browser.");
-        return;
-      }
-
-      setLoading(true);
-      const scopes = ["username", "payments"];
-      
-      const onIncompletePaymentFound = (payment: any) => {
-        console.log("Incomplete payment found:", payment);
-        toast.info("You have an incomplete payment. Please complete it first.");
-      };
-
-      const auth = await window.Pi.authenticate(scopes, onIncompletePaymentFound);
-      
-      console.log("Pi Auth - User authenticated:", auth.user.username);
-      setPiUser(auth.user);
-      setAccessToken(auth.accessToken);
-      
-      // Store in localStorage
-      localStorage.setItem("pi_user", JSON.stringify(auth.user));
-      localStorage.setItem("pi_access_token", auth.accessToken);
-
-      console.log("Pi Auth - Syncing with backend...");
-      // Verify and sync with backend
-      const { data: functionData, error: functionError } = await supabase.functions.invoke("pi-auth", {
-        body: { accessToken: auth.accessToken, username: auth.user.username, uid: auth.user.uid }
-      });
-
-      if (functionError) {
-        console.error("Backend sync error:", functionError);
-        const errorMsg = functionError.message || JSON.stringify(functionError);
-        throw new Error(`Backend sync failed: ${errorMsg}`);
-      }
-
-      if (!functionData?.success || !functionData?.profileId) {
-        throw new Error("Failed to create profile. Please try again.");
-      }
-
-      console.log("Pi Auth - Backend sync successful, profile ID:", functionData.profileId);
-      
-      // Store profile ID in localStorage
-      localStorage.setItem(`profile_id_${auth.user.username}`, functionData.profileId);
-
-      // Create Supabase session for the Pi user
-      // The pi-auth function creates a Supabase auth user, so we need to sign in with it
-      try {
-        const email = `pi-${auth.user.username}@pi-network.local`;
-        // Try to sign in with the created user
-        // Note: We can't use the password, but we can create a session using the service role
-        // For now, we'll rely on the profile-update function to handle auth via JWT
-        // The user_id in profiles table links to the auth user
-        console.log("Pi Auth - Supabase auth user should be created");
-      } catch (sessionError) {
-        console.warn("Could not create Supabase session:", sessionError);
-        // This is okay - we'll handle auth via edge functions
-      }
-
-      // Show appropriate message based on whether profile is new or existing
-      if (functionData.isNewProfile) {
-        toast.success(`Profile auto-created with your Pi username`);
-      } else {
-        toast.success(`Welcome back, @${auth.user.username}! 👋`);
-      }
-    } catch (error: any) {
-      console.error("Pi authentication error:", error);
-      toast.error(error.message || "Authentication failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signOut = async () => {
-    setPiUser(null);
-    setAccessToken(null);
-    
-    // Clear all Pi-related data from localStorage
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (key.startsWith('pi_') || key.startsWith('profile_id_'))) {
-        keysToRemove.push(key);
-      }
-    }
-    keysToRemove.forEach(key => localStorage.removeItem(key));
-    
-    // Sign out from Supabase if there's a session
-    try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      console.warn("Error signing out from Supabase:", error);
-    }
-    
-    toast.info("Signed out successfully");
-  };
-
-  const createPayment = async (amount: number, memo: string, metadata: any) => {
-    if (!window.Pi || !piUser || !accessToken) {
-      toast.error("Please sign in with Pi to make payments");
-      return;
-    }
-
-    return new Promise((resolve, reject) => {
-      const paymentData = { amount, memo, metadata };
-      
-      const callbacks = {
-        onReadyForServerApproval: async (paymentId: string) => {
-          console.log("Payment ready for approval:", paymentId);
-          try {
-            // Get auth token for JWT
-            const { data: { session } } = await supabase.auth.getSession();
-            
-            if (!session?.access_token) {
-              // Try to create session for Pi user
-              console.warn("No Supabase session for payment approval - attempting to proceed");
-              // For Pi users, we might not have a session, but payment should still work
-              // The edge function should handle this case
-            }
-
-            const { data: approveData, error } = await supabase.functions.invoke("pi-payment-approve", {
-              body: { paymentId },
-              headers: session?.access_token ? {
-                Authorization: `Bearer ${session.access_token}`
-              } : {}
-            });
-            
-            if (error) {
-              console.error("Payment approval error:", error);
-              // Check if it's an auth error - if so, try without auth (Pi users)
-              if (error.message?.includes("auth") || error.message?.includes("token") || error.message?.includes("authenticated")) {
-                console.log("Retrying payment approval without auth header...");
-                const { error: retryError } = await supabase.functions.invoke("pi-payment-approve", {
-                  body: { paymentId }
-                });
-                if (retryError) throw retryError;
-              } else {
-                throw error;
-              }
-            }
-            
-            if (approveData?.success === false) {
-              throw new Error(approveData.error || "Payment approval failed");
-            }
-          } catch (error) {
-            console.error("Approval error:", error);
-            throw error;
-          }
-        },
-        onReadyForServerCompletion: async (paymentId: string, txid: string) => {
-          console.log("Payment ready for completion:", paymentId, txid);
-          try {
-            // Get auth token for JWT
-            const { data: { session } } = await supabase.auth.getSession();
-            
-            if (!session?.access_token) {
-              console.warn("No Supabase session for payment completion - attempting to proceed");
-            }
-
-            const { data, error } = await supabase.functions.invoke("pi-payment-complete", {
-              body: { paymentId, txid, metadata },
-              headers: session?.access_token ? {
-                Authorization: `Bearer ${session.access_token}`
-              } : {}
-            });
-            
-            if (error) {
-              console.error("Payment completion error:", error);
-              // Check if it's an auth error - if so, try without auth (Pi users)
-              if (error.message?.includes("auth") || error.message?.includes("token") || error.message?.includes("authenticated")) {
-                console.log("Retrying payment completion without auth header...");
-                const { data: retryData, error: retryError } = await supabase.functions.invoke("pi-payment-complete", {
-                  body: { paymentId, txid, metadata }
-                });
-                if (retryError) throw retryError;
-                if (retryData?.success === false) {
-                  throw new Error(retryData.error || "Payment completion failed");
-                }
-                toast.success("Payment completed successfully!");
-                resolve(retryData);
-                return;
-              } else {
-                throw error;
-              }
-            }
-            
-            if (data?.success === false) {
-              throw new Error(data.error || "Payment completion failed");
-            }
-            
-            toast.success("Payment completed successfully!");
-            resolve(data);
-          } catch (error) {
-            console.error("Completion error:", error);
-            toast.error("Payment completion failed");
-            reject(error);
-          }
-        },
-        onCancel: (paymentId: string) => {
-          console.log("Payment cancelled:", paymentId);
-          toast.info("Payment cancelled");
-          reject(new Error("Payment cancelled"));
-        },
-        onError: (error: Error, payment?: any) => {
-          console.error("Payment error:", error, payment);
-          toast.error(error.message || "Payment failed");
-          reject(error);
-        },
-      };
-
-      window.Pi.createPayment(paymentData, callbacks);
+  // Handle incomplete payments
+  const handleIncompletePayment = (payment: any) => {
+    console.log('Incomplete payment found:', payment);
+    toast("You have an incomplete payment. Please complete it before making a new payment.", {
+      description: "Incomplete Payment",
+      duration: 5000,
     });
   };
 
-  const showRewardedAd = async (): Promise<boolean> => {
-    if (!window.Pi) {
-      toast.error("Pi SDK not available. Please open in Pi Browser.");
-      return false;
+  // Save user data to Supabase
+  const saveUserToSupabase = async (piUser: PiUser, token: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('pi-auth', {
+        body: {
+          pi_user_id: piUser.uid,
+          username: piUser.username,
+          wallet_address: piUser.wallet_address,
+        },
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (error) {
+        console.warn('Failed to save user to Supabase:', error);
+      } else {
+        console.log('User saved to Supabase successfully');
+      }
+    } catch (err) {
+      console.warn('Failed to save user to Supabase:', err);
+    }
+  };
+
+  // Sign In with Pi Network
+  const signIn = async (scopes: string[] = ['username', 'payments', 'wallet_address']) => {
+    if (!isInitialized || !window.Pi) {
+      throw new Error('Pi SDK not initialized');
     }
 
-    if (!isAuthenticated || !piUser) {
-      toast.error("Please sign in with Pi Network first");
-      return false;
-    }
+    setLoading(true);
+    setError(null);
 
     try {
-      // Ensure Pi SDK is initialized
-      if (!window.Pi.Ads) {
-        toast.error("Pi Ads not available. Please ensure you're using Pi Browser.");
-        return false;
+      const authResult = await window.Pi.authenticate(scopes, handleIncompletePayment);
+      
+      // Verify with Pi API
+      const response = await fetch('https://api.minepi.com/v2/me', {
+        headers: {
+          'Authorization': `Bearer ${authResult.accessToken}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Authentication verification failed');
       }
 
-      // Request ad first (this ensures ad is loaded)
-      const requestResponse = await window.Pi.Ads.requestAd("rewarded");
+      const verifiedUser = await response.json();
+      console.log('Pi authentication successful:', verifiedUser);
       
-      if (requestResponse.result === "AD_NETWORK_ERROR") {
-        toast.error("Ad network error. Please try again later.");
-        return false;
-      }
+      // Store authentication data
+      localStorage.setItem('pi_access_token', authResult.accessToken);
+      localStorage.setItem('pi_user', JSON.stringify(authResult.user));
       
-      if (requestResponse.result === "AD_NOT_AVAILABLE") {
-        toast.info("No ads available at the moment. Please try again later.");
-        return false;
-      }
+      // Update state
+      setAccessToken(authResult.accessToken);
+      setPiUser(authResult.user);
       
-      if (requestResponse.result === "ADS_NOT_SUPPORTED") {
-        toast.info("Ads are not supported in this environment.");
-        return false;
-      }
+      // Save to Supabase
+      await saveUserToSupabase(authResult.user, authResult.accessToken);
       
-      if (requestResponse.result !== "AD_LOADED") {
-        toast.error("Ad could not be loaded. Please try again.");
-        return false;
-      }
+      toast(`Welcome, ${authResult.user.username || 'Pi User'}!`, {
+        description: "Authentication Successful",
+        duration: 3000,
+      });
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
+      setError(errorMessage);
+      console.error('Pi authentication failed:', err);
+      toast(errorMessage, {
+        description: "Authentication Failed",
+        duration: 5000,
+      });
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      // Wait a bit for ad to be ready
-      await new Promise(resolve => setTimeout(resolve, 500));
+  // Sign Out
+  const signOut = async () => {
+    localStorage.removeItem('pi_access_token');
+    localStorage.removeItem('pi_user');
+    setAccessToken(null);
+    setPiUser(null);
+    
+    toast("You have been signed out successfully.", {
+      description: "Signed Out",
+      duration: 3000,
+    });
+  };
 
-      // Check if ad is ready
-      const isReadyResponse = await window.Pi.Ads.isAdReady("rewarded");
-      if (!isReadyResponse.ready) {
-        toast.error("Ad is not ready yet. Please try again.");
-        return false;
-      }
+  // Create Payment
+  const createPayment = async (amount: number, memo: string, metadata: any = {}) => {
+    if (!isAuthenticated || !window.Pi) {
+      throw new Error('User not authenticated');
+    }
 
-      // Show the ad
-      const showResponse = await window.Pi.Ads.showAd("rewarded");
+    const paymentData: PaymentData = {
+      amount,
+      memo,
+      metadata
+    };
+
+    const callbacks: PaymentCallbacks = {
+      onReadyForServerApproval: async (paymentId: string) => {
+        console.log('Payment ready for server approval:', paymentId);
+        try {
+          const { error } = await supabase.functions.invoke('pi-payment-approve', {
+            body: { paymentId },
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          });
+          
+          if (error) {
+            console.error('Payment approval error:', error);
+          }
+        } catch (err) {
+          console.error('Payment approval error:', err);
+        }
+      },
       
-      if (showResponse.result === "AD_REWARDED") {
-        toast.success("Thank you for watching! Access granted.");
-        return true;
-      } else if (showResponse.result === "AD_CLOSED") {
-        toast.info("Please watch the full ad to continue");
-        return false;
-      } else if (showResponse.result === "AD_DISPLAY_ERROR") {
-        toast.error("Ad display error. Please try again.");
-        return false;
-      } else if (showResponse.result === "USER_UNAUTHENTICATED") {
-        toast.error("Please sign in with Pi Network");
-        return false;
-      } else {
-        toast.error(`Ad error: ${showResponse.result}`);
-        return false;
-      }
-    } catch (error: any) {
-      console.error("Rewarded ad error:", error);
-      toast.error(error.message || "Failed to show ad");
+      onReadyForServerCompletion: async (paymentId: string, txid: string) => {
+        console.log('Payment ready for server completion:', paymentId, txid);
+        try {
+          const { error } = await supabase.functions.invoke('pi-payment-complete', {
+            body: { paymentId, txid },
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          });
+          
+          if (error) {
+            console.error('Payment completion error:', error);
+            toast("Payment was submitted but completion failed.", {
+              description: "Payment Error",
+              duration: 5000,
+            });
+          } else {
+            toast("Your payment has been completed successfully.", {
+              description: "Payment Successful",
+              duration: 3000,
+            });
+          }
+        } catch (err) {
+          console.error('Payment completion error:', err);
+        }
+      },
+      
+      onCancel: (paymentId: string) => {
+        console.log('Payment cancelled:', paymentId);
+        toast("The payment was cancelled.", {
+          description: "Payment Cancelled",
+          duration: 3000,
+        });
+      },
+      
+      onError: (error: Error, payment?: any) => {
+        console.error('Payment error:', error, payment);
+        toast(error.message || "An error occurred during payment.", {
+          description: "Payment Error", 
+          duration: 5000,
+        });
+      },
+    };
+
+    window.Pi.createPayment(paymentData, callbacks);
+  };
+
+  // Check if ad is ready
+  const isAdReady = async (adType: 'interstitial' | 'rewarded'): Promise<boolean> => {
+    if (!window.Pi || !adNetworkSupported) return false;
+    
+    try {
+      const response = await window.Pi.Ads.isAdReady(adType);
+      return response.ready;
+    } catch (err) {
+      console.error('Error checking ad readiness:', err);
       return false;
     }
   };
 
-  const showInterstitialAd = async (): Promise<boolean> => {
-    if (!window.Pi) {
-      return true; // Allow access if Pi SDK not available
+  // Show Rewarded Ad
+  const showRewardedAd = async (): Promise<boolean> => {
+    if (!window.Pi || !adNetworkSupported) {
+      toast("Ad Network not supported on this Pi Browser version.", {
+        description: "Ads Not Supported",
+        duration: 5000,
+      });
+      return false;
+    }
+
+    if (!isAuthenticated) {
+      toast("You must be authenticated to view rewarded ads.", {
+        description: "Authentication Required",
+        duration: 5000,
+      });
+      return false;
     }
 
     try {
-      const isReadyResponse = await window.Pi.Ads.isAdReady("interstitial");
+      const response = await window.Pi.Ads.showAd('rewarded');
       
-      if (!isReadyResponse.ready) {
-        const requestResponse = await window.Pi.Ads.requestAd("interstitial");
-        if (requestResponse.result !== "AD_LOADED") {
-          return true; // Allow access if ad couldn't load
+      if (response.result === 'AD_REWARDED' && response.adId) {
+        try {
+          // Verify ad status with Pi Platform API
+          const { data, error } = await supabase.functions.invoke('pi-ad-verify', {
+            body: { adId: response.adId },
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          });
+          
+          if (!error && data?.mediator_ack_status === 'granted') {
+            toast("You have been rewarded for watching the ad!", {
+              description: "Ad Reward Earned",
+              duration: 3000,
+            });
+            return true;
+          }
+        } catch (err) {
+          console.error('Ad verification error:', err);
         }
       }
-
-      await window.Pi.Ads.showAd("interstitial");
-      return true;
-    } catch (error: any) {
-      console.error("Interstitial ad error:", error);
-      return true; // Allow access on error
+      
+      return response.result === 'AD_REWARDED';
+    } catch (err) {
+      console.error('Error showing rewarded ad:', err);
+      toast("Failed to show rewarded ad.", {
+        description: "Ad Error",
+        duration: 5000,
+      });
+      return false;
     }
   };
 
-  const value = {
+  // Show Interstitial Ad
+  const showInterstitialAd = async (): Promise<boolean> => {
+    if (!window.Pi || !adNetworkSupported) {
+      toast("Ad Network not supported on this Pi Browser version.", {
+        description: "Ads Not Supported",
+        duration: 5000,
+      });
+      return false;
+    }
+
+    try {
+      const response = await window.Pi.Ads.showAd('interstitial');
+      return response.result === 'AD_CLOSED';
+    } catch (err) {
+      console.error('Error showing interstitial ad:', err);
+      toast("Failed to show interstitial ad.", {
+        description: "Ad Error",
+        duration: 5000,
+      });
+      return false;
+    }
+  };
+
+  // Share content
+  const shareContent = (title: string, message: string) => {
+    if (window.Pi) {
+      window.Pi.openShareDialog(title, message);
+    } else {
+      toast("Share feature not available.", {
+        description: "Feature Not Available",
+        duration: 3000,
+      });
+    }
+  };
+
+  // Open external URL
+  const openExternalUrl = async (url: string): Promise<void> => {
+    if (window.Pi) {
+      try {
+        await window.Pi.openUrlInSystemBrowser(url);
+      } catch (err) {
+        console.error('Error opening external URL:', err);
+        // Fallback to window.open
+        window.open(url, '_blank');
+      }
+    } else {
+      window.open(url, '_blank');
+    }
+  };
+
+  const value: PiContextType = {
     piUser,
     accessToken,
-    isAuthenticated: !!piUser && !!accessToken,
+    isAuthenticated,
     loading,
+    isInitialized,
+    adNetworkSupported,
+    error,
     signIn,
     signOut,
     createPayment,
     showRewardedAd,
     showInterstitialAd,
+    isAdReady,
+    shareContent,
+    openExternalUrl,
   };
 
   return <PiContext.Provider value={value}>{children}</PiContext.Provider>;

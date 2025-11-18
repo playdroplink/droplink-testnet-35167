@@ -1,3 +1,10 @@
+// Deno type declarations for Edge Functions
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+};
+
 // @ts-ignore - Deno runtime types (available at runtime)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // @ts-ignore - ESM module (available at runtime)
@@ -145,20 +152,20 @@ serve(async (req) => {
 
     systemPrompt += `\n\nBe helpful, friendly, and professional. If you don't know something, be honest about it.`;
 
-    // Call Lovable AI
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    // Call OpenAI API
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    if (!OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY is not configured');
     }
 
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'gpt-4',
         messages: [
           { role: 'system', content: systemPrompt },
           ...messages,

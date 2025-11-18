@@ -10,12 +10,11 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Analytics } from "@/components/Analytics";
 import { DesignCustomizer } from "@/components/DesignCustomizer";
 import { CustomLinksManager } from "@/components/CustomLinksManager";
-import { DonationWallet } from "@/components/DonationWallet";
-import { PiWalletManager } from "@/components/PiWalletManager";
 import { PiAdBanner } from "@/components/PiAdBanner";
 import { AdGatedFeature } from "@/components/AdGatedFeature";
 import { PlanGate } from "@/components/PlanGate";
 import { useActiveSubscription } from "@/hooks/useActiveSubscription";
+import { useAutoSave } from "@/hooks/useAutoSave";
 import { supabase } from "@/integrations/supabase/client";
 import { usePi } from "@/contexts/PiContext";
 import { Switch } from "@/components/ui/switch";
@@ -93,10 +92,6 @@ interface ProfileData {
     description: string;
     fileUrl: string;
   }>;
-  wallets: {
-    crypto: Array<{ name: string; address: string; id: string }>;
-    bank: Array<{ name: string; details: string; id: string }>;
-  };
   hasPremium?: boolean;
   showShareButton?: boolean;
   piWalletAddress?: string;
@@ -121,6 +116,29 @@ const Dashboard = () => {
   const [showQRCode, setShowQRCode] = useState(false);
   const [hasCheckedSubscription, setHasCheckedSubscription] = useState(false);
   const [displayUsername, setDisplayUsername] = useState<string | null>(null);
+  const [hasSupabaseSession, setHasSupabaseSession] = useState(false);
+
+  // Check for Supabase session on mount
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setHasSupabaseSession(!!session?.user);
+    };
+    checkSession();
+  }, []);
+
+  // Add timeout for auth loading to prevent infinite loading
+  useEffect(() => {
+    const authTimeout = setTimeout(() => {
+      if (loading) {
+        console.log('Authentication timeout - proceeding without Pi auth');
+        setLoading(false);
+      }
+    }, 5000); // 5 second timeout
+
+    return () => clearTimeout(authTimeout);
+  }, [loading]);
+
   const [profile, setProfile] = useState<ProfileData>({
     logo: "",
     businessName: "",
@@ -146,15 +164,59 @@ const Dashboard = () => {
       buttonStyle: "filled",
     },
     products: [],
-    wallets: {
-      crypto: [],
-      bank: [],
-    },
     hasPremium: false,
     showShareButton: true,
     piWalletAddress: "",
     piDonationMessage: "Send me a coffee ☕",
   });
+
+  // Auto-save functionality
+  const autoSave = useAutoSave<ProfileData>({
+    tableName: 'profiles',
+    recordId: profileId || '',
+    delay: 3000, // 3 second delay
+    onSave: async (data: ProfileData) => {
+      // Custom save logic for profile
+      if (!profileId) return;
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          business_name: data.businessName,
+          store_url: data.storeUrl,
+          description: data.description,
+          email: data.email,
+          youtube_video_url: data.youtubeVideoUrl,
+          social_links: data.socialLinks,
+          custom_links: data.customLinks,
+          theme: data.theme,
+          logo_url: data.logo,
+          show_share_button: data.showShareButton,
+          pi_wallet_address: data.piWalletAddress,
+          pi_donation_message: data.piDonationMessage,
+        })
+        .eq('id', profileId);
+      
+      if (error) throw error;
+    },
+    onError: (error: Error) => {
+      console.error('Auto-save failed:', error);
+    }
+  });
+
+  // Update auto-save data when profile changes
+  useEffect(() => {
+    if (profileId && !loading) {
+      autoSave.updateData(profile);
+    }
+  }, [profile, profileId, loading]);
+
+  // Initialize auto-save with profile data
+  useEffect(() => {
+    if (profileId && profile && !loading) {
+      autoSave.initialize(profile);
+    }
+  }, [profileId, loading]);
 
   useEffect(() => {
     // Wait for Pi context to be ready
@@ -231,9 +293,16 @@ const Dashboard = () => {
         setDisplayUsername(supabaseUser.email?.split("@")[0] || null);
         console.log("Loading profile for email user:", supabaseUser.email);
       } else {
-        // No authentication
-        navigate("/auth");
-        return;
+        // No authentication - in development, allow bypass
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Development mode: creating demo profile');
+          userIdentifier = 'dev_user';
+          isPiUser = false;
+          setDisplayUsername('dev_user');
+        } else {
+          navigate("/auth");
+          return;
+        }
       }
 
       // Try to load from localStorage first
@@ -270,31 +339,6 @@ const Dashboard = () => {
           .maybeSingle();
         profileData = result.data;
         error = result.error;
-        
-        // If no profile exists, create one
-        if (!profileData && !error) {
-          const emailUsername = supabaseUser.email?.split("@")[0] || `user-${supabaseUser.id.slice(0, 8)}`;
-          const sanitizedUsername = emailUsername.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-          
-          const { data: newProfile, error: createError } = await supabase
-            .from("profiles")
-            .insert({
-              user_id: supabaseUser.id,
-              username: sanitizedUsername,
-              business_name: sanitizedUsername,
-              description: "",
-              email: supabaseUser.email || "",
-            })
-            .select()
-            .single();
-          
-          if (createError) {
-            console.error("Error creating profile for email user:", createError);
-          } else if (newProfile) {
-            profileData = newProfile;
-            console.log("Created profile for email user:", newProfile.id);
-          }
-        }
       }
 
       if (error) {
@@ -413,9 +457,63 @@ const Dashboard = () => {
           console.error("Error saving to localStorage:", e);
         }
       } else {
-        // Auto-create profile
+        // Auto-create profile for Pi user or email user
         const defaultName = isPiUser && piUser ? piUser.username : (supabaseUser?.email?.split("@")[0] || "user");
         console.log("Profile not found, auto-creating with name:", defaultName);
+        
+        // Create profile in database first
+        let newProfileId = null;
+        try {
+          if (isPiUser && piUser) {
+            // Create Pi user profile
+            const { data: newProfile, error: createError } = await supabase
+              .from("profiles")
+              .insert({
+                username: piUser.username,
+                business_name: piUser.username,
+                description: "",
+                email: "", // Pi users don't have email in the basic interface
+                pi_user_id: piUser.uid,
+              })
+              .select()
+              .single();
+            
+            if (createError) {
+              console.error("Error creating Pi user profile:", createError);
+            } else if (newProfile) {
+              newProfileId = newProfile.id;
+              setProfileId(newProfileId);
+              console.log("Created Pi user profile:", newProfileId);
+            }
+          } else if (supabaseUser) {
+            // Create email user profile
+            const emailUsername = supabaseUser.email?.split("@")[0] || `user-${supabaseUser.id.slice(0, 8)}`;
+            const sanitizedUsername = emailUsername.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+            
+            const { data: newProfile, error: createError } = await supabase
+              .from("profiles")
+              .insert({
+                user_id: supabaseUser.id,
+                username: sanitizedUsername,
+                business_name: sanitizedUsername,
+                description: "",
+                email: supabaseUser.email || "",
+              })
+              .select()
+              .single();
+            
+            if (createError) {
+              console.error("Error creating email user profile:", createError);
+            } else if (newProfile) {
+              newProfileId = newProfile.id;
+              setProfileId(newProfileId);
+              console.log("Created email user profile:", newProfileId);
+            }
+          }
+        } catch (dbError) {
+          console.error("Database profile creation failed:", dbError);
+        }
+        
         const defaultProfile = {
           logo: "",
           businessName: defaultName,
@@ -456,7 +554,7 @@ const Dashboard = () => {
           const profileToStore = {
             ...defaultProfile,
             lastSynced: new Date().toISOString(),
-            profileId: null
+            profileId: newProfileId // Use the actual database profile ID
           };
           const storageKey = isPiUser ? `profile_${userIdentifier}` : `profile_email_${supabaseUser?.id}`;
           localStorage.setItem(storageKey, JSON.stringify(profileToStore));
@@ -464,7 +562,12 @@ const Dashboard = () => {
         } catch (e) {
           console.error("Error saving to localStorage:", e);
         }
-        toast.info(`Profile auto-created with your ${isPiUser ? 'Pi username' : 'email'}`);
+        
+        if (newProfileId) {
+          toast.success(`Profile created successfully! Welcome ${defaultName}!`);
+        } else {
+          toast.info(`Profile auto-created with your ${isPiUser ? 'Pi username' : 'email'}`);
+        }
       }
     } catch (error) {
       console.error("Error:", error);
@@ -805,8 +908,6 @@ const Dashboard = () => {
           const { data: finData, error: finError } = await supabase.functions.invoke("financial-data", {
             method: "PUT",
             body: {
-              crypto_wallets: { wallets: profile.wallets.crypto },
-              bank_details: { accounts: profile.wallets.bank },
               pi_wallet_address: profile.piWalletAddress || null,
               pi_donation_message: profile.piDonationMessage || "Send me a coffee ☕",
             },
@@ -827,8 +928,6 @@ const Dashboard = () => {
               .update({
                 pi_wallet_address: profile.piWalletAddress || null,
                 pi_donation_message: profile.piDonationMessage || "Send me a coffee ☕",
-                crypto_wallets: { wallets: profile.wallets.crypto },
-                bank_details: { accounts: profile.wallets.bank },
               })
               .eq("id", currentProfileId);
             console.log("Financial data saved directly (no session)");
@@ -957,6 +1056,13 @@ const Dashboard = () => {
                     <Wallet className="w-4 h-4" />
                     Upgrade
                   </Button>
+                  {/* Pi Auth Button for Email Users */}
+                  {hasSupabaseSession && !isAuthenticated && (
+                    <Button onClick={() => navigate("/auth")} variant="outline" size="sm" className="w-full justify-start gap-2">
+                      <Wallet className="w-4 h-4" />
+                      Connect Pi
+                    </Button>
+                  )}
                   <DrawerClose asChild>
                     <Button variant="ghost" size="sm" className="w-full">Close</Button>
                   </DrawerClose>
@@ -1040,6 +1146,19 @@ const Dashboard = () => {
           <Button onClick={handleLogout} variant="ghost" size="sm">
             <LogOut className="w-4 h-4" />
           </Button>
+          
+          {/* Pi Auth Button for Email Users */}
+          {hasSupabaseSession && !isAuthenticated && (
+            <Button 
+              onClick={() => navigate("/auth")} 
+              variant="outline" 
+              size="sm"
+              className="gap-2"
+            >
+              <Wallet className="w-4 h-4" />
+              Connect Pi
+            </Button>
+          )}
         </div>
       </header>
 
@@ -1331,57 +1450,9 @@ const Dashboard = () => {
               </div>
             </PlanGate>
 
-            {/* Donation Wallets - Premium/Pro only */}
-            <PlanGate minPlan="premium">
-              <div className="border-t pt-6">
-                <DonationWallet
-                  wallets={profile.wallets}
-                  onChange={(wallets) => setProfile({ ...profile, wallets })} 
-                />
-              </div>
-            </PlanGate>
+            {/* Donation Wallets section removed */}
 
-            {/* Pi Network Wallet - Premium/Pro only */}
-            <PlanGate minPlan="premium">
-              <div className="border-t pt-6">
-                <PiWalletManager
-                  piWalletAddress={profile.piWalletAddress}
-                  donationMessage={profile.piDonationMessage}
-                  onSave={async (address, message) => {
-                    setProfile({ 
-                      ...profile, 
-                      piWalletAddress: address,
-                      piDonationMessage: message 
-                    });
-                    // Save via secure financial data endpoint
-                    try {
-                      const { data: { session } } = await supabase.auth.getSession();
-                      if (!session?.access_token) {
-                        toast.error("Please sign in to save wallet data");
-                        return;
-                      }
-
-                      const { data, error } = await supabase.functions.invoke("financial-data", {
-                        method: "PUT",
-                        body: {
-                          pi_wallet_address: address,
-                          pi_donation_message: message,
-                        },
-                        headers: {
-                          Authorization: `Bearer ${session.access_token}`
-                        }
-                      });
-
-                      if (error) throw error;
-                      toast.success("Wallet data saved successfully");
-                    } catch (error: any) {
-                      console.error("Error saving wallet data:", error);
-                      toast.error(error.message || "Failed to save wallet data");
-                    }
-                  }}
-                />
-              </div>
-            </PlanGate>
+            {/* Pi Network Wallet section removed */}
 
             {/* Share Button Settings */}
             <div className="border-t pt-6">

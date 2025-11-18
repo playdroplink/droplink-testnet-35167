@@ -253,7 +253,7 @@ const CustomDomain = () => {
                       <ul className="list-disc list-inside ml-4 mt-1">
                         <li><strong>Type:</strong> CNAME</li>
                         <li><strong>Name/Host:</strong> @ or your subdomain (e.g., www)</li>
-                        <li><strong>Value/Target:</strong> droplink-mainnet.lovable.app</li>
+                        <li><strong>Value/Target:</strong> your-vercel-app.vercel.app</li>
                         <li><strong>TTL:</strong> 3600 (or default)</li>
                       </ul>
                       <li>Save the DNS record</li>
@@ -263,10 +263,10 @@ const CustomDomain = () => {
                   <div className="mt-4 p-3 bg-background rounded border">
                     <p className="font-medium mb-2">Example CNAME Record:</p>
                     <code className="text-xs block">
-                      @ CNAME droplink-mainnet.lovable.app
+                      @ CNAME your-vercel-app.vercel.app
                     </code>
                     <p className="text-xs text-muted-foreground mt-2">
-                      Or for subdomain: www CNAME droplink-mainnet.lovable.app
+                      Or for subdomain: www CNAME your-vercel-app.vercel.app
                     </p>
                   </div>
                 </div>
