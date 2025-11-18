@@ -313,7 +313,7 @@ SELECT
     COUNT(DISTINCT ua.id) as achievements_count
 FROM public.profiles p
 LEFT JOIN public.user_preferences up ON up.profile_id = p.id
-LEFT JOIN public.followers f ON f.following_id = p.id
+LEFT JOIN public.followers f ON f.following_profile_id = p.id
 LEFT JOIN public.analytics a ON a.profile_id = p.id
 LEFT JOIN public.user_achievements ua ON ua.profile_id = p.id
 GROUP BY p.id, p.username, p.business_name, p.total_logins, p.last_login, p.onboarding_completed,
