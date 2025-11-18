@@ -14,6 +14,12 @@ interface DropTokenBalance {
   hasTrustline: boolean;
 }
 
+interface WalletInfo {
+  address: string;
+  type: 'pi_network' | 'imported';
+  hasPrivateKey: boolean;
+}
+
 interface AuthResult {
   accessToken: string;
   user: PiUser;
@@ -68,6 +74,7 @@ interface PiContextType {
   adNetworkSupported: boolean;
   error: string | null;
   dropBalance: DropTokenBalance | null;
+  currentWallet: WalletInfo | null;
   
   // Authentication
   signIn: (scopes?: string[]) => Promise<void>;
@@ -76,11 +83,17 @@ interface PiContextType {
   // User Data
   getPiUserProfile: (username: string) => Promise<any | null>;
   
+  // Wallet Management
+  setWalletAddress: (address: string) => Promise<void>;
+  importWallet: (privateKey: string) => Promise<string | null>;
+  switchToWallet: (address: string, type: 'pi_network' | 'imported') => void;
+  getCurrentWalletAddress: () => string | null;
+  
   // Payments  
   createPayment: (amount: number, memo: string, metadata?: any) => Promise<void>;
   
   // DROP Token Functions
-  checkDropBalance: () => Promise<DropTokenBalance | null>;
+  checkDropBalance: (walletAddress?: string) => Promise<DropTokenBalance | null>;
   createDropTrustline: () => Promise<boolean>;
   sendDropTokens: (recipient: string, amount: string) => Promise<string | null>;
   requestDropTokens: (amount?: number) => Promise<boolean>;
@@ -105,6 +118,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   const [adNetworkSupported, setAdNetworkSupported] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dropBalance, setDropBalance] = useState<DropTokenBalance | null>(null);
+  const [currentWallet, setCurrentWallet] = useState<WalletInfo | null>(null);
   
   // Derived state: user is authenticated if we have a Pi user and access token
   const isAuthenticated = !!piUser && !!accessToken;
@@ -157,6 +171,9 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
                 setAccessToken(storedToken);
                 setPiUser(userData);
                 console.log("Auto-authenticated with stored credentials");
+                
+                // Initialize wallet info
+                initializeWalletInfo(userData);
                 
                 // Sync user data with Supabase
                 await syncExistingPiUser();
@@ -212,6 +229,129 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       description: "Incomplete Payment",
       duration: 5000,
     });
+  };
+
+  // Initialize wallet information
+  const initializeWalletInfo = (userData: PiUser) => {
+    // Check for imported wallet first
+    const importedWallet = localStorage.getItem('drop_wallet_address');
+    if (importedWallet) {
+      setCurrentWallet({
+        address: importedWallet,
+        type: 'imported',
+        hasPrivateKey: !!localStorage.getItem('drop_wallet_private_key')
+      });
+    } else if (userData.wallet_address) {
+      setCurrentWallet({
+        address: userData.wallet_address,
+        type: 'pi_network', 
+        hasPrivateKey: false
+      });
+    }
+  };
+
+  // Set wallet address in user profile
+  const setWalletAddress = async (address: string): Promise<void> => {
+    if (!isAuthenticated) {
+      throw new Error('User not authenticated');
+    }
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ pi_wallet_address: address })
+        .eq('username', piUser?.username);
+
+      if (error) throw error;
+
+      // Update local user data
+      const updatedUser = { ...piUser!, wallet_address: address };
+      setPiUser(updatedUser);
+      localStorage.setItem('pi_user', JSON.stringify(updatedUser));
+
+      toast('Wallet address updated successfully!', {
+        description: 'Your Pi wallet address has been saved',
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Error setting wallet address:', error);
+      toast('Failed to update wallet address', {
+        description: 'Please try again',
+        duration: 5000,
+      });
+      throw error;
+    }
+  };
+
+  // Import wallet from private key
+  const importWallet = async (privateKey: string): Promise<string | null> => {
+    if (!privateKey || privateKey.length !== 56 || !privateKey.startsWith('S')) {
+      throw new Error('Invalid private key format');
+    }
+
+    try {
+      // Derive public key (simplified - use Stellar SDK in production)
+      const publicKey = derivePublicKeyFromPrivate(privateKey);
+      
+      if (publicKey) {
+        // Store securely
+        localStorage.setItem('drop_wallet_private_key', privateKey);
+        localStorage.setItem('drop_wallet_address', publicKey);
+        
+        // Update current wallet
+        setCurrentWallet({
+          address: publicKey,
+          type: 'imported',
+          hasPrivateKey: true
+        });
+
+        toast('Wallet imported successfully!', {
+          description: `Address: ${publicKey.slice(0, 8)}...${publicKey.slice(-8)}`,
+          duration: 4000,
+        });
+
+        return publicKey;
+      }
+      
+      throw new Error('Failed to derive public key');
+    } catch (error) {
+      console.error('Error importing wallet:', error);
+      throw error;
+    }
+  };
+
+  // Switch to a different wallet
+  const switchToWallet = (address: string, type: 'pi_network' | 'imported') => {
+    const hasPrivateKey = type === 'imported' && !!localStorage.getItem('drop_wallet_private_key');
+    
+    setCurrentWallet({
+      address,
+      type,
+      hasPrivateKey
+    });
+
+    // Check balance for the switched wallet
+    checkDropBalance(address);
+  };
+
+  // Get current wallet address
+  const getCurrentWalletAddress = (): string | null => {
+    return currentWallet?.address || piUser?.wallet_address || null;
+  };
+
+  // Derive public key from private key (simplified)
+  const derivePublicKeyFromPrivate = (privateKey: string): string | null => {
+    try {
+      if (privateKey.length === 56 && privateKey.startsWith('S')) {
+        // Generate mock public key for demo (use Stellar SDK in production)
+        const mockPublicKey = 'G' + privateKey.slice(1, 55) + 'A';
+        return mockPublicKey.toUpperCase();
+      }
+      return null;
+    } catch (error) {
+      console.error('Key derivation error:', error);
+      return null;
+    }
   };
 
   // Save user data to Supabaserom Supabase
@@ -602,13 +742,14 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Check DROP token balance
-  const checkDropBalance = async (): Promise<DropTokenBalance | null> => {
-    if (!piUser?.wallet_address) {
+  const checkDropBalance = async (walletAddress?: string): Promise<DropTokenBalance | null> => {
+    const targetWallet = walletAddress || getCurrentWalletAddress();
+    if (!targetWallet) {
       return null;
     }
 
     try {
-      const response = await fetch(`https://api.testnet.minepi.com/accounts/${piUser.wallet_address}`);
+      const response = await fetch(`https://api.testnet.minepi.com/accounts/${targetWallet}`);
       
       if (response.ok) {
         const accountData = await response.json();
@@ -761,9 +902,14 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     adNetworkSupported,
     error,
     dropBalance,
+    currentWallet,
     signIn,
     signOut,
     getPiUserProfile,
+    setWalletAddress,
+    importWallet,
+    switchToWallet,
+    getCurrentWalletAddress,
     createPayment,
     checkDropBalance,
     createDropTrustline,

@@ -78,6 +78,8 @@ interface ProfileData {
   username: string;
   hasPremium: boolean;
   showShareButton: boolean;
+  piWalletAddress?: string;
+  piDonationMessage?: string;
 }
 
 const PublicBio = () => {
@@ -93,6 +95,7 @@ const PublicBio = () => {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [showGiftDialog, setShowGiftDialog] = useState(false);
+  const [showPiWalletTip, setShowPiWalletTip] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -698,6 +701,60 @@ const PublicBio = () => {
           </div>
         )}
 
+        {/* Pi Wallet Tips */}
+        {profile.piWalletAddress && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold text-white text-center mb-6 flex items-center justify-center gap-2">
+              <Wallet className="w-5 h-5 text-blue-400" />
+              Send DROP Tokens
+            </h2>
+            
+            <div className="text-center space-y-4">
+              <div className="bg-blue-500/20 backdrop-blur rounded-lg border border-blue-400/30 p-4">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Wallet className="w-5 h-5 text-blue-400" />
+                  <span className="text-blue-300 font-medium">Pi Network Wallet</span>
+                </div>
+                <p className="text-gray-300 text-sm mb-4">
+                  {profile.piDonationMessage || "Send me DROP tokens on Pi Network!"}
+                </p>
+                
+                <div className="space-y-3">
+                  <Button
+                    onClick={() => setShowPiWalletTip(true)}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Wallet className="w-4 h-4 mr-2" />
+                    View Wallet QR
+                  </Button>
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={profile.piWalletAddress}
+                      readOnly
+                      className="flex-1 bg-black/50 border border-blue-400/30 rounded px-3 py-2 text-white text-xs font-mono"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(profile.piWalletAddress!);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                        toast.success("Wallet address copied!");
+                      }}
+                      className="border-blue-400/30 text-blue-300 hover:bg-blue-500/20"
+                    >
+                      {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Share Button */}
         {profile.showShareButton && (
           <div className="flex justify-center py-6">
@@ -814,6 +871,72 @@ const PublicBio = () => {
           senderProfileId={currentUserProfileId}
           receiverName={profile.businessName}
         />
+      )}
+
+      {/* Pi Wallet Tip Dialog */}
+      {profile && (
+        <Dialog open={showPiWalletTip} onOpenChange={setShowPiWalletTip}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Wallet className="w-5 h-5 text-blue-500" />
+                Send DROP Tokens
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground mb-3">
+                  {profile.piDonationMessage || "Scan QR code to send DROP tokens"}
+                </p>
+                <p className="text-xs text-blue-600 mb-4">Pi Network Blockchain</p>
+              </div>
+              
+              <div className="flex justify-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
+                <QRCodeSVG 
+                  value={profile.piWalletAddress || ''} 
+                  size={200}
+                  bgColor="#f8fafc"
+                  fgColor="#1e40af"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Pi Network Wallet Address</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={profile.piWalletAddress || ''}
+                    readOnly
+                    className="flex-1 px-3 py-2 bg-muted rounded-md text-xs font-mono"
+                  />
+                  <Button 
+                    size="sm" 
+                    onClick={() => {
+                      navigator.clipboard.writeText(profile.piWalletAddress || '');
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                      toast.success("Address copied!");
+                    }}
+                  >
+                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  </Button>
+                </div>
+                
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                  <div className="text-xs text-blue-800">
+                    <p className="font-medium mb-1">How to send DROP tokens:</p>
+                    <ul className="space-y-1 list-disc list-inside">
+                      <li>Open your Pi Wallet app</li>
+                      <li>Scan this QR code or enter the address</li>
+                      <li>Enter the amount of DROP tokens to send</li>
+                      <li>Confirm the transaction</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* AI Chat Widget */}

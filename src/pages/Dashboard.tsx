@@ -71,6 +71,7 @@ interface ProfileData {
   storeUrl: string;
   description: string;
   email?: string;
+  piWalletAddress?: string;
   youtubeVideoUrl: string;
   socialLinks: {
     twitter: string;
@@ -112,7 +113,7 @@ const Dashboard = () => {
   
   // Hooks must be called unconditionally
   const piContext = usePi();
-  const { piUser, isAuthenticated, signOut: piSignOut, loading: piLoading } = piContext;
+  const { piUser, isAuthenticated, signOut: piSignOut, loading: piLoading, getCurrentWalletAddress } = piContext;
   
   const subscription = useActiveSubscription();
   const { plan, loading: subscriptionLoading } = subscription;
@@ -123,6 +124,8 @@ const Dashboard = () => {
   const [profileId, setProfileId] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(true);
   const [showQRCode, setShowQRCode] = useState(false);
+  const [piWalletQrData, setPiWalletQrData] = useState<string>("");
+  const [showPiWalletQR, setShowPiWalletQR] = useState(false);
   const [hasCheckedSubscription, setHasCheckedSubscription] = useState(false);
   const [displayUsername, setDisplayUsername] = useState<string | null>(null);
   const [hasSupabaseSession, setHasSupabaseSession] = useState(false);
@@ -1587,6 +1590,117 @@ const Dashboard = () => {
               </div>
             </div>
 
+            {/* Pi Wallet Address for Tips & Payments */}
+            {isAuthenticated && (
+              <div className="border-t pt-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <Wallet className="w-5 h-5 text-blue-500" />
+                    Pi Wallet for Tips
+                  </h2>
+                  <span className="text-xs text-muted-foreground bg-blue-50 px-2 py-1 rounded">
+                    Pi Network
+                  </span>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center">
+                        <Wallet className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-medium text-blue-900 mb-1">Receive DROP Tokens</h3>
+                        <p className="text-sm text-blue-700 mb-3">
+                          Set your Pi wallet address to receive DROP token tips from visitors to your store.
+                        </p>
+                        
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={profile.piWalletAddress || ''}
+                              onChange={(e) => setProfile({ ...profile, piWalletAddress: e.target.value })}
+                              placeholder="G... (Pi Network wallet address)"
+                              className="bg-white border-blue-300 text-xs font-mono"
+                              maxLength={56}
+                            />
+                            {profile.piWalletAddress && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  if (profile.piWalletAddress) {
+                                    setPiWalletQrData(profile.piWalletAddress);
+                                    setShowPiWalletQR(true);
+                                  }
+                                }}
+                                className="border-blue-300"
+                              >
+                                <QrCode className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={async () => {
+                                if (getCurrentWalletAddress) {
+                                  const walletAddr = getCurrentWalletAddress();
+                                  if (walletAddr) {
+                                    setProfile({ ...profile, piWalletAddress: walletAddr });
+                                    toast.success('Wallet address imported from Pi Network!');
+                                  } else {
+                                    toast.error('No Pi wallet found. Please authenticate or import a wallet first.');
+                                  }
+                                } else {
+                                  toast.error('Please go to the Wallet section to set up your Pi Network wallet first.');
+                                }
+                              }}
+                              className="text-xs border-blue-300"
+                            >
+                              <Wallet className="w-3 h-3 mr-1" />
+                              Import from Wallet
+                            </Button>
+                            
+                            {profile.piWalletAddress && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(profile.piWalletAddress!);
+                                  toast.success('Wallet address copied!');
+                                }}
+                                className="text-xs border-blue-300"
+                              >
+                                Copy Address
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="mt-3 p-3 bg-blue-100 rounded border">
+                          <div className="flex items-start gap-2">
+                            <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                            <div className="text-xs text-blue-800">
+                              <p className="font-medium mb-1">How it works:</p>
+                              <ul className="space-y-1 list-disc list-inside">
+                                <li>Visitors can send DROP tokens to this address</li>
+                                <li>QR code will be shown on your public bio page</li>
+                                <li>Only enter addresses you own and control</li>
+                                <li>This feature works with Pi Network blockchain</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Custom Links - Premium/Pro only */}
             <PlanGate minPlan="premium">
               <div className="border-t pt-6">
@@ -1840,6 +1954,14 @@ const Dashboard = () => {
         onOpenChange={setShowQRCode}
         url={`${window.location.origin}/${profile.storeUrl}`}
         username={profile.storeUrl}
+      />
+
+      {/* Pi Wallet QR Code Dialog */}
+      <QRCodeDialog
+        open={showPiWalletQR}
+        onOpenChange={setShowPiWalletQR}
+        url={piWalletQrData}
+        username="Pi-Wallet"
       />
     </div>
   );
