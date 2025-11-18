@@ -52,7 +52,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
   const [showQrDialog, setShowQrDialog] = useState<boolean>(false);
   const [userPrivateKey, setUserPrivateKey] = useState<string>('');
   const [showPrivateKeyDialog, setShowPrivateKeyDialog] = useState<boolean>(false);
-  const [isTestnetMode, setIsTestnetMode] = useState<boolean>(true);
+  const [isMainnetMode, setIsMainnetMode] = useState<boolean>(true);
   const [importedWallet, setImportedWallet] = useState<string>('');
   const [currentWalletAddress, setCurrentWalletAddress] = useState<string>(piWallet || '');
   const [isImporting, setIsImporting] = useState<boolean>(false);
@@ -65,8 +65,8 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
     try {
       setIsLoading(true);
       
-      // Check Pi Testnet for balance
-      const response = await fetch(`https://api.testnet.minepi.com/accounts/${targetWallet}`);
+      // Check Pi Mainnet for balance
+      const response = await fetch(`https://api.mainnet.minepi.com/accounts/${targetWallet}`);
       
       if (response.ok) {
         const accountData = await response.json();
@@ -201,7 +201,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
     if (!userPrivateKey || userPrivateKey.length !== 56 || !userPrivateKey.startsWith('S')) {
       toast({
         title: "Invalid Private Key",
-        description: "Please enter a valid Pi Testnet private key (56 chars, starts with 'S')",
+        description: "Please enter a valid Pi Mainnet private key (56 chars, starts with 'S')",
         variant: "destructive"
       });
       return;
@@ -672,8 +672,8 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Network</Label>
-                <Badge variant={isTestnetMode ? "default" : "secondary"}>
-                  {isTestnetMode ? 'Pi Testnet' : 'Pi Mainnet'}
+                <Badge variant={isMainnetMode ? "default" : "secondary"}>
+                  {isMainnetMode ? 'Pi Mainnet' : 'Pi Testnet'}
                 </Badge>
               </div>
               
@@ -795,7 +795,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
             </Alert>
             
             <div className="space-y-2">
-              <Label htmlFor="privateKey">Pi Testnet Private Key</Label>
+              <Label htmlFor="privateKey">Pi Mainnet Private Key</Label>
               <Input
                 id="privateKey"
                 type="password"
@@ -860,7 +860,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
           
           <Button variant="outline" className="w-full justify-start" asChild>
             <a 
-              href={`https://api.testnet.minepi.com/assets?asset_code=${DROP_TOKEN.code}&asset_issuer=${DROP_TOKEN.issuer}`}
+              href={`https://api.mainnet.minepi.com/assets?asset_code=${DROP_TOKEN.code}&asset_issuer=${DROP_TOKEN.issuer}`}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -871,12 +871,12 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
           
           <Button variant="outline" className="w-full justify-start" asChild>
             <a 
-              href="https://api.testnet.minepi.com/friendbot"
+              href="https://pi.network"
               target="_blank"
               rel="noopener noreferrer"
             >
               <ExternalLink className="h-4 w-4 mr-2" />
-              Pi Testnet Faucet
+              Pi Network Official
             </a>
           </Button>
         </CardContent>

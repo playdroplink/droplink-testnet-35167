@@ -7,8 +7,12 @@
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "build:mainnet": "vite build --mode production",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy:mainnet": "node mainnet-deploy.cjs && npm run build:mainnet",
+    "verify:mainnet": "node mainnet-deploy.cjs",
+    "validate:production": "node validate-production.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

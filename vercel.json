@@ -6,6 +6,10 @@
   "devCommand": "npm run dev",
   "rewrites": [
     {
+      "source": "/.well-known/pi.toml",
+      "destination": "/pi.toml"
+    },
+    {
       "source": "/u/([^/]+)",
       "destination": "/index.html"
     },
@@ -20,6 +24,23 @@
   ],
   "headers": [
     {
+      "source": "/.well-known/(.*)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, OPTIONS"
+        }
+      ]
+    },
+    {
       "source": "/assets/(.*)",
       "headers": [
         {
@@ -33,7 +54,7 @@
       "headers": [
         {
           "key": "X-Frame-Options",
-          "value": "DENY"
+          "value": "SAMEORIGIN"
         },
         {
           "key": "X-Content-Type-Options",
@@ -45,5 +66,10 @@
         }
       ]
     }
-  ]
+  ],
+  "env": {
+    "VITE_PI_NETWORK": "mainnet",
+    "VITE_API_URL": "https://api.mainnet.minepi.com",
+    "VITE_DOMAIN": "droplink.space"
+  }
 }

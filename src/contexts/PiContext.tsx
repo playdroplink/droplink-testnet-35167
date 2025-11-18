@@ -123,24 +123,24 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   // Derived state: user is authenticated if we have a Pi user and access token
   const isAuthenticated = !!piUser && !!accessToken;
 
-  // DROP Token Configuration
+  // DROP Token Configuration (Mainnet)
   const DROP_TOKEN = {
     code: 'DROP',
-    issuer: 'SB4I6DX4Y6PS7SAJW2SFUQZP3DAW5HE7RBAKISOMTVACARMFCMRBH46I',
-    distributor: 'SBS4OY37QMZ67U2WLWZQUUFUV2JOBKWCBFS7IZDOJV3NZPYC3OOZ4OIM'
+    issuer: 'GBVTV77XFMDYSSVIG6ZGSRAGZ3S7KA4275YYLOLIROOD3Y3F3TH5U3EI',
+    distributor: 'GCTPMH43NGN7E4IXLQ27H2XWGGWWDY3I6UAPBFXYQSEUPEKNQE2BZXC2'
   };
 
   useEffect(() => {
     const initializePi = async () => {
       try {
         if (typeof window !== 'undefined' && window.Pi) {
-          // Initialize Pi SDK for sandbox mode (testing)
+          // Initialize Pi SDK for mainnet (production)
           await window.Pi.init({ 
             version: "2.0",
-            sandbox: true // Always use sandbox mode
+            sandbox: false // Production mainnet mode
           });
           
-          console.log("Pi SDK initialized successfully (Sandbox Mode Enabled)");
+          console.log("Pi SDK initialized successfully (Mainnet Mode Enabled)");
           setIsInitialized(true);
           
           // Check ad network support
@@ -160,7 +160,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           if (storedToken && storedUser) {
             try {
               // Verify token with Pi API
-              const response = await fetch('https://api.minepi.com/v2/me', {
+              const response = await fetch('https://api.mainnet.minepi.com/v2/me', {
                 headers: {
                   'Authorization': `Bearer ${storedToken}`
                 }
@@ -470,7 +470,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       const authResult = await window.Pi.authenticate(scopes, handleIncompletePayment);
       
       // Verify with Pi API
-      const response = await fetch('https://api.minepi.com/v2/me', {
+      const response = await fetch('https://api.mainnet.minepi.com/v2/me', {
         headers: {
           'Authorization': `Bearer ${authResult.accessToken}`
         }
@@ -749,7 +749,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const response = await fetch(`https://api.testnet.minepi.com/accounts/${targetWallet}`);
+      const response = await fetch(`https://api.mainnet.minepi.com/accounts/${targetWallet}`);
       
       if (response.ok) {
         const accountData = await response.json();

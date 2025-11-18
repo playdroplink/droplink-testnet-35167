@@ -453,7 +453,7 @@ const Wallet = () => {
                       
                       <Button variant="outline" className="w-full justify-start" asChild>
                         <a 
-                          href="https://api.testnet.minepi.com/assets?asset_code=DROP&asset_issuer=GBVTV77XFMDYSSVIG6ZGSRAGZ3S7KA4275YYLOLIROOD3Y3F3TH5U3EI"
+                          href="https://api.mainnet.minepi.com/assets?asset_code=DROP&asset_issuer=GBVTV77XFMDYSSVIG6ZGSRAGZ3S7KA4275YYLOLIROOD3Y3F3TH5U3EI"
                           target="_blank"
                           rel="noopener noreferrer"
                         >
@@ -464,12 +464,12 @@ const Wallet = () => {
                       
                       <Button variant="outline" className="w-full justify-start" asChild>
                         <a 
-                          href="https://api.testnet.minepi.com/friendbot"
+                          href="https://pi.network"
                           target="_blank"
                           rel="noopener noreferrer"
                         >
                           <ExternalLink className="h-4 w-4 mr-2" />
-                          Pi Testnet Faucet
+                          Pi Network Official
                         </a>
                       </Button>
                     </div>
