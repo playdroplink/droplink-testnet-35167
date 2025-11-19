@@ -23,7 +23,7 @@ interface PaymentLink {
   id: string;
   description: string;
   amount: number;
-  type: 'payment' | 'tip' | 'subscription' | 'product';
+  type: 'payment' | 'tip' | 'subscription' | 'product' | 'donation';
   active: boolean;
   totalReceived: number;
   transactionCount: number;
@@ -67,38 +67,39 @@ const PaymentPage: React.FC = () => {
       // First try to load from database payment_links table (if it exists)
       try {
         const { data: dbLink, error: dbError } = await supabase
-          .from('payment_links')
-          .select(`
-            *,
-            profiles:profile_id (
-              username,
-              business_name,
-              logo_url
-            )
-          `)
+          .from('payment_links' as any)
+          .select('*')
           .eq('link_id', id)
           .eq('is_active', true)
           .single();
 
         if (!dbError && dbLink) {
           console.log('Found payment link in database:', dbLink);
+          
+          // Get profile data separately
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('username, business_name, logo')
+            .eq('id', (dbLink as any).profile_id)
+            .single();
+
           setPaymentLink({
-            id: dbLink.link_id,
-            description: dbLink.description,
-            amount: parseFloat(dbLink.amount),
-            type: dbLink.payment_type as any,
-            active: dbLink.is_active,
-            totalReceived: parseFloat(dbLink.total_received || '0'),
-            transactionCount: dbLink.transaction_count || 0,
-            memo: dbLink.description,
-            productInfo: dbLink.payment_type === 'product' ? {
-              name: dbLink.description,
-              description: dbLink.description
+            id: (dbLink as any).link_id || id,
+            description: (dbLink as any).description || 'Payment Link',
+            amount: parseFloat((dbLink as any).amount?.toString() || '0'),
+            type: ((dbLink as any).payment_type || 'payment') as any,
+            active: (dbLink as any).is_active !== false,
+            totalReceived: parseFloat((dbLink as any).total_received?.toString() || '0'),
+            transactionCount: (dbLink as any).transaction_count || 0,
+            memo: (dbLink as any).description || 'Payment Link',
+            productInfo: (dbLink as any).payment_type === 'product' ? {
+              name: (dbLink as any).description || 'Product',
+              description: (dbLink as any).description || 'Product'
             } : undefined,
             merchantProfile: {
-              username: dbLink.profiles?.username || '',
-              businessName: dbLink.profiles?.business_name || '',
-              logoUrl: dbLink.profiles?.logo_url || ''
+              username: profileData?.username || 'Unknown',
+              businessName: profileData?.business_name || profileData?.username || 'Unknown Business',
+              logoUrl: profileData?.logo || ''
             }
           });
           return;
@@ -110,7 +111,7 @@ const PaymentPage: React.FC = () => {
       // Fallback 1: Search in all profiles' theme_settings
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('username, business_name, logo_url, theme_settings, pi_user_id');
+        .select('username, business_name, logo, theme_settings, user_id');
 
       console.log('Searching in', profiles?.length || 0, 'profiles for payment link:', id);
 
@@ -141,7 +142,7 @@ const PaymentPage: React.FC = () => {
                 merchantProfile: {
                   username: profile.username || '',
                   businessName: profile.business_name || '',
-                  logoUrl: profile.logo_url || ''
+                  logoUrl: profile.logo || ''
                 }
               });
               return;
@@ -167,7 +168,7 @@ const PaymentPage: React.FC = () => {
             console.log('Found payment link in global localStorage:', foundLink);
             
             // Try to find the merchant profile
-            const merchantProfile = profiles?.find(p => p.pi_user_id === userId);
+            const merchantProfile = profiles?.find(p => p.user_id === userId);
             
             setPaymentLink({
               ...foundLink,
@@ -178,7 +179,7 @@ const PaymentPage: React.FC = () => {
               merchantProfile: merchantProfile ? {
                 username: merchantProfile.username || '',
                 businessName: merchantProfile.business_name || '',
-                logoUrl: merchantProfile.logo_url || ''
+                logoUrl: merchantProfile.logo || ''
               } : undefined
             });
             return;
@@ -221,7 +222,7 @@ const PaymentPage: React.FC = () => {
       };
 
       // Create Pi Network payment
-      const payment = await createPayment(paymentData);
+      const payment = await createPayment(paymentData.amount, paymentData.memo, paymentData.metadata);
       
       if (payment) {
         setTransactionHash(payment.identifier || '');
@@ -229,7 +230,7 @@ const PaymentPage: React.FC = () => {
         
         // Track payment in database
         try {
-          await supabase.from('payment_transactions').insert({
+          await supabase.from('payment_transactions' as any).insert({
             payment_link_id: null, // Will be linked later
             transaction_id: payment.identifier,
             payment_id: payment.identifier,

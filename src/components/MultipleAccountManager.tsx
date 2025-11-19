@@ -39,27 +39,19 @@ export const MultipleAccountManager: React.FC<MultipleAccountManagerProps> = ({
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const { toast } = useToast();
-  const { user: piUser, createPayment } = usePi();
+  const { piUser, createAccount, loadUserAccounts, switchAccount, checkUsernameAvailability: checkUsername, createPayment, availableAccounts } = usePi();
 
   const ACCOUNT_CREATION_FEE = 10; // 10 PI
 
   useEffect(() => {
-    loadUserAccounts();
+    loadAccounts();
   }, [piUser?.uid]);
 
-  const loadUserAccounts = async () => {
-    if (!piUser?.uid) return;
-
+  const loadAccounts = async () => {
     try {
-      const { data, error } = await supabase
-        .rpc('get_user_accounts_by_pi_id', {
-          pi_user_id_param: piUser.uid
-        });
-
-      if (error) throw error;
-
-      if (data?.success && data?.accounts) {
-        setAccounts(data.accounts);
+      const accounts = await loadUserAccounts();
+      if (accounts && accounts.length > 0) {
+        setAccounts(accounts);
       }
     } catch (error) {
       console.error('Failed to load accounts:', error);
@@ -80,14 +72,8 @@ export const MultipleAccountManager: React.FC<MultipleAccountManagerProps> = ({
     setIsUsernameChecking(true);
     
     try {
-      const { data, error } = await supabase
-        .rpc('check_username_availability', {
-          username_to_check: username.trim()
-        });
-
-      if (error) throw error;
-
-      setUsernameAvailable(data?.available || false);
+      const available = await checkUsername(username.trim());
+      setUsernameAvailable(available);
     } catch (error) {
       console.error('Username check failed:', error);
       setUsernameAvailable(false);
@@ -125,7 +111,7 @@ export const MultipleAccountManager: React.FC<MultipleAccountManagerProps> = ({
 
     try {
       // For additional accounts, process payment first
-      if (availableAccounts.length > 0) {
+      if (accounts.length > 0) {
         setPaymentProcessing(true);
         
         const paymentData = {
@@ -148,19 +134,10 @@ export const MultipleAccountManager: React.FC<MultipleAccountManagerProps> = ({
       }
 
       // Create the account
-      const { data: accountResult, error } = await supabase
-        .rpc('create_pi_network_account', {
-          pi_username: newUsername.trim(),
-          pi_user_id: piUser?.uid,
-          display_name: displayName.trim() || newUsername.trim(),
-          is_additional_account: availableAccounts.length > 0,
-          payment_amount: availableAccounts.length > 0 ? ACCOUNT_CREATION_FEE : 0
-        });
-
-      if (error) throw error;
-
-      if (!accountResult?.success) {
-        throw new Error(accountResult?.error || 'Failed to create account');
+      const newAccount = await createAccount(newUsername.trim(), displayName.trim() || newUsername.trim());
+      
+      if (!newAccount) {
+        throw new Error('Failed to create account');
       }
 
       toast({
@@ -176,7 +153,7 @@ export const MultipleAccountManager: React.FC<MultipleAccountManagerProps> = ({
       setIsCreateDialogOpen(false);
 
       // Reload accounts
-      await loadUserAccounts();
+      await loadAccounts();
 
     } catch (error) {
       console.error('Account creation failed:', error);
@@ -193,17 +170,7 @@ export const MultipleAccountManager: React.FC<MultipleAccountManagerProps> = ({
 
   const switchToAccount = async (account: PiAccount) => {
     try {
-      const { data, error } = await supabase
-        .rpc('switch_to_account', {
-          pi_user_id_param: piUser?.uid,
-          target_username: account.pi_username
-        });
-
-      if (error) throw error;
-
-      if (!data?.success) {
-        throw new Error(data?.error || 'Failed to switch account');
-      }
+      await switchAccount(account);
 
       toast({
         title: "Account Switched",
@@ -341,7 +308,7 @@ export const MultipleAccountManager: React.FC<MultipleAccountManagerProps> = ({
                   <Alert className="border-yellow-200 bg-yellow-50">
                     <CreditCard className="h-4 w-4 text-yellow-600" />
                     <AlertDescription className="text-yellow-700">
-                      {availableAccounts.length > 0 ? (
+                      {accounts.length > 0 ? (
                         <>
                           <strong>Cost: {ACCOUNT_CREATION_FEE} PI</strong>
                           <br />
@@ -439,7 +406,7 @@ export const MultipleAccountManager: React.FC<MultipleAccountManagerProps> = ({
                         <UserPlus className="h-4 w-4 mr-2" />
                         Creating...
                       </>
-                    ) : availableAccounts.length > 0 ? (
+                    ) : accounts.length > 0 ? (
                       <>
                         <Coins className="h-4 w-4 mr-2" />
                         Pay {ACCOUNT_CREATION_FEE} PI & Create

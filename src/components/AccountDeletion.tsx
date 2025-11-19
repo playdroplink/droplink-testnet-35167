@@ -23,7 +23,7 @@ export const AccountDeletion: React.FC<AccountDeletionProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteStep, setDeleteStep] = useState(1);
   const { toast } = useToast();
-  const { user: piUser, signOut } = usePi();
+  const { piUser, signOut } = usePi();
 
   const confirmationPhrase = "DELETE MY ACCOUNT";
   const isConfirmed = confirmationText === confirmationPhrase;
@@ -44,7 +44,7 @@ export const AccountDeletion: React.FC<AccountDeletionProps> = ({
       // Step 1: Delete user data via database function
       setDeleteStep(1);
       const { data: deleteResult, error: deleteError } = await supabase
-        .rpc('delete_user_account_completely', {
+        .rpc('delete_user_account_completely' as any, {
           user_id_to_delete: currentUser?.id || piUser?.uid
         });
 

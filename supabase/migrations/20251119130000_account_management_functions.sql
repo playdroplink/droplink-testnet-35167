@@ -9,71 +9,128 @@ SECURITY DEFINER
 AS $$
 DECLARE
     deletion_result json;
-    deleted_counts json;
     profile_data json;
+    affected_rows integer;
+    total_deleted integer := 0;
+    pi_user_id_value text;
+    pi_username_value text;
 BEGIN
     -- Get profile data before deletion for logging
-    SELECT to_json(p) INTO profile_data
+    SELECT to_json(p), p.pi_user_id, p.pi_username INTO profile_data, pi_user_id_value, pi_username_value
     FROM profiles p
     WHERE p.id = user_id_to_delete;
 
-    -- Initialize deletion counts
-    deleted_counts := json_build_object(
-        'profiles', 0,
-        'payment_links', 0,
-        'payment_transactions', 0,
-        'analytics', 0,
-        'custom_links', 0,
-        'feature_usage', 0,
-        'profile_financial_data', 0,
-        'user_sessions', 0,
-        'user_preferences', 0,
-        'voting_submissions', 0,
-        'voting_votes', 0
-    );
-
     -- Delete from all tables in reverse dependency order
     
-    -- 1. Delete voting votes
-    DELETE FROM voting_votes WHERE user_id = user_id_to_delete;
+    -- 1. Delete voting votes (by user_id and pi_user_id)
+    DELETE FROM voting_votes WHERE user_id = user_id_to_delete OR pi_user_id = pi_user_id_value;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
     
-    -- 2. Delete voting submissions  
-    DELETE FROM voting_submissions WHERE user_id = user_id_to_delete;
+    -- 2. Delete voting submissions (by user_id and pi_user_id)
+    DELETE FROM voting_submissions WHERE user_id = user_id_to_delete OR pi_user_id = pi_user_id_value;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
     
     -- 3. Delete user preferences
     DELETE FROM user_preferences WHERE user_id = user_id_to_delete;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
     
-    -- 4. Delete user sessions
-    DELETE FROM user_sessions WHERE user_id = user_id_to_delete;
+    -- 4. Delete user sessions (by user_id and pi_user_id)
+    DELETE FROM user_sessions WHERE user_id = user_id_to_delete OR pi_user_id = pi_user_id_value;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
     
     -- 5. Delete profile financial data
     DELETE FROM profile_financial_data WHERE profile_id = user_id_to_delete;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
     
-    -- 6. Delete feature usage
-    DELETE FROM feature_usage WHERE user_id = user_id_to_delete;
+    -- 6. Delete feature usage (by user_id and pi_user_id)
+    DELETE FROM feature_usage WHERE user_id = user_id_to_delete OR pi_user_id = pi_user_id_value;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
     
-    -- 7. Delete custom links
-    DELETE FROM custom_links WHERE user_id = user_id_to_delete;
+    -- 7. Delete custom links (by user_id and pi_user_id)
+    DELETE FROM custom_links WHERE user_id = user_id_to_delete OR pi_user_id = pi_user_id_value;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
     
-    -- 8. Delete analytics
-    DELETE FROM analytics WHERE user_id = user_id_to_delete;
+    -- 8. Delete analytics (by user_id and profile_id)
+    DELETE FROM analytics WHERE user_id = user_id_to_delete OR profile_id = user_id_to_delete;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
     
-    -- 9. Delete payment transactions
-    DELETE FROM payment_transactions WHERE user_id = user_id_to_delete;
+    -- 9. Delete payment transactions (by user_id and profile_id)
+    DELETE FROM payment_transactions WHERE user_id = user_id_to_delete OR profile_id = user_id_to_delete;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
     
-    -- 10. Delete payment links
-    DELETE FROM payment_links WHERE user_id = user_id_to_delete;
+    -- 10. Delete payment links (by user_id, profile_id, and pi_user_id)
+    DELETE FROM payment_links WHERE user_id = user_id_to_delete OR profile_id = user_id_to_delete OR pi_user_id = pi_user_id_value;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
     
-    -- 11. Finally delete the profile (this should cascade to auth.users)
-    DELETE FROM profiles WHERE id = user_id_to_delete;
+    -- 11. Delete subscriptions (by profile_id)
+    DELETE FROM subscriptions WHERE profile_id = user_id_to_delete;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
+    
+    -- 12. Delete gifts and gift_transactions (by profile_id and pi_user_id)
+    DELETE FROM gift_transactions WHERE sender_id = user_id_to_delete OR recipient_id = user_id_to_delete;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
+    
+    DELETE FROM gifts WHERE profile_id = user_id_to_delete;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
+    
+    -- 13. Delete followers (by profile_id)
+    DELETE FROM followers WHERE profile_id = user_id_to_delete OR follower_profile_id = user_id_to_delete;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
+    
+    -- 14. Delete AI chat messages (by profile_id)
+    DELETE FROM ai_chat_messages WHERE profile_id = user_id_to_delete;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
+    
+    -- 15. Delete AI support config (by profile_id)
+    DELETE FROM ai_support_config WHERE profile_id = user_id_to_delete;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
+    
+    -- 16. Delete payment_idempotency (by profile_id)
+    DELETE FROM payment_idempotency WHERE profile_id = user_id_to_delete;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
+    
+    -- 17. Delete products (by profile_id)
+    DELETE FROM products WHERE profile_id = user_id_to_delete;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
+    
+    -- 18. Delete user_wallets (by profile_id)
+    DELETE FROM user_wallets WHERE profile_id = user_id_to_delete;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
+    
+    -- 19. CRITICAL: Delete ALL profiles with same pi_user_id (handles multiple accounts)
+    DELETE FROM profiles WHERE id = user_id_to_delete OR pi_user_id = pi_user_id_value OR username = pi_username_value;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
 
     -- Create result
     deletion_result := json_build_object(
         'success', true,
         'user_id', user_id_to_delete,
+        'pi_user_id', pi_user_id_value,
+        'pi_username', pi_username_value,
         'deleted_at', NOW(),
-        'deleted_counts', deleted_counts,
-        'original_profile', profile_data
+        'total_records_deleted', total_deleted,
+        'profile_existed', profile_data IS NOT NULL,
+        'message', 'Account completely deleted. You can create a new account with the same Pi Network username.'
     );
 
     RETURN deletion_result;
@@ -82,7 +139,8 @@ EXCEPTION WHEN OTHERS THEN
     RETURN json_build_object(
         'success', false,
         'error', SQLERRM,
-        'user_id', user_id_to_delete
+        'user_id', user_id_to_delete,
+        'pi_user_id', pi_user_id_value
     );
 END;
 $$;
@@ -103,23 +161,44 @@ DECLARE
     new_user_id uuid;
     account_result json;
     username_exists boolean;
+    existing_count integer;
+    cleaned_username text;
+    final_display_name text;
 BEGIN
-    -- Check if username already exists
-    SELECT EXISTS(
-        SELECT 1 FROM profiles 
-        WHERE username = pi_username OR pi_username = create_pi_network_account.pi_username
-    ) INTO username_exists;
+    -- Clean and validate inputs
+    cleaned_username := TRIM(LOWER(pi_username));
+    final_display_name := COALESCE(TRIM(display_name), cleaned_username);
     
-    -- If this is an additional account and username exists, return error
-    IF is_additional_account AND username_exists THEN
+    -- Validate username length
+    IF LENGTH(cleaned_username) < 3 THEN
         RETURN json_build_object(
             'success', false,
-            'error', 'Username already exists. Please choose a different username.',
-            'error_code', 'USERNAME_EXISTS'
+            'error', 'Username must be at least 3 characters long.',
+            'error_code', 'INVALID_USERNAME'
         );
     END IF;
     
-    -- If this is an additional account, verify payment
+    -- Check if username already exists (comprehensive check)
+    SELECT COUNT(*) INTO existing_count
+    FROM profiles 
+    WHERE LOWER(username) = cleaned_username 
+       OR LOWER(pi_username) = cleaned_username 
+       OR (pi_user_id = create_pi_network_account.pi_user_id AND pi_user_id IS NOT NULL);
+    
+    username_exists := (existing_count > 0);
+    
+    -- If username exists, return error with details
+    IF username_exists THEN
+        RETURN json_build_object(
+            'success', false,
+            'error', 'Username "' || cleaned_username || '" is already taken. Please choose a different username.',
+            'error_code', 'USERNAME_EXISTS',
+            'existing_count', existing_count,
+            'suggested_username', cleaned_username || '_' || EXTRACT(EPOCH FROM NOW())::bigint
+        );
+    END IF;
+    
+    -- For additional accounts, verify payment
     IF is_additional_account AND payment_amount < 10 THEN
         RETURN json_build_object(
             'success', false,
@@ -131,33 +210,49 @@ BEGIN
     -- Generate new user ID
     new_user_id := gen_random_uuid();
     
-    -- Create new profile
+    -- Create new profile with proper field mapping
     INSERT INTO profiles (
         id,
-        email,
         username,
-        full_name,
-        pi_username,
-        pi_user_id,
-        wallet_address,
-        plan_type,
-        subscription_status,
-        subscription_expires_at,
+        business_name,
         created_at,
-        updated_at
+        updated_at,
+        user_id,
+        pi_wallet_address,
+        description,
+        has_premium,
+        logo,
+        pi_donation_message,
+        show_share_button,
+        social_links,
+        theme_settings,
+        crypto_wallets,
+        bank_details,
+        youtube_video_url
     ) VALUES (
         new_user_id,
-        pi_username || '@pi.network', -- Generate email from Pi username
-        pi_username,
-        COALESCE(display_name, pi_username),
-        pi_username,
-        pi_user_id,
-        NULL, -- Will be set when wallet is connected
-        'free', -- Start with free plan
-        'active',
-        NULL, -- No expiration for free plan
+        cleaned_username,
+        final_display_name,
         NOW(),
-        NOW()
+        NOW(),
+        pi_user_id, -- Store Pi user ID in user_id field
+        NULL, -- Will be set when wallet is connected
+        'DropLink user powered by Pi Network',
+        false, -- Start with free plan
+        NULL,
+        'Send me Pi! 🥧',
+        true,
+        '{}',
+        json_build_object(
+            'primaryColor', '#3b82f6',
+            'backgroundColor', '#000000',
+            'backgroundType', 'color',
+            'iconStyle', 'rounded',
+            'buttonStyle', 'filled'
+        ),
+        '{}',
+        '{}',
+        ''
     );
     
     -- Create default user preferences
@@ -177,33 +272,40 @@ BEGIN
         'one_time',
         NOW(),
         NOW()
-    );
+    ) ON CONFLICT (user_id) DO NOTHING;
     
     -- If this is an additional account, record the payment
-    IF is_additional_account THEN
+    IF is_additional_account AND payment_amount >= 10 THEN
         INSERT INTO payment_transactions (
             id,
-            user_id,
+            profile_id,
+            transaction_id,
+            payment_id,
             amount,
-            currency,
-            payment_type,
-            payment_method,
-            transaction_status,
-            metadata,
-            created_at
+            sender_address,
+            receiver_address,
+            status,
+            memo,
+            pi_metadata,
+            created_at,
+            updated_at
         ) VALUES (
             gen_random_uuid(),
             new_user_id,
+            'account_' || new_user_id::text,
+            'payment_' || new_user_id::text,
             payment_amount,
-            'PI',
-            'account_creation',
-            'pi_network',
+            pi_user_id,
+            'droplink_system',
             'completed',
+            'Additional account creation fee',
             json_build_object(
                 'account_type', 'additional',
-                'pi_username', pi_username,
-                'creation_fee', true
+                'pi_username', cleaned_username,
+                'creation_fee', true,
+                'pi_user_id', pi_user_id
             ),
+            NOW(),
             NOW()
         );
     END IF;
@@ -211,11 +313,13 @@ BEGIN
     account_result := json_build_object(
         'success', true,
         'user_id', new_user_id,
-        'pi_username', pi_username,
-        'display_name', COALESCE(display_name, pi_username),
+        'username', cleaned_username,
+        'display_name', final_display_name,
+        'pi_user_id', pi_user_id,
         'is_additional_account', is_additional_account,
         'payment_amount', payment_amount,
-        'created_at', NOW()
+        'created_at', NOW(),
+        'message', 'Account created successfully!'
     );
     
     RETURN account_result;
@@ -223,8 +327,10 @@ BEGIN
 EXCEPTION WHEN OTHERS THEN
     RETURN json_build_object(
         'success', false,
-        'error', SQLERRM,
-        'error_code', 'DATABASE_ERROR'
+        'error', 'Database error: ' || SQLERRM,
+        'error_code', 'DATABASE_ERROR',
+        'username', cleaned_username,
+        'pi_user_id', pi_user_id
     );
 END;
 $$;
@@ -241,21 +347,20 @@ BEGIN
     SELECT json_agg(
         json_build_object(
             'user_id', p.id,
-            'pi_username', p.pi_username,
-            'display_name', p.full_name,
-            'plan_type', p.plan_type,
-            'subscription_status', p.subscription_status,
-            'wallet_address', p.wallet_address,
+            'username', p.username,
+            'display_name', p.business_name,
+            'pi_user_id', p.user_id,
             'created_at', p.created_at,
+            'has_premium', COALESCE(p.has_premium, false),
             'is_primary', p.created_at = (
                 SELECT MIN(created_at) 
                 FROM profiles 
-                WHERE pi_user_id = pi_user_id_param
+                WHERE user_id = pi_user_id_param
             )
         ) ORDER BY p.created_at ASC
     ) INTO accounts_result
     FROM profiles p
-    WHERE p.pi_user_id = pi_user_id_param;
+    WHERE p.user_id = pi_user_id_param;
     
     RETURN json_build_object(
         'success', true,
@@ -288,8 +393,8 @@ BEGIN
     -- Check if account exists and belongs to the Pi user
     SELECT EXISTS(
         SELECT 1 FROM profiles 
-        WHERE pi_user_id = pi_user_id_param 
-        AND pi_username = target_username
+        WHERE user_id = pi_user_id_param 
+        AND LOWER(username) = LOWER(target_username)
     ) INTO account_exists;
     
     IF NOT account_exists THEN
@@ -301,10 +406,17 @@ BEGIN
     END IF;
     
     -- Get account details
-    SELECT to_json(p) INTO target_account
+    SELECT json_build_object(
+        'user_id', p.id,
+        'username', p.username,
+        'display_name', p.business_name,
+        'pi_user_id', p.user_id,
+        'has_premium', COALESCE(p.has_premium, false),
+        'created_at', p.created_at
+    ) INTO target_account
     FROM profiles p
-    WHERE p.pi_user_id = pi_user_id_param 
-    AND p.pi_username = target_username;
+    WHERE p.user_id = pi_user_id_param 
+    AND LOWER(p.username) = LOWER(target_username);
     
     RETURN json_build_object(
         'success', true,
@@ -329,12 +441,30 @@ AS $$
 DECLARE
     is_available boolean;
     suggested_username text;
+    username_count integer;
 BEGIN
-    -- Check if username is available
-    SELECT NOT EXISTS(
-        SELECT 1 FROM profiles 
-        WHERE username = username_to_check OR pi_username = username_to_check
-    ) INTO is_available;
+    -- Clean and validate username
+    username_to_check := TRIM(LOWER(username_to_check));
+    
+    -- Check if username is too short
+    IF LENGTH(username_to_check) < 3 THEN
+        RETURN json_build_object(
+            'available', false,
+            'username', username_to_check,
+            'error', 'Username must be at least 3 characters long.',
+            'checked_at', NOW()
+        );
+    END IF;
+    
+    -- Count existing usernames (check all possible fields)
+    SELECT COUNT(*) INTO username_count
+    FROM profiles 
+    WHERE LOWER(username) = username_to_check 
+       OR LOWER(pi_username) = username_to_check 
+       OR LOWER(business_name) = username_to_check;
+    
+    -- Username is available if count is 0
+    is_available := (username_count = 0);
     
     -- If not available, suggest an alternative
     IF NOT is_available THEN
@@ -345,13 +475,114 @@ BEGIN
         'available', is_available,
         'username', username_to_check,
         'suggested_username', suggested_username,
+        'existing_count', username_count,
         'checked_at', NOW()
     );
 
 EXCEPTION WHEN OTHERS THEN
     RETURN json_build_object(
         'available', false,
-        'error', SQLERRM
+        'error', SQLERRM,
+        'username', username_to_check
     );
 END;
 $$;
+
+-- Grant permissions to authenticated users
+GRANT EXECUTE ON FUNCTION delete_user_account_completely(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION create_pi_network_account(text, text, text, boolean, decimal) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_user_accounts_by_pi_id(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION switch_to_account(text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION check_username_availability(text) TO authenticated;
+
+-- Function to completely clean Pi user data before creating new account
+CREATE OR REPLACE FUNCTION cleanup_pi_user_data(pi_user_id_param text, pi_username_param text)
+RETURNS json
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    cleanup_result json;
+    total_cleaned integer := 0;
+    affected_rows integer;
+BEGIN
+    -- Clean all data associated with this Pi user ID and username
+    
+    -- 1. Delete from voting tables
+    DELETE FROM voting_votes WHERE pi_user_id = pi_user_id_param;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_cleaned := total_cleaned + affected_rows;
+    
+    DELETE FROM voting_submissions WHERE pi_user_id = pi_user_id_param;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_cleaned := total_cleaned + affected_rows;
+    
+    -- 2. Delete user preferences for all profiles with this pi_user_id
+    DELETE FROM user_preferences WHERE user_id IN (
+        SELECT id FROM profiles WHERE pi_user_id = pi_user_id_param OR username = pi_username_param
+    );
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_cleaned := total_cleaned + affected_rows;
+    
+    -- 3. Delete user sessions
+    DELETE FROM user_sessions WHERE pi_user_id = pi_user_id_param;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_cleaned := total_cleaned + affected_rows;
+    
+    -- 4. Delete profile financial data
+    DELETE FROM profile_financial_data WHERE profile_id IN (
+        SELECT id FROM profiles WHERE pi_user_id = pi_user_id_param OR username = pi_username_param
+    );
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_cleaned := total_cleaned + affected_rows;
+    
+    -- 5. Delete feature usage
+    DELETE FROM feature_usage WHERE pi_user_id = pi_user_id_param;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_cleaned := total_cleaned + affected_rows;
+    
+    -- 6. Delete analytics and other tables
+    DELETE FROM analytics WHERE profile_id IN (
+        SELECT id FROM profiles WHERE pi_user_id = pi_user_id_param OR username = pi_username_param
+    );
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_cleaned := total_cleaned + affected_rows;
+    
+    -- 7. Delete payment related data
+    DELETE FROM payment_transactions WHERE profile_id IN (
+        SELECT id FROM profiles WHERE pi_user_id = pi_user_id_param OR username = pi_username_param
+    );
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_cleaned := total_cleaned + affected_rows;
+    
+    DELETE FROM payment_links WHERE pi_user_id = pi_user_id_param;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_cleaned := total_cleaned + affected_rows;
+    
+    -- 8. Finally delete all profiles with this pi_user_id or username
+    DELETE FROM profiles WHERE pi_user_id = pi_user_id_param OR username = pi_username_param;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_cleaned := total_cleaned + affected_rows;
+    
+    cleanup_result := json_build_object(
+        'success', true,
+        'pi_user_id', pi_user_id_param,
+        'pi_username', pi_username_param,
+        'total_records_cleaned', total_cleaned,
+        'cleaned_at', NOW(),
+        'message', 'All data cleaned. Ready for fresh account creation.'
+    );
+    
+    RETURN cleanup_result;
+
+EXCEPTION WHEN OTHERS THEN
+    RETURN json_build_object(
+        'success', false,
+        'error', SQLERRM,
+        'pi_user_id', pi_user_id_param
+    );
+END;
+$$;
+
+-- Grant permission for cleanup function
+GRANT EXECUTE ON FUNCTION cleanup_pi_user_data(text, text) TO authenticated;

@@ -42,7 +42,7 @@ export const AccountSwitcher: React.FC<AccountSwitcherProps> = ({
   const [accounts, setAccounts] = useState<PiAccount[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { user: piUser } = usePi();
+  const { piUser, switchAccount, loadUserAccounts } = usePi();
 
   useEffect(() => {
     loadAccounts();
@@ -53,15 +53,9 @@ export const AccountSwitcher: React.FC<AccountSwitcherProps> = ({
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .rpc('get_user_accounts_by_pi_id', {
-          pi_user_id_param: piUser.uid
-        });
-
-      if (error) throw error;
-
-      if (data?.success && data?.accounts) {
-        setAccounts(data.accounts);
+      const accounts = await loadUserAccounts();
+      if (accounts && accounts.length > 0) {
+        setAccounts(accounts);
       }
     } catch (error) {
       console.error('Failed to load accounts:', error);
@@ -74,17 +68,7 @@ export const AccountSwitcher: React.FC<AccountSwitcherProps> = ({
     if (account.pi_username === currentAccount?.pi_username) return;
 
     try {
-      const { data, error } = await supabase
-        .rpc('switch_to_account', {
-          pi_user_id_param: piUser?.uid,
-          target_username: account.pi_username
-        });
-
-      if (error) throw error;
-
-      if (!data?.success) {
-        throw new Error(data?.error || 'Failed to switch account');
-      }
+      await switchAccount(account);
 
       toast({
         title: "Account Switched",
