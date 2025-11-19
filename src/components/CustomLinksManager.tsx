@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, X, Link as LinkIcon, ShoppingBag, Mail, Phone, Calendar, Download, ExternalLink, Heart, Star, Zap } from "lucide-react";
+import { Plus, X, Link as LinkIcon, ShoppingBag, Mail, Phone, Calendar, Download, ExternalLink, Heart, Star, Zap, Lock } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useActiveSubscription } from "@/hooks/useActiveSubscription";
+import { toast } from "sonner";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface CustomLink {
   id: string;
@@ -30,7 +33,21 @@ interface CustomLinksManagerProps {
 }
 
 export const CustomLinksManager = ({ links, onChange }: CustomLinksManagerProps) => {
+  const { plan, loading } = useActiveSubscription();
+  
+  const getMaxLinks = () => {
+    if (plan === "free") return 1;
+    return Infinity; // Unlimited for premium/pro
+  };
+
   const addLink = () => {
+    const maxLinks = getMaxLinks();
+    
+    if (links.length >= maxLinks) {
+      toast.error(`Free plan limited to ${maxLinks} custom link. Upgrade to add more!`);
+      return;
+    }
+
     const newLink: CustomLink = {
       id: crypto.randomUUID(),
       title: "",
@@ -72,6 +89,25 @@ export const CustomLinksManager = ({ links, onChange }: CustomLinksManagerProps)
           Add Link
         </Button>
       </div>
+
+      {/* Plan Limit Indicator */}
+      {plan === "free" && (
+        <Card className="bg-amber-50 border-amber-200">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <Lock className="w-5 h-5 text-amber-600 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-amber-800">
+                  Free Plan: {links.length}/{getMaxLinks()} custom link used
+                </p>
+                <p className="text-xs text-amber-700 mt-1">
+                  Upgrade to Premium (π20/month) for unlimited custom links with icons and styling
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {links.length > 0 && (
         <div className="space-y-3">

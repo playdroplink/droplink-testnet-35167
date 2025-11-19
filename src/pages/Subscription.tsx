@@ -24,19 +24,20 @@ const plans: Plan[] = [
     monthlyPrice: 0,
     yearlyPrice: 0,
     features: [
-      "1 bio page link",
-      "1 social media link",
+      "1 bio page link only",
+      "1 social media link only",
       "Basic QR code sharing",
-      "DropLink watermark",
+      "DropLink watermark shown",
       "Limited customization",
+      "Pi Ad Network (watch ads for temporary access)",
+      "Basic analytics (watch ads to view)",
       "Community support only",
-      "Basic analytics (views only)",
     ],
   },
   {
     name: "Premium",
-    monthlyPrice: 10,
-    yearlyPrice: 96, // 20% discount
+    monthlyPrice: 20,
+    yearlyPrice: 192, // 20% discount
     features: [
       "Unlimited bio page links",
       "Unlimited social media links",
@@ -48,13 +49,16 @@ const plans: Plan[] = [
       "Priority email support",
       "Custom domain support",
       "Ad-free experience",
+      "Product listings with pricing",
+      "DROP token receiving",
+      "Custom link icons & styling",
     ],
     popular: true,
   },
   {
     name: "Pro",
-    monthlyPrice: 20,
-    yearlyPrice: 192, // 20% discount
+    monthlyPrice: 30,
+    yearlyPrice: 288, // 20% discount
     features: [
       "Everything in Premium",
       "AI-powered analytics insights",
@@ -66,23 +70,10 @@ const plans: Plan[] = [
       "24/7 priority support",
       "Bulk link management",
       "Export analytics data",
-    ],
-  },
-  {
-    name: "Enterprise",
-    monthlyPrice: 30,
-    yearlyPrice: 288, // 20% discount
-    features: [
-      "Everything in Pro",
-      "Multi-team collaboration",
-      "Advanced security features",
-      "Custom integrations",
-      "Dedicated account manager",
-      "SLA guarantee (99.9% uptime)",
-      "Custom feature development",
-      "Advanced compliance tools",
-      "Unlimited API calls",
-      "Phone support",
+      "Pi Payments integration",
+      "Transaction history & management",
+      "AI chat widget",
+      "Multi-profile management",
     ],
   },
 ];

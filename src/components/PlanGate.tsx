@@ -12,10 +12,6 @@ export const PlanGate = ({
   minPlan: Exclude<PlanType, "free">; // premium or pro
   children: ReactNode;
 }) => {
-  // ALL FEATURES UNLOCKED - NO RESTRICTIONS
-  return <>{children}</>;
-  
-  /* Plan gating completely disabled - all features available
   const navigate = useNavigate();
   const { plan, loading, expiresAt } = useActiveSubscription();
 
@@ -43,5 +39,4 @@ export const PlanGate = ({
   }
 
   return <>{children}</>;
-  */
 };

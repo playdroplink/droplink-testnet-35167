@@ -147,7 +147,7 @@ interface UserPreferencesContextType {
   getExperimentVariant: (experiment: string) => string | null;
   
   // Usage tracking
-  trackFeatureUsage: (feature: string) => Promise<void>;
+  trackFeatureUsage: (feature: string, increment?: number) => Promise<void>;
   updateLastActive: () => Promise<void>;
 }
 
@@ -176,27 +176,131 @@ export const UserPreferencesProvider = ({ children }: { children: ReactNode }) =
 
       setCurrentUserId(user.id);
       
-      // For now, just use default preferences since database table may not exist yet
-      // TODO: Enable this once user_preferences table is created via migration
-      console.log('Using default preferences (database integration pending migration)');
-      setPreferences(defaultPreferences);
+      // Try to load from database using our new function
+      const { data: functionData, error: functionError } = await supabase.rpc(
+        'get_user_preferences',
+        { p_user_id: user.id }
+      );
+
+      if (functionError) {
+        console.error('Database function error:', functionError);
+        // Fallback to direct table query
+        const { data, error } = await supabase
+          .from('user_preferences')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Direct query error:', error);
+          // Fallback to localStorage
+          const stored = localStorage.getItem(`user_preferences_${user.id}`);
+          if (stored) {
+            setPreferences({ ...defaultPreferences, ...JSON.parse(stored) });
+            console.log('⚠️ Loaded preferences from localStorage fallback');
+          } else {
+            setPreferences(defaultPreferences);
+          }
+          return;
+        }
+
+        if (data) {
+          setPreferences({
+            ...defaultPreferences,
+            ...data,
+            dashboard_layout: data.dashboard_layout || defaultPreferences.dashboard_layout,
+            store_settings: data.store_settings || defaultPreferences.store_settings,
+            social_settings: data.social_settings || defaultPreferences.social_settings,
+            content_settings: data.content_settings || defaultPreferences.content_settings,
+            privacy_settings: data.privacy_settings || defaultPreferences.privacy_settings,
+            notification_settings: data.notification_settings || defaultPreferences.notification_settings,
+          });
+          console.log('✅ User preferences loaded from database (direct query)');
+        } else {
+          setPreferences(defaultPreferences);
+          await createDefaultPreferences(user.id);
+        }
+      } else if (functionData) {
+        // Use the function response
+        setPreferences({
+          ...defaultPreferences,
+          ...functionData
+        });
+        console.log('✅ User preferences loaded from database function');
+      } else {
+        setPreferences(defaultPreferences);
+        await createDefaultPreferences(user.id);
+      }
+      
     } catch (err) {
       console.error('Failed to load preferences:', err);
-      setPreferences(defaultPreferences);
+      setError('Failed to load preferences');
+      // Fallback to localStorage
+      if (currentUserId) {
+        const stored = localStorage.getItem(`user_preferences_${currentUserId}`);
+        if (stored) {
+          setPreferences({ ...defaultPreferences, ...JSON.parse(stored) });
+          console.log('⚠️ Loaded preferences from localStorage fallback');
+        } else {
+          setPreferences(defaultPreferences);
+        }
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // Create default preferences (for now in localStorage)
+  // Create default preferences
   const createDefaultPreferences = async (userId: string) => {
     try {
-      // For now, just store in localStorage since database table may not exist yet
-      localStorage.setItem(`user_preferences_${userId}`, JSON.stringify(defaultPreferences));
-      console.log('✅ Created default preferences in localStorage');
+      // Get profile ID
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      const profileId = profile?.id;
+
+      // Try using the database function first
+      const { error: functionError } = await supabase.rpc(
+        'update_user_preferences',
+        {
+          p_user_id: userId,
+          p_profile_id: profileId,
+          p_preferences: defaultPreferences
+        }
+      );
+
+      if (functionError) {
+        console.error('Function error creating defaults:', functionError);
+        // Fallback to direct insert
+        const { error: directError } = await supabase
+          .from('user_preferences')
+          .insert({
+            user_id: userId,
+            profile_id: profileId,
+            ...defaultPreferences
+          });
+
+        if (directError) {
+          console.error('Direct insert error:', directError);
+          // Final fallback to localStorage
+          localStorage.setItem(`user_preferences_${userId}`, JSON.stringify(defaultPreferences));
+          console.log('⚠️ Created default preferences in localStorage fallback');
+        } else {
+          console.log('✅ Created default preferences in database (direct)');
+        }
+      } else {
+        console.log('✅ Created default preferences in database (function)');
+      }
+      
       setPreferences(defaultPreferences);
     } catch (err) {
       console.error('Failed to create default preferences:', err);
+      // Store in localStorage as last resort
+      localStorage.setItem(`user_preferences_${userId}`, JSON.stringify(defaultPreferences));
+      setPreferences(defaultPreferences);
     }
   };
 
@@ -205,16 +309,68 @@ export const UserPreferencesProvider = ({ children }: { children: ReactNode }) =
     if (!currentUserId) return;
 
     try {
-      // For now, just store in localStorage since database table may not exist yet
-      // TODO: Enable database saving once user_preferences table is created via migration
+      // Get current profile ID
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', currentUserId)
+        .maybeSingle();
+
+      const profileId = profile?.id;
+
+      // Use our database function to update preferences
+      const { error: functionError } = await supabase.rpc(
+        'update_user_preferences',
+        {
+          p_user_id: currentUserId,
+          p_profile_id: profileId,
+          p_preferences: updatedPrefs
+        }
+      );
+
+      if (functionError) {
+        console.error('Function error:', functionError);
+        // Fallback to direct table upsert
+        const { error: directError } = await supabase
+          .from('user_preferences')
+          .upsert({
+            user_id: currentUserId,
+            profile_id: profileId,
+            ...updatedPrefs,
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'user_id'
+          });
+
+        if (directError) {
+          console.error('Direct upsert error:', directError);
+          // Final fallback to localStorage
+          localStorage.setItem(`user_preferences_${currentUserId}`, JSON.stringify({
+            ...preferences,
+            ...updatedPrefs
+          }));
+          console.log('⚠️ Preferences saved to localStorage fallback');
+          return;
+        }
+        console.log('✅ Preferences saved to database (direct)');
+      } else {
+        console.log('✅ Preferences saved to database (function)');
+      }
+      
+      // Also save to localStorage as backup
       localStorage.setItem(`user_preferences_${currentUserId}`, JSON.stringify({
         ...preferences,
         ...updatedPrefs
       }));
-      console.log('✅ Preferences saved to localStorage (database integration pending migration)');
+      
     } catch (err) {
       console.error('Failed to save preferences:', err);
       toast.error('Failed to save preferences');
+      // Store in localStorage as fallback
+      localStorage.setItem(`user_preferences_${currentUserId}`, JSON.stringify({
+        ...preferences,
+        ...updatedPrefs
+      }));
     }
   };
 
@@ -230,6 +386,35 @@ export const UserPreferencesProvider = ({ children }: { children: ReactNode }) =
     setPreferences(defaultPreferences);
     await savePreferences(defaultPreferences);
     toast.success('Preferences reset to defaults');
+  };
+
+  // Track feature usage
+  const trackFeatureUsage = async (featureName: string, increment: number = 1) => {
+    if (!currentUserId) return;
+
+    try {
+      // Get profile ID
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', currentUserId)
+        .maybeSingle();
+
+      const profileId = profile?.id;
+      
+      if (profileId) {
+        // Use the database function to track usage
+        await supabase.rpc('track_feature_usage', {
+          p_profile_id: profileId,
+          p_feature_name: featureName,
+          p_increment: increment
+        });
+        
+        console.log(`✅ Tracked usage for ${featureName}: +${increment}`);
+      }
+    } catch (err) {
+      console.error('Failed to track feature usage:', err);
+    }
   };
 
   // Specific update methods
@@ -286,24 +471,6 @@ export const UserPreferencesProvider = ({ children }: { children: ReactNode }) =
 
   const getExperimentVariant = (experiment: string): string | null => {
     return preferences.experiments[experiment] ?? null;
-  };
-
-  // Usage tracking
-  const trackFeatureUsage = async (feature: string) => {
-    const favoriteFeatures = preferences.usage_data.favoriteFeatures || [];
-    const updatedFeatures = [...favoriteFeatures];
-    
-    if (!updatedFeatures.includes(feature)) {
-      updatedFeatures.push(feature);
-    }
-
-    const updatedUsage = {
-      ...preferences.usage_data,
-      favoriteFeatures: updatedFeatures,
-      lastActive: new Date().toISOString()
-    };
-
-    await updatePreferences({ usage_data: updatedUsage });
   };
 
   const updateLastActive = async () => {

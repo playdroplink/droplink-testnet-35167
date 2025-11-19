@@ -15,18 +15,6 @@ interface ActiveSubscription {
 }
 
 export const useActiveSubscription = (): ActiveSubscription => {
-  // ALL FEATURES UNLOCKED - RETURN PREMIUM PLAN FOR ALL USERS
-  return {
-    plan: "premium" as PlanType,
-    expiresAt: null, // No expiration
-    status: "active",
-    loading: false,
-    subscription: null,
-    isLoading: false,
-    isActive: true,
-  };
-  
-  /* Original subscription logic disabled - all features unlocked
   const { piUser } = usePi();
   const [plan, setPlan] = useState<PlanType>("free");
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
@@ -80,6 +68,13 @@ export const useActiveSubscription = (): ActiveSubscription => {
     load();
   }, [piUser]);
 
-  return { plan, expiresAt, status, loading };
-  */
+  return { 
+    plan, 
+    expiresAt, 
+    status, 
+    loading, 
+    subscription: null,
+    isLoading: loading,
+    isActive: status === "active"
+  };
 };
