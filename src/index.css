@@ -43,24 +43,25 @@ All colors MUST be HSL.
     --hover-bg: 0 0% 97%;
   }
 
-  .dark {
-    --background: 0 0% 4%;
-    --foreground: 0 0% 98%;
+  /* Dark Theme Disabled - Light Mode Only */
+  /* .black {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
 
-    --card: 0 0% 7%;
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 3%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 7%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 100%;
 
     --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 0 0% 8%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 0 0% 8%;
+    --muted-foreground: 0 0% 70%;
 
     --accent: 217 91% 60%;
     --accent-foreground: 0 0% 100%;
@@ -69,13 +70,12 @@ All colors MUST be HSL.
     --destructive-foreground: 0 0% 100%;
 
     --border: 0 0% 15%;
-    --input: 0 0% 15%;
+    --input: 0 0% 12%;
     --ring: 217 91% 60%;
 
-    /* Custom tokens */
-    --input-bg: 0 0% 7%;
+    --input-bg: 0 0% 5%;
     --hover-bg: 0 0% 10%;
-  }
+  } */
 }
 
 @layer base {
@@ -85,6 +85,32 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    /* Ensure light mode is always applied */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 217 91% 60%;
+    --radius: 0.75rem;
+    --input-bg: 0 0% 98%;
+    --hover-bg: 0 0% 97%;
+  }
+
+  body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   }
 }
@@ -95,10 +121,36 @@ All colors MUST be HSL.
   }
 
   .glass {
-    @apply border border-border bg-background/95 shadow-xl;
+    @apply border border-border bg-background/95 shadow-xl backdrop-blur-md;
   }
 
   .glass-card {
-    @apply border border-border bg-card shadow-xl;
+    @apply border border-border bg-card/80 shadow-xl backdrop-blur-sm;
+  }
+
+  .glass-surface {
+    @apply bg-background/70 backdrop-blur-lg border border-border/50;
+  }
+
+  .transparent-surface {
+    @apply bg-background/30 backdrop-blur-xl border border-border/30;
+  }
+
+  /* Mobile-specific solid backgrounds */
+  @media (max-width: 768px) {
+    .glass-card {
+      @apply bg-card border border-border shadow-md;
+      backdrop-filter: none;
+    }
+
+    .glass-surface {
+      @apply bg-background border border-border;
+      backdrop-filter: none;
+    }
+
+    .transparent-surface {
+      @apply bg-background border border-border;
+      backdrop-filter: none;
+    }
   }
 }

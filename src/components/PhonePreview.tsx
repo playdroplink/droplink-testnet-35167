@@ -47,6 +47,8 @@ interface ProfileData {
   theme: {
     primaryColor: string;
     backgroundColor: string;
+    backgroundType: 'color' | 'gif';
+    backgroundGif: string;
     iconStyle: string;
     buttonStyle: string;
   };
@@ -134,12 +136,47 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
 
   return (
     <div className="relative w-[280px] h-[570px] rounded-[3rem] border-[10px] border-foreground/20 shadow-2xl overflow-hidden"
-         style={{ backgroundColor: profile.theme?.backgroundColor || '#000000' }}>
+         style={
+           profile.theme?.backgroundType === 'gif' && profile.theme?.backgroundGif
+             ? {}
+             : { backgroundColor: profile.theme?.backgroundColor || '#000000' }
+         }>
+      
+      {/* GIF Background for Phone Preview */}
+      {profile.theme?.backgroundType === 'gif' && profile.theme?.backgroundGif && (
+        <div className="absolute inset-0 z-0">
+          <img
+            src={profile.theme.backgroundGif}
+            alt="Background"
+            className="w-full h-full object-cover"
+            style={{ objectFit: 'cover' }}
+            onError={(e) => {
+              console.log('GIF background failed to load:', profile.theme?.backgroundGif);
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+            onLoad={() => {
+              console.log('GIF background loaded successfully:', profile.theme?.backgroundGif);
+            }}
+          />
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              // Hide broken image and show fallback
+              e.currentTarget.style.display = 'none';
+              const parent = e.currentTarget.parentElement;
+              if (parent) {
+                parent.style.backgroundColor = profile.theme?.backgroundColor || '#000000';
+              }
+            }}
+          />
+          <div className="absolute inset-0 bg-black/20" /> {/* Light overlay for readability */}
+        </div>
+      )}
+      
       {/* Phone Notch */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-foreground/20 rounded-b-3xl z-10" />
       
       {/* Phone Screen Content */}
-      <div className="h-full overflow-y-auto pt-8 px-6 pb-6">
+      <div className="h-full overflow-y-auto pt-8 px-6 pb-6 relative z-10">
         <div className="flex flex-col items-center text-center space-y-6">
           {/* Logo */}
           <div className="w-20 h-20 rounded-2xl bg-muted border border-border flex items-center justify-center overflow-hidden">

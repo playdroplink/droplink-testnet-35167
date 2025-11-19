@@ -18,7 +18,6 @@ import {
   Twitter,
   Mail,
   Award,
-  TrendingUp,
   Play,
   Building,
   Crown,
@@ -78,7 +77,7 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
       description: "Built on Pi Network's secure blockchain infrastructure"
     },
     {
-      icon: <Network className="w-5 h-5 text-orange-500" />,
+      icon: <Network className="w-5 h-5 text-sky-500" />,
       title: "Pi Ecosystem Hub",
       description: "Connect with the entire Pi Network community and ecosystem"
     },
@@ -98,13 +97,6 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
     "Mainnet Pi transactions"
   ];
 
-  const stats = [
-    { label: "Pi Pioneers", value: "15K+", icon: <Users className="w-4 h-4" /> },
-    { label: "Pi Transactions", value: "75K+", icon: <Zap className="w-4 h-4" /> },
-    { label: "Pi Domains", value: "5K+", icon: <Globe className="w-4 h-4" /> },
-    { label: "Pi Earned", value: "250K+", icon: <Crown className="w-4 h-4" /> }
-  ];
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -118,12 +110,9 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 text-2xl">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center text-white font-bold">
-              D
-            </div>
-            {appInfo.name}
+            <span className="text-sky-500">{appInfo.name}</span>
             <Badge variant="secondary">v{appInfo.version}</Badge>
-            <Badge variant="outline" className="text-orange-600 border-orange-600">Pi Network</Badge>
+            <Badge variant="outline" className="text-sky-500 border-sky-500">Pi Network</Badge>
           </DialogTitle>
           <DialogDescription className="text-base">
             {appInfo.description}
@@ -132,10 +121,10 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
 
         <div className="space-y-6">
           {/* Demo Video */}
-          <Card className="bg-gradient-to-r from-orange-50 to-purple-50 border-orange-200">
+          <Card className="glass-card border-primary/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Play className="w-5 h-5 text-orange-500" />
+                <Play className="w-5 h-5 text-sky-500" />
                 Watch DropLink Demo
               </CardTitle>
               <CardDescription>
@@ -173,17 +162,17 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
           </Card>
 
           {/* Organization Info */}
-          <Card className="border-orange-200 bg-gradient-to-r from-orange-50/50 to-purple-50/50">
+          <Card className="glass-card border-primary/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Building className="w-5 h-5 text-orange-500" />
+                <Building className="w-5 h-5 text-sky-500" />
                 About Mrwain Organization
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="font-semibold mb-2 text-orange-600">Our Mission</h4>
+                  <h4 className="font-semibold mb-2 text-sky-600">Our Mission</h4>
                   <p className="text-sm text-muted-foreground">{organizationInfo.mission}</p>
                 </div>
                 <div>
@@ -195,7 +184,7 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                 <div>
                   <p className="text-muted-foreground">Founded By</p>
-                  <p className="font-medium text-orange-600">{organizationInfo.founder}</p>
+                  <p className="font-medium text-sky-600">{organizationInfo.founder}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Established</p>
@@ -240,31 +229,6 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
           </Card>
 
           {/* Statistics */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
-                Pi Network Statistics
-              </CardTitle>
-              <CardDescription>
-                Growing the Pi ecosystem together
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {stats.map((stat) => (
-                  <div key={stat.label} className="text-center p-4 rounded-lg bg-gradient-to-br from-orange-50 to-purple-50 border border-orange-200">
-                    <div className="flex justify-center mb-2 text-orange-500">
-                      {stat.icon}
-                    </div>
-                    <div className="text-2xl font-bold text-purple-600">{stat.value}</div>
-                    <div className="text-sm text-muted-foreground">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Features */}
           <Card>
             <CardHeader>
@@ -298,13 +262,10 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-start gap-4 p-4 rounded-lg bg-gradient-to-r from-orange-50 to-purple-50 border border-orange-200">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
-                    M
-                  </div>
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-card/50 backdrop-blur-sm border">
                   <div>
                     <h4 className="font-semibold text-lg">Mrwain</h4>
-                    <p className="text-sm text-orange-600 font-medium">Founder & Lead Developer</p>
+                    <p className="text-sm text-sky-600 font-medium">Founder & Lead Developer</p>
                     <p className="text-sm text-muted-foreground mt-1">
                       Pioneering Pi Network development with a vision to empower creators and build 
                       the decentralized social economy. Leading the charge in Pi ecosystem innovation.
@@ -313,9 +274,6 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
                 </div>
                 <Separator />
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center text-white font-bold text-sm">
-                    P
-                  </div>
                   <div>
                     <h4 className="font-medium">Pi Network Community</h4>
                     <p className="text-sm text-blue-600">Beta Testers & Contributors</p>
@@ -338,7 +296,7 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" className="gap-2 hover:bg-orange-50 hover:border-orange-300">
+                <Button variant="outline" size="sm" className="gap-2 hover:bg-sky-50 hover:border-sky-300">
                   <Network className="w-4 h-4" />
                   Pi Network
                   <ExternalLink className="w-3 h-3" />

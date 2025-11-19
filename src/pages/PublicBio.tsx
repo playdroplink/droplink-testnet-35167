@@ -61,6 +61,8 @@ interface ProfileData {
   theme: {
     primaryColor: string;
     backgroundColor: string;
+    backgroundType: 'color' | 'gif';
+    backgroundGif: string;
     iconStyle: string;
     buttonStyle: string;
   };
@@ -273,6 +275,8 @@ const PublicBio = () => {
         theme: {
           primaryColor: themeSettings?.primaryColor || "#3b82f6",
           backgroundColor: themeSettings?.backgroundColor || "#000000",
+          backgroundType: (themeSettings?.backgroundType as 'color' | 'gif') || "color",
+          backgroundGif: themeSettings?.backgroundGif || "",
           iconStyle: themeSettings?.iconStyle || "rounded",
           buttonStyle: themeSettings?.buttonStyle || "filled",
         },
@@ -446,10 +450,27 @@ const PublicBio = () => {
 
   return (
     <div 
-      className="min-h-screen p-6 flex flex-col items-center"
-      style={{ backgroundColor: profile.theme.backgroundColor }}
+      className="min-h-screen p-6 flex flex-col items-center relative"
+      style={
+        profile.theme.backgroundType === 'gif' && profile.theme.backgroundGif
+          ? {}
+          : { backgroundColor: profile.theme.backgroundColor }
+      }
     >
-      <div className="w-full max-w-2xl space-y-8 py-12">
+      {/* GIF Background */}
+      {profile.theme.backgroundType === 'gif' && profile.theme.backgroundGif && (
+        <div className="fixed inset-0 z-0">
+          <img
+            src={profile.theme.backgroundGif}
+            alt="Background"
+            className="w-full h-full object-cover"
+            style={{ minHeight: '100vh' }}
+          />
+          <div className="absolute inset-0 bg-black/30" /> {/* Overlay for better readability */}
+        </div>
+      )}
+      
+      <div className="w-full max-w-2xl space-y-8 py-12 relative z-10">
         {/* Pi Ad Banner for free plan users */}
         <PiAdBanner />
         

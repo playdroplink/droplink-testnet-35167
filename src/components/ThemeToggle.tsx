@@ -1,31 +1,48 @@
-import { Moon, Sun } from "lucide-react";
+import { Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
-export const ThemeToggle = () => {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+interface ThemeToggleProps {
+  variant?: "outline" | "ghost" | "default";
+  size?: "sm" | "lg" | "icon";
+  className?: string;
+  showText?: boolean;
+}
 
+export const ThemeToggle = ({ 
+  variant = "ghost", 
+  size = "icon", 
+  className = "",
+  showText = false 
+}: ThemeToggleProps) => {
+  // Always ensure light mode is applied
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
-    const initialTheme = savedTheme || "light";
-    setTheme(initialTheme);
-    document.documentElement.classList.toggle("dark", initialTheme === "dark");
+    const root = document.documentElement;
+    
+    // Remove all theme classes and ensure light mode
+    root.classList.remove("dark", "black", "white");
+    
+    // Set light mode in localStorage
+    localStorage.setItem("theme", "light");
+    
+    // Clear any dark mode transitions
+    root.style.transition = "";
   }, []);
 
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-    document.documentElement.classList.toggle("dark", newTheme === "dark");
-  };
-
+  // This component now just shows a disabled sun icon
   return (
-    <Button variant="ghost" size="icon" onClick={toggleTheme}>
-      {theme === "light" ? (
-        <Moon className="h-5 w-5" />
-      ) : (
-        <Sun className="h-5 w-5" />
+    <Button 
+      variant={variant} 
+      size={size}
+      className={`transition-smooth ${showText ? 'gap-2' : ''} ${className} opacity-50 cursor-not-allowed`}
+      disabled={true}
+      title="Light mode only (Dark mode temporarily disabled)"
+    >
+      <Sun className="h-4 w-4" />
+      {showText && (
+        <span>Light Mode</span>
       )}
+      <span className="sr-only">Light mode only</span>
     </Button>
   );
 };

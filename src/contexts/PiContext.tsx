@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { PI_CONFIG, isPiNetworkAvailable, validatePiConfig, validateMainnetConfig } from "@/config/pi-config";
 
 // Pi Network Types
 interface PiUser {
@@ -123,21 +124,23 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   // Derived state: user is authenticated if we have a Pi user and access token
   const isAuthenticated = !!piUser && !!accessToken;
 
-  // DROP Token Configuration (Mainnet)
-  const DROP_TOKEN = {
-    code: 'DROP',
-    issuer: 'GBVTV77XFMDYSSVIG6ZGSRAGZ3S7KA4275YYLOLIROOD3Y3F3TH5U3EI',
-    distributor: 'GCTPMH43NGN7E4IXLQ27H2XWGGWWDY3I6UAPBFXYQSEUPEKNQE2BZXC2'
-  };
+  // DROP Token Configuration (Mainnet) - use config file
+  const DROP_TOKEN = PI_CONFIG.DROP_TOKEN;
 
   useEffect(() => {
     const initializePi = async () => {
       try {
-        if (typeof window !== 'undefined' && window.Pi) {
-          // Initialize Pi SDK for mainnet (production)
-        await window.Pi.init({
-          version: "2.0"
-        });          console.log("Pi SDK initialized successfully (Mainnet Mode Enabled)");
+        // Validate configuration first
+        if (!validatePiConfig()) {
+          console.error('Invalid Pi Network configuration');
+          setError('Invalid Pi Network configuration');
+          return;
+        }
+
+        if (isPiNetworkAvailable()) {
+          // Initialize Pi SDK for mainnet using config
+          await window.Pi.init(PI_CONFIG.SDK);
+          console.log(`Pi SDK initialized successfully (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'} Mode)`);
           setIsInitialized(true);
           
           // Check ad network support
@@ -156,11 +159,9 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           
           if (storedToken && storedUser) {
             try {
-              // Verify token with Pi API
-              const response = await fetch('https://api.mainnet.minepi.com/v2/me', {
-                headers: {
-                  'Authorization': `Bearer ${storedToken}`
-                }
+              // Verify token with Pi API using config
+              const response = await fetch(PI_CONFIG.ENDPOINTS.ME, {
+                headers: PI_CONFIG.getAuthHeaders(storedToken)
               });
               
               if (response.ok) {
@@ -198,23 +199,31 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         }
       } catch (err) {
         console.error('Failed to initialize Pi SDK:', err);
-        // Don't set error in development to avoid blocking app
-        if (process.env.NODE_ENV !== 'development') {
-          setError('Failed to initialize Pi Network SDK');
+        // Improved error handling - don't block the app
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        console.log('Pi SDK Error Details:', errorMessage);
+        
+        // Only show user-friendly message, don't block app
+        if (process.env.NODE_ENV === 'production') {
+          toast.error('Pi Network unavailable. Some features may be limited.');
         }
+        
+        // Don't set error state - allow app to continue
+        setIsInitialized(false);
       } finally {
         setLoading(false);
       }
     };
 
-    // In development, add a timeout to prevent infinite loading
+    // Improved timeout handling
     const timeout = setTimeout(() => {
       if (loading) {
         console.log('Pi SDK initialization timeout - continuing without Pi');
         setLoading(false);
         setError(null); // Clear any errors to allow app to continue
+        setIsInitialized(false); // Ensure we don't block the app
       }
-    }, 2000); // Reduced timeout to 2 seconds
+    }, 3000); // Increased timeout to 3 seconds for better reliability
     
     initializePi().finally(() => clearTimeout(timeout));
   }, []);

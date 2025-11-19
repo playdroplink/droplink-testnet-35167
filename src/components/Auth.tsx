@@ -8,9 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Mail } from "lucide-react";
 import { toast } from "sonner";
+import { usePi } from "@/contexts/PiContext";
 
 export const Auth = () => {
   const navigate = useNavigate();
+  const { piUser, isAuthenticated, authenticate: piAuthenticate, loading: piLoading } = usePi();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -48,6 +50,16 @@ export const Auth = () => {
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  const handlePiAuth = async () => {
+    try {
+      await piAuthenticate();
+      toast.success("Successfully authenticated with Pi Network!");
+      navigate("/dashboard", { replace: true });
+    } catch (error: any) {
+      toast.error(error.message || "Pi Network authentication failed");
+    }
+  };
 
   const handleGoogleAuth = async () => {
     setLoading(true);
@@ -147,13 +159,84 @@ export const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Google OAuth Button */}
+          {/* Pi Network Authentication Button */}
+          <div className="p-6 pt-0 space-y-4">
+            <Button 
+              onClick={handlePiAuth}
+              className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90"
+              disabled={piLoading || loading}
+            >
+              {piLoading ? "Connecting..." : "Sign in with Pi Network"}
+            </Button>
+            
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t"></span>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+              </div>
+            </div>
+            
+            <Button 
+              onClick={handleGoogleAuth} 
+              variant="outline" 
+              className="w-full" 
+              disabled={loading || piLoading}
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              Continue with Email
+            </Button>
+            
+            {/* Feature highlights */}
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p className="flex items-center gap-2">
+                <span className="text-primary">✓</span>Create your personalized link-in-bio page
+              </p>
+              <p className="flex items-center gap-2">
+                <span className="text-primary">✓</span>Sell digital products and accept Pi payments
+              </p>
+              <p className="flex items-center gap-2">
+                <span className="text-primary">✓</span>Connect all your social media in one place
+              </p>
+              <p className="flex items-center gap-2">
+                <span className="text-primary">✓</span>Your data persists across sessions with Pi authentication
+              </p>
+            </div>
+            
+            {/* Pi Browser notice */}
+            <div className="pt-4 border-t space-y-2">
+              <p className="text-xs text-center text-muted-foreground">
+                Please open this app in Pi Browser to use Pi authentication.<br/>
+                Your Pi username will be used as your unique identifier.
+              </p>
+              <div className="flex justify-center gap-4 text-xs">
+                <a href="/terms" className="text-primary hover:underline">Terms</a>
+                <span className="text-muted-foreground">•</span>
+                <a href="/privacy" className="text-primary hover:underline">Privacy</a>
+              </div>
+            </div>
+          </div>
+          
+          {/* Separator for email auth */}
+          <div className="relative mb-4">
+            <div className="absolute inset-0 flex items-center">
+              <Separator className="w-full" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Email Authentication
+              </span>
+            </div>
+          </div>
+
+          {/* Email Authentication Form */}
           <div className="space-y-4">
             <Button 
               onClick={handleGoogleAuth} 
               variant="outline" 
               className="w-full" 
-              disabled={loading}
+              disabled={loading || piLoading}
             >
               <Mail className="w-4 h-4 mr-2" />
               Continue with Google

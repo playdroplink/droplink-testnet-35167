@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PhonePreview } from "@/components/PhonePreview";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Analytics } from "@/components/Analytics";
 import { DesignCustomizer } from "@/components/DesignCustomizer";
 import { CustomLinksManager } from "@/components/CustomLinksManager";
@@ -109,6 +108,8 @@ interface ProfileData {
   theme: {
     primaryColor: string;
     backgroundColor: string;
+    backgroundType: 'color' | 'gif';
+    backgroundGif: string;
     iconStyle: string;
     buttonStyle: string;
   };
@@ -189,6 +190,8 @@ const Dashboard = () => {
     theme: {
       primaryColor: "#3b82f6",
       backgroundColor: "#000000",
+      backgroundType: "color" as const,
+      backgroundGif: "",
       iconStyle: "rounded",
       buttonStyle: "filled",
     },
@@ -464,6 +467,8 @@ const Dashboard = () => {
           theme: {
             primaryColor: themeSettings?.primaryColor || "#3b82f6",
             backgroundColor: themeSettings?.backgroundColor || "#000000",
+            backgroundType: (themeSettings?.backgroundType as 'color' | 'gif') || "color",
+            backgroundGif: themeSettings?.backgroundGif || "",
             iconStyle: themeSettings?.iconStyle || "rounded",
             buttonStyle: themeSettings?.buttonStyle || "filled",
           },
@@ -653,6 +658,8 @@ const Dashboard = () => {
           theme: {
             primaryColor: "#3b82f6",
             backgroundColor: "#000000",
+            backgroundType: "color" as const,
+            backgroundGif: "",
             iconStyle: "rounded",
             buttonStyle: "filled",
           },
@@ -1139,8 +1146,8 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
-      <header className="bg-white border-b border-gray-200 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 shadow-sm">
+    <div className="min-h-screen bg-background">
+      <header className={`px-3 sm:px-4 lg:px-6 py-3 sm:py-4 shadow-sm border-b border-border ${isMobile ? 'bg-background' : 'glass-surface'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-4">
             <h1 className="text-lg sm:text-xl font-semibold text-sky-500">DropLink</h1>
@@ -1149,6 +1156,16 @@ const Dashboard = () => {
             )}
           </div>
           <div className="flex items-center gap-1 sm:gap-2 lg:gap-4">
+            {isMobile && (
+              <Button
+                onClick={() => setShowPreview(!showPreview)}
+                variant="outline"
+                size="sm"
+                className="h-9 w-9 mr-1"
+              >
+                {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </Button>
+            )}
             {isMobile ? (
               <Drawer>
                 <DrawerTrigger asChild>
@@ -1157,7 +1174,7 @@ const Dashboard = () => {
                     <span className="hidden sm:inline ml-2">Menu</span>
                   </Button>
                 </DrawerTrigger>
-                <DrawerContent className="bg-white">
+                <DrawerContent className="bg-background border-t border-border">
                   <DrawerHeader>
                     <DrawerTitle className="text-lg font-semibold">DropLink Menu</DrawerTitle>
                     <DrawerDescription>Quick actions and settings</DrawerDescription>
@@ -1165,13 +1182,13 @@ const Dashboard = () => {
                   <div className="p-4 space-y-3 max-h-[70vh] overflow-y-auto">
                     {/* Profile & Share Section */}
                     <div className="space-y-2">
-                      <h3 className="font-medium text-sm text-gray-700 px-2">Profile & Share</h3>
+                      <h3 className="font-medium text-sm text-muted-foreground px-2">Profile & Share</h3>
                       <div className="grid grid-cols-2 gap-2">
-                        <Button onClick={handleShowQRCode} variant="outline" size="sm" className="justify-start gap-2 h-12">
+                        <Button onClick={handleShowQRCode} variant="outline" size="sm" className="inline-flex justify-start gap-2 h-12">
                           <QrCode className="w-4 h-4" />
                           QR Code
                         </Button>
-                        <Button onClick={handleCopyLink} variant="outline" size="sm" className="justify-start gap-2 h-12">
+                        <Button onClick={handleCopyLink} variant="outline" size="sm" className="inline-flex justify-start gap-2 h-12">
                           <Share2 className="w-4 h-4" />
                           Share
                         </Button>
@@ -1180,21 +1197,21 @@ const Dashboard = () => {
 
                     {/* Navigation Section */}
                     <div className="space-y-2">
-                      <h3 className="font-medium text-sm text-gray-700 px-2">Navigation</h3>
+                      <h3 className="font-medium text-sm text-muted-foreground px-2">Navigation</h3>
                       <div className="grid grid-cols-2 gap-2">
-                        <Button onClick={() => navigate("/followers")} variant="outline" size="sm" className="justify-start gap-2 h-12">
+                        <Button onClick={() => navigate("/followers")} variant="outline" size="sm" className="inline-flex justify-start gap-2 h-12">
                           <Users className="w-4 h-4" />
                           Followers
                         </Button>
-                        <Button onClick={() => navigate("/wallet")} variant="outline" size="sm" className="justify-start gap-2 h-12">
+                        <Button onClick={() => navigate("/wallet")} variant="outline" size="sm" className="inline-flex justify-start gap-2 h-12">
                           <Wallet className="w-4 h-4" />
                           Wallet
                         </Button>
-                        <Button onClick={() => navigate("/profile")} variant="outline" size="sm" className="justify-start gap-2 h-12">
+                        <Button onClick={() => navigate("/profile")} variant="outline" size="sm" className="inline-flex justify-start gap-2 h-12">
                           <User className="w-4 h-4" />
                           Profile
                         </Button>
-                        <Button onClick={() => navigate("/domain")} variant="outline" size="sm" className="justify-start gap-2 h-12">
+                        <Button onClick={() => navigate("/domain")} variant="outline" size="sm" className="inline-flex justify-start gap-2 h-12">
                           <Globe className="w-4 h-4" />
                           Domain
                         </Button>
@@ -1203,7 +1220,7 @@ const Dashboard = () => {
 
                     {/* Settings Section */}
                     <div className="space-y-2">
-                      <h3 className="font-medium text-sm text-gray-700 px-2">Settings</h3>
+                      <h3 className="font-medium text-sm text-muted-foreground px-2">Settings</h3>
                       <div className="space-y-2">
                         <Button
                           onClick={() => setShowPreview(!showPreview)}
@@ -1214,17 +1231,13 @@ const Dashboard = () => {
                           {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           {showPreview ? 'Hide Preview' : 'Show Preview'}
                         </Button>
-                        <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
-                          <span className="text-sm font-medium">Theme</span>
-                          <ThemeToggle />
-                        </div>
                       </div>
                     </div>
 
                     {/* Pi Network Section */}
                     {hasSupabaseSession && !isAuthenticated && (
                       <div className="space-y-2">
-                        <h3 className="font-medium text-sm text-gray-700 px-2">Pi Network</h3>
+                        <h3 className="font-medium text-sm text-muted-foreground px-2">Pi Network</h3>
                         <Button 
                           onClick={() => navigate("/auth")} 
                           variant="default" 
@@ -1239,9 +1252,9 @@ const Dashboard = () => {
 
                     {/* Support & Help Section */}
                     <div className="space-y-2">
-                      <h3 className="font-medium text-sm text-gray-700 px-2">Support & Help</h3>
+                      <h3 className="font-medium text-sm text-muted-foreground px-2">Support & Help</h3>
                       <div className="grid grid-cols-2 gap-2">
-                        <Button onClick={() => navigate("/ai-support")} variant="outline" size="sm" className="justify-start gap-2 h-12">
+                        <Button onClick={() => navigate("/ai-support")} variant="outline" size="sm" className="inline-flex justify-start gap-2 h-12">
                           <Bot className="w-4 h-4" />
                           AI Support
                         </Button>
@@ -1259,16 +1272,16 @@ const Dashboard = () => {
 
                     {/* Subscription Section */}
                     <div className="space-y-2">
-                      <h3 className="font-medium text-sm text-gray-700 px-2">Subscription</h3>
-                      <Button onClick={() => navigate("/subscription")} variant="default" size="sm" className="w-full justify-start gap-2 h-12">
+                      <h3 className="font-medium text-sm text-muted-foreground px-2">Subscription</h3>
+                      <Button onClick={() => navigate("/subscription")} variant="default" size="sm" className="w-full inline-flex justify-start gap-2 h-12">
                         <Crown className="w-4 h-4" />
                         Upgrade Plan
                       </Button>
                     </div>
 
                     {/* Account Section */}
-                    <div className="space-y-2 pt-2 border-t border-gray-200">
-                      <Button onClick={handleLogout} variant="destructive" size="sm" className="w-full justify-start gap-2 h-12">
+                    <div className="space-y-2 pt-2 border-t border-border">
+                      <Button onClick={handleLogout} variant="destructive" size="sm" className="w-full inline-flex justify-start gap-2 h-12">
                         <LogOut className="w-4 h-4" />
                         Sign Out
                       </Button>
@@ -1278,11 +1291,11 @@ const Dashboard = () => {
               </Drawer>
             ) : (
               <>
-                <Button onClick={handleShowQRCode} variant="outline" size="sm" className="hidden sm:flex gap-2">
+                <Button onClick={handleShowQRCode} variant="outline" size="sm" className="hidden sm:inline-flex gap-2">
                   <QrCode className="w-4 h-4" />
                   QR Code
                 </Button>
-                <Button onClick={handleCopyLink} variant="outline" size="sm" className="hidden sm:flex gap-2">
+                <Button onClick={handleCopyLink} variant="outline" size="sm" className="hidden sm:inline-flex gap-2">
                   <Share2 className="w-4 h-4" />
                   Share
                 </Button>
@@ -1290,7 +1303,7 @@ const Dashboard = () => {
                   onClick={() => navigate("/followers")} 
                   variant="outline" 
                   size="sm" 
-                  className="hidden md:flex gap-2"
+                  className="hidden md:inline-flex gap-2"
                 >
                   <Users className="w-4 h-4" />
                   Followers
@@ -1299,7 +1312,7 @@ const Dashboard = () => {
                   onClick={() => navigate("/wallet")} 
                   variant="outline" 
                   size="sm" 
-                  className="hidden md:flex gap-2"
+                  className="hidden md:inline-flex gap-2"
                 >
                   <Wallet className="w-4 h-4" />
                   Wallet
@@ -1308,7 +1321,7 @@ const Dashboard = () => {
                   onClick={() => navigate("/subscription")} 
                   variant="outline" 
                   size="sm" 
-                  className="hidden md:flex"
+                  className="hidden md:inline-flex"
                 >
                   Upgrade
                 </Button>
@@ -1316,21 +1329,20 @@ const Dashboard = () => {
                   onClick={() => setShowAboutModal(true)}
                   variant="outline"
                   size="sm"
-                  className="hidden lg:flex gap-2"
+                  className="hidden lg:inline-flex gap-2"
                 >
                   <Info className="w-4 h-4" />
                   About
                 </Button>
-                <Button 
+                <Button
                   onClick={() => setShowPreview(!showPreview)} 
                   variant="outline" 
                   size="sm"
-                  className="lg:hidden"
+                  className="lg:hidden inline-flex"
                 >
                   {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </Button>
-                <ThemeToggle />
-                <Button onClick={handleLogout} variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50">
+                <Button onClick={handleLogout} variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50 inline-flex">
                   <LogOut className="w-4 h-4" />
                 </Button>
                 
@@ -1340,7 +1352,7 @@ const Dashboard = () => {
                     onClick={() => navigate("/auth")} 
                     variant="outline" 
                     size="sm"
-                    className="gap-2"
+                    className="gap-2 inline-flex"
                   >
                     <Wallet className="w-4 h-4" />
                     Connect Pi
@@ -1354,54 +1366,54 @@ const Dashboard = () => {
 
       <div className="flex flex-col lg:flex-row h-[calc(100vh-73px)]">
         {/* Editor Panel */}
-        <div className={`flex-1 overflow-y-auto p-4 lg:p-8 bg-white m-2 rounded-xl shadow-sm border border-gray-100 ${showPreview ? 'hidden lg:block' : 'block'}`}>
+        <div className={`flex-1 overflow-y-auto p-4 lg:p-8 ${isMobile ? 'bg-background' : 'glass-card'} m-2 rounded-xl ${showPreview ? 'hidden lg:block' : 'block'}`}>
           <div className="max-w-2xl mx-auto">
             <Tabs defaultValue="profile" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 lg:grid-cols-9 mb-6 overflow-x-auto">
-                <TabsTrigger value="profile" className="text-xs sm:text-sm">
-                  <Settings className="w-4 h-4 mr-1 lg:mr-2" />
+              <TabsList className="flex flex-wrap gap-1 sm:gap-2 w-full bg-muted p-2 rounded-lg mb-6 min-h-fit">
+                <TabsTrigger value="profile" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                  <Settings className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Profile</span>
                 </TabsTrigger>
-                <TabsTrigger value="design" className="text-xs sm:text-sm">
-                  <Palette className="w-4 h-4 mr-1 lg:mr-2" />
+                <TabsTrigger value="design" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                  <Palette className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Design</span>
                 </TabsTrigger>
-                <TabsTrigger value="analytics" className="text-xs sm:text-sm flex">
-                  <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                <TabsTrigger value="analytics" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                  <BarChart3 className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Analytics</span>
                 </TabsTrigger>
-                <TabsTrigger value="features" className="text-xs sm:text-sm flex">
-                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                <TabsTrigger value="features" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                  <Sparkles className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Features</span>
                 </TabsTrigger>
-                <TabsTrigger value="drop-tokens" className="text-xs sm:text-sm flex">
-                  <Coins className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                <TabsTrigger value="drop-tokens" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                  <Coins className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">DROP</span>
                 </TabsTrigger>
-                <TabsTrigger value="ad-network" className="text-xs sm:text-sm flex">
-                  <PlayCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                <TabsTrigger value="ad-network" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                  <PlayCircle className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Ads</span>
                 </TabsTrigger>
-                <TabsTrigger value="payments" className="text-xs sm:text-sm flex">
-                  <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                <TabsTrigger value="payments" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                  <CreditCard className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Pay</span>
                 </TabsTrigger>
-                <TabsTrigger value="subscription" className="text-xs sm:text-sm flex">
-                  <Crown className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                <TabsTrigger value="subscription" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                  <Crown className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Sub</span>
                 </TabsTrigger>
-                <TabsTrigger value="voting" className="text-xs sm:text-sm flex">
-                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                <TabsTrigger value="voting" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                  <TrendingUp className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Vote</span>
                 </TabsTrigger>
-                <TabsTrigger value="preferences" className="text-xs sm:text-sm flex">
-                  <User className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                <TabsTrigger value="preferences" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                  <User className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Settings</span>
                 </TabsTrigger>
                 {isAuthenticated && (
-                  <TabsTrigger value="pi-data" className="text-xs sm:text-sm flex">
-                    <Bot className="w-4 h-4 mr-2" />
-                    Pi Data
+                  <TabsTrigger value="pi-data" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                    <Bot className="w-4 h-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">Pi Data</span>
                   </TabsTrigger>
                 )}
               </TabsList>
@@ -1695,7 +1707,7 @@ const Dashboard = () => {
                               value={profile.piWalletAddress || ''}
                               onChange={(e) => setProfile({ ...profile, piWalletAddress: e.target.value })}
                               placeholder="G... (Pi Network wallet address)"
-                              className="bg-white border-blue-300 text-xs font-mono"
+                              className="bg-background border-primary text-xs font-mono"
                               maxLength={56}
                             />
                             {profile.piWalletAddress && (
@@ -1943,9 +1955,11 @@ const Dashboard = () => {
             </PlanGate>
 
                 {/* Action Buttons */}
-                <div className="flex gap-4 pt-4 pb-8">
-                  <Button variant="outline" className="flex-1">Cancel</Button>
-                  <Button onClick={handleSave} className="flex-1" disabled={saving}>
+                <div className={`flex gap-4 pt-6 pb-6 mt-8 border-t border-border sticky bottom-0 z-50 mx-auto max-w-2xl ${isMobile ? 'bg-background shadow-md' : 'bg-background/95 backdrop-blur-sm shadow-lg'}`}>
+                  <Button variant="outline" className="flex-1 h-12">
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSave} className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium" disabled={saving}>
                     {saving ? "Saving..." : "Save changes"}
                   </Button>
                 </div>
@@ -1960,11 +1974,13 @@ const Dashboard = () => {
                   />
                   
                   {/* Save Button */}
-                  <div className="flex gap-4 pt-4 pb-8 border-t bg-background sticky bottom-0">
-                    <Button variant="outline" className="flex-1">Cancel</Button>
+                  <div className={`flex gap-4 pt-6 pb-6 mt-8 border-t border-border sticky bottom-0 z-50 mx-auto max-w-2xl ${isMobile ? 'bg-background shadow-md' : 'bg-background/95 backdrop-blur-sm shadow-lg'}`}>
+                    <Button variant="outline" className="flex-1 h-12">
+                      Cancel
+                    </Button>
                     <Button 
                       onClick={handleSave} 
-                      className="flex-1 bg-primary hover:bg-primary/90" 
+                      className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium" 
                       disabled={saving}
                     >
                       {saving ? "Saving..." : "Save changes"}
@@ -2033,7 +2049,7 @@ const Dashboard = () => {
         </div>
 
         {/* Preview Panel */}
-        <div className={`lg:w-[400px] xl:w-[500px] bg-white border-l border-gray-200 p-6 lg:p-8 flex flex-col items-center shadow-sm ${
+        <div className={`lg:w-[400px] xl:w-[500px] ${isMobile ? 'bg-background border-t' : 'glass-surface border-l'} border-border/30 p-6 lg:p-8 flex flex-col items-center ${
           showPreview ? 'flex' : 'hidden lg:flex'
         }`}>
           <div className="mb-4 flex items-center justify-between w-full">
