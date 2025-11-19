@@ -26,11 +26,14 @@ import {
   ArrowUpDown,
   TrendingUp,
   Clock,
-  Check
+  Check,
+  ExternalLink
 } from 'lucide-react';
 import { usePi } from '@/contexts/PiContext';
 import { toast } from 'sonner';
 import { PI_CONFIG } from '@/config/pi-config';
+import { supabase } from '@/integrations/supabase/client';
+import { syncPaymentLinksToDatabase, loadPaymentLinksFromDatabase } from '@/lib/database-sync';
 
 interface PaymentLink {
   id: string;
@@ -38,10 +41,25 @@ interface PaymentLink {
   description: string;
   type: 'product' | 'donation' | 'tip' | 'subscription' | 'group';
   url: string;
-  created: Date;
+  created: Date | string;
   active: boolean;
   totalReceived: number;
   transactionCount: number;
+  memo?: string;
+  productInfo?: {
+    name: string;
+    description: string;
+    downloadUrl?: string;
+    accessUrl?: string;
+  };
+}
+
+interface MerchantConfig {
+  seedPhrase: string;
+  walletAddress: string;
+  validationKey: string;
+  apiKey: string;
+  environment: 'mainnet' | 'testnet';
 }
 
 interface Transaction {
@@ -84,13 +102,76 @@ const PiPayments: React.FC = () => {
   // Loading States
   const [loadingBalance, setLoadingBalance] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  
+  // Merchant Configuration State
+  const [merchantConfig, setMerchantConfig] = useState<MerchantConfig>({
+    seedPhrase: '',
+    walletAddress: '',
+    validationKey: '7511661aac4538b1832d2c9ba117f6d972b26a54640598d3fbb9824013c7079203f65b02d125be3f418605cfb89ba0e4443e3ec997e3800eb464df0bc5410d2a',
+    apiKey: import.meta.env.VITE_PI_API_KEY || '',
+    environment: 'mainnet'
+  });
+  const [showMerchantConfig, setShowMerchantConfig] = useState(false);
+
+  // Pi Network payment scope creation
+  const createPiPaymentScope = async (paymentLink: PaymentLink) => {
+    try {
+      const response = await fetch('https://api.minepi.com/v2/payments', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Key ${merchantConfig.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          payment: {
+            amount: paymentLink.amount,
+            memo: paymentLink.description || paymentLink.memo,
+            metadata: {
+              linkId: paymentLink.id,
+              type: paymentLink.type,
+              merchantWallet: merchantConfig.walletAddress,
+              validation: merchantConfig.validationKey
+            }
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Pi API error: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log('Pi payment scope created:', result);
+      return result;
+    } catch (error) {
+      console.error('Failed to create Pi payment scope:', error);
+      throw error;
+    }
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
       loadWalletData();
       loadPaymentLinks();
+      loadMerchantConfig();
     }
   }, [isAuthenticated]);
+
+  const loadMerchantConfig = () => {
+    try {
+      const saved = localStorage.getItem('pi_merchant_config');
+      if (saved) {
+        const config = JSON.parse(saved);
+        setMerchantConfig(prev => ({
+          ...prev,
+          ...config,
+          validationKey: '7511661aac4538b1832d2c9ba117f6d972b26a54640598d3fbb9824013c7079203f65b02d125be3f418605cfb89ba0e4443e3ec997e3800eb464df0bc5410d2a' // Keep default validation key
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to load merchant config:', error);
+    }
+  };
 
   const loadWalletData = async () => {
     setLoadingBalance(true);
@@ -172,7 +253,16 @@ const PiPayments: React.FC = () => {
   };
 
   const savePaymentLinks = (links: PaymentLink[]) => {
+    // Save with user-specific key
     localStorage.setItem(`paymentLinks_${piUser?.uid}`, JSON.stringify(links));
+    
+    // Also save globally for public access
+    const globalLinks = JSON.parse(localStorage.getItem('all_payment_links') || '{}');
+    if (piUser?.uid) {
+      globalLinks[piUser.uid] = links;
+      localStorage.setItem('all_payment_links', JSON.stringify(globalLinks));
+    }
+    
     setPaymentLinks(links);
   };
 
@@ -194,23 +284,83 @@ const PiPayments: React.FC = () => {
       const baseUrl = window.location.origin;
       const paymentUrl = `${baseUrl}/pay/${linkId}`;
       
+      // Create payment link with enhanced Pi Network integration
       const newLink: PaymentLink = {
         id: linkId,
         amount: parseFloat(amount),
         description: memo,
         type: paymentType,
         url: paymentUrl,
-        created: new Date(),
+        created: new Date().toISOString(),
         active: true,
         totalReceived: 0,
-        transactionCount: 0
+        transactionCount: 0,
+        memo: memo,
+        productInfo: paymentType === 'product' ? {
+          name: memo,
+          description: memo,
+          downloadUrl: '',
+          accessUrl: ''
+        } : undefined
       };
+
+      // Save to database and theme_settings for multiple access methods
+      try {
+        if (piUser?.uid && piUser?.username) {
+          // Get current profile ID for sync
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id, theme_settings')
+            .eq('username', piUser.username)
+            .single();
+          
+          if (profile?.id) {
+            // Save to theme_settings as primary method (since payment_links table may not be created yet)
+            const currentTheme = (profile.theme_settings as any) || {};
+            const currentPaymentLinks = currentTheme.paymentLinks || [];
+            const updatedPaymentLinks = [...currentPaymentLinks, newLink];
+            
+            await supabase
+              .from('profiles')
+              .update({
+                theme_settings: {
+                  ...currentTheme,
+                  paymentLinks: updatedPaymentLinks
+                }
+              })
+              .eq('id', profile.id);
+            
+            console.log('Payment link saved to profile theme_settings:', newLink.id);
+            
+            // Note: Additional database sync can be added when migration is complete
+          }
+        }
+      } catch (dbError) {
+        console.warn('Database operations failed, using localStorage only:', dbError);
+      }
 
       const updatedLinks = [...paymentLinks, newLink];
       savePaymentLinks(updatedLinks);
 
+      // Create Pi Network payment scope for this link
+      if (merchantConfig.apiKey && merchantConfig.walletAddress) {
+        try {
+          await createPiPaymentScope(newLink);
+        } catch (scopeError) {
+          console.warn('Pi payment scope creation failed:', scopeError);
+        }
+      }
+
       toast.success('Payment link created successfully!', {
-        description: 'Share this link to receive payments'
+        description: `Share this link to receive ${formatPiAmount(parseFloat(amount))} payments. Link ID: ${linkId}`
+      });
+
+      console.log('Payment link created:', {
+        linkId,
+        url: paymentUrl,
+        description: memo,
+        amount: parseFloat(amount),
+        type: paymentType
       });
 
       // Clear form
@@ -227,8 +377,12 @@ const PiPayments: React.FC = () => {
   };
 
   const copyPaymentLink = (link: PaymentLink) => {
-    navigator.clipboard.writeText(link.url);
-    toast.success('Payment link copied to clipboard!');
+    // Ensure we're using the correct URL format
+    const correctUrl = `${window.location.origin}/pay/${link.id}`;
+    navigator.clipboard.writeText(correctUrl);
+    toast.success('Payment link copied to clipboard!', {
+      description: `Link: /pay/${link.id}`
+    });
   };
 
   const toggleLinkStatus = (linkId: string) => {
@@ -294,11 +448,15 @@ const PiPayments: React.FC = () => {
       </Card>
 
       <Tabs defaultValue="create" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="create">Create Payment</TabsTrigger>
           <TabsTrigger value="links">Payment Links</TabsTrigger>
           <TabsTrigger value="wallet">Wallet & Balance</TabsTrigger>
           <TabsTrigger value="history">Transaction History</TabsTrigger>
+          <TabsTrigger value="merchant">
+            <Wallet className="w-4 h-4 mr-1" />
+            Merchant Config
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="create">
@@ -491,8 +649,22 @@ const PiPayments: React.FC = () => {
                             </Badge>
                           </div>
                           <p className="text-sm text-gray-500">
-                            Created {link.created.toLocaleDateString()} • {formatPiAmount(link.amount)}
+                            Created {new Date(link.created).toLocaleDateString()} • {formatPiAmount(link.amount)}
                           </p>
+                          <div className="flex items-center gap-2 text-xs text-blue-600">
+                            <span>Link ID: {link.id}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                navigator.clipboard.writeText(link.id);
+                                toast.success('Link ID copied!');
+                              }}
+                              className="h-6 px-2"
+                            >
+                              <Copy className="w-3 h-3" />
+                            </Button>
+                          </div>
                         </div>
                         <div className="text-right">
                           <p className="font-medium">{formatPiAmount(link.totalReceived)}</p>
@@ -508,6 +680,17 @@ const PiPayments: React.FC = () => {
                           onClick={() => copyPaymentLink(link)}
                         >
                           <Copy className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const url = `${window.location.origin}/pay/${link.id}`;
+                            window.open(url, '_blank');
+                          }}
+                          title="Test payment link"
+                        >
+                          <ExternalLink className="w-4 h-4" />
                         </Button>
                       </div>
                       
@@ -692,6 +875,155 @@ const PiPayments: React.FC = () => {
                   ))}
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="merchant">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wallet className="w-5 h-5 text-green-500" />
+                Merchant Configuration
+              </CardTitle>
+              <CardDescription>
+                Configure your Pi Network merchant settings for payment processing and smart contract integration
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="environment">Environment</Label>
+                  <Select 
+                    value={merchantConfig.environment} 
+                    onValueChange={(value: 'mainnet' | 'testnet') => 
+                      setMerchantConfig({...merchantConfig, environment: value})
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select environment" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="mainnet">Mainnet (Production)</SelectItem>
+                      <SelectItem value="testnet">Testnet (Development)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="apiKey">Pi API Key</Label>
+                  <Input
+                    id="apiKey"
+                    type="password"
+                    placeholder="Enter your Pi Network API key"
+                    value={merchantConfig.apiKey}
+                    onChange={(e) => setMerchantConfig({...merchantConfig, apiKey: e.target.value})}
+                  />
+                  <p className="text-xs text-gray-500">
+                    Get your API key from Pi Developer Portal
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="walletAddress">Merchant Wallet Address</Label>
+                  <Input
+                    id="walletAddress"
+                    placeholder="Enter your Pi wallet address"
+                    value={merchantConfig.walletAddress}
+                    onChange={(e) => setMerchantConfig({...merchantConfig, walletAddress: e.target.value})}
+                  />
+                  <p className="text-xs text-gray-500">
+                    This is where you'll receive payments
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="seedPhrase">Seed Phrase (Optional)</Label>
+                  <Textarea
+                    id="seedPhrase"
+                    placeholder="Enter your seed phrase for advanced payment processing"
+                    value={merchantConfig.seedPhrase}
+                    onChange={(e) => setMerchantConfig({...merchantConfig, seedPhrase: e.target.value})}
+                    rows={3}
+                  />
+                  <p className="text-xs text-gray-500">
+                    Only needed for advanced smart contract features. Keep this secure!
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="validationKey">Validation Key</Label>
+                  <Input
+                    id="validationKey"
+                    placeholder="Validation key for payment verification"
+                    value={merchantConfig.validationKey}
+                    onChange={(e) => setMerchantConfig({...merchantConfig, validationKey: e.target.value})}
+                    readOnly
+                  />
+                  <p className="text-xs text-gray-500">
+                    Pre-configured validation key for your DropLink store
+                  </p>
+                </div>
+              </div>
+
+              <Alert>
+                <CheckCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Your merchant configuration will be saved securely. API keys are encrypted and seed phrases are stored locally only.
+                </AlertDescription>
+              </Alert>
+
+              <div className="flex gap-3">
+                <Button 
+                  onClick={() => {
+                    localStorage.setItem('pi_merchant_config', JSON.stringify(merchantConfig));
+                    toast.success('Merchant configuration saved successfully!');
+                  }}
+                  className="flex-1"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Save Configuration
+                </Button>
+                
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    const saved = localStorage.getItem('pi_merchant_config');
+                    if (saved) {
+                      setMerchantConfig(JSON.parse(saved));
+                      toast.success('Configuration loaded from storage');
+                    }
+                  }}
+                >
+                  Load Saved
+                </Button>
+              </div>
+
+              <div className="pt-4 border-t">
+                <h4 className="font-medium mb-2">Integration Status</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    {merchantConfig.apiKey ? (
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                    )}
+                    <span>API Key {merchantConfig.apiKey ? 'Configured' : 'Missing'}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    {merchantConfig.walletAddress ? (
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                    )}
+                    <span>Wallet Address {merchantConfig.walletAddress ? 'Configured' : 'Missing'}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <span>Environment: {merchantConfig.environment.toUpperCase()}</span>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

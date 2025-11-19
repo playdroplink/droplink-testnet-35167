@@ -10,7 +10,15 @@ import {
   Star,
   Zap,
   Link as LinkIcon,
-  Globe
+  Globe,
+  CreditCard,
+  DollarSign,
+  Gift,
+  Users,
+  Pi,
+  Wallet,
+  QrCode,
+  Copy
 } from "lucide-react";
 import { 
   FaTwitter, 
@@ -21,6 +29,20 @@ import {
   FaLinkedin, 
   FaTwitch
 } from "react-icons/fa";
+import { QRCodeDisplay } from "./QRCodeDisplay";
+import { toast } from "sonner";
+
+interface PaymentLink {
+  id: string;
+  amount: number;
+  description: string;
+  type: 'product' | 'donation' | 'tip' | 'subscription' | 'group';
+  url: string;
+  created: Date;
+  active: boolean;
+  totalReceived: number;
+  transactionCount: number;
+}
 
 interface ProfileData {
   logo: string;
@@ -59,7 +81,10 @@ interface ProfileData {
     description: string;
     fileUrl: string;
   }>;
+  paymentLinks?: PaymentLink[];
   hasPremium?: boolean;
+  piWalletAddress?: string;
+  piDonationMessage?: string;
 }
 
 interface PhonePreviewProps {
@@ -119,6 +144,21 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
       case "zap": return <Zap {...iconProps} />;
       default: return <LinkIcon {...iconProps} />;
     }
+  };
+
+  const getPaymentIcon = (type: string) => {
+    switch (type) {
+      case 'product': return <ShoppingBag className="w-4 h-4" />;
+      case 'donation': return <Gift className="w-4 h-4" />;
+      case 'tip': return <DollarSign className="w-4 h-4" />;
+      case 'subscription': return <CreditCard className="w-4 h-4" />;
+      case 'group': return <Users className="w-4 h-4" />;
+      default: return <Pi className="w-4 h-4" />;
+    }
+  };
+
+  const formatPiAmount = (amount: number) => {
+    return `π ${amount.toFixed(2)}`;
   };
 
   const extractYouTubeVideoId = (url: string): string | null => {
@@ -235,6 +275,37 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
                   <span>{link.title || "Untitled Link"}</span>
                 </button>
               ))}
+            </div>
+          )}
+
+          {/* Payment Checkout Links */}
+          {profile.paymentLinks && profile.paymentLinks.filter(link => link.active).length > 0 && (
+            <div className="w-full space-y-2 pt-4">
+              <div className="flex items-center gap-2 text-white text-sm font-medium">
+                <CreditCard className="w-4 h-4" />
+                <span>Payment Links ({profile.paymentLinks.filter(link => link.active).length})</span>
+              </div>
+              {profile.paymentLinks.filter(link => link.active).slice(0, 3).map((link) => (
+                <button
+                  key={link.id}
+                  {...getButtonStyles()}
+                  className={`${getButtonStyles().className} flex items-center justify-between gap-2 group hover:scale-[1.02] transition-transform`}
+                >
+                  <div className="flex items-center gap-2">
+                    {getPaymentIcon(link.type)}
+                    <span className="truncate">{link.description}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs font-bold">{formatPiAmount(link.amount)}</span>
+                    <Pi className="w-3 h-3" />
+                  </div>
+                </button>
+              ))}
+              {profile.paymentLinks.filter(link => link.active).length > 3 && (
+                <p className="text-[10px] text-white/60 text-center">
+                  +{profile.paymentLinks.filter(link => link.active).length - 3} more payment options
+                </p>
+              )}
             </div>
           )}
 

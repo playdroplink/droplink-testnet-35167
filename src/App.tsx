@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Dashboard from "./pages/Dashboard";
 import PublicBio from "./pages/PublicBio";
+import PaymentPage from "./pages/PaymentPage";
 import NotFound from "./pages/NotFound";
 import Subscription from "./pages/Subscription";
 import Followers from "./pages/Followers";
@@ -66,6 +67,7 @@ const App = () => {
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/domain" element={<CustomDomain />} />
             <Route path="/debug" element={<ProfileDebug />} />
+            <Route path="/pay/:linkId" element={<PaymentPage />} />
             <Route path="/u/:username" element={<PublicBio />} />
             <Route path="/profile/:username" element={<PublicBio />} />
             <Route path="/:username" element={<PublicBio />} />

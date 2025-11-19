@@ -517,6 +517,19 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       setAccessToken(authResult.accessToken);
       setPiUser(authResult.user);
       
+      // Try to get wallet address if not provided
+      if (!authResult.user.wallet_address && window.Pi) {
+        try {
+          const walletInfo = await window.Pi.getCurrentWalletAddress?.();
+          if (walletInfo) {
+            authResult.user.wallet_address = walletInfo;
+            setPiUser({ ...authResult.user, wallet_address: walletInfo });
+          }
+        } catch (walletError) {
+          console.warn('Could not get wallet address:', walletError);
+        }
+      }
+      
       // Save to Supabase
       await saveUserToSupabase(authResult.user, authResult.accessToken);
       

@@ -81,6 +81,18 @@ import { QRCodeDialog } from "@/components/QRCodeDialog";
 import PiDataManager from "@/components/PiDataManager";
 import { useState as useQRState } from "react";
 
+interface PaymentLink {
+  id: string;
+  amount: number;
+  description: string;
+  type: 'product' | 'donation' | 'tip' | 'subscription' | 'group';
+  url: string;
+  created: Date;
+  active: boolean;
+  totalReceived: number;
+  transactionCount: number;
+}
+
 interface ProfileData {
   logo: string;
   businessName: string;
@@ -120,6 +132,7 @@ interface ProfileData {
     description: string;
     fileUrl: string;
   }>;
+  paymentLinks?: PaymentLink[];
   hasPremium?: boolean;
   showShareButton?: boolean;
   piDonationMessage?: string;
@@ -196,43 +209,145 @@ const Dashboard = () => {
       buttonStyle: "filled",
     },
     products: [],
+    paymentLinks: [],
     hasPremium: false,
     showShareButton: true,
     piWalletAddress: "",
     piDonationMessage: "Send me a coffee ☕",
   });
 
-  // Auto-save functionality
+  // Auto-save functionality with enhanced database sync
   const autoSave = useAutoSave<ProfileData>({
     tableName: 'profiles',
     recordId: profileId || '',
     delay: 3000, // 3 second delay
     onSave: async (data: ProfileData) => {
-      // Custom save logic for profile
+      // Enhanced save logic for all profile features
       if (!profileId) return;
       
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          business_name: data.businessName,
-          store_url: data.storeUrl,
-          description: data.description,
-          email: data.email,
-          youtube_video_url: data.youtubeVideoUrl,
-          social_links: data.socialLinks,
-          custom_links: data.customLinks,
-          theme: data.theme,
-          logo_url: data.logo,
-          show_share_button: data.showShareButton,
-          pi_wallet_address: data.piWalletAddress,
-          pi_donation_message: data.piDonationMessage,
-        })
-        .eq('id', profileId);
-      
-      if (error) throw error;
+      try {
+        // 1. Update main profile data with all features
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            business_name: data.businessName,
+            store_url: data.storeUrl,
+            description: data.description,
+            email: data.email,
+            youtube_video_url: data.youtubeVideoUrl,
+            social_links: data.socialLinks,
+            // Store custom links and payment links in theme_settings for now
+            theme_settings: {
+              ...data.theme,
+              customLinks: data.customLinks || [],
+              paymentLinks: (data.paymentLinks || []).map(link => ({
+                id: link.id,
+                amount: link.amount,
+                description: link.description,
+                type: link.type,
+                url: link.url,
+                created: link.created.toISOString(),
+                active: link.active,
+                totalReceived: link.totalReceived,
+                transactionCount: link.transactionCount
+              }))
+            },
+            logo_url: data.logo,
+            show_share_button: data.showShareButton,
+            pi_wallet_address: data.piWalletAddress,
+            pi_donation_message: data.piDonationMessage,
+            has_premium: data.hasPremium || false,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', profileId);
+        
+        if (profileError) throw profileError;
+        
+        // 2. Sync products to database
+        if (data.products && data.products.length > 0) {
+          // Delete existing products for clean sync
+          await supabase
+            .from('products')
+            .delete()
+            .eq('profile_id', profileId);
+          
+          // Insert updated products
+          const productsToInsert = data.products.map(product => ({
+            profile_id: profileId,
+            title: product.title,
+            description: product.description,
+            price: product.price,
+            file_url: product.fileUrl
+          }));
+          
+          if (productsToInsert.length > 0) {
+            const { error: productsError } = await supabase
+              .from('products')
+              .insert(productsToInsert);
+            
+            if (productsError) {
+              console.error('Products sync error:', productsError);
+            }
+          }
+        }
+        
+        // 3. Enhanced localStorage backup with all features
+        const profileToStore = {
+          ...data,
+          lastSynced: new Date().toISOString(),
+          profileId: profileId,
+          // Store payment links separately for quick access
+          paymentLinksBackup: data.paymentLinks || [],
+          customLinksBackup: data.customLinks || [],
+          featuresEnabled: {
+            paymentLinks: (data.paymentLinks?.length || 0) > 0,
+            customLinks: (data.customLinks?.length || 0) > 0,
+            products: (data.products?.length || 0) > 0,
+            piIntegration: !!data.piWalletAddress,
+            premiumFeatures: data.hasPremium || false
+          }
+        };
+        
+        const storageKey = piUser ? `profile_${piUser.username}` : `profile_email_${profileId}`;
+        localStorage.setItem(storageKey, JSON.stringify(profileToStore));
+        
+        // 4. Store payment links separately for PiPayments component access
+        if (piUser?.uid && data.paymentLinks) {
+          localStorage.setItem(`paymentLinks_${piUser.uid}`, JSON.stringify(data.paymentLinks));
+        }
+        
+        // 5. Track usage analytics to existing analytics table
+        if (profileId) {
+          try {
+            await supabase.from('analytics').insert({
+              profile_id: profileId,
+              event_type: 'profile_update',
+              event_data: {
+                auto_save: true,
+                fields_updated: Object.keys(data),
+                has_payment_links: (data.paymentLinks?.length || 0) > 0,
+                has_custom_links: (data.customLinks?.length || 0) > 0,
+                has_products: (data.products?.length || 0) > 0,
+                timestamp: new Date().toISOString()
+              },
+              user_agent: navigator.userAgent,
+              session_id: sessionStorage.getItem('session_id') || `session_${Date.now()}`
+            });
+          } catch (analyticsError) {
+            console.warn('Analytics tracking failed:', analyticsError);
+          }
+        }
+        
+        console.log('✅ All user data synced to Supabase successfully');
+        
+      } catch (error) {
+        console.error('❌ Database sync error:', error);
+        throw error; // Re-throw to trigger error handling
+      }
     },
     onError: (error: Error) => {
       console.error('Auto-save failed:', error);
+      toast.error('Failed to save changes to database. Please check your connection.');
     }
   });
 
@@ -243,12 +358,43 @@ const Dashboard = () => {
     }
   }, [profile, profileId, loading]);
 
+  // Load payment links for the current user
+  const loadPaymentLinks = (): PaymentLink[] => {
+    if (!piUser?.uid) return [];
+    
+    try {
+      const stored = localStorage.getItem(`paymentLinks_${piUser.uid}`);
+      if (stored) {
+        const links = JSON.parse(stored);
+        // Convert date strings back to Date objects
+        return links.map((link: any) => ({
+          ...link,
+          created: new Date(link.created)
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading payment links:', error);
+    }
+    return [];
+  };
+
   // Initialize auto-save with profile data
   useEffect(() => {
     if (profileId && profile && !loading) {
       autoSave.initialize(profile);
     }
   }, [profileId, loading]);
+
+  // Refresh payment links when piUser changes or when coming back to dashboard
+  useEffect(() => {
+    if (piUser?.uid && profileId) {
+      const paymentLinks = loadPaymentLinks();
+      setProfile(prev => ({
+        ...prev,
+        paymentLinks
+      }));
+    }
+  }, [piUser?.uid, profileId]);
 
   useEffect(() => {
     // Wait for Pi context to be ready
@@ -419,13 +565,23 @@ const Dashboard = () => {
               ? { Authorization: `Bearer ${session.access_token}` }
               : { "X-Pi-Access-Token": piAccessToken as string };
 
-            const { data: finData, error: finError } = await supabase.functions.invoke("financial-data", {
-              method: "GET",
-              headers
-            });
-            
-            if (!finError && finData?.data) {
-              financialData = finData.data;
+            try {
+              const { data: finData, error: finError } = await supabase.functions.invoke("financial-data", {
+                method: "GET",
+                headers
+              });
+              
+              if (!finError && finData?.data) {
+                financialData = finData.data;
+              }
+            } catch (error) {
+              console.warn('Financial data function not available, using profile data fallback');
+              financialData = {
+                pi_wallet_address: profileData.pi_wallet_address || '',
+                pi_donation_message: profileData.pi_donation_message || 'Send me a coffee ☕',
+                crypto_wallets: {},
+                bank_details: {}
+              };
             }
           } else {
             // No session or Pi token - load from profiles table directly
@@ -487,6 +643,23 @@ const Dashboard = () => {
           showShareButton: (profileData as any).show_share_button !== false,
           piWalletAddress: financialData.pi_wallet_address || "",
           piDonationMessage: financialData.pi_donation_message || "Send me a coffee ☕",
+          // Enhanced payment links loading: try database first, then localStorage
+          paymentLinks: (() => {
+            // Try to restore from theme_settings first (database)
+            const dbPaymentLinks = (themeSettings as any)?.paymentLinks;
+            if (dbPaymentLinks && Array.isArray(dbPaymentLinks)) {
+              try {
+                return dbPaymentLinks.map((link: any) => ({
+                  ...link,
+                  created: new Date(link.created)
+                }));
+              } catch (error) {
+                console.warn('Error restoring payment links from database:', error);
+              }
+            }
+            // Fallback to localStorage
+            return loadPaymentLinks();
+          })()
         };
         
         setProfile(loadedProfile);
@@ -1040,20 +1213,32 @@ const Dashboard = () => {
             ? { Authorization: `Bearer ${session.access_token}` }
             : { "X-Pi-Access-Token": piAccessToken as string };
 
-          const { data: finData, error: finError } = await supabase.functions.invoke("financial-data", {
-            method: "PUT",
-            body: {
-              pi_wallet_address: profile.piWalletAddress || null,
-              pi_donation_message: profile.piDonationMessage || "Send me a coffee ☕",
-            },
-            headers
-          });
-          
-          if (finError) {
-            console.warn("Financial data save error (non-critical):", finError);
-            // Financial data is now stored directly in profiles table
-          } else {
-            console.log("Financial data saved successfully");
+          try {
+            const { data: finData, error: finError } = await supabase.functions.invoke("financial-data", {
+              method: "PUT",
+              body: {
+                pi_wallet_address: profile.piWalletAddress || null,
+                pi_donation_message: profile.piDonationMessage || "Send me a coffee ☕",
+              },
+              headers
+            });
+            
+            if (finError) {
+              console.warn("Financial data save error (non-critical):", finError);
+              // Financial data is now stored directly in profiles table
+            } else {
+              console.log("Financial data saved successfully");
+            }
+          } catch (error) {
+            console.warn("Financial data function not available, using profiles table fallback");
+            // Save to profiles table directly as fallback
+            await supabase
+              .from("profiles")
+              .update({
+                pi_wallet_address: profile.piWalletAddress || null,
+                pi_donation_message: profile.piDonationMessage || "Send me a coffee ☕",
+              })
+              .eq("id", currentProfileId);
           }
         } else if (currentProfileId) {
           // No session but we have profile ID - save to profiles table directly
@@ -1422,7 +1607,20 @@ const Dashboard = () => {
         {/* Editor Panel */}
         <div className={`flex-1 overflow-y-auto p-4 lg:p-8 ${isMobile ? 'bg-background' : 'glass-card'} m-2 rounded-xl ${showPreview ? 'hidden lg:block' : 'block'}`}>
           <div className="max-w-2xl mx-auto">
-            <Tabs defaultValue="profile" className="w-full">
+            <Tabs 
+              defaultValue="profile" 
+              className="w-full"
+              onValueChange={(value) => {
+                // Refresh payment links when payments tab is accessed
+                if (value === 'payments' && piUser?.uid) {
+                  const paymentLinks = loadPaymentLinks();
+                  setProfile(prev => ({
+                    ...prev,
+                    paymentLinks
+                  }));
+                }
+              }}
+            >
               <TabsList className="flex flex-wrap gap-1 sm:gap-2 w-full bg-muted p-2 rounded-lg mb-6 min-h-fit">
                 <TabsTrigger value="profile" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
                   <Settings className="w-4 h-4 mr-1 sm:mr-2" />

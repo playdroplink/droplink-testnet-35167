@@ -6,6 +6,7 @@ import { usePi } from "@/contexts/PiContext";
 import { Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { AboutModal } from "@/components/AboutModal";
 import droplinkLogo from "@/assets/droplink-logo.png";
 
 const PiAuth = () => {
@@ -155,6 +156,12 @@ const PiAuth = () => {
               Your Pi username will be used as your unique identifier.
             </p>
             <div className="flex justify-center gap-4 text-xs">
+              <AboutModal>
+                <button className="text-primary hover:underline cursor-pointer">
+                  About
+                </button>
+              </AboutModal>
+              <span className="text-muted-foreground">•</span>
               <a href="/terms" className="text-primary hover:underline">Terms</a>
               <span className="text-muted-foreground">•</span>
               <a href="/privacy" className="text-primary hover:underline">Privacy</a>
