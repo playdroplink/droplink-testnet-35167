@@ -126,7 +126,7 @@ export const MultipleAccountManager: React.FC<MultipleAccountManagerProps> = ({
 
         const payment = await createPayment(ACCOUNT_CREATION_FEE, `Additional DropLink account: ${newUsername}`, paymentData.metadata);
         
-        if (!payment || payment.status !== 'completed') {
+        if (!payment) {
           throw new Error('Payment failed or was not completed');
         }
         
@@ -137,7 +137,7 @@ export const MultipleAccountManager: React.FC<MultipleAccountManagerProps> = ({
       const newAccount = await createAccount(newUsername.trim(), displayName.trim() || newUsername.trim());
       
       if (!newAccount) {
-        throw new Error('Failed to create account');
+        throw new Error('Failed to create account - no account data returned');
       }
 
       toast({

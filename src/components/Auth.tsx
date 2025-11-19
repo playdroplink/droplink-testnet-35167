@@ -24,8 +24,14 @@ export const Auth = () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          console.log("User already authenticated, redirecting to dashboard");
-          navigate("/dashboard", { replace: true });
+          console.log("User already authenticated, checking for post-auth actions");
+          
+          // Check for post-auth actions first
+          const handledSpecialAction = await handlePostAuthAction();
+          if (!handledSpecialAction) {
+            console.log("Redirecting to dashboard");
+            navigate("/dashboard", { replace: true });
+          }
         }
       } catch (error) {
         console.error("Auth check error:", error);
@@ -35,12 +41,17 @@ export const Auth = () => {
     checkAuthStatus();
 
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session?.user?.email);
       
       if (event === 'SIGNED_IN' && session?.user) {
         toast.success("Successfully signed in!");
-        navigate("/dashboard", { replace: true });
+        
+        // Check for post-auth actions first
+        const handledSpecialAction = await handlePostAuthAction();
+        if (!handledSpecialAction) {
+          navigate("/dashboard", { replace: true });
+        }
       } else if (event === 'SIGNED_OUT') {
         console.log("User signed out, staying on auth page");
         // Clear any remaining state
@@ -51,11 +62,35 @@ export const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  // Handle post-authentication actions (like following a user)
+  const handlePostAuthAction = async () => {
+    const authAction = sessionStorage.getItem('authAction');
+    const profileToFollow = sessionStorage.getItem('profileToFollow');
+    
+    if (authAction === 'follow' && profileToFollow) {
+      // Clear the session storage
+      sessionStorage.removeItem('authAction');
+      sessionStorage.removeItem('profileToFollow');
+      
+      // Navigate to the profile to follow
+      toast.success("Successfully signed in! You can now follow this user.");
+      navigate(`/${profileToFollow}`, { replace: true });
+      return true; // Indicate we handled a special action
+    }
+    
+    return false; // No special action needed
+  };
+
   const handlePiAuth = async () => {
     try {
       await piAuthenticate();
       toast.success("Successfully authenticated with Pi Network!");
-      navigate("/dashboard", { replace: true });
+      
+      // Check for post-auth actions first
+      const handledSpecialAction = await handlePostAuthAction();
+      if (!handledSpecialAction) {
+        navigate("/dashboard", { replace: true });
+      }
     } catch (error: any) {
       toast.error(error.message || "Pi Network authentication failed");
     }

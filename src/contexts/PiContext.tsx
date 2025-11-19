@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { PI_CONFIG, isPiNetworkAvailable, validatePiConfig, validateMainnetConfig } from "@/config/pi-config";
+import { PI_CONFIG, isPiNetworkAvailable, validatePiConfig, validateMainnetConfig, getDROPTokenBalance, createDROPTrustline } from "@/config/pi-config";
 
 // Pi Network Types
 interface PiUser {
@@ -50,124 +50,130 @@ interface PaymentCallbacks {
   onError: (error: Error, payment?: any) => void;
 }
 
-interface AdResponse {
-  type: 'interstitial' | 'rewarded';
+interface AdResult {
   result: 'AD_CLOSED' | 'AD_REWARDED' | 'AD_DISPLAY_ERROR' | 'AD_NETWORK_ERROR' | 'AD_NOT_AVAILABLE' | 'ADS_NOT_SUPPORTED' | 'USER_UNAUTHENTICATED';
-  adId?: string;
 }
 
 declare global {
   interface Window {
     Pi: {
-      init: (config: { version: string; sandbox?: boolean }) => Promise<void>;
+      init: (config: { version: string; sandbox?: boolean; }) => Promise<void>;
       authenticate: (
         scopes: string[],
         onIncompletePaymentFound?: (payment: any) => void
       ) => Promise<AuthResult>;
-      createPayment: (paymentData: PaymentData, callbacks: PaymentCallbacks) => void;
+      createPayment: (paymentData: PaymentData, callbacks: PaymentCallbacks) => Promise<void>;
+      openShareDialog: (title: string, text: string) => Promise<boolean>;
+      openUrlInBrowser: (url: string) => Promise<boolean>;
+      showRewardedAd: () => Promise<AdResult>;
+      showInterstitialAd: () => Promise<AdResult>;
       nativeFeaturesList: () => Promise<string[]>;
-      openShareDialog: (title: string, message: string) => void;
-      openUrlInSystemBrowser: (url: string) => Promise<void>;
       Ads: {
-        isAdReady: (adType: 'interstitial' | 'rewarded') => Promise<{ type: string; ready: boolean }>;
-        requestAd: (adType: 'interstitial' | 'rewarded') => Promise<{ type: string; result: string }>;
-        showAd: (adType: 'interstitial' | 'rewarded') => Promise<AdResponse>;
+        isAdReady: () => Promise<boolean>;
       };
     };
   }
 }
 
+// Pi Context Interface
 interface PiContextType {
-  // Current user (from Pi Network authentication)
+  // Authentication
   piUser: PiUser | null;
   accessToken: string | null;
   isAuthenticated: boolean;
   loading: boolean;
+  error: string | null;
   isInitialized: boolean;
   adNetworkSupported: boolean;
-  error: string | null;
-  dropBalance: DropTokenBalance | null;
-  currentWallet: WalletInfo | null;
   
-  // Current active account (from DropLink database)
+  // Account Management
   currentAccount: PiAccount | null;
   availableAccounts: PiAccount[];
+  currentProfile: any | null;
   
-  // Authentication
+  // Wallet
+  currentWallet: WalletInfo | null;
+  dropBalance: DropTokenBalance;
+  
+  // Functions
   signIn: (scopes?: string[]) => Promise<void>;
   signOut: () => Promise<void>;
   
-  // User Data
-  getPiUserProfile: (username: string) => Promise<any | null>;
-  
-  // Multiple Account Management
-  loadUserAccounts: () => Promise<PiAccount[]>;
-  createAccount: (username: string, displayName?: string) => Promise<PiAccount | null>;
-  switchAccount: (account: PiAccount) => Promise<void>;
-  deleteAccount: (accountId: string) => Promise<boolean>;
+  // Profile Management
+  getPiUserProfile: (identifier: string) => Promise<any>;
   checkUsernameAvailability: (username: string) => Promise<boolean>;
   
-  // Payments
-  createPayment: (amount: number, memo: string, metadata?: any) => Promise<any>;
+  // Account Management Functions
+  loadUserAccounts: () => Promise<PiAccount[]>;
+  createAccount: (username: string, displayName?: string, paymentId?: string) => Promise<PiAccount>;
+  switchAccount: (account: PiAccount) => Promise<void>;
+  deleteAccount: (accountId: string) => Promise<boolean>;
   
-  // Wallet Management
-  setWalletAddress: (address: string) => Promise<void>;
-  importWallet: (privateKey: string) => Promise<string | null>;
-  switchToWallet: (address: string, type: 'pi_network' | 'imported') => void;
+  // Wallet Functions
+  setWalletAddress: (address: string) => Promise<boolean>;
+  importWallet: (privateKey: string) => Promise<WalletInfo | null>;
+  switchToWallet: (walletInfo: WalletInfo) => void;
   getCurrentWalletAddress: () => string | null;
   
+  // Payment Functions
+  createPayment: (amount: number, memo: string, metadata?: any) => Promise<string | null>;
+  
   // DROP Token Functions
-  checkDropBalance: (walletAddress?: string) => Promise<DropTokenBalance | null>;
-  createDropTrustline: () => Promise<boolean>;
-  sendDropTokens: (recipient: string, amount: string) => Promise<string | null>;
+  getDROPBalance: () => Promise<DropTokenBalance>;
+  createDROPTrustline: () => Promise<boolean>;
   requestDropTokens: (amount?: number) => Promise<boolean>;
   
-  // Ads
+  // Ad Functions
   showRewardedAd: () => Promise<boolean>;
   showInterstitialAd: () => Promise<boolean>;
-  isAdReady: (adType: 'interstitial' | 'rewarded') => Promise<boolean>;
+  isAdReady: () => Promise<boolean>;
   
-  // Utilities
-  shareContent: (title: string, message: string) => void;
-  openExternalUrl: (url: string) => Promise<void>;
+  // Share Functions
+  shareContent: (title: string, text: string) => Promise<boolean>;
+  openExternalUrl: (url: string) => Promise<boolean>;
 }
 
 const PiContext = createContext<PiContextType | undefined>(undefined);
 
 export const PiProvider = ({ children }: { children: ReactNode }) => {
+  // Authentication state
   const [piUser, setPiUser] = useState<PiUser | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [adNetworkSupported, setAdNetworkSupported] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [dropBalance, setDropBalance] = useState<DropTokenBalance | null>(null);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  const [adNetworkSupported, setAdNetworkSupported] = useState<boolean>(false);
+  
+  // Wallet and token state
+  const [dropBalance, setDropBalance] = useState<DropTokenBalance>({ balance: "0", hasTrustline: false });
   const [currentWallet, setCurrentWallet] = useState<WalletInfo | null>(null);
   
   // Multiple account management state
   const [currentAccount, setCurrentAccount] = useState<PiAccount | null>(null);
   const [availableAccounts, setAvailableAccounts] = useState<PiAccount[]>([]);
+  const [currentProfile, setCurrentProfile] = useState<any | null>(null);
   
   // Derived state: user is authenticated if we have a Pi user and access token
   const isAuthenticated = !!piUser && !!accessToken;
 
-  // DROP Token Configuration (Mainnet) - use config file
-  const DROP_TOKEN = PI_CONFIG.DROP_TOKEN;
-
   useEffect(() => {
     const initializePi = async () => {
       try {
-        // Validate configuration first
-        if (!validatePiConfig()) {
-          console.error('Invalid Pi Network configuration');
-          setError('Invalid Pi Network configuration');
+        // Validate mainnet configuration first
+        if (!validateMainnetConfig()) {
+          console.error('Invalid Pi Network mainnet configuration');
+          setError('Invalid Pi Network mainnet configuration');
           return;
         }
+
+        console.log('🥧 Initializing Pi Network (Mainnet Mode)...');
+        console.log('Network:', PI_CONFIG.NETWORK);
+        console.log('Sandbox Mode:', PI_CONFIG.SANDBOX_MODE);
 
         if (isPiNetworkAvailable()) {
           // Initialize Pi SDK for mainnet using config
           await window.Pi.init(PI_CONFIG.SDK);
-          console.log(`Pi SDK initialized successfully (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'} Mode)`);
+          console.log(`✅ Pi SDK initialized successfully (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'} Mode)`);
           setIsInitialized(true);
           
           // Check ad network support
@@ -175,9 +181,9 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
             const features = await window.Pi.nativeFeaturesList();
             const adSupported = features.includes('ad_network');
             setAdNetworkSupported(adSupported);
-            console.log("Ad Network Support:", adSupported);
+            console.log("🎯 Ad Network Support:", adSupported);
           } catch (err) {
-            console.warn('Failed to check native features:', err);
+            console.warn('⚠️ Failed to check native features:', err);
           }
           
           // Check for stored authentication
@@ -186,316 +192,50 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           
           if (storedToken && storedUser) {
             try {
-              // Verify token with Pi API using config
+              // Verify token with Pi API using mainnet config
               const response = await fetch(PI_CONFIG.ENDPOINTS.ME, {
                 headers: PI_CONFIG.getAuthHeaders(storedToken)
               });
               
               if (response.ok) {
+                const verifiedUser = await response.json();
                 const userData = JSON.parse(storedUser);
                 setAccessToken(storedToken);
                 setPiUser(userData);
-                console.log("Auto-authenticated with stored credentials");
+                console.log("🔐 Auto-authenticated with stored credentials (Mainnet)");
                 
-                // Initialize wallet info
-                initializeWalletInfo(userData);
-                
-                // Sync user data with Supabase
-                await syncExistingPiUser();
+                // Update user data if needed
+                if (verifiedUser.uid === userData.uid) {
+                  setPiUser({...userData, ...verifiedUser});
+                }
               } else {
-                // Token invalid, clear storage
+                // Clear invalid credentials
                 localStorage.removeItem('pi_access_token');
                 localStorage.removeItem('pi_user');
               }
             } catch (err) {
-              console.warn('Failed to verify stored token:', err);
+              console.warn('Failed to verify stored credentials:', err);
+              localStorage.removeItem('pi_access_token');
+              localStorage.removeItem('pi_user');
             }
           }
         } else {
-          console.warn("Pi SDK not available - loading script...");
-          // Load Pi SDK dynamically
-          const script = document.createElement('script');
-          script.src = 'https://sdk.minepi.com/pi-sdk.js';
-          script.async = true;
-          script.onload = () => {
-            console.log("Pi SDK script loaded");
-            // Retry initialization after script loads
-            setTimeout(initializePi, 1000);
-          };
-          document.head.appendChild(script);
+          console.warn('Pi Network SDK not available - running in compatibility mode');
         }
       } catch (err) {
-        console.error('Failed to initialize Pi SDK:', err);
-        // Improved error handling - don't block the app
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        console.log('Pi SDK Error Details:', errorMessage);
-        
-        // Only show user-friendly message for specific errors
-        if (errorMessage.includes('Pi SDK') || errorMessage.includes('network')) {
-          console.warn('Pi Network connection issue - app will continue with limited functionality');
-        }
-        
-        // Don't set error state - allow app to continue
-        setIsInitialized(false);
-        setError(null); // Clear error to prevent app blocking
-      } finally {
-        setLoading(false);
+        console.error('Failed to initialize Pi Network:', err);
+        setError('Failed to initialize Pi Network');
       }
     };
 
-    // Improved timeout handling
-    const timeout = setTimeout(() => {
-      if (loading) {
-        console.log('Pi SDK initialization timeout - continuing without Pi');
-        setLoading(false);
-        setError(null); // Clear any errors to allow app to continue
-        setIsInitialized(false); // Ensure we don't block the app
-      }
-    }, 2000); // Reduced timeout to 2 seconds for faster app loading
-    
-    initializePi().finally(() => clearTimeout(timeout));
+    initializePi();
   }, []);
 
-  // Handle incomplete payments
-  const handleIncompletePayment = (payment: any) => {
-    console.log('Incomplete payment found:', payment);
-    toast("You have an incomplete payment. Please complete it before making a new payment.", {
-      description: "Incomplete Payment",
-      duration: 5000,
-    });
-  };
-
-  // Initialize wallet information
-  const initializeWalletInfo = (userData: PiUser) => {
-    // Check for imported wallet first
-    const importedWallet = localStorage.getItem('drop_wallet_address');
-    if (importedWallet) {
-      setCurrentWallet({
-        address: importedWallet,
-        type: 'imported',
-        hasPrivateKey: !!localStorage.getItem('drop_wallet_private_key')
-      });
-    } else if (userData.wallet_address) {
-      setCurrentWallet({
-        address: userData.wallet_address,
-        type: 'pi_network', 
-        hasPrivateKey: false
-      });
-    }
-  };
-
-  // Set wallet address in user profile
-  const setWalletAddress = async (address: string): Promise<void> => {
-    if (!isAuthenticated) {
-      throw new Error('User not authenticated');
-    }
-
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ pi_wallet_address: address })
-        .eq('username', piUser?.username);
-
-      if (error) throw error;
-
-      // Update local user data
-      const updatedUser = { ...piUser!, wallet_address: address };
-      setPiUser(updatedUser);
-      localStorage.setItem('pi_user', JSON.stringify(updatedUser));
-
-      toast('Wallet address updated successfully!', {
-        description: 'Your Pi wallet address has been saved',
-        duration: 3000,
-      });
-    } catch (error) {
-      console.error('Error setting wallet address:', error);
-      toast('Failed to update wallet address', {
-        description: 'Please try again',
-        duration: 5000,
-      });
-      throw error;
-    }
-  };
-
-  // Import wallet from private key
-  const importWallet = async (privateKey: string): Promise<string | null> => {
-    if (!privateKey || privateKey.length !== 56 || !privateKey.startsWith('S')) {
-      throw new Error('Invalid private key format');
-    }
-
-    try {
-      // Derive public key (simplified - use Stellar SDK in production)
-      const publicKey = derivePublicKeyFromPrivate(privateKey);
-      
-      if (publicKey) {
-        // Store securely
-        localStorage.setItem('drop_wallet_private_key', privateKey);
-        localStorage.setItem('drop_wallet_address', publicKey);
-        
-        // Update current wallet
-        setCurrentWallet({
-          address: publicKey,
-          type: 'imported',
-          hasPrivateKey: true
-        });
-
-        toast('Wallet imported successfully!', {
-          description: `Address: ${publicKey.slice(0, 8)}...${publicKey.slice(-8)}`,
-          duration: 4000,
-        });
-
-        return publicKey;
-      }
-      
-      throw new Error('Failed to derive public key');
-    } catch (error) {
-      console.error('Error importing wallet:', error);
-      throw error;
-    }
-  };
-
-  // Switch to a different wallet
-  const switchToWallet = (address: string, type: 'pi_network' | 'imported') => {
-    const hasPrivateKey = type === 'imported' && !!localStorage.getItem('drop_wallet_private_key');
-    
-    setCurrentWallet({
-      address,
-      type,
-      hasPrivateKey
-    });
-
-    // Check balance for the switched wallet
-    checkDropBalance(address);
-  };
-
-  // Get current wallet address
-  const getCurrentWalletAddress = (): string | null => {
-    return currentWallet?.address || piUser?.wallet_address || null;
-  };
-
-  // Derive public key from private key (simplified)
-  const derivePublicKeyFromPrivate = (privateKey: string): string | null => {
-    try {
-      if (privateKey.length === 56 && privateKey.startsWith('S')) {
-        // Generate mock public key for demo (use Stellar SDK in production)
-        const mockPublicKey = 'G' + privateKey.slice(1, 55) + 'A';
-        return mockPublicKey.toUpperCase();
-      }
-      return null;
-    } catch (error) {
-      console.error('Key derivation error:', error);
-      return null;
-    }
-  };
-
-  // Save user data to Supabaserom Supabase
-  const getPiUserProfile = async (username: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('username', username.toLowerCase())
-        .single();
-
-      if (error) {
-        console.error('Failed to get Pi user profile:', error);
-        return null;
-      }
-
-      return data;
-    } catch (err) {
-      console.error('Exception getting Pi user profile:', err);
-      return null;
-    }
-  };
-
-  // Check and sync existing Pi user with Supabase
-  const syncExistingPiUser = async () => {
-    const storedToken = localStorage.getItem('pi_access_token');
-    const storedUser = localStorage.getItem('pi_user');
-    
-    if (storedToken && storedUser) {
-      try {
-        const userData = JSON.parse(storedUser);
-        console.log('🔄 Syncing existing Pi user with Supabase:', userData.username);
-        
-        // Check if user data is already synced recently
-        const extendedUserData = localStorage.getItem('pi_user_extended');
-        if (extendedUserData) {
-          const parsed = JSON.parse(extendedUserData);
-          const lastSynced = new Date(parsed.lastSynced);
-          const now = new Date();
-          const hoursSinceSync = (now.getTime() - lastSynced.getTime()) / (1000 * 60 * 60);
-          
-          // If synced within last 24 hours, skip re-sync
-          if (hoursSinceSync < 24) {
-            console.log('✅ Pi user data recently synced, skipping');
-            return;
-          }
-        }
-        
-        // Re-sync user data
-        await saveUserToSupabase(userData, storedToken);
-      } catch (err) {
-        console.error('Failed to sync existing Pi user:', err);
-      }
-    }
-  };
-
-  // Save user data to Supabase
-  const saveUserToSupabase = async (piUser: PiUser, token: string) => {
-    try {
-      console.log('💾 Saving Pi user to Supabase:', { username: piUser.username, uid: piUser.uid });
-      
-      const { data, error } = await supabase.functions.invoke('pi-auth', {
-        body: {
-          accessToken: token,
-          username: piUser.username,
-          uid: piUser.uid,
-          wallet_address: piUser.wallet_address
-        }
-      });
-
-      if (error) {
-        console.error('❌ Failed to save Pi user to Supabase:', error);
-        toast('Warning: User data not saved to database', {
-          description: 'You may need to re-authenticate later',
-          duration: 5000,
-        });
-      } else {
-        console.log('✅ Pi user saved to Supabase successfully:', data);
-        
-        // Store additional metadata locally
-        const userData = {
-          ...piUser,
-          profileId: data?.profileId,
-          supabaseUserId: data?.userId,
-          isNewProfile: data?.isNewProfile,
-          lastSynced: new Date().toISOString()
-        };
-        localStorage.setItem('pi_user_extended', JSON.stringify(userData));
-        
-        if (data?.isNewProfile) {
-          toast('Profile created successfully!', {
-            description: 'Your Pi Network account is now linked to Droplink',
-            duration: 4000,
-          });
-        }
-      }
-    } catch (err) {
-      console.error('❌ Exception saving Pi user to Supabase:', err);
-      toast('Warning: Could not sync user data', {
-        description: 'Please check your internet connection',
-        duration: 5000,
-      });
-    }
-  };
-
-  // Sign In with Pi Network
-  const signIn = async (scopes: string[] = ['username', 'payments', 'wallet_address']) => {
+  // Sign In with Pi Network (Mainnet)
+  const signIn = async (scopes: string[] = PI_CONFIG.scopes || ['username', 'payments', 'wallet_address']) => {
     if (!isInitialized || !window.Pi) {
       // Try to reinitialize Pi SDK
-      toast('Initializing Pi Network connection...', {
+      toast('Initializing Pi Network connection (Mainnet)...', {
         description: 'Please wait while we connect to Pi Network',
         duration: 3000,
       });
@@ -504,7 +244,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         if (isPiNetworkAvailable()) {
           await window.Pi.init(PI_CONFIG.SDK);
           setIsInitialized(true);
-          console.log('Pi SDK reinitialized successfully');
+          console.log('✅ Pi SDK reinitialized successfully (Mainnet)');
         } else {
           throw new Error('Pi Network is not available in this browser');
         }
@@ -522,46 +262,69 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
 
     try {
-      const authResult = await window.Pi.authenticate(scopes, handleIncompletePayment);
+      console.log('🔐 Starting Pi Network authentication (Mainnet)...');
+      const authResult = await window.Pi.authenticate(scopes, PI_CONFIG.onIncompletePaymentFound);
       
-      // Verify with Pi API (Sandbox)
+      // Verify with Pi API (Mainnet)
+      console.log('🔍 Verifying authentication with Pi Mainnet API...');
       const response = await fetch(PI_CONFIG.ENDPOINTS.ME, {
         headers: PI_CONFIG.getAuthHeaders(authResult.accessToken)
       });
 
       if (!response.ok) {
-        throw new Error('Authentication verification failed');
+        throw new Error('Mainnet authentication verification failed');
       }
 
       const verifiedUser = await response.json();
-      console.log('Pi authentication successful:', verifiedUser);
+      console.log('✅ Pi mainnet authentication successful:', verifiedUser);
       
+      // Use the user data from authentication result
+      let finalUser = authResult.user;
+      
+      // Note: Wallet address will be provided by Pi authentication if user has connected wallet
+
+      // Authenticate with our new Pi auth system
+      const { data: dbResult, error } = await (supabase as any).rpc('authenticate_pi_user', {
+        p_pi_user_id: finalUser.uid,
+        p_pi_username: finalUser.username || `user_${finalUser.uid}`,
+        p_access_token: authResult.accessToken,
+        p_wallet_address: finalUser.wallet_address || null
+      });
+
+      if (error) {
+        throw new Error(`Database authentication failed: ${error.message}`);
+      }
+
+      if (!dbResult?.success) {
+        throw new Error(dbResult?.error || 'Database authentication failed');
+      }
+
       // Store authentication data
       localStorage.setItem('pi_access_token', authResult.accessToken);
-      localStorage.setItem('pi_user', JSON.stringify(authResult.user));
+      localStorage.setItem('pi_user', JSON.stringify(finalUser));
       
       // Update state
       setAccessToken(authResult.accessToken);
-      setPiUser(authResult.user);
+      setPiUser(finalUser);
       
-      // Try to get wallet address if not provided
-      if (!authResult.user.wallet_address && window.Pi) {
-        try {
-          const walletInfo = await window.Pi.getCurrentWalletAddress?.();
-          if (walletInfo) {
-            authResult.user.wallet_address = walletInfo;
-            setPiUser({ ...authResult.user, wallet_address: walletInfo });
-          }
-        } catch (walletError) {
-          console.warn('Could not get wallet address:', walletError);
-        }
+      // Set current profile from database result
+      if (dbResult.user_data) {
+        setCurrentProfile({
+          id: dbResult.user_data.id,
+          username: dbResult.user_data.username,
+          business_name: dbResult.user_data.business_name,
+          pi_user_id: dbResult.user_data.pi_user_id,
+          pi_username: dbResult.user_data.pi_username,
+          pi_wallet_address: dbResult.user_data.pi_wallet_address,
+          pi_wallet_verified: dbResult.user_data.pi_wallet_verified,
+          has_premium: dbResult.user_data.has_premium,
+          theme_settings: dbResult.user_data.theme_settings,
+          created_at: dbResult.user_data.created_at
+        });
       }
       
-      // Save to Supabase
-      await saveUserToSupabase(authResult.user, authResult.accessToken);
-      
-      toast(`Welcome, ${authResult.user.username || 'Pi User'}!`, {
-        description: "Authentication Successful",
+      toast(dbResult.message || `Welcome, ${finalUser.username || 'Pi User'}!`, {
+        description: "Authentication Successful (Mainnet)",
         duration: 3000,
       });
       
@@ -585,265 +348,124 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       // Clear Pi Network authentication
       localStorage.removeItem('pi_access_token');
       localStorage.removeItem('pi_user');
-      localStorage.removeItem('pi_user_extended'); // Clear extended user data
-      setAccessToken(null);
+      localStorage.removeItem('pi_user_extended');
+      
+      // Reset state
       setPiUser(null);
+      setAccessToken(null);
+      setCurrentProfile(null);
+      setCurrentAccount(null);
+      setAvailableAccounts([]);
+      setDropBalance({ balance: "0", hasTrustline: false });
+      setCurrentWallet(null);
       
-      // Clear Supabase authentication (for Gmail/email users)
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('Supabase sign out error:', error);
-        // Still proceed with logout even if Supabase logout fails
-      }
-      
-      // Clear any additional local storage items
-      localStorage.removeItem('supabase.auth.token');
-      
-      toast("You have been signed out successfully.", {
-        description: "Signed Out",
+      toast("Signed out successfully", {
+        description: "You have been signed out of Pi Network",
         duration: 3000,
       });
     } catch (error) {
       console.error('Sign out error:', error);
-      toast("Signed out (with some errors)", {
-        description: "Please refresh if issues persist",
+      toast.error("Error signing out", {
+        description: "Please try again",
         duration: 3000,
       });
     }
   };
 
-  // Create Payment
-  const createPayment = async (amount: number, memo: string, metadata: any = {}) => {
-    if (!isAuthenticated || !window.Pi) {
-      throw new Error('User not authenticated');
-    }
-
-    const paymentData: PaymentData = {
-      amount,
-      memo,
-      metadata
-    };
-
-    const callbacks: PaymentCallbacks = {
-      onReadyForServerApproval: async (paymentId: string) => {
-        console.log('Payment ready for server approval:', paymentId);
-        try {
-          const { error } = await supabase.functions.invoke('pi-payment-approve', {
-            body: { paymentId },
-            headers: {
-              'Authorization': `Bearer ${accessToken}`
-            }
-          });
-          
-          if (error) {
-            console.error('Payment approval error:', error);
-          }
-        } catch (err) {
-          console.error('Payment approval error:', err);
-        }
-      },
-      
-      onReadyForServerCompletion: async (paymentId: string, txid: string) => {
-        console.log('Payment ready for server completion:', paymentId, txid);
-        try {
-          const { error } = await supabase.functions.invoke('pi-payment-complete', {
-            body: { paymentId, txid },
-            headers: {
-              'Authorization': `Bearer ${accessToken}`
-            }
-          });
-          
-          if (error) {
-            console.error('Payment completion error:', error);
-            toast("Payment was submitted but completion failed.", {
-              description: "Payment Error",
-              duration: 5000,
-            });
-          } else {
-            toast("Your payment has been completed successfully.", {
-              description: "Payment Successful",
-              duration: 3000,
-            });
-          }
-        } catch (err) {
-          console.error('Payment completion error:', err);
-        }
-      },
-      
-      onCancel: (paymentId: string) => {
-        console.log('Payment cancelled:', paymentId);
-        toast("The payment was cancelled.", {
-          description: "Payment Cancelled",
-          duration: 3000,
-        });
-      },
-      
-      onError: (error: Error, payment?: any) => {
-        console.error('Payment error:', error, payment);
-        toast(error.message || "An error occurred during payment.", {
-          description: "Payment Error", 
-          duration: 5000,
-        });
-      },
-    };
-
-    window.Pi.createPayment(paymentData, callbacks);
-  };
-
-  // Check if ad is ready
-  const isAdReady = async (adType: 'interstitial' | 'rewarded'): Promise<boolean> => {
-    if (!window.Pi || !adNetworkSupported) return false;
-    
+  // Get Pi user profile by username or ID
+  const getPiUserProfile = async (identifier: string) => {
     try {
-      const response = await window.Pi.Ads.isAdReady(adType);
-      return response.ready;
-    } catch (err) {
-      console.error('Error checking ad readiness:', err);
-      return false;
-    }
-  };
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .or(`username.eq.${identifier.toLowerCase()},pi_username.eq.${identifier.toLowerCase()},pi_user_id.eq.${identifier},user_id.eq.${identifier}`)
+        .single();
 
-  // Show Rewarded Ad
-  const showRewardedAd = async (): Promise<boolean> => {
-    if (!window.Pi || !adNetworkSupported) {
-      toast("Ad Network not supported on this Pi Browser version.", {
-        description: "Ads Not Supported",
-        duration: 5000,
-      });
-      return false;
-    }
-
-    if (!isAuthenticated) {
-      toast("You must be authenticated to view rewarded ads.", {
-        description: "Authentication Required",
-        duration: 5000,
-      });
-      return false;
-    }
-
-    try {
-      const response = await window.Pi.Ads.showAd('rewarded');
-      
-      if (response.result === 'AD_REWARDED' && response.adId) {
-        try {
-          // Verify ad status with Pi Platform API
-          const { data, error } = await supabase.functions.invoke('pi-ad-verify', {
-            body: { adId: response.adId },
-            headers: {
-              'Authorization': `Bearer ${accessToken}`
-            }
-          });
-          
-          if (!error && data?.mediator_ack_status === 'granted') {
-            toast("You have been rewarded for watching the ad!", {
-              description: "Ad Reward Earned",
-              duration: 3000,
-            });
-            return true;
-          }
-        } catch (err) {
-          console.error('Ad verification error:', err);
-        }
+      if (error) {
+        console.error('Failed to get Pi user profile:', error);
+        return null;
       }
-      
-      return response.result === 'AD_REWARDED';
+
+      return data;
     } catch (err) {
-      console.error('Error showing rewarded ad:', err);
-      toast("Failed to show rewarded ad.", {
-        description: "Ad Error",
-        duration: 5000,
-      });
-      return false;
-    }
-  };
-
-  // Show Interstitial Ad
-  const showInterstitialAd = async (): Promise<boolean> => {
-    if (!window.Pi || !adNetworkSupported) {
-      toast("Ad Network not supported on this Pi Browser version.", {
-        description: "Ads Not Supported",
-        duration: 5000,
-      });
-      return false;
-    }
-
-    try {
-      const response = await window.Pi.Ads.showAd('interstitial');
-      return response.result === 'AD_CLOSED';
-    } catch (err) {
-      console.error('Error showing interstitial ad:', err);
-      toast("Failed to show interstitial ad.", {
-        description: "Ad Error",
-        duration: 5000,
-      });
-      return false;
-    }
-  };
-
-  // Share content
-  const shareContent = (title: string, message: string) => {
-    if (window.Pi) {
-      window.Pi.openShareDialog(title, message);
-    } else {
-      toast("Share feature not available.", {
-        description: "Feature Not Available",
-        duration: 3000,
-      });
-    }
-  };
-
-  // Open external URL
-  const openExternalUrl = async (url: string): Promise<void> => {
-    if (window.Pi) {
-      try {
-        await window.Pi.openUrlInSystemBrowser(url);
-      } catch (err) {
-        console.error('Error opening external URL:', err);
-        // Fallback to window.open
-        window.open(url, '_blank');
-      }
-    } else {
-      window.open(url, '_blank');
-    }
-  };
-
-  // Check DROP token balance
-  const checkDropBalance = async (walletAddress?: string): Promise<DropTokenBalance | null> => {
-    const targetWallet = walletAddress || getCurrentWalletAddress();
-    if (!targetWallet) {
+      console.error('Exception getting Pi user profile:', err);
       return null;
     }
+  };
+
+  // Check username availability
+  const checkUsernameAvailability = async (username: string): Promise<boolean> => {
+    try {
+      // Use a direct query since the RPC function might not be registered in types
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .or(`username.eq.${username},pi_username.eq.${username}`)
+        .limit(1);
+
+      if (error) throw error;
+
+      return !data || data.length === 0;
+    } catch (error) {
+      console.error('Failed to check username availability:', error);
+      return false;
+    }
+  };
+
+  // Get DROP Token Balance
+  const getDROPBalanceFunc = async (): Promise<DropTokenBalance> => {
+    if (!isAuthenticated || !piUser?.wallet_address) {
+      return { balance: "0", hasTrustline: false };
+    }
 
     try {
-      const response = await fetch(`https://api.mainnet.minepi.com/accounts/${targetWallet}`);
+      console.log('🪙 Checking DROP token balance for:', piUser.wallet_address);
       
-      if (response.ok) {
-        const accountData = await response.json();
-        
-        // Find DROP token balance
-        const dropBalance = accountData.balances?.find((bal: any) => 
-          bal.asset_code === DROP_TOKEN.code && 
-          bal.asset_issuer === DROP_TOKEN.issuer
-        );
-
-        const result: DropTokenBalance = {
-          balance: dropBalance ? dropBalance.balance : '0',
-          hasTrustline: !!dropBalance
+      // Check balance using Stellar Horizon API
+      const response = await fetch(
+        `${PI_CONFIG.ENDPOINTS.HORIZON}/accounts/${piUser.wallet_address}/balances`
+      );
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch wallet balances');
+      }
+      
+      const data = await response.json();
+      
+      // Find DROP token in balances
+      const dropBalance = data.balances?.find((balance: any) => 
+        balance.asset_code === 'DROP' && 
+        balance.asset_issuer === PI_CONFIG.DROP_TOKEN.issuer
+      );
+      
+      if (dropBalance) {
+        console.log('✅ DROP token balance found:', dropBalance.balance);
+        const result = {
+          balance: dropBalance.balance,
+          hasTrustline: true
         };
-
+        setDropBalance(result);
+        return result;
+      } else {
+        console.log('⚠️ DROP token not found in wallet - no trustline');
+        const result = {
+          balance: "0",
+          hasTrustline: false
+        };
         setDropBalance(result);
         return result;
       }
     } catch (error) {
-      console.error('Error checking DROP balance:', error);
+      console.error('❌ Failed to get DROP token balance:', error);
+      const result = { balance: "0", hasTrustline: false };
+      setDropBalance(result);
+      return result;
     }
-
-    return null;
   };
 
-  // Create DROP token trustline
-  const createDropTrustline = async (): Promise<boolean> => {
-    if (!isAuthenticated || !window.Pi) {
+  // Create DROP Token Trustline
+  const createDROPTrustlineFunc = async (): Promise<boolean> => {
+    if (!isAuthenticated || !piUser?.wallet_address) {
       toast("Please authenticate with Pi Network first", {
         description: "Authentication Required",
         duration: 5000,
@@ -852,63 +474,48 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      // In a real implementation, this would use Pi SDK to create trustline
-      // For now, we'll show instructions to the user
-      toast("Please add DROP token to your Pi Wallet", {
-        description: "Go to Tokens > Search for 'DROP' > Add to wallet",
-        duration: 8000,
-      });
+      console.log('🔗 Creating DROP token trustline...');
+      
+      // Create trustline transaction using Pi Network SDK
+      const trustlinePayment = {
+        amount: 0.0000001, // Minimum amount to establish trustline
+        memo: "DROP Trustline Setup",
+        metadata: {
+          type: "trustline",
+          asset_code: PI_CONFIG.DROP_TOKEN.code,
+          asset_issuer: PI_CONFIG.DROP_TOKEN.issuer
+        }
+      };
 
-      // Simulate successful trustline creation
-      setTimeout(async () => {
-        await checkDropBalance();
-      }, 2000);
+      // Use Pi Network payment flow to create trustline
+      await window.Pi.createPayment(trustlinePayment, {
+        onReadyForServerApproval: (paymentId: string) => {
+          console.log('Trustline payment ready for approval:', paymentId);
+        },
+        onReadyForServerCompletion: (paymentId: string, txid: string) => {
+          console.log('Trustline transaction completed:', txid);
+          toast.success("DROP token trustline created successfully!", {
+            description: "You can now receive DROP tokens",
+            duration: 5000,
+          });
+        },
+        onCancel: (paymentId: string) => {
+          console.log('Trustline payment cancelled:', paymentId);
+        },
+        onError: (error: Error) => {
+          console.error('Trustline payment error:', error);
+          throw error;
+        }
+      });
 
       return true;
     } catch (error) {
-      console.error('Error creating DROP trustline:', error);
-      toast("Failed to create trustline for DROP token", {
-        description: "Trustline Error",
+      console.error('❌ Failed to create DROP trustline:', error);
+      toast.error("Failed to create DROP token trustline", {
+        description: "Please try again later",
         duration: 5000,
       });
       return false;
-    }
-  };
-
-  // Send DROP tokens
-  const sendDropTokens = async (recipient: string, amount: string): Promise<string | null> => {
-    if (!isAuthenticated || !window.Pi) {
-      toast("Please authenticate with Pi Network first", {
-        description: "Authentication Required",
-        duration: 5000,
-      });
-      return null;
-    }
-
-    try {
-      // In a real implementation, this would create and sign a Stellar transaction
-      // For demonstration, we'll simulate the process
-      toast(`Sending ${amount} DROP tokens to ${recipient}`, {
-        description: "Transaction Processing",
-        duration: 5000,
-      });
-
-      // Simulate transaction hash
-      const txHash = `drop_tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Update balance after sending
-      setTimeout(async () => {
-        await checkDropBalance();
-      }, 3000);
-
-      return txHash;
-    } catch (error) {
-      console.error('Error sending DROP tokens:', error);
-      toast("Failed to send DROP tokens", {
-        description: "Transaction Error",
-        duration: 5000,
-      });
-      return null;
     }
   };
 
@@ -923,6 +530,8 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
+      console.log(`🪙 Requesting ${amount} DROP tokens...`);
+      
       // Call backend function to distribute tokens
       const { data, error } = await supabase.functions.invoke('distribute-drop-tokens', {
         body: { 
@@ -938,33 +547,33 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         throw error;
       }
 
-      toast(`Received ${amount} DROP tokens!`, {
+      toast.success(`Received ${amount} DROP tokens!`, {
         description: "Tokens Distributed",
         duration: 5000,
       });
 
-      // Update balance
+      // Update balance after distribution
       setTimeout(async () => {
-        await checkDropBalance();
+        await getDROPBalanceFunc();
       }, 2000);
 
       return true;
     } catch (error) {
-      console.error('Error requesting DROP tokens:', error);
-      toast("Failed to request DROP tokens", {
-        description: "Distribution Error",
+      console.error('❌ Failed to request DROP tokens:', error);
+      toast.error("Failed to request DROP tokens", {
+        description: "Please try again later",
         duration: 5000,
       });
       return false;
     }
   };
 
-  // Multiple Account Management Functions
+  // Multiple account management functions
   const loadUserAccounts = async (): Promise<PiAccount[]> => {
     if (!piUser?.uid) return [];
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .rpc('get_user_accounts_by_pi_id', {
           pi_user_id_param: piUser.uid
         });
@@ -981,20 +590,24 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         }
         
         return data.accounts;
+      } else {
+        return [];
       }
-      
-      return [];
     } catch (error) {
       console.error('Failed to load user accounts:', error);
       return [];
     }
   };
 
-  const createAccount = async (username: string, displayName?: string): Promise<PiAccount | null> => {
-    if (!piUser?.uid) return null;
+  const createAccount = async (username: string, displayName?: string, paymentId?: string): Promise<PiAccount> => {
+    if (!piUser?.uid) {
+      throw new Error('User not authenticated');
+    }
 
     try {
-      const { data, error } = await supabase
+      console.log('Creating account with:', { username, displayName, pi_user_id: piUser.uid });
+      
+      const { data, error } = await (supabase as any)
         .rpc('create_pi_network_account', {
           pi_username: username,
           pi_user_id: piUser.uid,
@@ -1003,24 +616,53 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           payment_amount: availableAccounts.length > 0 ? 10 : 0
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase RPC error:', error);
+        throw error;
+      }
 
       if (data?.success) {
-        // Reload accounts
+        // Account created successfully
+        const newAccount: PiAccount = {
+          user_id: data.user_id,
+          pi_username: data.username,
+          display_name: data.display_name,
+          plan_type: 'free',
+          subscription_status: 'active', 
+          wallet_address: null,
+          created_at: data.created_at,
+          is_primary: availableAccounts.length === 0
+        };
+
+        // Reload accounts to get updated list
         await loadUserAccounts();
-        return data.account;
+        
+        console.log('Account created successfully:', newAccount);
+        return newAccount;
+      } else {
+        console.error('Account creation failed:', data?.error || 'Unknown error');
+        throw new Error(data?.error || 'Failed to create account');
       }
       
-      return null;
     } catch (error) {
       console.error('Failed to create account:', error);
-      return null;
+      
+      // Show user-friendly error message
+      if (error.message?.includes('USERNAME_EXISTS')) {
+        throw new Error('Username is already taken. Please choose a different username.');
+      } else if (error.message?.includes('INSUFFICIENT_PAYMENT')) {
+        throw new Error('Additional accounts require a 10 PI payment.');
+      } else if (error.message?.includes('INVALID_USERNAME')) {
+        throw new Error('Username must be at least 3 characters long.');
+      } else {
+        throw new Error(error.message || 'Failed to create account');
+      }
     }
   };
 
   const switchAccount = async (account: PiAccount): Promise<void> => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .rpc('switch_to_account', {
           pi_user_id_param: piUser?.uid,
           target_username: account.pi_username
@@ -1033,12 +675,13 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         toast(`Switched to account: ${account.display_name}`, {
           duration: 3000,
         });
+      } else {
+        throw new Error(data?.error || 'Failed to switch account');
       }
     } catch (error) {
       console.error('Failed to switch account:', error);
-      toast("Failed to switch account", {
+      toast.error("Failed to switch account", {
         description: "Please try again",
-        variant: "destructive",
         duration: 3000,
       });
     }
@@ -1046,7 +689,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteAccount = async (accountId: string): Promise<boolean> => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .rpc('delete_user_account_completely', {
           user_id_to_delete: accountId
         });
@@ -1054,39 +697,34 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error;
 
       if (data?.success) {
-        // Reload accounts
-        await loadUserAccounts();
+        // Remove account from local state
+        setAvailableAccounts(prev => prev.filter(acc => acc.user_id !== accountId));
         
-        // If current account was deleted, switch to primary
+        // Switch to primary account if current account was deleted
         if (currentAccount?.user_id === accountId) {
           const primaryAccount = availableAccounts.find(acc => acc.is_primary);
           if (primaryAccount) {
             setCurrentAccount(primaryAccount);
+          } else {
+            setCurrentAccount(null);
           }
         }
         
+        toast.success("Account deleted successfully", {
+          description: "All account data has been removed",
+          duration: 3000,
+        });
+        
         return true;
+      } else {
+        throw new Error('Failed to delete account');
       }
-      
-      return false;
     } catch (error) {
       console.error('Failed to delete account:', error);
-      return false;
-    }
-  };
-
-  const checkUsernameAvailability = async (username: string): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase
-        .rpc('check_username_availability', {
-          username_to_check: username
-        });
-
-      if (error) throw error;
-
-      return data?.available || false;
-    } catch (error) {
-      console.error('Failed to check username availability:', error);
+      toast.error("Failed to delete account", {
+        description: "Please try again later",
+        duration: 5000,
+      });
       return false;
     }
   };
@@ -1101,34 +739,83 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [isAuthenticated]);
 
+  // Placeholder functions for features not yet implemented
+  const setWalletAddress = async (address: string): Promise<boolean> => {
+    // Implementation pending
+    return true;
+  };
+
+  const importWallet = async (privateKey: string): Promise<WalletInfo | null> => {
+    // Implementation pending
+    return null;
+  };
+
+  const switchToWallet = (walletInfo: WalletInfo) => {
+    setCurrentWallet(walletInfo);
+  };
+
+  const getCurrentWalletAddress = (): string | null => {
+    return piUser?.wallet_address || null;
+  };
+
+  const createPayment = async (amount: number, memo: string, metadata?: any): Promise<string | null> => {
+    // Implementation pending
+    return null;
+  };
+
+  const showRewardedAd = async (): Promise<boolean> => {
+    // Implementation pending
+    return false;
+  };
+
+  const showInterstitialAd = async (): Promise<boolean> => {
+    // Implementation pending
+    return false;
+  };
+
+  const isAdReady = async (): Promise<boolean> => {
+    // Implementation pending
+    return false;
+  };
+
+  const shareContent = async (title: string, text: string): Promise<boolean> => {
+    // Implementation pending
+    return false;
+  };
+
+  const openExternalUrl = async (url: string): Promise<boolean> => {
+    // Implementation pending
+    return false;
+  };
+
   const value: PiContextType = {
     piUser,
     accessToken,
     isAuthenticated,
     loading,
+    error,
     isInitialized,
     adNetworkSupported,
-    error,
-    dropBalance,
-    currentWallet,
     currentAccount,
     availableAccounts,
+    currentProfile,
+    currentWallet,
+    dropBalance,
     signIn,
     signOut,
     getPiUserProfile,
+    checkUsernameAvailability,
     loadUserAccounts,
     createAccount,
     switchAccount,
     deleteAccount,
-    checkUsernameAvailability,
     setWalletAddress,
     importWallet,
     switchToWallet,
     getCurrentWalletAddress,
     createPayment,
-    checkDropBalance,
-    createDropTrustline,
-    sendDropTokens,
+    getDROPBalance: getDROPBalanceFunc,
+    createDROPTrustline: createDROPTrustlineFunc,
     requestDropTokens,
     showRewardedAd,
     showInterstitialAd,

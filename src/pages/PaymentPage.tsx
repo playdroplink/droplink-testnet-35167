@@ -225,15 +225,15 @@ const PaymentPage: React.FC = () => {
       const payment = await createPayment(paymentData.amount, paymentData.memo, paymentData.metadata);
       
       if (payment) {
-        setTransactionHash(payment.identifier || '');
+        setTransactionHash(payment || '');
         setPaymentStatus('completed');
         
         // Track payment in database
         try {
           await supabase.from('payment_transactions' as any).insert({
             payment_link_id: null, // Will be linked later
-            transaction_id: payment.identifier,
-            payment_id: payment.identifier,
+            transaction_id: payment,
+            payment_id: payment,
             amount: paymentLink.amount,
             sender_address: piUser?.uid || '',
             receiver_address: paymentLink.merchantProfile?.username || '',

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
@@ -86,6 +86,7 @@ interface ProfileData {
 
 const PublicBio = () => {
   const { username } = useParams();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [currentUserProfileId, setCurrentUserProfileId] = useState<string | null>(null);
@@ -136,6 +137,16 @@ const PublicBio = () => {
       .maybeSingle();
     
     setIsFollowing(!!data);
+  };
+
+  const handleSignUpToFollow = () => {
+    // Store the current store/profile for redirect after authentication
+    sessionStorage.setItem('redirectAfterAuth', window.location.pathname);
+    sessionStorage.setItem('authAction', 'follow');
+    sessionStorage.setItem('profileToFollow', username || '');
+    
+    // Navigate to authentication page
+    navigate('/auth');
   };
 
   const handleFollow = async () => {
@@ -550,7 +561,7 @@ const PublicBio = () => {
                   Like this store? Follow to stay connected!
                 </p>
                 <Button
-                  onClick={() => window.location.href = "/"}
+                  onClick={handleSignUpToFollow}
                   className={`${getIconStyle(profile.theme.iconStyle)} gap-2`}
                   style={{ backgroundColor: profile.theme.primaryColor }}
                 >
