@@ -19,21 +19,55 @@ const PiAuth = () => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        navigate("/");
+        // Handle redirect after auth
+        handlePostAuthRedirect();
         return;
       }
       
       if (isAuthenticated && piUser) {
-        navigate("/");
+        handlePostAuthRedirect();
       }
     };
     
     checkAuth();
   }, [isAuthenticated, piUser, navigate]);
 
+  // Handle post-authentication redirects
+  const handlePostAuthRedirect = () => {
+    const authAction = sessionStorage.getItem('authAction');
+    const profileToFollow = sessionStorage.getItem('profileToFollow');
+    const redirectAfterAuth = sessionStorage.getItem('redirectAfterAuth');
+    
+    if (authAction === 'follow' && profileToFollow) {
+      // Clear the session storage
+      sessionStorage.removeItem('authAction');
+      sessionStorage.removeItem('profileToFollow');
+      sessionStorage.removeItem('redirectAfterAuth');
+      
+      toast.success("Successfully signed in! You can now follow this user.");
+      navigate(`/${profileToFollow}`, { replace: true });
+      return;
+    }
+    
+    // Handle general redirect after auth
+    if (redirectAfterAuth && redirectAfterAuth !== '/auth' && redirectAfterAuth !== '/') {
+      // Clear the session storage
+      sessionStorage.removeItem('redirectAfterAuth');
+      sessionStorage.removeItem('authAction');
+      
+      toast.success("Welcome! You can now access this page.");
+      navigate(redirectAfterAuth, { replace: true });
+      return;
+    }
+    
+    // Default redirect
+    navigate("/");
+  };
+
   const handlePiSignIn = async () => {
     try {
       await signIn();
+      // Post-auth redirect is handled in useEffect
     } catch (error: any) {
       console.error("Sign in error:", error);
       toast.error(error.message || "Failed to sign in");

@@ -30,6 +30,8 @@ const Profile = () => {
   const loadProfile = async () => {
     try {
       if (!isAuthenticated || !piUser) {
+        // Store current page for redirect after authentication
+        sessionStorage.setItem('redirectAfterAuth', window.location.pathname);
         navigate("/auth");
         return;
       }

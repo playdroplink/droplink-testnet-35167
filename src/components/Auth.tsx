@@ -62,19 +62,32 @@ export const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Handle post-authentication actions (like following a user)
+  // Handle post-authentication actions (like following a user or returning to profile)
   const handlePostAuthAction = async () => {
     const authAction = sessionStorage.getItem('authAction');
     const profileToFollow = sessionStorage.getItem('profileToFollow');
+    const redirectAfterAuth = sessionStorage.getItem('redirectAfterAuth');
     
     if (authAction === 'follow' && profileToFollow) {
       // Clear the session storage
       sessionStorage.removeItem('authAction');
       sessionStorage.removeItem('profileToFollow');
+      sessionStorage.removeItem('redirectAfterAuth');
       
       // Navigate to the profile to follow
       toast.success("Successfully signed in! You can now follow this user.");
       navigate(`/${profileToFollow}`, { replace: true });
+      return true; // Indicate we handled a special action
+    }
+    
+    // Handle general redirect after auth (like returning to profile page)
+    if (redirectAfterAuth && redirectAfterAuth !== '/auth' && redirectAfterAuth !== '/') {
+      // Clear the session storage
+      sessionStorage.removeItem('redirectAfterAuth');
+      sessionStorage.removeItem('authAction');
+      
+      toast.success("Welcome! You can now access this page.");
+      navigate(redirectAfterAuth, { replace: true });
       return true; // Indicate we handled a special action
     }
     
@@ -153,11 +166,11 @@ export const Auth = () => {
         
         toast.success("Welcome back!");
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`
+            emailRedirectTo: `${window.location.origin}/dashboard`
           }
         });
         
@@ -171,9 +184,16 @@ export const Auth = () => {
           return;
         }
         
-        toast.success("Account created successfully! You can now log in.");
-        setIsLogin(true);
-        setPassword("");
+        // If user is immediately signed in (email confirmation disabled)
+        if (data.user && data.session) {
+          toast.success("Account created successfully! Welcome to DropLink!");
+          // Will be handled by the auth state change listener
+        } else {
+          // Email confirmation required
+          toast.success("Account created successfully! Please check your email to verify your account, then log in.");
+          setIsLogin(true);
+          setPassword("");
+        }
       }
     } catch (error: any) {
       toast.error("An unexpected error occurred. Please try again.");
