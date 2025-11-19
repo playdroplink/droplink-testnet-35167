@@ -497,11 +497,9 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     try {
       const authResult = await window.Pi.authenticate(scopes, handleIncompletePayment);
       
-      // Verify with Pi API (Production)
-      const response = await fetch('https://api.minepi.com/v2/me', {
-        headers: {
-          'Authorization': `Bearer ${authResult.accessToken}`
-        }
+      // Verify with Pi API (Sandbox)
+      const response = await fetch(PI_CONFIG.ENDPOINTS.ME, {
+        headers: PI_CONFIG.getAuthHeaders(authResult.accessToken)
       });
 
       if (!response.ok) {
