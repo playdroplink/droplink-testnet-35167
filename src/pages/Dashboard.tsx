@@ -1152,7 +1152,20 @@ const Dashboard = () => {
           <div className="flex items-center gap-2 sm:gap-4">
             <h1 className="text-lg sm:text-xl font-semibold text-sky-500">DropLink</h1>
             {displayUsername && (
-              <span className="text-xs sm:text-sm text-muted-foreground hidden sm:inline">@{displayUsername}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm text-muted-foreground">@{displayUsername}</span>
+                {isAuthenticated && (
+                  <span className="px-2 py-1 bg-sky-100 text-sky-700 text-xs rounded-full font-medium">
+                    π Auth
+                  </span>
+                )}
+              </div>
+            )}
+            {!isAuthenticated && piLoading && (
+              <span className="text-xs text-orange-600 animate-pulse">Connecting Pi...</span>
+            )}
+            {!isAuthenticated && !piLoading && (
+              <span className="text-xs text-gray-500">Pi Network Ready</span>
             )}
           </div>
           <div className="flex items-center gap-1 sm:gap-2 lg:gap-4">
@@ -1180,6 +1193,47 @@ const Dashboard = () => {
                     <DrawerDescription>Quick actions and settings</DrawerDescription>
                   </DrawerHeader>
                   <div className="p-4 space-y-3 max-h-[70vh] overflow-y-auto">
+                    {/* User Info Section */}
+                    <div className="space-y-2">
+                      <div className="bg-sky-50 border border-sky-200 rounded-lg p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium text-sky-900">
+                              {displayUsername ? `@${displayUsername}` : 'Welcome'}
+                            </p>
+                            <div className="flex items-center gap-2">
+                              {isAuthenticated ? (
+                                <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                                  <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>
+                                  Pi Connected
+                                </span>
+                              ) : piLoading ? (
+                                <span className="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full font-medium animate-pulse">
+                                  <span className="w-1.5 h-1.5 bg-orange-500 rounded-full mr-1.5"></span>
+                                  Connecting...
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full font-medium">
+                                  <span className="w-1.5 h-1.5 bg-gray-500 rounded-full mr-1.5"></span>
+                                  Pi Ready
+                                </span>
+                              )}
+                              {hasSupabaseSession && (
+                                <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
+                                  Email Auth
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          {isAuthenticated && (
+                            <div className="text-sky-600">
+                              <Wallet className="w-5 h-5" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Profile & Share Section */}
                     <div className="space-y-2">
                       <h3 className="font-medium text-sm text-muted-foreground px-2">Profile & Share</h3>

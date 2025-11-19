@@ -1,15 +1,15 @@
-// Pi Network Configuration (Sandbox for Development)
+// Pi Network Configuration (Mainnet for Production)
 export const PI_CONFIG = {
-  // Development Configuration (Sandbox)
+  // Mainnet Configuration
   API_KEY: "96tnxytg82pevnvvxfowap4bwctcxo6wkp2dexoraevtj8svh0mvqxttpbtwvjm5",
-  BASE_URL: "https://api.minepi.com/v2",
-  NETWORK: "sandbox",
-  SANDBOX_MODE: true,
+  BASE_URL: "https://api.mainnet.minepi.com",
+  NETWORK: "mainnet",
+  SANDBOX_MODE: false,
   
   // SDK Configuration
   SDK: {
     version: "2.0",
-    sandbox: true,
+    sandbox: false,
   },
   
   // DROP Token Configuration
@@ -34,11 +34,16 @@ export const PI_CONFIG = {
     'Content-Type': 'application/json',
   }),
   
-  // Sandbox endpoints
+  // Mainnet endpoints
   ENDPOINTS: {
-    ME: "https://api.minepi.com/v2/me",
-    WALLETS: "https://api.minepi.com/v2/wallets",
-    TRANSACTIONS: "https://api.minepi.com/v2/transactions",
+    ME: "https://api.mainnet.minepi.com/accounts",
+    WALLETS: "https://api.mainnet.minepi.com/accounts",
+    TRANSACTIONS: "https://api.mainnet.minepi.com/transactions",
+    PAYMENTS: "https://api.mainnet.minepi.com/payments",
+    OPERATIONS: "https://api.mainnet.minepi.com/operations",
+    LEDGERS: "https://api.mainnet.minepi.com/ledgers",
+    EFFECTS: "https://api.mainnet.minepi.com/effects",
+    FEE_STATS: "https://api.mainnet.minepi.com/fee_stats",
   }
 };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,70 +6,251 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CreditCard, Pi, Wallet, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { 
+  CreditCard, 
+  Pi, 
+  Wallet, 
+  CheckCircle, 
+  AlertTriangle,
+  Copy,
+  QrCode,
+  History,
+  DollarSign,
+  ShoppingCart,
+  Gift,
+  Users,
+  Link,
+  ArrowUpDown,
+  TrendingUp,
+  Clock,
+  Check
+} from 'lucide-react';
 import { usePi } from '@/contexts/PiContext';
 import { toast } from 'sonner';
+import { PI_CONFIG } from '@/config/pi-config';
+
+interface PaymentLink {
+  id: string;
+  amount: number;
+  description: string;
+  type: 'product' | 'donation' | 'tip' | 'subscription' | 'group';
+  url: string;
+  created: Date;
+  active: boolean;
+  totalReceived: number;
+  transactionCount: number;
+}
+
+interface Transaction {
+  id: string;
+  hash: string;
+  amount: number;
+  from: string;
+  to: string;
+  memo: string;
+  status: 'pending' | 'completed' | 'failed';
+  timestamp: Date;
+  fee: number;
+}
+
+interface Balance {
+  available: number;
+  pending: number;
+  total: number;
+  lastUpdated: Date;
+}
 
 const PiPayments: React.FC = () => {
-  const { isAuthenticated, createPayment, piUser } = usePi();
+  const { isAuthenticated, createPayment, piUser, getCurrentWalletAddress } = usePi();
+  
+  // Payment Creation State
   const [amount, setAmount] = useState('');
   const [memo, setMemo] = useState('');
-  const [metadata, setMetadata] = useState('');
+  const [paymentType, setPaymentType] = useState<'product' | 'donation' | 'tip' | 'subscription' | 'group'>('product');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [lastPayment, setLastPayment] = useState<any>(null);
+  
+  // Payment Links State
+  const [paymentLinks, setPaymentLinks] = useState<PaymentLink[]>([]);
+  const [selectedLink, setSelectedLink] = useState<PaymentLink | null>(null);
+  
+  // Wallet State
+  const [balance, setBalance] = useState<Balance>({ available: 0, pending: 0, total: 0, lastUpdated: new Date() });
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [walletAddress, setWalletAddress] = useState<string>('');
+  
+  // Loading States
+  const [loadingBalance, setLoadingBalance] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
-  const handleCreatePayment = async () => {
-    if (!amount || parseFloat(amount) <= 0) {
-      toast("Please enter a valid amount", {
-        description: "Amount must be greater than 0",
-        duration: 3000,
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadWalletData();
+      loadPaymentLinks();
+    }
+  }, [isAuthenticated]);
+
+  const loadWalletData = async () => {
+    setLoadingBalance(true);
+    try {
+      const address = await getCurrentWalletAddress();
+      setWalletAddress(address || '');
+      
+      // Fetch balance from Pi mainnet API
+      if (address) {
+        await fetchBalance(address);
+        await fetchTransactionHistory(address);
+      }
+    } catch (error) {
+      console.error('Failed to load wallet data:', error);
+      toast.error('Failed to load wallet data');
+    } finally {
+      setLoadingBalance(false);
+    }
+  };
+
+  const fetchBalance = async (address: string) => {
+    try {
+      const response = await fetch(`${PI_CONFIG.BASE_URL}/accounts/${address}`, {
+        headers: PI_CONFIG.getAuthHeaders(localStorage.getItem('pi_access_token') || '')
       });
+      
+      if (response.ok) {
+        const accountData = await response.json();
+        const piBalance = accountData.balances?.find((b: any) => b.asset_type === 'native');
+        
+        setBalance({
+          available: parseFloat(piBalance?.balance || '0'),
+          pending: 0, // Calculate from pending transactions
+          total: parseFloat(piBalance?.balance || '0'),
+          lastUpdated: new Date()
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch balance:', error);
+    }
+  };
+
+  const fetchTransactionHistory = async (address: string) => {
+    setLoadingHistory(true);
+    try {
+      const response = await fetch(`${PI_CONFIG.BASE_URL}/accounts/${address}/transactions?limit=20&order=desc`, {
+        headers: PI_CONFIG.getAuthHeaders(localStorage.getItem('pi_access_token') || '')
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const mappedTransactions: Transaction[] = data._embedded?.records?.map((tx: any) => ({
+          id: tx.id,
+          hash: tx.hash,
+          amount: parseFloat(tx.fee_charged) || 0,
+          from: tx.source_account,
+          to: tx.account,
+          memo: tx.memo || '',
+          status: tx.successful ? 'completed' : 'failed',
+          timestamp: new Date(tx.created_at),
+          fee: parseFloat(tx.fee_charged) || 0
+        })) || [];
+        
+        setTransactions(mappedTransactions);
+      }
+    } catch (error) {
+      console.error('Failed to fetch transaction history:', error);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const loadPaymentLinks = () => {
+    // Load from localStorage for now (could be from backend)
+    const stored = localStorage.getItem(`paymentLinks_${piUser?.uid}`);
+    if (stored) {
+      setPaymentLinks(JSON.parse(stored));
+    }
+  };
+
+  const savePaymentLinks = (links: PaymentLink[]) => {
+    localStorage.setItem(`paymentLinks_${piUser?.uid}`, JSON.stringify(links));
+    setPaymentLinks(links);
+  };
+
+  const createPaymentLink = async () => {
+    if (!amount || parseFloat(amount) <= 0) {
+      toast.error('Please enter a valid amount');
       return;
     }
 
     if (!memo.trim()) {
-      toast("Please enter a memo", {
-        description: "Memo is required for all payments",
-        duration: 3000,
-      });
+      toast.error('Please enter a description');
       return;
     }
 
     setIsProcessing(true);
-    
+
     try {
-      let parsedMetadata = {};
-      if (metadata.trim()) {
-        try {
-          parsedMetadata = JSON.parse(metadata);
-        } catch {
-          parsedMetadata = { description: metadata };
-        }
-      }
-
-      const payment = await createPayment(
-        parseFloat(amount),
-        memo,
-        parsedMetadata
-      );
-
-      setLastPayment(payment);
+      const linkId = `pl_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const baseUrl = window.location.origin;
+      const paymentUrl = `${baseUrl}/pay/${linkId}`;
       
-      toast("Payment initiated successfully!", {
-        description: "Please complete the payment in Pi Browser",
-        duration: 5000,
+      const newLink: PaymentLink = {
+        id: linkId,
+        amount: parseFloat(amount),
+        description: memo,
+        type: paymentType,
+        url: paymentUrl,
+        created: new Date(),
+        active: true,
+        totalReceived: 0,
+        transactionCount: 0
+      };
+
+      const updatedLinks = [...paymentLinks, newLink];
+      savePaymentLinks(updatedLinks);
+
+      toast.success('Payment link created successfully!', {
+        description: 'Share this link to receive payments'
       });
 
-      // Clear form on success
+      // Clear form
       setAmount('');
       setMemo('');
-      setMetadata('');
-      
+      setSelectedLink(newLink);
+
     } catch (error) {
-      console.error('Payment creation failed:', error);
+      console.error('Failed to create payment link:', error);
+      toast.error('Failed to create payment link');
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const copyPaymentLink = (link: PaymentLink) => {
+    navigator.clipboard.writeText(link.url);
+    toast.success('Payment link copied to clipboard!');
+  };
+
+  const toggleLinkStatus = (linkId: string) => {
+    const updatedLinks = paymentLinks.map(link => 
+      link.id === linkId ? { ...link, active: !link.active } : link
+    );
+    savePaymentLinks(updatedLinks);
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'product': return <ShoppingCart className="w-4 h-4" />;
+      case 'donation': return <Gift className="w-4 h-4" />;
+      case 'tip': return <DollarSign className="w-4 h-4" />;
+      case 'subscription': return <CreditCard className="w-4 h-4" />;
+      case 'group': return <Users className="w-4 h-4" />;
+      default: return <Pi className="w-4 h-4" />;
+    }
+  };
+
+  const formatPiAmount = (amount: number) => {
+    return `π ${amount.toFixed(2)}`;
   };
 
   if (!isAuthenticated) {
@@ -77,18 +258,19 @@ const PiPayments: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            Pi Payments
+            <CreditCard className="h-5 w-5 text-sky-500" />
+            Pi Payments - DropPay
+            <Badge variant="secondary">Mainnet</Badge>
           </CardTitle>
           <CardDescription>
-            Create and process payments on Pi Network
+            Create payment checkout links for digital products, donations, tips, and paid groups
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Alert>
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              Please authenticate with Pi Network to access payment features.
+              Please authenticate with Pi Network to access DropPay payment features.
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -97,151 +279,424 @@ const PiPayments: React.FC = () => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5" />
-          Pi Payments
-          <Badge variant="secondary">Mainnet</Badge>
-        </CardTitle>
-        <CardDescription>
-          Create and process payments on Pi Network mainnet
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* User Info */}
-        <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
-          <Pi className="h-8 w-8 text-blue-600" />
-          <div>
-            <p className="font-medium text-blue-900">Connected to Pi Network</p>
-            <p className="text-sm text-blue-600">
-              User: {piUser?.username || 'Anonymous'}
-            </p>
-          </div>
-        </div>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5 text-sky-500" />
+            Pi Payments - DropPay
+            <Badge className="bg-sky-500">Mainnet</Badge>
+          </CardTitle>
+          <CardDescription>
+            Complete payment solution for Pi Network mainnet - Create checkout links, track payments, and manage your Pi wallet
+          </CardDescription>
+        </CardHeader>
+      </Card>
 
-        {/* Payment Form */}
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="amount">Amount (π)</Label>
-            <Input
-              id="amount"
-              type="number"
-              placeholder="0.00"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              min="0"
-              step="0.01"
-            />
-          </div>
+      <Tabs defaultValue="create" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="create">Create Payment</TabsTrigger>
+          <TabsTrigger value="links">Payment Links</TabsTrigger>
+          <TabsTrigger value="wallet">Wallet & Balance</TabsTrigger>
+          <TabsTrigger value="history">Transaction History</TabsTrigger>
+        </TabsList>
 
-          <div>
-            <Label htmlFor="memo">Memo *</Label>
-            <Input
-              id="memo"
-              placeholder="Payment description (required)"
-              value={memo}
-              onChange={(e) => setMemo(e.target.value)}
-              maxLength={100}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Brief description of the payment purpose
-            </p>
-          </div>
+        <TabsContent value="create">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Link className="w-5 h-5 text-sky-500" />
+                Create Payment Checkout Link
+              </CardTitle>
+              <CardDescription>
+                Generate shareable payment links for your digital products, donations, or services
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* User Info */}
+              <div className="flex items-center gap-3 p-4 bg-sky-50 rounded-lg border border-sky-200">
+                <Pi className="h-8 w-8 text-sky-600" />
+                <div>
+                  <p className="font-medium text-sky-900">Connected to Pi Network Mainnet</p>
+                  <p className="text-sm text-sky-600">
+                    User: {piUser?.username || 'Anonymous'} | Wallet: {walletAddress ? `${walletAddress.slice(0, 8)}...${walletAddress.slice(-8)}` : 'Loading...'}
+                  </p>
+                </div>
+              </div>
 
-          <div>
-            <Label htmlFor="metadata">Metadata (Optional)</Label>
-            <Textarea
-              id="metadata"
-              placeholder='{"orderId": "123", "productName": "Premium Plan"}'
-              value={metadata}
-              onChange={(e) => setMetadata(e.target.value)}
-              rows={3}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Additional data as JSON or plain text
-            </p>
-          </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="paymentType">Payment Type</Label>
+                    <Select value={paymentType} onValueChange={(value: any) => setPaymentType(value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="product">Digital Product</SelectItem>
+                        <SelectItem value="donation">Donation</SelectItem>
+                        <SelectItem value="tip">Tip/Gratuity</SelectItem>
+                        <SelectItem value="subscription">Subscription</SelectItem>
+                        <SelectItem value="group">Paid Group Access</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-          <Button
-            onClick={handleCreatePayment}
-            disabled={isProcessing || !amount || !memo}
-            className="w-full"
-            size="lg"
-          >
-            <CreditCard className="h-5 w-5 mr-2" />
-            {isProcessing ? 'Creating Payment...' : `Create Payment (${amount || '0.00'} π)`}
-          </Button>
-        </div>
+                  <div>
+                    <Label htmlFor="amount">Amount (π)</Label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      placeholder="0.00"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
 
-        {/* Last Payment Info */}
-        {lastPayment && (
-          <Alert>
-            <CheckCircle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Payment Created:</strong> {lastPayment.identifier}<br />
-              <span className="text-sm text-gray-600">
-                Status: {lastPayment.status || 'Initiated'} • 
-                Amount: {lastPayment.amount} π
-              </span>
-            </AlertDescription>
-          </Alert>
-        )}
+                  <div>
+                    <Label htmlFor="memo">Description *</Label>
+                    <Textarea
+                      id="memo"
+                      placeholder="Enter payment description (e.g., Premium Course Access, Monthly Subscription, etc.)"
+                      value={memo}
+                      onChange={(e) => setMemo(e.target.value)}
+                      rows={3}
+                      maxLength={200}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      This will be shown to customers during checkout
+                    </p>
+                  </div>
+                </div>
 
-        {/* Payment Instructions */}
-        <div className="text-xs text-gray-500 space-y-2 bg-gray-50 p-4 rounded-lg">
-          <h4 className="font-medium text-gray-700">Payment Flow:</h4>
-          <ol className="list-decimal list-inside space-y-1">
-            <li>Enter payment amount and memo above</li>
-            <li>Click "Create Payment" to initiate transaction</li>
-            <li>Complete payment approval in Pi Browser</li>
-            <li>Payment will be processed on Pi Network mainnet</li>
-            <li>Confirmation will be shown once completed</li>
-          </ol>
-          <p className="mt-3 text-xs">
-            <strong>Note:</strong> All payments are processed on Pi Network mainnet using 
-            official Pi SDK v2.0 with full compliance.
-          </p>
-        </div>
+                <div className="space-y-4">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <h4 className="font-medium mb-2">Payment Link Preview</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Type:</span>
+                        <span className="flex items-center gap-1">
+                          {getTypeIcon(paymentType)}
+                          {paymentType.charAt(0).toUpperCase() + paymentType.slice(1)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Amount:</span>
+                        <span className="font-medium">{formatPiAmount(parseFloat(amount) || 0)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Description:</span>
+                        <span className="text-right">{memo || 'No description'}</span>
+                      </div>
+                    </div>
+                  </div>
 
-        {/* Quick Payment Examples */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setAmount('1.00');
-              setMemo('Premium subscription - 1 month');
-            }}
-          >
-            π 1.00<br />
-            <span className="text-xs">Premium</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setAmount('5.00');
-              setMemo('Tip for content creator');
-            }}
-          >
-            π 5.00<br />
-            <span className="text-xs">Tip</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setAmount('10.00');
-              setMemo('Custom domain - 1 year');
-            }}
-          >
-            π 10.00<br />
-            <span className="text-xs">Domain</span>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+                  <Button
+                    onClick={createPaymentLink}
+                    disabled={isProcessing || !amount || !memo}
+                    className="w-full bg-sky-500 hover:bg-sky-600"
+                    size="lg"
+                  >
+                    <Link className="h-5 w-5 mr-2" />
+                    {isProcessing ? 'Creating Link...' : 'Create Payment Link'}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Quick Templates */}
+              <div className="space-y-3">
+                <Label>Quick Templates</Label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {[
+                    { amount: '1.00', memo: 'Premium subscription - 1 month', type: 'subscription' as const },
+                    { amount: '5.00', memo: 'Support my content', type: 'tip' as const },
+                    { amount: '10.00', memo: 'Digital course access', type: 'product' as const },
+                    { amount: '25.00', memo: 'VIP group membership', type: 'group' as const }
+                  ].map((template, idx) => (
+                    <Button
+                      key={idx}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs h-auto py-3 px-2"
+                      onClick={() => {
+                        setAmount(template.amount);
+                        setMemo(template.memo);
+                        setPaymentType(template.type);
+                      }}
+                    >
+                      <div className="text-center">
+                        <div className="font-medium">{formatPiAmount(parseFloat(template.amount))}</div>
+                        <div className="text-xs opacity-70">{template.memo}</div>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {selectedLink && (
+                <Alert className="border-green-200 bg-green-50">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <AlertDescription>
+                    <div className="space-y-2">
+                      <p className="font-medium text-green-800">Payment Link Created Successfully!</p>
+                      <div className="flex items-center gap-2 p-2 bg-white rounded border">
+                        <code className="flex-1 text-xs">{selectedLink.url}</code>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => copyPaymentLink(selectedLink)}
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="links">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <QrCode className="w-5 h-5 text-sky-500" />
+                Your Payment Links
+              </CardTitle>
+              <CardDescription>
+                Manage and share your payment checkout links
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {paymentLinks.length === 0 ? (
+                <div className="text-center py-8">
+                  <QrCode className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No payment links created yet</p>
+                  <p className="text-sm text-gray-400">Create your first payment link in the "Create Payment" tab</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {paymentLinks.map((link) => (
+                    <div key={link.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            {getTypeIcon(link.type)}
+                            <span className="font-medium">{link.description}</span>
+                            <Badge variant={link.active ? "default" : "secondary"}>
+                              {link.active ? "Active" : "Inactive"}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-gray-500">
+                            Created {link.created.toLocaleDateString()} • {formatPiAmount(link.amount)}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">{formatPiAmount(link.totalReceived)}</p>
+                          <p className="text-xs text-gray-500">{link.transactionCount} payments</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                        <code className="flex-1 text-xs">{link.url}</code>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => copyPaymentLink(link)}
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => toggleLinkStatus(link.id)}
+                        >
+                          {link.active ? "Disable" : "Enable"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(link.url, '_blank')}
+                        >
+                          Preview
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="wallet">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Wallet className="w-5 h-5 text-sky-500" />
+                  Pi Wallet Balance
+                </CardTitle>
+                <CardDescription>
+                  Your Pi Network mainnet wallet overview
+                </CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadWalletData}
+                disabled={loadingBalance}
+              >
+                <ArrowUpDown className="w-4 h-4 mr-2" />
+                Refresh
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-4">
+                  <div className="text-center p-6 bg-sky-50 rounded-lg border border-sky-200">
+                    <Pi className="w-8 h-8 text-sky-600 mx-auto mb-2" />
+                    <p className="text-2xl font-bold text-sky-900">{formatPiAmount(balance.available)}</p>
+                    <p className="text-sm text-sky-600">Available Balance</p>
+                  </div>
+                  
+                  {balance.pending > 0 && (
+                    <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
+                      <Clock className="w-6 h-6 text-orange-600 mx-auto mb-2" />
+                      <p className="font-medium text-orange-900">{formatPiAmount(balance.pending)}</p>
+                      <p className="text-sm text-orange-600">Pending</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="md:col-span-2 space-y-4">
+                  <div className="space-y-2">
+                    <Label>Wallet Address</Label>
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded border">
+                      <code className="flex-1 text-sm break-all">{walletAddress || 'Loading...'}</code>
+                      {walletAddress && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(walletAddress);
+                            toast.success('Wallet address copied!');
+                          }}
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Account Details</Label>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="flex justify-between p-2 bg-gray-50 rounded">
+                        <span>Network:</span>
+                        <span className="font-medium">Pi Mainnet</span>
+                      </div>
+                      <div className="flex justify-between p-2 bg-gray-50 rounded">
+                        <span>Last Updated:</span>
+                        <span className="font-medium">{balance.lastUpdated.toLocaleTimeString()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Alert className="border-sky-200 bg-sky-50">
+                    <TrendingUp className="h-4 w-4 text-sky-600" />
+                    <AlertDescription className="text-sky-800">
+                      <strong>Pro Tip:</strong> Share your payment links to start receiving Pi payments directly to this wallet. 
+                      All transactions are processed on Pi Network mainnet for maximum security.
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="history">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <History className="w-5 h-5 text-sky-500" />
+                  Transaction History
+                </CardTitle>
+                <CardDescription>
+                  Recent transactions on Pi Network mainnet
+                </CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchTransactionHistory(walletAddress)}
+                disabled={loadingHistory}
+              >
+                <ArrowUpDown className="w-4 h-4 mr-2" />
+                Refresh
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {loadingHistory ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Loading transaction history...</p>
+                </div>
+              ) : transactions.length === 0 ? (
+                <div className="text-center py-8">
+                  <History className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No transactions found</p>
+                  <p className="text-sm text-gray-400">Your payment history will appear here once you start transacting</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {transactions.map((tx) => (
+                    <div key={tx.id} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${
+                              tx.status === 'completed' ? 'bg-green-500' : 
+                              tx.status === 'pending' ? 'bg-orange-500' : 'bg-red-500'
+                            }`} />
+                            <span className="font-medium">{tx.memo || 'No memo'}</span>
+                            <Badge variant="outline" className="text-xs">
+                              {tx.status}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-gray-500">
+                            {tx.timestamp.toLocaleDateString()} {tx.timestamp.toLocaleTimeString()}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">{formatPiAmount(tx.amount)}</p>
+                          <p className="text-xs text-gray-500">Fee: {formatPiAmount(tx.fee)}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
+                        <div className="grid grid-cols-1 gap-1">
+                          <div><strong>Hash:</strong> {tx.hash}</div>
+                          <div><strong>From:</strong> {tx.from}</div>
+                          <div><strong>To:</strong> {tx.to}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

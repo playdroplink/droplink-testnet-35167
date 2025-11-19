@@ -203,13 +203,14 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         console.log('Pi SDK Error Details:', errorMessage);
         
-        // Only show user-friendly message, don't block app
-        if (process.env.NODE_ENV === 'production') {
-          toast.error('Pi Network unavailable. Some features may be limited.');
+        // Only show user-friendly message for specific errors
+        if (errorMessage.includes('Pi SDK') || errorMessage.includes('network')) {
+          console.warn('Pi Network connection issue - app will continue with limited functionality');
         }
         
         // Don't set error state - allow app to continue
         setIsInitialized(false);
+        setError(null); // Clear error to prevent app blocking
       } finally {
         setLoading(false);
       }
@@ -223,7 +224,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         setError(null); // Clear any errors to allow app to continue
         setIsInitialized(false); // Ensure we don't block the app
       }
-    }, 3000); // Increased timeout to 3 seconds for better reliability
+    }, 2000); // Reduced timeout to 2 seconds for faster app loading
     
     initializePi().finally(() => clearTimeout(timeout));
   }, []);
@@ -466,7 +467,28 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   // Sign In with Pi Network
   const signIn = async (scopes: string[] = ['username', 'payments', 'wallet_address']) => {
     if (!isInitialized || !window.Pi) {
-      throw new Error('Pi SDK not initialized');
+      // Try to reinitialize Pi SDK
+      toast('Initializing Pi Network connection...', {
+        description: 'Please wait while we connect to Pi Network',
+        duration: 3000,
+      });
+      
+      try {
+        if (isPiNetworkAvailable()) {
+          await window.Pi.init(PI_CONFIG.SDK);
+          setIsInitialized(true);
+          console.log('Pi SDK reinitialized successfully');
+        } else {
+          throw new Error('Pi Network is not available in this browser');
+        }
+      } catch (reinitError) {
+        const errorMsg = 'Pi Network is not available. Please use Pi Browser or ensure Pi SDK is loaded.';
+        toast.error(errorMsg, {
+          description: 'Please try using Pi Browser or check your connection',
+          duration: 5000,
+        });
+        throw new Error(errorMsg);
+      }
     }
 
     setLoading(true);

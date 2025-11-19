@@ -153,22 +153,16 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
             onError={(e) => {
               console.log('GIF background failed to load:', profile.theme?.backgroundGif);
               (e.target as HTMLImageElement).style.display = 'none';
-            }}
-            onLoad={() => {
-              console.log('GIF background loaded successfully:', profile.theme?.backgroundGif);
-            }}
-          />
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              // Hide broken image and show fallback
-              e.currentTarget.style.display = 'none';
               const parent = e.currentTarget.parentElement;
               if (parent) {
                 parent.style.backgroundColor = profile.theme?.backgroundColor || '#000000';
               }
             }}
+            onLoad={() => {
+              console.log('GIF background loaded successfully:', profile.theme?.backgroundGif);
+            }}
           />
-          <div className="absolute inset-0 bg-black/20" /> {/* Light overlay for readability */}
+          <div className="absolute inset-0 bg-black/20"></div>
         </div>
       )}
       
