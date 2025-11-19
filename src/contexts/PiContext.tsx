@@ -10,6 +10,17 @@ interface PiUser {
   wallet_address?: string;
 }
 
+interface PiAccount {
+  user_id: string;
+  pi_username: string;
+  display_name: string;
+  plan_type: string;
+  subscription_status: string;
+  wallet_address?: string;
+  created_at: string;
+  is_primary: boolean;
+}
+
 interface DropTokenBalance {
   balance: string;
   hasTrustline: boolean;
@@ -67,6 +78,7 @@ declare global {
 }
 
 interface PiContextType {
+  // Current user (from Pi Network authentication)
   piUser: PiUser | null;
   accessToken: string | null;
   isAuthenticated: boolean;
@@ -77,12 +89,23 @@ interface PiContextType {
   dropBalance: DropTokenBalance | null;
   currentWallet: WalletInfo | null;
   
+  // Current active account (from DropLink database)
+  currentAccount: PiAccount | null;
+  availableAccounts: PiAccount[];
+  
   // Authentication
   signIn: (scopes?: string[]) => Promise<void>;
   signOut: () => Promise<void>;
   
   // User Data
   getPiUserProfile: (username: string) => Promise<any | null>;
+  
+  // Multiple Account Management
+  loadUserAccounts: () => Promise<PiAccount[]>;
+  createAccount: (username: string, displayName?: string) => Promise<PiAccount | null>;
+  switchAccount: (account: PiAccount) => Promise<void>;
+  deleteAccount: (accountId: string) => Promise<boolean>;
+  checkUsernameAvailability: (username: string) => Promise<boolean>;
   
   // Payments
   createPayment: (amount: number, memo: string, metadata?: any) => Promise<any>;
@@ -120,6 +143,10 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
   const [dropBalance, setDropBalance] = useState<DropTokenBalance | null>(null);
   const [currentWallet, setCurrentWallet] = useState<WalletInfo | null>(null);
+  
+  // Multiple account management state
+  const [currentAccount, setCurrentAccount] = useState<PiAccount | null>(null);
+  const [availableAccounts, setAvailableAccounts] = useState<PiAccount[]>([]);
   
   // Derived state: user is authenticated if we have a Pi user and access token
   const isAuthenticated = !!piUser && !!accessToken;
@@ -932,6 +959,148 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Multiple Account Management Functions
+  const loadUserAccounts = async (): Promise<PiAccount[]> => {
+    if (!piUser?.uid) return [];
+
+    try {
+      const { data, error } = await supabase
+        .rpc('get_user_accounts_by_pi_id', {
+          pi_user_id_param: piUser.uid
+        });
+
+      if (error) throw error;
+
+      if (data?.success && data?.accounts) {
+        setAvailableAccounts(data.accounts);
+        
+        // Set current account if not set
+        if (!currentAccount && data.accounts.length > 0) {
+          const primaryAccount = data.accounts.find((acc: PiAccount) => acc.is_primary) || data.accounts[0];
+          setCurrentAccount(primaryAccount);
+        }
+        
+        return data.accounts;
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('Failed to load user accounts:', error);
+      return [];
+    }
+  };
+
+  const createAccount = async (username: string, displayName?: string): Promise<PiAccount | null> => {
+    if (!piUser?.uid) return null;
+
+    try {
+      const { data, error } = await supabase
+        .rpc('create_pi_network_account', {
+          pi_username: username,
+          pi_user_id: piUser.uid,
+          display_name: displayName || username,
+          is_additional_account: availableAccounts.length > 0,
+          payment_amount: availableAccounts.length > 0 ? 10 : 0
+        });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        // Reload accounts
+        await loadUserAccounts();
+        return data.account;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Failed to create account:', error);
+      return null;
+    }
+  };
+
+  const switchAccount = async (account: PiAccount): Promise<void> => {
+    try {
+      const { data, error } = await supabase
+        .rpc('switch_to_account', {
+          pi_user_id_param: piUser?.uid,
+          target_username: account.pi_username
+        });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        setCurrentAccount(account);
+        toast(`Switched to account: ${account.display_name}`, {
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to switch account:', error);
+      toast("Failed to switch account", {
+        description: "Please try again",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
+  };
+
+  const deleteAccount = async (accountId: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .rpc('delete_user_account_completely', {
+          user_id_to_delete: accountId
+        });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        // Reload accounts
+        await loadUserAccounts();
+        
+        // If current account was deleted, switch to primary
+        if (currentAccount?.user_id === accountId) {
+          const primaryAccount = availableAccounts.find(acc => acc.is_primary);
+          if (primaryAccount) {
+            setCurrentAccount(primaryAccount);
+          }
+        }
+        
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Failed to delete account:', error);
+      return false;
+    }
+  };
+
+  const checkUsernameAvailability = async (username: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .rpc('check_username_availability', {
+          username_to_check: username
+        });
+
+      if (error) throw error;
+
+      return data?.available || false;
+    } catch (error) {
+      console.error('Failed to check username availability:', error);
+      return false;
+    }
+  };
+
+  // Load accounts when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadUserAccounts();
+    } else {
+      setCurrentAccount(null);
+      setAvailableAccounts([]);
+    }
+  }, [isAuthenticated]);
+
   const value: PiContextType = {
     piUser,
     accessToken,
@@ -942,9 +1111,16 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     error,
     dropBalance,
     currentWallet,
+    currentAccount,
+    availableAccounts,
     signIn,
     signOut,
     getPiUserProfile,
+    loadUserAccounts,
+    createAccount,
+    switchAccount,
+    deleteAccount,
+    checkUsernameAvailability,
     setWalletAddress,
     importWallet,
     switchToWallet,

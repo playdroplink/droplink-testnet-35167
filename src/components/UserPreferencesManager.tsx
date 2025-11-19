@@ -21,8 +21,13 @@ import {
   Moon,
   Sun,
   Settings,
-  Smartphone
+  Smartphone,
+  UserCog,
+  Trash2
 } from "lucide-react";
+import { AccountDeletion } from "./AccountDeletion";
+import { MultipleAccountManager } from "./MultipleAccountManager";
+import { AccountSwitcher } from "./AccountSwitcher";
 
 export const UserPreferencesManager = () => {
   const {
@@ -88,7 +93,7 @@ export const UserPreferencesManager = () => {
       </div>
 
       <Tabs defaultValue="appearance" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="appearance">
             <Palette className="w-4 h-4 mr-2" />
             Theme
@@ -100,6 +105,10 @@ export const UserPreferencesManager = () => {
           <TabsTrigger value="store">
             <Store className="w-4 h-4 mr-2" />
             Store
+          </TabsTrigger>
+          <TabsTrigger value="account">
+            <UserCog className="w-4 h-4 mr-2" />
+            Account
           </TabsTrigger>
           <TabsTrigger value="social">
             <Users className="w-4 h-4 mr-2" />
@@ -353,6 +362,30 @@ export const UserPreferencesManager = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Account Management */}
+        <TabsContent value="account">
+          <div className="space-y-6">
+            {/* Multiple Account Manager */}
+            <MultipleAccountManager 
+              currentUser={null} // Will be handled by the component internally
+              onAccountSwitch={(account) => {
+                toast.success(`Switched to account: ${account.display_name}`);
+                // Refresh the page to load new account data
+                window.location.reload();
+              }}
+            />
+
+            {/* Account Deletion */}
+            <AccountDeletion
+              currentUser={null} // Will be handled by the component internally
+              onAccountDeleted={() => {
+                // Redirect to auth page after account deletion
+                window.location.href = '/auth';
+              }}
+            />
+          </div>
         </TabsContent>
 
         {/* Social Settings */}
