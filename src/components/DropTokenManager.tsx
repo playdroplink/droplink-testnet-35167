@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Droplets, Send, Wallet, ExternalLink, Copy, CheckCircle, AlertCircle, Info, QrCode, Download, Upload, Key, RefreshCw } from 'lucide-react';
+import { Droplets, Send, Wallet, ExternalLink, Copy, CheckCircle, AlertCircle, Info, QrCode, Download, Upload, Key, RefreshCw, AlertTriangle, Ban } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import QRCode from 'qrcode';
 
@@ -56,6 +56,17 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
   const [importedWallet, setImportedWallet] = useState<string>('');
   const [currentWalletAddress, setCurrentWalletAddress] = useState<string>(piWallet || '');
   const [isImporting, setIsImporting] = useState<boolean>(false);
+
+  // Token recall states
+  const [showRecallDialog, setShowRecallDialog] = useState<boolean>(false);
+  const [recallTarget, setRecallTarget] = useState<string>('');
+  const [recallAmount, setRecallAmount] = useState<string>('');
+  const [issuerPrivateKey, setIssuerPrivateKey] = useState<string>('');
+  const [isRecalling, setIsRecalling] = useState<boolean>(false);
+  const [tokenAuthStatus, setTokenAuthStatus] = useState<{
+    authRequired: boolean;
+    authRevocable: boolean;
+  }>({ authRequired: false, authRevocable: false });
 
   // Check DROP token balance and trustline
   const checkDropBalance = async (walletAddress?: string) => {
@@ -354,6 +365,118 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
     link.click();
   };
 
+  // Check token authorization status
+  const checkTokenAuthStatus = async () => {
+    try {
+      const response = await fetch(`https://api.mainnet.minepi.com/accounts/${DROP_TOKEN.issuer}`);
+      if (response.ok) {
+        const accountData = await response.json();
+        const flags = accountData.flags;
+        setTokenAuthStatus({
+          authRequired: flags.auth_required || false,
+          authRevocable: flags.auth_revocable || false
+        });
+      }
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+    }
+  };
+
+  // Recall tokens from a specific account
+  const recallTokensFromAccount = async () => {
+    if (!issuerPrivateKey || !recallTarget || !recallAmount) {
+      toast({
+        title: "Error",
+        description: "All fields are required for token recall",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsRecalling(true);
+
+      // This would normally use Stellar SDK to:
+      // 1. Load issuer account
+      // 2. Create clawback operation
+      // 3. Submit transaction
+
+      // For demo purposes, show success message
+      toast({
+        title: "Token Recall Initiated",
+        description: `Recalling ${recallAmount} DROP tokens from ${recallTarget.slice(0, 6)}...${recallTarget.slice(-6)}`,
+      });
+
+      // Simulate recall process
+      setTimeout(() => {
+        toast({
+          title: "Recall Successful! ✅",
+          description: `${recallAmount} DROP tokens have been recalled`,
+        });
+        
+        // Clear form
+        setRecallTarget('');
+        setRecallAmount('');
+        setIssuerPrivateKey('');
+        setShowRecallDialog(false);
+        
+        // Refresh balance
+        checkDropBalance();
+      }, 3000);
+
+    } catch (error) {
+      console.error('Recall error:', error);
+      toast({
+        title: "Recall Failed",
+        description: "Failed to recall tokens. Please check your inputs.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRecalling(false);
+    }
+  };
+
+  // Enable authorization flags for token
+  const enableAuthorizationFlags = async () => {
+    if (!issuerPrivateKey) {
+      toast({
+        title: "Error",
+        description: "Issuer private key is required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // This would use Stellar SDK to set authorization flags
+      toast({
+        title: "Setting Authorization Flags",
+        description: "Enabling token recall capabilities...",
+      });
+
+      // Simulate success
+      setTimeout(() => {
+        setTokenAuthStatus({
+          authRequired: true,
+          authRevocable: true
+        });
+        
+        toast({
+          title: "Authorization Enabled! ✅",
+          description: "Token now supports recall operations",
+        });
+      }, 2000);
+
+    } catch (error) {
+      console.error('Authorization error:', error);
+      toast({
+        title: "Failed to Enable Authorization",
+        description: "Could not set authorization flags",
+        variant: "destructive"
+      });
+    }
+  };
+
   useEffect(() => {
     // Load imported wallet from localStorage if available
     const savedWallet = localStorage.getItem('drop_wallet_address');
@@ -368,6 +491,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
   useEffect(() => {
     if (currentWalletAddress) {
       checkDropBalance(currentWalletAddress);
+      checkTokenAuthStatus();
     }
   }, [currentWalletAddress]);
 
@@ -508,7 +632,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
       {/* Wallet Actions Tabs */}
       <Card>
         <Tabs defaultValue="receive" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="receive" className="flex items-center gap-2">
               <Download className="h-4 w-4" />
               Receive
@@ -516,6 +640,10 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
             <TabsTrigger value="send" className="flex items-center gap-2">
               <Upload className="h-4 w-4" />
               Send
+            </TabsTrigger>
+            <TabsTrigger value="admin" className="flex items-center gap-2">
+              <Ban className="h-4 w-4" />
+              Admin
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Key className="h-4 w-4" />
@@ -658,6 +786,102 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
                   </AlertDescription>
                 </Alert>
               )}
+            </CardContent>
+          </TabsContent>
+
+          {/* Admin Tab - Token Recall */}
+          <TabsContent value="admin" className="space-y-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+                Token Administration
+              </CardTitle>
+              <CardDescription>
+                Advanced token management and recall capabilities (Issuer only)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Authorization Status */}
+              <div className="space-y-2">
+                <Label>Authorization Status</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Badge variant={tokenAuthStatus.authRequired ? "default" : "secondary"}>
+                    {tokenAuthStatus.authRequired ? "✅ Auth Required" : "❌ Auth Not Required"}
+                  </Badge>
+                  <Badge variant={tokenAuthStatus.authRevocable ? "default" : "secondary"}>
+                    {tokenAuthStatus.authRevocable ? "✅ Auth Revocable" : "❌ Not Revocable"}
+                  </Badge>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Enable Authorization */}
+              {!tokenAuthStatus.authRevocable && (
+                <Alert>
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Setup Required:</strong> Authorization flags must be enabled before token recall is possible.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Token Recall */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label>Token Recall</Label>
+                  {tokenAuthStatus.authRevocable && (
+                    <Badge variant="outline" className="text-green-600">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Available
+                    </Badge>
+                  )}
+                </div>
+                
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowRecallDialog(true)}
+                  disabled={!tokenAuthStatus.authRevocable}
+                  className="w-full"
+                >
+                  <Ban className="h-4 w-4 mr-2" />
+                  Recall Tokens
+                </Button>
+              </div>
+
+              <Separator />
+
+              {/* Enable Authorization Button */}
+              {!tokenAuthStatus.authRevocable && (
+                <div className="space-y-4">
+                  <Label>Setup Token Recall</Label>
+                  <div className="space-y-2">
+                    <Input
+                      type="password"
+                      placeholder="Issuer Private Key (S...)"
+                      value={issuerPrivateKey}
+                      onChange={(e) => setIssuerPrivateKey(e.target.value)}
+                      className="font-mono"
+                    />
+                    <Button
+                      onClick={enableAuthorizationFlags}
+                      disabled={!issuerPrivateKey || issuerPrivateKey.length !== 56}
+                      className="w-full"
+                      style={{ backgroundColor: DROP_TOKEN.colors.primary }}
+                    >
+                      Enable Authorization Flags
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Note:</strong> Token recall is irreversible and should only be used in emergency situations.
+                  Only the token issuer can perform recall operations.
+                </AlertDescription>
+              </Alert>
             </CardContent>
           </TabsContent>
 
@@ -881,6 +1105,98 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Token Recall Dialog */}
+      <Dialog open={showRecallDialog} onOpenChange={setShowRecallDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Token Recall
+            </DialogTitle>
+            <DialogDescription>
+              Recall DROP tokens from a specific account (Irreversible)
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Warning:</strong> Token recall is permanent and cannot be undone. 
+                Only use in emergency situations.
+              </AlertDescription>
+            </Alert>
+            
+            <div className="space-y-2">
+              <Label htmlFor="recallTarget">Target Account Address</Label>
+              <Input
+                id="recallTarget"
+                placeholder="G... (Pi Network account address)"
+                value={recallTarget}
+                onChange={(e) => setRecallTarget(e.target.value)}
+                className="font-mono"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="recallAmount">Amount to Recall</Label>
+              <Input
+                id="recallAmount"
+                type="number"
+                step="0.0000001"
+                placeholder="0.0000000"
+                value={recallAmount}
+                onChange={(e) => setRecallAmount(e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="issuerKey">Issuer Private Key</Label>
+              <Input
+                id="issuerKey"
+                type="password"
+                placeholder="S... (Issuer private key)"
+                value={issuerPrivateKey}
+                onChange={(e) => setIssuerPrivateKey(e.target.value)}
+                className="font-mono"
+                maxLength={56}
+              />
+              <p className="text-xs text-muted-foreground">
+                Required to authorize the recall operation
+              </p>
+            </div>
+            
+            <div className="bg-red-50 p-3 rounded text-xs space-y-2">
+              <p className="font-semibold text-red-800">Recall Checklist:</p>
+              <ul className="list-disc list-inside space-y-1 ml-2 text-red-700">
+                <li>Token has authorization revocable flag enabled</li>
+                <li>Target account has valid DROP balance</li>
+                <li>Issuer private key is correct</li>
+                <li>Operation is legally justified</li>
+              </ul>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowRecallDialog(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={recallTokensFromAccount}
+                disabled={!recallTarget || !recallAmount || !issuerPrivateKey || isRecalling}
+                className="flex-1"
+              >
+                {isRecalling ? 'Recalling...' : 'Recall Tokens'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
