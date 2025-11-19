@@ -140,13 +140,13 @@ const PublicBio = () => {
   };
 
   const handleSignUpToFollow = () => {
-    // Store the current store/profile for redirect after authentication
+    // Store the current store/profile for potential future redirect
     sessionStorage.setItem('redirectAfterAuth', window.location.pathname);
     sessionStorage.setItem('authAction', 'follow');
     sessionStorage.setItem('profileToFollow', username || '');
     
-    // Navigate to authentication page
-    navigate('/auth');
+    // Redirect to main DropLink website for signup
+    window.location.href = 'https://www.droplink.space';
   };
 
   const handleFollow = async () => {
@@ -812,9 +812,12 @@ const PublicBio = () => {
         {/* Droplink Branding Footer */}
         {!profile.hasPremium && (
           <div className="text-center py-8 border-t border-white/10">
-            <p className="text-white/60 text-sm font-medium">
+            <button
+              onClick={() => window.location.href = 'https://www.droplink.space'}
+              className="text-white/60 text-sm font-medium hover:text-sky-400 transition-colors cursor-pointer"
+            >
               JOIN <span className="text-sky-400">DROPLINK</span> BY MRWAIN ORGANIZATION
-            </p>
+            </button>
           </div>
         )}
       </div>

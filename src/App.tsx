@@ -19,28 +19,27 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import CustomDomain from "./pages/CustomDomain";
 import ProfileDebug from "./pages/ProfileDebug";
-import { SplashScreen } from "./components/SplashScreen";
+import Home from "./pages/Home";
+import SplashScreen from "./components/SplashScreen";
 
 const queryClient = new QueryClient();
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user has already seen splash in this session
-    const hasSeenSplash = sessionStorage.getItem('hasSeenSplash');
-    if (hasSeenSplash) {
-      setShowSplash(false);
-    }
+    // Always show splash when app opens
+    // Remove session storage check to show splash every time
+    setIsLoading(false);
   }, []);
 
   const handleLoadingComplete = () => {
-    sessionStorage.setItem('hasSeenSplash', 'true');
     setShowSplash(false);
   };
 
   if (showSplash) {
-    return <SplashScreen onLoadingComplete={handleLoadingComplete} />;
+    return <SplashScreen onComplete={handleLoadingComplete} />;
   }
 
   return (
@@ -56,6 +55,7 @@ const App = () => {
         >
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/home" element={<Home />} />
             <Route path="/auth" element={<PiAuth />} />
             <Route path="/email-auth" element={<EmailAuth />} />
             <Route path="/subscription" element={<Subscription />} />
