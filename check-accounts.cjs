@@ -1,5 +1,5 @@
 const StellarSDK = require('@stellar/stellar-sdk');
-const server = new StellarSDK.Horizon.Server('https://api.testnet.minepi.com');
+const server = new StellarSDK.Horizon.Server('https://api.mainnet.minepi.com');
 
 async function checkAccountStatus() {
   const issuerPublic = 'GBVTV77XFMDYSSVIG6ZGSRAGZ3S7KA4275YYLOLIROOD3Y3F3TH5U3EI';
@@ -21,8 +21,8 @@ async function checkAccountStatus() {
     });
   } catch (error) {
     console.log('❌ Issuer account not found/funded');
-    console.log('   Need to fund with Test-Pi first');
-    console.log(`   Friendbot URL: https://api.testnet.minepi.com/friendbot?addr=${issuerPublic}`);
+    console.log('   Need to fund with Pi first');
+    console.log(`   Account: ${issuerPublic}`);
   }
   
   // Check distributor account  
@@ -39,14 +39,14 @@ async function checkAccountStatus() {
     });
   } catch (error) {
     console.log('\n❌ Distributor account not found/funded');
-    console.log(`   Friendbot URL: https://api.testnet.minepi.com/friendbot?addr=${distributorPublic}`);
+    console.log(`   Account: ${distributorPublic}`);
   }
   
-  console.log('\n💡 To fund accounts:');
+  console.log('💡 To fund accounts:');
   console.log('====================');
-  console.log('1. Use Pi Testnet Faucet (Friendbot)');
-  console.log('2. Or fund via Pi Wallet app on testnet');
-  console.log('3. Each account needs Test-Pi for transaction fees');
+  console.log('1. Fund via Pi Wallet app on mainnet');
+  console.log('2. Transfer Pi from your personal wallet');
+  console.log('3. Each account needs Pi for transaction fees');
 }
 
 checkAccountStatus();

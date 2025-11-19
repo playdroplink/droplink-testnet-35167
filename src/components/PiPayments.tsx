@@ -894,20 +894,15 @@ const PiPayments: React.FC = () => {
               <div className="grid gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="environment">Environment</Label>
-                  <Select 
-                    value={merchantConfig.environment} 
-                    onValueChange={(value: 'mainnet' | 'testnet') => 
-                      setMerchantConfig({...merchantConfig, environment: value})
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select environment" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="mainnet">Mainnet (Production)</SelectItem>
-                      <SelectItem value="testnet">Testnet (Development)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="font-medium text-green-800">Mainnet (Production)</span>
+                    </div>
+                    <p className="text-sm text-green-700 mt-1">
+                      Connected to Pi Network Mainnet for live transactions
+                    </p>
+                  </div>
                 </div>
 
                 <div className="space-y-2">

@@ -1,16 +1,16 @@
 const StellarSDK = require('@stellar/stellar-sdk');
 
-// Pi Testnet Configuration
-const server = new StellarSDK.Horizon.Server('https://api.testnet.minepi.com');
-const NETWORK_PASSPHRASE = "Pi Testnet";
+// Pi Mainnet Configuration
+const server = new StellarSDK.Horizon.Server('https://api.mainnet.minepi.com');
+const NETWORK_PASSPHRASE = "Public Global Stellar Network ; September 2015";
 
 console.log('🔍 Detecting Pi Blockchain Connection...');
 console.log('=====================================');
 
 async function detectPiBlockchain() {
   try {
-    // Test connection to Pi Testnet
-    console.log('📡 Connecting to Pi Testnet...');
+    // Test connection to Pi Mainnet
+    console.log('📡 Connecting to Pi Mainnet...');
     const response = await server.ledgers().order('desc').limit(1).call();
     const latestLedger = response.records[0];
     
@@ -18,8 +18,8 @@ async function detectPiBlockchain() {
     console.log(`📊 Latest Ledger: #${latestLedger.sequence}`);
     console.log(`⏰ Ledger Time: ${new Date(latestLedger.closed_at).toLocaleString()}`);
     console.log(`💰 Base Fee: ${latestLedger.base_fee_in_stroops} stroops`);
-    console.log(`🔗 Network: Pi Testnet`);
-    console.log(`🌐 API Endpoint: https://api.testnet.minepi.com`);
+    console.log(`🔗 Network: Pi Mainnet`);
+    console.log(`🌐 API Endpoint: https://api.mainnet.minepi.com`);
     console.log(`🏗️ Network Passphrase: ${NETWORK_PASSPHRASE}`);
     
     return true;
@@ -39,7 +39,7 @@ async function checkDropToken() {
   try {
     // Check if token exists
     console.log('🔍 Checking for DROP token...');
-    const tokenResponse = await fetch(`https://api.testnet.minepi.com/assets?asset_code=DROP&asset_issuer=${issuer}`);
+    const tokenResponse = await fetch(`https://api.mainnet.minepi.com/assets?asset_code=DROP&asset_issuer=${issuer}`);
     
     if (tokenResponse.ok) {
       const tokenData = await tokenResponse.json();
@@ -74,7 +74,7 @@ async function checkDropToken() {
     console.log('\n💰 Distributor Balances:');
     distributorResponse.balances.forEach(balance => {
       if (balance.asset_type === 'native') {
-        console.log(`   Test-Pi: ${balance.balance}`);
+        console.log(`   Pi: ${balance.balance}`);
       } else {
         console.log(`   ${balance.asset_code}: ${balance.balance}`);
       }

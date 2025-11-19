@@ -168,12 +168,13 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
 
         console.log('🥧 Initializing Pi Network (Mainnet Mode)...');
         console.log('Network:', PI_CONFIG.NETWORK);
-        console.log('Sandbox Mode:', PI_CONFIG.SANDBOX_MODE);
+        console.log('API Endpoint:', 'api.mainnet.minepi.com');
+        console.log('Mainnet Mode:', !PI_CONFIG.SANDBOX_MODE);
 
         if (isPiNetworkAvailable()) {
-          // Initialize Pi SDK for mainnet using config
+          // Initialize Pi SDK for mainnet using config (sandbox: false)
           await window.Pi.init(PI_CONFIG.SDK);
-          console.log(`✅ Pi SDK initialized successfully (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'} Mode)`);
+          console.log(`✅ Pi SDK initialized successfully (Mainnet Mode)`);
           setIsInitialized(true);
           
           // Check ad network support
