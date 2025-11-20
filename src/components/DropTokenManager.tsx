@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { PI_CONFIG } from '@/config/pi-config';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -52,7 +53,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
   const [showQrDialog, setShowQrDialog] = useState<boolean>(false);
   const [userPrivateKey, setUserPrivateKey] = useState<string>('');
   const [showPrivateKeyDialog, setShowPrivateKeyDialog] = useState<boolean>(false);
-  const [isMainnetMode, setIsMainnetMode] = useState<boolean>(true);
+  const [isMainnetMode, setIsMainnetMode] = useState<boolean>(!PI_CONFIG.SANDBOX_MODE);
   const [importedWallet, setImportedWallet] = useState<string>('');
   const [currentWalletAddress, setCurrentWalletAddress] = useState<string>(piWallet || '');
   const [isImporting, setIsImporting] = useState<boolean>(false);
@@ -76,8 +77,13 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
     try {
       setIsLoading(true);
       
-      // Check Pi Mainnet for balance
-      const response = await fetch(`https://api.mainnet.minepi.com/accounts/${targetWallet}`);
+      // Check Pi API for balance (uses configured endpoints)
+      const response = await fetch(`${PI_CONFIG.ENDPOINTS.PI_ACCOUNT_BALANCES}/${targetWallet}`, {
+        headers: {
+          'Authorization': `Bearer ${PI_CONFIG.API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
       
       if (response.ok) {
         const accountData = await response.json();
@@ -212,7 +218,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
     if (!userPrivateKey || userPrivateKey.length !== 56 || !userPrivateKey.startsWith('S')) {
       toast({
         title: "Invalid Private Key",
-        description: "Please enter a valid Pi Mainnet private key (56 chars, starts with 'S')",
+        description: `Please enter a valid ${PI_CONFIG.SANDBOX_MODE ? 'Pi Sandbox' : 'Pi Mainnet'} private key (56 chars, starts with 'S')`,
         variant: "destructive"
       });
       return;
@@ -368,7 +374,12 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
   // Check token authorization status
   const checkTokenAuthStatus = async () => {
     try {
-      const response = await fetch(`https://api.mainnet.minepi.com/accounts/${DROP_TOKEN.issuer}`);
+      const response = await fetch(`${PI_CONFIG.ENDPOINTS.PI_ACCOUNT_BALANCES}/${DROP_TOKEN.issuer}`, {
+        headers: {
+          'Authorization': `Bearer ${PI_CONFIG.API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
       if (response.ok) {
         const accountData = await response.json();
         const flags = accountData.flags;
@@ -729,7 +740,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
                     <Alert>
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>
-                        To send tokens, you need to import your Pi Mainnet private key.
+                        To send tokens, you need to import your {PI_CONFIG.SANDBOX_MODE ? 'Pi Sandbox' : 'Pi Mainnet'} private key.
                         <Button 
                           variant="link" 
                           className="p-0 h-auto font-normal underline ml-1"
@@ -897,7 +908,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
               <div className="space-y-2">
                 <Label>Network</Label>
                 <Badge variant={isMainnetMode ? "default" : "secondary"}>
-                  Pi Mainnet
+                  {PI_CONFIG.SANDBOX_MODE ? 'Pi Sandbox' : 'Pi Mainnet'}
                 </Badge>
               </div>
               
@@ -1005,7 +1016,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
               Import Private Key
             </DialogTitle>
             <DialogDescription>
-              Import your Pi Mainnet private key to enable sending tokens
+              Import your {PI_CONFIG.SANDBOX_MODE ? 'Pi Sandbox' : 'Pi Mainnet'} private key to enable sending tokens
             </DialogDescription>
           </DialogHeader>
           
@@ -1019,7 +1030,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
             </Alert>
             
             <div className="space-y-2">
-              <Label htmlFor="privateKey">Pi Mainnet Private Key</Label>
+              <Label htmlFor="privateKey">{PI_CONFIG.SANDBOX_MODE ? 'Pi Sandbox Private Key' : 'Pi Mainnet Private Key'}</Label>
               <Input
                 id="privateKey"
                 type="password"
@@ -1035,7 +1046,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
             </div>
             
             <div className="bg-muted p-3 rounded text-xs space-y-2">
-              <p className="font-semibold">How to get your Pi Mainnet private key:</p>
+              <p className="font-semibold">How to get your {PI_CONFIG.SANDBOX_MODE ? 'Pi Sandbox' : 'Pi Mainnet'} private key:</p>
               <ol className="list-decimal list-inside space-y-1 ml-2">
                 <li>Open Pi Wallet app</li>
                 <li>Go to wallet settings</li>
@@ -1084,7 +1095,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
           
           <Button variant="outline" className="w-full justify-start" asChild>
             <a 
-              href={`https://api.mainnet.minepi.com/assets?asset_code=${DROP_TOKEN.code}&asset_issuer=${DROP_TOKEN.issuer}`}
+              href={`${PI_CONFIG.ENDPOINTS.PI_ASSET_DISCOVERY}?asset_code=${DROP_TOKEN.code}&asset_issuer=${DROP_TOKEN.issuer}`}
               target="_blank"
               rel="noopener noreferrer"
             >

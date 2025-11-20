@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PlayCircle, Coins, Clock, CheckCircle } from 'lucide-react';
+import { PI_CONFIG } from '@/config/pi-config';
 import { usePi } from '@/contexts/PiContext';
 
 interface AdReward {
@@ -154,7 +155,7 @@ const PiAdNetwork: React.FC = () => {
         <CardTitle className="flex items-center gap-2">
           <PlayCircle className="h-5 w-5" />
           Pi Ad Network
-          <Badge variant="secondary">Mainnet</Badge>
+          <Badge variant="secondary">{PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'}</Badge>
         </CardTitle>
         <CardDescription>
           Watch ads and earn DROP tokens on Pi Network

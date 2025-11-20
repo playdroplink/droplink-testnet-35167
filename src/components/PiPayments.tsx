@@ -109,7 +109,7 @@ const PiPayments: React.FC = () => {
     walletAddress: '',
     validationKey: '7511661aac4538b1832d2c9ba117f6d972b26a54640598d3fbb9824013c7079203f65b02d125be3f418605cfb89ba0e4443e3ec997e3800eb464df0bc5410d2a',
     apiKey: import.meta.env.VITE_PI_API_KEY || '',
-    environment: 'mainnet'
+    environment: PI_CONFIG.SANDBOX_MODE ? 'testnet' : 'mainnet'
   });
   const [showMerchantConfig, setShowMerchantConfig] = useState(false);
 
@@ -411,15 +411,15 @@ const PiPayments: React.FC = () => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5 text-sky-500" />
-            Pi Payments - DropPay
-            <Badge variant="secondary">Mainnet</Badge>
-          </CardTitle>
-          <CardDescription>
-            Create payment checkout links for digital products, donations, tips, and paid groups
-          </CardDescription>
-        </CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-sky-500" />
+                Pi Payments - DropPay
+                <Badge variant="secondary">{PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'}</Badge>
+              </CardTitle>
+              <CardDescription>
+                Create payment checkout links for digital products, donations, tips, and paid groups
+              </CardDescription>
+            </CardHeader>
         <CardContent>
           <Alert>
             <AlertTriangle className="h-4 w-4" />
@@ -436,14 +436,14 @@ const PiPayments: React.FC = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5 text-sky-500" />
-            Pi Payments - DropPay
-            <Badge className="bg-sky-500">Mainnet</Badge>
-          </CardTitle>
-          <CardDescription>
-            Complete payment solution for Pi Network mainnet - Create checkout links, track payments, and manage your Pi wallet
-          </CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-sky-500" />
+              Pi Payments - DropPay
+              <Badge className="bg-sky-500">{PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'}</Badge>
+            </CardTitle>
+            <CardDescription>
+              Complete payment solution for Pi Network {PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'} - Create checkout links, track payments, and manage your Pi wallet
+            </CardDescription>
         </CardHeader>
       </Card>
 
@@ -475,7 +475,7 @@ const PiPayments: React.FC = () => {
               <div className="flex items-center gap-3 p-4 bg-sky-50 rounded-lg border border-sky-200">
                 <Pi className="h-8 w-8 text-sky-600" />
                 <div>
-                  <p className="font-medium text-sky-900">Connected to Pi Network Mainnet</p>
+                  <p className="font-medium text-sky-900">Connected to Pi Network {PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'}</p>
                   <p className="text-sm text-sky-600">
                     User: {piUser?.username || 'Anonymous'} | Wallet: {walletAddress ? `${walletAddress.slice(0, 8)}...${walletAddress.slice(-8)}` : 'Loading...'}
                   </p>
@@ -727,7 +727,7 @@ const PiPayments: React.FC = () => {
                   Pi Wallet Balance
                 </CardTitle>
                 <CardDescription>
-                  Your Pi Network mainnet wallet overview
+                  Your Pi Network {PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'} wallet overview
                 </CardDescription>
               </div>
               <Button
@@ -783,7 +783,7 @@ const PiPayments: React.FC = () => {
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div className="flex justify-between p-2 bg-gray-50 rounded">
                         <span>Network:</span>
-                        <span className="font-medium">Pi Mainnet</span>
+                        <span className="font-medium">{PI_CONFIG.SANDBOX_MODE ? 'Pi Sandbox' : 'Pi Mainnet'}</span>
                       </div>
                       <div className="flex justify-between p-2 bg-gray-50 rounded">
                         <span>Last Updated:</span>
@@ -794,9 +794,9 @@ const PiPayments: React.FC = () => {
 
                   <Alert className="border-sky-200 bg-sky-50">
                     <TrendingUp className="h-4 w-4 text-sky-600" />
-                    <AlertDescription className="text-sky-800">
+                      <AlertDescription className="text-sky-800">
                       <strong>Pro Tip:</strong> Share your payment links to start receiving Pi payments directly to this wallet. 
-                      All transactions are processed on Pi Network mainnet for maximum security.
+                      All transactions are processed on Pi Network {PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'} for maximum security.
                     </AlertDescription>
                   </Alert>
                 </div>
@@ -814,7 +814,7 @@ const PiPayments: React.FC = () => {
                   Transaction History
                 </CardTitle>
                 <CardDescription>
-                  Recent transactions on Pi Network mainnet
+                  Recent transactions on Pi Network {PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'}
                 </CardDescription>
               </div>
               <Button
@@ -897,10 +897,10 @@ const PiPayments: React.FC = () => {
                   <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="font-medium text-green-800">Mainnet (Production)</span>
+                      <span className="font-medium text-green-800">{PI_CONFIG.SANDBOX_MODE ? 'Sandbox (Testing)' : 'Mainnet (Production)'}</span>
                     </div>
                     <p className="text-sm text-green-700 mt-1">
-                      Connected to Pi Network Mainnet for live transactions
+                      Connected to Pi Network {PI_CONFIG.SANDBOX_MODE ? 'Sandbox for testing' : 'Mainnet for live transactions'}
                     </p>
                   </div>
                 </div>

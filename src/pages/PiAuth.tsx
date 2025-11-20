@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { isPiNetworkAvailable } from "@/config/pi-config";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePi } from "@/contexts/PiContext";
-import { Loader2, Mail } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AboutModal } from "@/components/AboutModal";
@@ -12,7 +13,7 @@ import droplinkLogo from "@/assets/droplink-logo.png";
 const PiAuth = () => {
   const navigate = useNavigate();
   const { isAuthenticated, loading, signIn, piUser } = usePi();
-  const [emailLoading, setEmailLoading] = useState(false);
+  
 
   useEffect(() => {
     // Check if user is already authenticated (Pi or Gmail)
@@ -74,17 +75,7 @@ const PiAuth = () => {
     }
   };
 
-  const handleEmailSignIn = async () => {
-    setEmailLoading(true);
-    try {
-      // Redirect to email auth page or show email form
-      navigate("/email-auth");
-    } catch (error: any) {
-      console.error("Email sign in error:", error);
-      toast.error(error.message || "Failed to sign in with email");
-      setEmailLoading(false);
-    }
-  };
+  
 
   if (loading) {
     return (
@@ -131,38 +122,7 @@ const PiAuth = () => {
             )}
           </Button>
 
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or continue with
-              </span>
-            </div>
-          </div>
-
-          {/* Email Sign In */}
-          <Button 
-            onClick={handleEmailSignIn} 
-            variant="outline"
-            className="w-full" 
-            size="lg"
-            disabled={emailLoading}
-          >
-            {emailLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Loading...
-              </>
-            ) : (
-              <>
-                <Mail className="w-4 h-4 mr-2" />
-                Continue with Email
-              </>
-            )}
-          </Button>
+          {/* Email sign-in has been disabled — only Pi Network authentication allowed */}
 
           <div className="space-y-2 text-sm text-muted-foreground">
             <p className="flex items-center gap-2">
@@ -189,6 +149,18 @@ const PiAuth = () => {
               <br />
               Your Pi username will be used as your unique identifier.
             </p>
+
+            {/* If Pi Browser/SDK is not available, show download link */}
+            {!isPiNetworkAvailable() && (
+              <div className="flex justify-center mt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => window.open('https://minepi.com/Wain2020', '_blank')}
+                >
+                  Download Pi Browser
+                </Button>
+              </div>
+            )}
             <div className="flex justify-center gap-4 text-xs">
               <AboutModal>
                 <button className="text-primary hover:underline cursor-pointer">

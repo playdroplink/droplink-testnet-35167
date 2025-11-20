@@ -14,7 +14,6 @@ import Wallet from "./pages/Wallet";
 import Profile from "./pages/Profile";
 import AISupport from "./pages/AISupport";
 import PiAuth from "./pages/PiAuth";
-import EmailAuth from "./pages/EmailAuth";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import CustomDomain from "./pages/CustomDomain";
@@ -57,7 +56,6 @@ const App = () => {
             <Route path="/" element={<Dashboard />} />
             <Route path="/home" element={<Home />} />
             <Route path="/auth" element={<PiAuth />} />
-            <Route path="/email-auth" element={<EmailAuth />} />
             <Route path="/subscription" element={<Subscription />} />
             <Route path="/followers" element={<Followers />} />
             <Route path="/wallet" element={<Wallet />} />

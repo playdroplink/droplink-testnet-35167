@@ -2,17 +2,19 @@
 export const PI_CONFIG = {
   // Mainnet Configuration
   API_KEY: "96tnxytg82pevnvvxfowap4bwctcxo6wkp2dexoraevtj8svh0mvqxttpbtwvjm5",
-  BASE_URL: "https://api.mainnet.minepi.com",
-  NETWORK: "mainnet",
+  // For testing you can enable sandbox mode. When sandbox is true the SDK
+  // and endpoints will use Pi's sandbox/test endpoints. Toggle as needed.
+  BASE_URL: "https://api.sandbox.minepi.com",
+  NETWORK: "sandbox",
   NETWORK_PASSPHRASE: "Pi Network", // Mainnet passphrase
-  SANDBOX_MODE: false,
+  SANDBOX_MODE: true,
   // Production policy: disallow creating extra/dev test accounts on mainnet
   ALLOW_MULTIPLE_ACCOUNTS: false,
   
   // SDK Configuration
   SDK: {
     version: "2.0",
-    sandbox: false,
+    sandbox: true,
   },
   
   // Scopes for authentication (include wallet_address for token detection)
@@ -59,22 +61,22 @@ export const PI_CONFIG = {
   
   // Mainnet endpoints
   ENDPOINTS: {
-    ME: "https://api.mainnet.minepi.com/v2/me",
-    WALLETS: "https://api.mainnet.minepi.com/v2/wallets",
-    TRANSACTIONS: "https://api.mainnet.minepi.com/v2/transactions",
-    PAYMENTS: "https://api.mainnet.minepi.com/v2/payments",
-    OPERATIONS: "https://api.mainnet.minepi.com/v2/operations",
-    LEDGERS: "https://api.mainnet.minepi.com/v2/ledgers",
-    EFFECTS: "https://api.mainnet.minepi.com/v2/effects",
-    FEE_STATS: "https://api.mainnet.minepi.com/v2/fee_stats",
+    ME: "https://api.sandbox.minepi.com/v2/me",
+    WALLETS: "https://api.sandbox.minepi.com/v2/wallets",
+    TRANSACTIONS: "https://api.sandbox.minepi.com/v2/transactions",
+    PAYMENTS: "https://api.sandbox.minepi.com/v2/payments",
+    OPERATIONS: "https://api.sandbox.minepi.com/v2/operations",
+    LEDGERS: "https://api.sandbox.minepi.com/v2/ledgers",
+    EFFECTS: "https://api.sandbox.minepi.com/v2/effects",
+    FEE_STATS: "https://api.sandbox.minepi.com/v2/fee_stats",
     // Pi Blockchain endpoints
-    PI_BLOCKCHAIN: "https://api.mainnet.minepi.com/v2/blockchain",
-    PI_ASSETS: "https://api.mainnet.minepi.com/v2/assets",
-    PI_ACCOUNT_BALANCES: "https://api.mainnet.minepi.com/v2/accounts",
+    PI_BLOCKCHAIN: "https://api.sandbox.minepi.com/v2/blockchain",
+    PI_ASSETS: "https://api.sandbox.minepi.com/v2/assets",
+    PI_ACCOUNT_BALANCES: "https://api.sandbox.minepi.com/v2/accounts",
     // Stellar Horizon endpoints for mainnet token detection
     HORIZON: "https://horizon.stellar.org",
     // Pi Network specific asset discovery
-    PI_ASSET_DISCOVERY: "https://api.mainnet.minepi.com/v2/assets"
+    PI_ASSET_DISCOVERY: "https://api.sandbox.minepi.com/v2/assets"
   }
 };
 
@@ -278,13 +280,13 @@ export const getTokenBalance = async (walletAddress: string, tokenCode?: string,
 // Legacy function names for backwards compatibility - these now show warnings
 export const getDROPTokenBalance = async (walletAddress: string): Promise<any> => {
   console.warn('⚠️ getDROPTokenBalance is deprecated. DROP token was configured for testnet only.');
-  console.warn('ℹ️ Use getTokenBalance() or getWalletTokens() for mainnet token detection.');
+  console.warn(`ℹ️ Use getTokenBalance() or getWalletTokens() for ${PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'} token detection.`);
   return getTokenBalance(walletAddress);
 };
 
 export const createDROPTrustline = async (walletAddress: string): Promise<boolean> => {
   console.warn('⚠️ createDROPTrustline is deprecated. DROP token was configured for testnet only.');
-  console.warn('ℹ️ Use createTokenTrustline() for mainnet tokens.');
+  console.warn(`ℹ️ Use createTokenTrustline() for ${PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'} tokens.`);
   return false;
 };
 
@@ -315,6 +317,6 @@ export const getAllWalletTokens = async (walletAddress: string): Promise<any[]> 
 //   name: "Your Token Name"
 // };
 
-console.log('✅ Pi Network Configuration loaded for MAINNET');
+console.log(`✅ Pi Network Configuration loaded for ${PI_CONFIG.SANDBOX_MODE ? 'SANDBOX' : 'MAINNET'}`);
 console.log('ℹ️ Previous testnet DROP token configuration has been removed');
-console.log('ℹ️ Use generic token detection methods for mainnet tokens');
+console.log(`ℹ️ Use generic token detection methods for ${PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'} tokens`);

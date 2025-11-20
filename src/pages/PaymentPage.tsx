@@ -16,6 +16,7 @@ import {
   CreditCard
 } from 'lucide-react';
 import { usePi } from '@/contexts/PiContext';
+import { PI_CONFIG } from '@/config/pi-config';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -453,7 +454,7 @@ const PaymentPage: React.FC = () => {
             </Button>
 
             <p className="text-xs text-center text-gray-500">
-              Secured by Pi Network • Processed on mainnet blockchain
+              Secured by Pi Network • Processed on {PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'} blockchain
             </p>
           </div>
 

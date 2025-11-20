@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PI_CONFIG } from '@/config/pi-config';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,7 +60,7 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
     {
       icon: <Zap className="w-5 h-5 text-yellow-500" />,
       title: "Pi Network Integration", 
-      description: "Seamlessly integrated with Pi Network mainnet for authentic Web3 experience"
+      description: `Seamlessly integrated with ${PI_CONFIG.SANDBOX_MODE ? 'Pi Sandbox' : 'Pi Mainnet'} for authentic Web3 experience`
     },
     {
       icon: <Globe className="w-5 h-5 text-blue-500" />,
@@ -94,7 +95,7 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
     "Pi Network authentication",
     "Custom .pi domain names",
     "Pi ecosystem interoperability",
-    "Mainnet Pi transactions"
+    `${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'} Pi transactions`
   ];
 
   return (

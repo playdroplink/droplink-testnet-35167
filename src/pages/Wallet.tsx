@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { usePi } from "@/contexts/PiContext";
 import { DropTokenManager } from "@/components/DropTokenManager";
+import { PI_CONFIG } from '@/config/pi-config';
 
 interface Transaction {
   id: string;
@@ -453,10 +454,10 @@ const Wallet = () => {
                       
                       <Button variant="outline" className="w-full justify-start" asChild>
                         <a 
-                          href="https://api.mainnet.minepi.com/assets?asset_code=DROP&asset_issuer=GBVTV77XFMDYSSVIG6ZGSRAGZ3S7KA4275YYLOLIROOD3Y3F3TH5U3EI"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
+                            href={`${PI_CONFIG.ENDPOINTS.PI_ASSET_DISCOVERY}?asset_code=DROP&asset_issuer=GBVTV77XFMDYSSVIG6ZGSRAGZ3S7KA4275YYLOLIROOD3Y3F3TH5U3EI`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
                           <ExternalLink className="h-4 w-4 mr-2" />
                           View on Pi Explorer
                         </a>

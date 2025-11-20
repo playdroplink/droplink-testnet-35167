@@ -161,22 +161,30 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const initializePi = async () => {
       try {
-        // Validate mainnet configuration first
-        if (!validateMainnetConfig()) {
-          console.error('Invalid Pi Network mainnet configuration');
-          setError('Invalid Pi Network mainnet configuration');
-          return;
+        // Validate configuration based on sandbox/mainnet mode
+        if (PI_CONFIG.SANDBOX_MODE) {
+          if (!validatePiConfig()) {
+            console.error('Invalid Pi Network sandbox configuration');
+            setError('Invalid Pi Network sandbox configuration');
+            return;
+          }
+        } else {
+          if (!validateMainnetConfig()) {
+            console.error('Invalid Pi Network mainnet configuration');
+            setError('Invalid Pi Network mainnet configuration');
+            return;
+          }
         }
 
-        console.log('🥧 Initializing Pi Network (Mainnet Mode)...');
+        console.log(`🥧 Initializing Pi Network (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})...`);
         console.log('Network:', PI_CONFIG.NETWORK);
-        console.log('API Endpoint:', 'api.mainnet.minepi.com');
-        console.log('Mainnet Mode:', !PI_CONFIG.SANDBOX_MODE);
+        console.log('API Endpoint:', PI_CONFIG.BASE_URL);
+        console.log('Sandbox Mode:', PI_CONFIG.SANDBOX_MODE);
 
         if (isPiNetworkAvailable()) {
-          // Initialize Pi SDK for mainnet using config (sandbox: false)
+          // Initialize Pi SDK using configured SDK options
           await window.Pi.init(PI_CONFIG.SDK);
-          console.log(`✅ Pi SDK initialized successfully (Mainnet Mode)`);
+          console.log(`✅ Pi SDK initialized successfully (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})`);
           setIsInitialized(true);
           
           // Check ad network support
@@ -195,7 +203,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           
           if (storedToken && storedUser) {
             try {
-              // Verify token with Pi API using mainnet config
+                // Verify token with Pi API using configured endpoint
               const response = await fetch(PI_CONFIG.ENDPOINTS.ME, {
                 headers: PI_CONFIG.getAuthHeaders(storedToken)
               });
@@ -205,7 +213,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
                 const userData = JSON.parse(storedUser);
                 setAccessToken(storedToken);
                 setPiUser(userData);
-                console.log("🔐 Auto-authenticated with stored credentials (Mainnet)");
+                console.log(`🔐 Auto-authenticated with stored credentials (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})`);
                 
                 // Update user data if needed
                 if (verifiedUser.uid === userData.uid) {
@@ -238,7 +246,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (scopes: string[] = PI_CONFIG.scopes || ['username', 'payments', 'wallet_address']) => {
     if (!isInitialized || !window.Pi) {
       // Try to reinitialize Pi SDK
-      toast('Initializing Pi Network connection (Mainnet)...', {
+      toast(`Initializing Pi Network connection (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})...`, {
         description: 'Please wait while we connect to Pi Network',
         duration: 3000,
       });
@@ -247,7 +255,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         if (isPiNetworkAvailable()) {
           await window.Pi.init(PI_CONFIG.SDK);
           setIsInitialized(true);
-          console.log('✅ Pi SDK reinitialized successfully (Mainnet)');
+          console.log(`✅ Pi SDK reinitialized successfully (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})`);
         } else {
           throw new Error('Pi Network is not available in this browser');
         }
@@ -265,21 +273,21 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
 
     try {
-      console.log('🔐 Starting Pi Network authentication (Mainnet)...');
+      console.log(`🔐 Starting Pi Network authentication (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})...`);
       const authResult = await window.Pi.authenticate(scopes, PI_CONFIG.onIncompletePaymentFound);
       
-      // Verify with Pi API (Mainnet)
-      console.log('🔍 Verifying authentication with Pi Mainnet API...');
+      // Verify with Pi API (configured endpoint)
+      console.log(`🔍 Verifying authentication with Pi ${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'} API...`);
       const response = await fetch(PI_CONFIG.ENDPOINTS.ME, {
         headers: PI_CONFIG.getAuthHeaders(authResult.accessToken)
       });
 
       if (!response.ok) {
-        throw new Error('Mainnet authentication verification failed');
+        throw new Error(`${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'} authentication verification failed`);
       }
 
       const verifiedUser = await response.json();
-      console.log('✅ Pi mainnet authentication successful:', verifiedUser);
+      console.log(`✅ Pi ${PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'} authentication successful:`, verifiedUser);
       
       // Use the user data from authentication result
       let finalUser = authResult.user;
@@ -287,52 +295,66 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       // Note: Wallet address will be provided by Pi authentication if user has connected wallet
 
       // Authenticate with our new Pi auth system
-      // First try server-side RPC to register/verify user
+      // Try server-side RPC to register/verify user, then invoke the `pi-auth` edge function.
       let dbResult: any = null;
       try {
-        const rpcRes = await (supabase as any).rpc('authenticate_pi_user', {
-          p_pi_user_id: finalUser.uid,
-          p_pi_username: finalUser.username || `user_${finalUser.uid}`,
-          p_access_token: authResult.accessToken,
-          p_wallet_address: finalUser.wallet_address || null
-        });
-        dbResult = rpcRes?.data || null;
-        const rpcError = rpcRes?.error;
-        if (rpcError) {
-          console.warn('RPC authenticate_pi_user failed, falling back to function invoke:', rpcError.message || rpcError);
+        // Prefer RPC for quick checks if available (may be restricted in some environments)
+        try {
+          const rpcRes = await (supabase as any).rpc('authenticate_pi_user', {
+            p_pi_user_id: finalUser.uid,
+            p_pi_username: finalUser.username || `user_${finalUser.uid}`,
+            p_access_token: authResult.accessToken,
+            p_wallet_address: finalUser.wallet_address || null
+          });
+          dbResult = rpcRes?.data || null;
+          const rpcError = rpcRes?.error;
+          if (rpcError) {
+            console.warn('RPC authenticate_pi_user returned error (non-fatal):', rpcError.message || rpcError);
+          }
+        } catch (rpcExc) {
+          console.warn('RPC authenticate_pi_user failed (non-fatal):', rpcExc);
         }
 
-        // Additionally call the `pi-auth` edge function to ensure full user data is stored and synced
+        // Call the `pi-auth` edge function to ensure full user data is stored and synced server-side.
         try {
-          const { data: funcData, error: funcErr } = await supabase.functions.invoke('pi-auth', {
-            body: {
+          const invokeRes = await supabase.functions.invoke('pi-auth', {
+            body: JSON.stringify({
               accessToken: authResult.accessToken,
               username: finalUser.username || `user_${finalUser.uid}`,
               uid: finalUser.uid,
               wallet_address: finalUser.wallet_address || null,
               profile: finalUser
-            }
+            })
           });
 
-          if (funcErr) {
-            console.warn('pi-auth function returned error:', funcErr.message || funcErr);
-          } else {
-            // If function returned profile or user data, persist extended info
-            if (funcData?.profileId || funcData?.userId) {
-              localStorage.setItem('pi_user_extended', JSON.stringify({
-                ...finalUser,
-                profileId: funcData.profileId,
-                supabaseUserId: funcData.userId,
-                lastSynced: new Date().toISOString()
-              }));
+          const funcData = (invokeRes as any)?.data;
+          const funcError = (invokeRes as any)?.error;
+
+          if (funcError) {
+            console.warn('pi-auth function returned error (non-fatal):', funcError.message || funcError);
+          } else if (funcData) {
+            // If function returned profile or user data, persist extended info and update local state
+            localStorage.setItem('pi_user_extended', JSON.stringify({
+              ...finalUser,
+              ...(funcData.profile || {}),
+              supabaseUserId: funcData.userId || null,
+              lastSynced: new Date().toISOString()
+            }));
+
+            // Map returned profile into currentProfile
+            if (funcData.profile) {
+              setCurrentProfile(funcData.profile);
+            }
+
+            if (funcData.userData) {
+              dbResult = funcData.userData;
             }
           }
         } catch (invokeErr) {
-          console.warn('Failed invoking pi-auth function:', invokeErr);
+          console.warn('Failed invoking pi-auth function (non-fatal):', invokeErr);
         }
-
       } catch (outerErr) {
-        console.warn('Failed to register Pi user via RPC/function:', outerErr);
+        console.warn('Failed to register Pi user via RPC/function (non-fatal):', outerErr);
       }
 
       // Store authentication data (always store locally)
@@ -367,7 +389,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       setPiUser(finalUser);
       
       // Set current profile from database result
-      if (dbResult.user_data) {
+      if (dbResult?.user_data) {
         setCurrentProfile({
           id: dbResult.user_data.id,
           username: dbResult.user_data.username,
@@ -380,10 +402,56 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           theme_settings: dbResult.user_data.theme_settings,
           created_at: dbResult.user_data.created_at
         });
+      } else {
+        // Fallback: try to find or create a profile client-side so Supabase knows this Pi user exists.
+        try {
+          const usernameToCheck = (finalUser.username || `user_${finalUser.uid}`).toLowerCase();
+          const { data: existingProfile, error: selectErr } = await supabase
+            .from('profiles')
+            .select('*')
+            .or(`pi_user_id.eq.${finalUser.uid},pi_username.eq.${usernameToCheck}`)
+            .maybeSingle();
+
+          if (selectErr) {
+            console.warn('Failed to query profiles for Pi user (non-fatal):', selectErr);
+          }
+
+          if (existingProfile) {
+            setCurrentProfile(existingProfile);
+          } else {
+            // Create a minimal profile record linked to this Pi user
+            const sanitizedUsername = usernameToCheck.replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+            const insertPayload: any = {
+              username: sanitizedUsername,
+              business_name: sanitizedUsername,
+              description: '',
+              pi_user_id: finalUser.uid,
+              pi_username: finalUser.username || null
+            };
+
+            try {
+              const { data: newProfile, error: insertErr } = await supabase
+                .from('profiles')
+                .insert(insertPayload)
+                .select()
+                .maybeSingle();
+
+              if (insertErr) {
+                console.warn('Failed to create profile for Pi user (non-fatal):', insertErr);
+              } else if (newProfile) {
+                setCurrentProfile(newProfile);
+              }
+            } catch (insertExc) {
+              console.warn('Exception while creating Pi user profile (non-fatal):', insertExc);
+            }
+          }
+        } catch (fallbackErr) {
+          console.warn('Profile fallback check/create failed (non-fatal):', fallbackErr);
+        }
       }
       
       toast(dbResult.message || `Welcome, ${finalUser.username || 'Pi User'}!`, {
-        description: "Authentication Successful (Mainnet)",
+        description: `Authentication Successful (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})`,
         duration: 3000,
       });
       
@@ -504,7 +572,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         
         // Note: Automatic token display is deprecated for testnet tokens
         if (typeof window !== 'undefined' && window.Pi) {
-          console.log('ℹ️ Token display requires proper mainnet token configuration');
+          console.log(`ℹ️ Token display requires proper ${PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'} token configuration`);
         }
         
         return result;
@@ -540,7 +608,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       
       // Note: Trustline creation is now generic for any mainnet token
       console.warn('ℹ️ Trustline creation is deprecated for testnet tokens');
-      console.warn('ℹ️ Use createTokenTrustline() for verified mainnet tokens');
+      console.warn(`ℹ️ Use createTokenTrustline() for verified ${PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'} tokens`);
       
       // For demo purposes, we'll return false since no specific token is configured
       const success = false;
@@ -613,7 +681,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       await getDROPBalanceFunc();
       
       // Note: Automatic token addition is deprecated for testnet tokens
-      console.log('ℹ️ Token display depends on proper mainnet token configuration');
+      console.log(`ℹ️ Token display depends on proper ${PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'} token configuration`);
       const added = false; // No tokens configured for mainnet
       
       if (added) {
@@ -715,9 +783,9 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       throw new Error('User not authenticated');
     }
 
-    // Enforce production/mainnet policy: disallow creating additional/dev test accounts
+    // Enforce production policy: disallow creating additional/dev test accounts when configured
     if (!PI_CONFIG.ALLOW_MULTIPLE_ACCOUNTS && availableAccounts.length > 0) {
-      throw new Error('Creating additional accounts is disabled in this deployment (mainnet only)');
+      throw new Error(`Creating additional accounts is disabled in this deployment (${PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'} only)`);
     }
 
     try {
