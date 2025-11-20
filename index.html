@@ -18,7 +18,7 @@
     <meta name="pi-app-version" content="1.0.0" />
     
     <!-- Content Security Policy for Pi Browser -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.minepi.com https://api.mainnet.minepi.com https://horizon.stellar.org https://idkjfuctyukspexmijvb.supabase.co https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.minepi.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://sdk.minepi.com https://api.mainnet.minepi.com https://horizon.stellar.org https://idkjfuctyukspexmijvb.supabase.co https://*.supabase.co wss://*.supabase.co;" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.minepi.com https://api.mainnet.minepi.com https://horizon.stellar.org https://idkjfuctyukspexmijvb.supabase.co https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.minepi.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://sdk.minepi.com https://api.mainnet.minepi.com https://horizon.stellar.org https://idkjfuctyukspexmijvb.supabase.co https://*.supabase.co wss://*.supabase.co; frame-src 'self' https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://www.youtube.googleapis.com;" />
     
     <title>Droplink - Create Your Personal Page &amp; Sell Digital Products</title>
     <meta name="description" content="Create a beautiful link in bio page with all your social links and sell digital products in one place. Simple, clean, and professional.">
@@ -34,6 +34,96 @@
     <meta name="pi-validation-url" content="https://droplink.space/validation-key.txt" />
     <meta name="pi-app-url" content="https://droplink.space" />
     <meta name="pi-mainnet-ready" content="true" />
+    
+    <!-- Inline pre-flight diagnostic script (shows banner if critical Pi checks fail) -->
+    <script>
+      (function(){
+        const containerId = 'pi-preflight-banner';
+        function showBanner(lines){
+          try{
+            if(document.getElementById(containerId)) return;
+            const banner = document.createElement('div');
+            banner.id = containerId;
+            banner.style.position = 'fixed';
+            banner.style.left = '12px';
+            banner.style.right = '12px';
+            banner.style.top = '12px';
+            banner.style.zIndex = 999999;
+            banner.style.padding = '12px 16px';
+            banner.style.background = '#fff6f6';
+            banner.style.border = '1px solid #f5c6cb';
+            banner.style.borderRadius = '8px';
+            banner.style.boxShadow = '0 6px 24px rgba(0,0,0,0.08)';
+            banner.style.fontFamily = 'sans-serif';
+            banner.style.color = '#6b0f0f';
+            banner.style.fontSize = '13px';
+            banner.innerText = 'Pi Preflight Issues:\n' + lines.join('\n');
+            const btn = document.createElement('button');
+            btn.innerText = 'Dismiss';
+            btn.style.marginLeft = '12px';
+            btn.onclick = function(){ banner.remove(); };
+            banner.appendChild(document.createElement('br'));
+            banner.appendChild(btn);
+            document.body.appendChild(banner);
+          }catch(e){console.warn('Banner error',e)}
+        }
+
+        async function runChecks(){
+          const issues = [];
+          // validation-key
+          try{
+            const r = await fetch('/validation-key.txt', {cache:'no-store'});
+            if(!r.ok) issues.push('validation-key.txt not reachable (HTTP '+r.status+')');
+            else {
+              const text = (await r.text()).trim();
+              if(!text) issues.push('validation-key.txt is empty');
+            }
+          }catch(e){ issues.push('validation-key.txt fetch failed: '+e.message); }
+
+          // manifest
+          try{
+            const r = await fetch('/manifest.json', {cache:'no-store'});
+            if(!r.ok) issues.push('manifest.json not reachable (HTTP '+r.status+')');
+            else {
+              const m = await r.json();
+              if(!m.pi_app) issues.push('manifest.json missing pi_app section');
+              else {
+                if(!m.pi_app.api_key) issues.push('manifest.pi_app.api_key is missing');
+                if(!m.pi_app.validation_key) issues.push('manifest.pi_app.validation_key is missing');
+              }
+            }
+          }catch(e){ issues.push('manifest.json fetch/parse failed: '+e.message); }
+
+          // SDK reachability
+          try{
+            const sdk = 'https://sdk.minepi.com/pi-sdk.js';
+            const hostname = location.hostname;
+            const isProd = hostname === 'droplink.space' || hostname === 'www.droplink.space';
+            if (isProd) {
+              const r = await fetch(sdk, {method:'HEAD', cache:'no-store'});
+              if(!r.ok) issues.push('Pi SDK not reachable (HTTP '+r.status+')');
+            } else {
+              // In development hosts (localhost) CDNs often block HEAD/CORS.
+              // Do a best-effort check and log warnings, but don't make it fatal.
+              try {
+                const r = await fetch(sdk, {method:'HEAD', cache:'no-store'});
+                if(!r.ok) console.warn('Pi SDK HEAD returned ' + r.status + ' — continuing in dev mode');
+              } catch (e) {
+                console.warn('Pi SDK HEAD failed in dev host — skipping strict check', e);
+              }
+            }
+          }catch(e){ console.warn('Pi SDK check unexpected error — continuing', e); }
+
+          // If any issue, show banner with hints
+          if(issues.length>0){
+            showBanner(issues.concat(['Hints: ensure site is served from the registered Pi app domain (https://droplink.space), validation-key.txt must be at site root via HTTPS, and manifest.json must include pi_app with matching keys. Clear Pi Browser cache and retry.']));
+          }
+        }
+
+        // Run checks after DOM available
+        if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', runChecks); else runChecks();
+      })();
+    </script>
     
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/ALLayxCo2Zd0m48xGbSaAofsXYf1/social-images/social-1762075342466-Untitled design (8) (1).png">

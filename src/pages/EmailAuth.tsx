@@ -17,21 +17,11 @@ const EmailAuth = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Check if user is already logged in
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        navigate("/");
-      }
-    });
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        navigate("/");
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    // Email/Gmail sign-in is temporarily disabled. Redirect users to Pi Network auth.
+    const timer = setTimeout(() => {
+      navigate('/auth');
+    }, 1200);
+    return () => clearTimeout(timer);
   }, [navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -154,92 +144,17 @@ const EmailAuth = () => {
               className="w-16 h-16 object-contain"
             />
           </div>
-          <div className="flex items-center justify-between mb-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/auth")}
-              className="absolute left-4 top-4"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <CardTitle className="text-2xl flex-1 text-center">Welcome to Droplink</CardTitle>
-          </div>
-          <CardDescription>
-            {isLogin ? "Sign in to your account" : "Create a new account"}
-          </CardDescription>
+          <CardTitle className="text-2xl">Email Sign-In Disabled</CardTitle>
+          <CardDescription className="mt-2">For now, email/Gmail sign-in is disabled. Please use Pi Network authentication.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleAuth} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={loading}
-                className="bg-input-bg"
-              />
+          <div className="space-y-4">
+            <p className="text-sm">You will be redirected to Pi Network authentication shortly. If not, click the button below.</p>
+            <div className="flex gap-2">
+              <Button onClick={() => navigate('/auth')} className="flex-1">Go to Pi Sign-In</Button>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-                minLength={isLogin ? undefined : 6}
-                className="bg-input-bg"
-              />
-            </div>
-
-            <Button 
-              type="submit" 
-              className="w-full" 
-              size="lg"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {isLogin ? "Signing in..." : "Creating account..."}
-                </>
-              ) : (
-                isLogin ? "Sign In" : "Create Account"
-              )}
-            </Button>
-
-            <div className="text-center">
-              <Button
-                type="button"
-                variant="link"
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setPassword("");
-                }}
-                className="text-sm"
-              >
-                {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-              </Button>
-            </div>
-          </form>
-
-          <div className="mt-6 pt-6 border-t space-y-2">
-            <p className="text-xs text-center text-muted-foreground">
-              By continuing, you agree to our Terms of Service and Privacy Policy.
-            </p>
-            <div className="flex justify-center gap-4 text-xs">
-              <a href="/terms" className="text-primary hover:underline">Terms</a>
-              <span className="text-muted-foreground">•</span>
-              <a href="/privacy" className="text-primary hover:underline">Privacy</a>
+            <div className="text-xs text-muted-foreground mt-4">
+              If you are an admin and need email sign-in re-enabled, update the configuration or contact the developer.
             </div>
           </div>
         </CardContent>

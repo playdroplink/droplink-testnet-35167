@@ -287,22 +287,78 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       // Note: Wallet address will be provided by Pi authentication if user has connected wallet
 
       // Authenticate with our new Pi auth system
-      const { data: dbResult, error } = await (supabase as any).rpc('authenticate_pi_user', {
-        p_pi_user_id: finalUser.uid,
-        p_pi_username: finalUser.username || `user_${finalUser.uid}`,
-        p_access_token: authResult.accessToken,
-        p_wallet_address: finalUser.wallet_address || null
-      });
+      // First try server-side RPC to register/verify user
+      let dbResult: any = null;
+      try {
+        const rpcRes = await (supabase as any).rpc('authenticate_pi_user', {
+          p_pi_user_id: finalUser.uid,
+          p_pi_username: finalUser.username || `user_${finalUser.uid}`,
+          p_access_token: authResult.accessToken,
+          p_wallet_address: finalUser.wallet_address || null
+        });
+        dbResult = rpcRes?.data || null;
+        const rpcError = rpcRes?.error;
+        if (rpcError) {
+          console.warn('RPC authenticate_pi_user failed, falling back to function invoke:', rpcError.message || rpcError);
+        }
 
-      if (error) {
-        throw new Error(`Database authentication failed: ${error.message}`);
+        // Additionally call the `pi-auth` edge function to ensure full user data is stored and synced
+        try {
+          const { data: funcData, error: funcErr } = await supabase.functions.invoke('pi-auth', {
+            body: {
+              accessToken: authResult.accessToken,
+              username: finalUser.username || `user_${finalUser.uid}`,
+              uid: finalUser.uid,
+              wallet_address: finalUser.wallet_address || null,
+              profile: finalUser
+            }
+          });
+
+          if (funcErr) {
+            console.warn('pi-auth function returned error:', funcErr.message || funcErr);
+          } else {
+            // If function returned profile or user data, persist extended info
+            if (funcData?.profileId || funcData?.userId) {
+              localStorage.setItem('pi_user_extended', JSON.stringify({
+                ...finalUser,
+                profileId: funcData.profileId,
+                supabaseUserId: funcData.userId,
+                lastSynced: new Date().toISOString()
+              }));
+            }
+          }
+        } catch (invokeErr) {
+          console.warn('Failed invoking pi-auth function:', invokeErr);
+        }
+
+      } catch (outerErr) {
+        console.warn('Failed to register Pi user via RPC/function:', outerErr);
       }
 
-      if (!dbResult?.success) {
-        throw new Error(dbResult?.error || 'Database authentication failed');
+      // Store authentication data (always store locally)
+      // Upsert Pi user into `pi_users` table in Supabase so we always have a record keyed by `pi_uid`.
+      try {
+        const upsertPayload = {
+          pi_uid: finalUser.uid,
+          pi_username: finalUser.username || null,
+          display_name: (finalUser as any).username || null,
+          profile_picture: (finalUser as any).photo || null,
+          updated_at: new Date().toISOString()
+        };
+
+        const { data: upsertData, error: upsertError } = await (supabase as any)
+          .from('pi_users')
+          .upsert(upsertPayload, { onConflict: 'pi_uid' });
+
+        if (upsertError) {
+          console.warn('Failed to upsert pi_users record:', upsertError);
+        } else {
+          console.log('✅ Upserted pi_users record:', upsertData);
+        }
+      } catch (upsertErr) {
+        console.warn('Exception while upserting pi_users:', upsertErr);
       }
 
-      // Store authentication data
       localStorage.setItem('pi_access_token', authResult.accessToken);
       localStorage.setItem('pi_user', JSON.stringify(finalUser));
       

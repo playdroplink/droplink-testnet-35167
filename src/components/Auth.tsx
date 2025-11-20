@@ -110,96 +110,16 @@ export const Auth = () => {
   };
 
   const handleGoogleAuth = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`
-        }
-      });
-
-      if (error) {
-        toast.error(`Google sign-in failed: ${error.message}`);
-        return;
-      }
-
-      // OAuth will redirect automatically
-    } catch (error: any) {
-      toast.error("Google sign-in failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    // Temporarily disable Gmail/Email sign-in for production mainnet
+    toast.error("Email/Google sign-in is temporarily disabled. Please use Pi Network to sign in.");
   };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Basic validation
-    if (!email || !password) {
-      toast.error("Please fill in all fields");
-      return;
-    }
 
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        
-        if (error) {
-          if (error.message.includes("Invalid login credentials")) {
-            toast.error("Invalid email or password");
-          } else {
-            toast.error(error.message);
-          }
-          return;
-        }
-        
-        toast.success("Welcome back!");
-      } else {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`
-          }
-        });
-        
-        if (error) {
-          if (error.message.includes("already registered")) {
-            toast.error("This email is already registered. Please log in instead.");
-            setIsLogin(true);
-          } else {
-            toast.error(error.message);
-          }
-          return;
-        }
-        
-        // If user is immediately signed in (email confirmation disabled)
-        if (data.user && data.session) {
-          toast.success("Account created successfully! Welcome to DropLink!");
-          // Will be handled by the auth state change listener
-        } else {
-          // Email confirmation required
-          toast.success("Account created successfully! Please check your email to verify your account, then log in.");
-          setIsLogin(true);
-          setPassword("");
-        }
-      }
-    } catch (error: any) {
-      toast.error("An unexpected error occurred. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    // Email sign-in is disabled in this deployment. Prevent any auth calls.
+    toast.error("Email sign-in is disabled. Please use Pi Network authentication.");
+    return;
   };
 
   return (
@@ -233,15 +153,14 @@ export const Auth = () => {
               </div>
             </div>
             
-            <Button 
-              onClick={handleGoogleAuth} 
-              variant="outline" 
-              className="w-full" 
-              disabled={loading || piLoading}
-            >
-              <Mail className="w-4 h-4 mr-2" />
-              Continue with Email
-            </Button>
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                disabled
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                Email sign-in disabled
+              </Button>
             
             {/* Feature highlights */}
             <div className="space-y-2 text-sm text-muted-foreground">
@@ -288,13 +207,12 @@ export const Auth = () => {
           {/* Email Authentication Form */}
           <div className="space-y-4">
             <Button 
-              onClick={handleGoogleAuth} 
               variant="outline" 
               className="w-full" 
-              disabled={loading || piLoading}
+              disabled
             >
               <Mail className="w-4 h-4 mr-2" />
-              Continue with Google
+              Google sign-in disabled
             </Button>
             
             <div className="relative">
@@ -319,6 +237,7 @@ export const Auth = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled
               />
             </div>
             <div className="space-y-2">
@@ -331,19 +250,17 @@ export const Auth = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
+                disabled
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Loading..." : isLogin ? "Log In" : "Sign Up"}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full"
-              onClick={() => setIsLogin(!isLogin)}
-            >
-              {isLogin ? "Need an account? Sign up" : "Already have an account? Log in"}
-            </Button>
+            <div className="space-y-2">
+              <Button type="button" className="w-full" onClick={() => toast('Email sign-in disabled; use Pi Network')}>
+                Email sign-in disabled
+              </Button>
+              <Button type="button" variant="ghost" className="w-full" onClick={() => window.location.href = '/auth'}>
+                Go to Pi Network sign-in
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
