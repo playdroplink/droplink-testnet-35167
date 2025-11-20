@@ -4,6 +4,7 @@ export const PI_CONFIG = {
   API_KEY: "96tnxytg82pevnvvxfowap4bwctcxo6wkp2dexoraevtj8svh0mvqxttpbtwvjm5",
   BASE_URL: "https://api.mainnet.minepi.com",
   NETWORK: "mainnet",
+  NETWORK_PASSPHRASE: "Pi Network", // Mainnet passphrase
   SANDBOX_MODE: false,
   
   // SDK Configuration
@@ -12,8 +13,8 @@ export const PI_CONFIG = {
     sandbox: false,
   },
   
-  // Scopes for authentication
-  scopes: ['username', 'payments', 'wallet_address'],
+  // Scopes for authentication (include wallet_address for token detection)
+  scopes: ['username', 'payments', 'wallet_address', 'openid'],
   
   // Payment callback handlers
   onIncompletePaymentFound: (payment: any) => {
@@ -21,27 +22,23 @@ export const PI_CONFIG = {
     // Handle incomplete payment
   },
   
-  // DROP Token Configuration (Mainnet)
-  DROP_TOKEN: {
-    code: "DROP",
-    issuer: "GBVTV77XFMDYSSVIG6ZGSRAGZ3S7KA4275YYLOLIROOD3Y3F3TH5U3EI",
-    distributor: "GCTPMH43NGN7E4IXLQ27H2XWGGWWDY3I6UAPBFXYQSEUPEKNQE2BZXC2",
-    display_decimals: 2,
-    name: "DropLink Token",
-    description: "DropLink platform utility token",
-    // Mainnet asset details
-    asset_type: "credit_alphanum4",
-    home_domain: "droplink.io",
-    // Token trustline and distribution info
-    trustline_limit: "1000000000",
-    is_authorized: true,
-    is_authorized_to_maintain_liabilities: true,
-    // Contract information
-    contract: {
-      address: "GBVTV77XFMDYSSVIG6ZGSRAGZ3S7KA4275YYLOLIROOD3Y3F3TH5U3EI",
-      name: "DropLink",
-      symbol: "DROP",
-      decimals: 2
+  // IMPORTANT: DROP Token Configuration Removed
+  // The previous DROP token configuration was for testnet only.
+  // For mainnet tokens, they must be:
+  // 1. Properly issued on Pi Mainnet (not testnet)
+  // 2. Have valid home domain and pi.toml file
+  // 3. Be verified by Pi Network servers
+  // 4. Follow Pi Network token standards
+  
+  // Token Detection Configuration
+  CUSTOM_TOKENS: {
+    // Example structure for detecting custom tokens
+    // Replace with actual mainnet tokens when available
+    example: {
+      code: "EXAMPLE",
+      issuer: "EXAMPLE_ISSUER_ADDRESS",
+      name: "Example Token",
+      home_domain: "example.com"
     }
   },
   
@@ -49,8 +46,8 @@ export const PI_CONFIG = {
   VALIDATION_KEY: "7511661aac4538b1832d2c9ba117f6d972b26a54640598d3fbb9824013c7079203f65b02d125be3f418605cfb89ba0e4443e3ec997e3800eb464df0bc5410d2a",
   
   // Platform URLs
-  PLATFORM_URL: "https://droplink.io",
-  MAINNET_URL: "https://droplink.io",
+  PLATFORM_URL: "https://droplink.space",
+  MAINNET_URL: "https://droplink.space",
   
   // Headers for API requests
   getAuthHeaders: (accessToken: string) => ({
@@ -61,16 +58,21 @@ export const PI_CONFIG = {
   // Mainnet endpoints
   ENDPOINTS: {
     ME: "https://api.mainnet.minepi.com/v2/me",
-    WALLETS: "https://api.mainnet.minepi.com/accounts",
-    TRANSACTIONS: "https://api.mainnet.minepi.com/transactions",
-    PAYMENTS: "https://api.mainnet.minepi.com/payments",
-    OPERATIONS: "https://api.mainnet.minepi.com/operations",
-    LEDGERS: "https://api.mainnet.minepi.com/ledgers",
-    EFFECTS: "https://api.mainnet.minepi.com/effects",
-    FEE_STATS: "https://api.mainnet.minepi.com/fee_stats",
-    // Stellar Horizon endpoints for DROP token
+    WALLETS: "https://api.mainnet.minepi.com/v2/wallets",
+    TRANSACTIONS: "https://api.mainnet.minepi.com/v2/transactions",
+    PAYMENTS: "https://api.mainnet.minepi.com/v2/payments",
+    OPERATIONS: "https://api.mainnet.minepi.com/v2/operations",
+    LEDGERS: "https://api.mainnet.minepi.com/v2/ledgers",
+    EFFECTS: "https://api.mainnet.minepi.com/v2/effects",
+    FEE_STATS: "https://api.mainnet.minepi.com/v2/fee_stats",
+    // Pi Blockchain endpoints
+    PI_BLOCKCHAIN: "https://api.mainnet.minepi.com/v2/blockchain",
+    PI_ASSETS: "https://api.mainnet.minepi.com/v2/assets",
+    PI_ACCOUNT_BALANCES: "https://api.mainnet.minepi.com/v2/accounts",
+    // Stellar Horizon endpoints for mainnet token detection
     HORIZON: "https://horizon.stellar.org",
-    DROP_ASSET: "https://horizon.stellar.org/assets?asset_code=DROP&asset_issuer=GBVTV77XFMDYSSVIG6ZGSRAGZ3S7KA4275YYLOLIROOD3Y3F3TH5U3EI"
+    // Pi Network specific asset discovery
+    PI_ASSET_DISCOVERY: "https://api.mainnet.minepi.com/v2/assets"
   }
 };
 
@@ -96,38 +98,221 @@ export const validateMainnetConfig = (): boolean => {
          validatePiConfig();
 };
 
-// Helper to get DROP token balance
-export const getDROPTokenBalance = async (walletAddress: string): Promise<any> => {
+// Enhanced Pi Network token detection for mainnet
+export const getWalletTokens = async (walletAddress: string): Promise<any[]> => {
   try {
-    const response = await fetch(
-      `${PI_CONFIG.ENDPOINTS.HORIZON}/accounts/${walletAddress}/balances`
-    );
-    const data = await response.json();
+    console.log('🔍 Detecting Pi Network tokens for wallet:', walletAddress);
     
-    // Find DROP token in balances
-    const dropBalance = data.balances?.find((balance: any) => 
-      balance.asset_code === 'DROP' && 
-      balance.asset_issuer === PI_CONFIG.DROP_TOKEN.issuer
+    // Try multiple detection methods for mainnet
+    const detectionMethods = [
+      detectViaPiMainnetAPI,
+      detectViaStellarHorizon,
+      detectViaDirectQuery
+    ];
+    
+    const allTokens = [];
+    
+    for (const method of detectionMethods) {
+      try {
+        const tokens = await method(walletAddress);
+        if (tokens && tokens.length > 0) {
+          console.log(`✅ Found ${tokens.length} tokens via ${method.name}`);
+          allTokens.push(...tokens);
+        }
+      } catch (error) {
+        console.warn(`⚠️ Detection method ${method.name} failed:`, error);
+        continue;
+      }
+    }
+    
+    // Remove duplicates
+    const uniqueTokens = allTokens.filter((token, index, self) => 
+      index === self.findIndex(t => t.asset_code === token.asset_code && t.asset_issuer === token.asset_issuer)
     );
     
-    return dropBalance || null;
+    console.log(`📊 Total unique tokens found: ${uniqueTokens.length}`);
+    return uniqueTokens;
   } catch (error) {
-    console.error('Failed to get DROP token balance:', error);
-    return null;
+    console.error('❌ Failed to detect tokens:', error);
+    return [];
   }
 };
 
-// Helper to create DROP token trustline
-export const createDROPTrustline = async (walletAddress: string): Promise<boolean> => {
+// Method 1: Detect via Pi Mainnet API
+const detectViaPiMainnetAPI = async (walletAddress: string) => {
+  const response = await fetch(
+    `${PI_CONFIG.ENDPOINTS.PI_ACCOUNT_BALANCES}/${walletAddress}`,
+    {
+      headers: {
+        'Authorization': `Bearer ${PI_CONFIG.API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+  
+  if (!response.ok) {
+    throw new Error(`Pi API error: ${response.status}`);
+  }
+  
+  const data = await response.json();
+  return data.balances?.filter((balance: any) => balance.asset_type !== 'native') || [];
+};
+
+// Method 2: Detect via Stellar Horizon API
+const detectViaStellarHorizon = async (walletAddress: string) => {
+  const response = await fetch(
+    `${PI_CONFIG.ENDPOINTS.HORIZON}/accounts/${walletAddress}/balances`
+  );
+  
+  if (!response.ok) {
+    throw new Error(`Horizon API error: ${response.status}`);
+  }
+  
+  const data = await response.json();
+  return data.balances?.filter((balance: any) => balance.asset_type !== 'native') || [];
+};
+
+// Method 3: Direct asset discovery query
+const detectViaDirectQuery = async (walletAddress: string) => {
   try {
-    // This would integrate with Pi Network SDK to create trustline
-    console.log('Creating DROP trustline for:', walletAddress);
+    const response = await fetch(
+      `${PI_CONFIG.ENDPOINTS.PI_ASSET_DISCOVERY}?account=${walletAddress}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${PI_CONFIG.API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
     
-    // Implementation would use Pi Network SDK
-    // Return true if successful
-    return true;
+    if (!response.ok) {
+      throw new Error(`Asset discovery error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data.assets || [];
   } catch (error) {
-    console.error('Failed to create DROP trustline:', error);
+    // Fallback to generic asset listing
+    return [];
+  }
+};
+
+// Create trustline for any Pi mainnet token
+export const createTokenTrustline = async (tokenCode: string, tokenIssuer: string): Promise<boolean> => {
+  try {
+    console.log(`🔗 Creating trustline for token: ${tokenCode}`);
+    
+    if (typeof window !== 'undefined' && window.Pi) {
+      const trustlineData = {
+        amount: 0.0000001, // Minimum amount for trustline
+        memo: `${tokenCode} trustline creation`,
+        metadata: {
+          type: 'change_trust',
+          asset_code: tokenCode,
+          asset_issuer: tokenIssuer,
+          limit: "1000000000" // Default limit
+        }
+      };
+      
+      await window.Pi.createPayment(trustlineData, {
+        onReadyForServerApproval: (paymentId: string) => {
+          console.log(`📝 Trustline payment ready: ${paymentId}`);
+        },
+        onReadyForServerCompletion: (paymentId: string, txid: string) => {
+          console.log(`✅ Trustline created successfully: ${txid}`);
+        },
+        onCancel: (paymentId: string) => {
+          console.log(`❌ Trustline creation cancelled: ${paymentId}`);
+        },
+        onError: (error: Error) => {
+          console.error(`❌ Trustline creation error:`, error);
+          throw error;
+        }
+      });
+      
+      return true;
+    }
+    
+    throw new Error('Pi Network SDK not available');
+  } catch (error) {
+    console.error('❌ Failed to create trustline:', error);
     return false;
   }
 };
+
+// Generic token balance checker
+export const getTokenBalance = async (walletAddress: string, tokenCode?: string, tokenIssuer?: string): Promise<any> => {
+  try {
+    console.log(`🪙 Checking token balance for: ${tokenCode || 'all tokens'}`);
+    
+    const tokens = await getWalletTokens(walletAddress);
+    
+    if (tokenCode && tokenIssuer) {
+      // Look for specific token
+      const token = tokens.find(t => 
+        t.asset_code === tokenCode && 
+        t.asset_issuer === tokenIssuer
+      );
+      
+      return token ? {
+        balance: token.balance,
+        hasTrustline: true,
+        source: 'pi_mainnet',
+        token_info: token
+      } : {
+        balance: "0",
+        hasTrustline: false
+      };
+    } else {
+      // Return all tokens
+      return tokens;
+    }
+  } catch (error) {
+    console.error('❌ Failed to get token balance:', error);
+    return { balance: "0", hasTrustline: false };
+  }
+};
+
+// Legacy function names for backwards compatibility - these now show warnings
+export const getDROPTokenBalance = async (walletAddress: string): Promise<any> => {
+  console.warn('⚠️ getDROPTokenBalance is deprecated. DROP token was configured for testnet only.');
+  console.warn('ℹ️ Use getTokenBalance() or getWalletTokens() for mainnet token detection.');
+  return getTokenBalance(walletAddress);
+};
+
+export const createDROPTrustline = async (walletAddress: string): Promise<boolean> => {
+  console.warn('⚠️ createDROPTrustline is deprecated. DROP token was configured for testnet only.');
+  console.warn('ℹ️ Use createTokenTrustline() for mainnet tokens.');
+  return false;
+};
+
+export const addDROPToWallet = async (walletAddress: string): Promise<boolean> => {
+  console.warn('⚠️ addDROPToWallet is deprecated. DROP token was configured for testnet only.');
+  return false;
+};
+
+export const getAllWalletTokens = async (walletAddress: string): Promise<any[]> => {
+  console.warn('⚠️ getAllWalletTokens is being renamed to getWalletTokens for clarity.');
+  return getWalletTokens(walletAddress);
+};
+
+// IMPORTANT NOTE: 
+// The DROP token configuration has been removed because it was testnet-specific.
+// To implement proper mainnet tokens:
+//
+// 1. Token must be issued on Pi Mainnet (not testnet)
+// 2. Must have a valid home_domain with proper pi.toml file
+// 3. Must follow Pi Network token standards
+// 4. Must be verified by Pi Network servers
+//
+// Example of proper mainnet token configuration when available:
+// const MAINNET_TOKEN = {
+//   code: "TOKEN",
+//   issuer: "MAINNET_ISSUER_ADDRESS", 
+//   home_domain: "yourtoken.com",
+//   name: "Your Token Name"
+// };
+
+console.log('✅ Pi Network Configuration loaded for MAINNET');
+console.log('ℹ️ Previous testnet DROP token configuration has been removed');
+console.log('ℹ️ Use generic token detection methods for mainnet tokens');

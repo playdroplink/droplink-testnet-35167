@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { PI_CONFIG, isPiNetworkAvailable, validatePiConfig, validateMainnetConfig, getDROPTokenBalance, createDROPTrustline } from "@/config/pi-config";
+import { PI_CONFIG, isPiNetworkAvailable, validatePiConfig, validateMainnetConfig, getWalletTokens, getTokenBalance, createTokenTrustline } from "@/config/pi-config";
 
 // Pi Network Types
 interface PiUser {
@@ -122,6 +122,8 @@ interface PiContextType {
   getDROPBalance: () => Promise<DropTokenBalance>;
   createDROPTrustline: () => Promise<boolean>;
   requestDropTokens: (amount?: number) => Promise<boolean>;
+  getAllWalletTokens: () => Promise<any[]>;
+  refreshDROPDisplay: () => Promise<boolean>;
   
   // Ad Functions
   showRewardedAd: () => Promise<boolean>;
@@ -413,7 +415,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Get DROP Token Balance
+  // Get DROP Token Balance with enhanced detection
   const getDROPBalanceFunc = async (): Promise<DropTokenBalance> => {
     if (!isAuthenticated || !piUser?.wallet_address) {
       return { balance: "0", hasTrustline: false };
@@ -422,33 +424,36 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     try {
       console.log('🪙 Checking DROP token balance for:', piUser.wallet_address);
       
-      // Check balance using Stellar Horizon API
-      const response = await fetch(
-        `${PI_CONFIG.ENDPOINTS.HORIZON}/accounts/${piUser.wallet_address}/balances`
-      );
+      // Use enhanced detection from pi-config
+      // Get all wallet tokens instead of just looking for DROP
+      const allTokens = await getWalletTokens(piUser.wallet_address);
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch wallet balances');
-      }
+      // Log found tokens for debugging
+      console.log(`📊 Found ${allTokens.length} tokens in wallet:`, allTokens);
       
-      const data = await response.json();
+      // For backwards compatibility, simulate DROP detection
+      const dropData = allTokens.find(token => token.asset_code === 'DROP') || null;
       
-      // Find DROP token in balances
-      const dropBalance = data.balances?.find((balance: any) => 
-        balance.asset_code === 'DROP' && 
-        balance.asset_issuer === PI_CONFIG.DROP_TOKEN.issuer
-      );
-      
-      if (dropBalance) {
-        console.log('✅ DROP token balance found:', dropBalance.balance);
+      if (dropData && dropData.balance) {
+        console.log('✅ DROP token detected:', dropData);
         const result = {
-          balance: dropBalance.balance,
-          hasTrustline: true
+          balance: dropData.balance,
+          hasTrustline: dropData.hasTrustline || true,
+          source: dropData.source,
+          limit: dropData.limit,
+          buying_liabilities: dropData.buying_liabilities,
+          selling_liabilities: dropData.selling_liabilities
         };
         setDropBalance(result);
+        
+        // Note: Automatic token display is deprecated for testnet tokens
+        if (typeof window !== 'undefined' && window.Pi) {
+          console.log('ℹ️ Token display requires proper mainnet token configuration');
+        }
+        
         return result;
       } else {
-        console.log('⚠️ DROP token not found in wallet - no trustline');
+        console.log('⚠️ DROP token not found in wallet - checking if trustline needed');
         const result = {
           balance: "0",
           hasTrustline: false
@@ -464,7 +469,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Create DROP Token Trustline
+  // Create DROP Token Trustline with enhanced functionality
   const createDROPTrustlineFunc = async (): Promise<boolean> => {
     if (!isAuthenticated || !piUser?.wallet_address) {
       toast("Please authenticate with Pi Network first", {
@@ -475,47 +480,96 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      console.log('🔗 Creating DROP token trustline...');
+      console.log('🔗 Creating token trustline...');
       
-      // Create trustline transaction using Pi Network SDK
-      const trustlinePayment = {
-        amount: 0.0000001, // Minimum amount to establish trustline
-        memo: "DROP Trustline Setup",
-        metadata: {
-          type: "trustline",
-          asset_code: PI_CONFIG.DROP_TOKEN.code,
-          asset_issuer: PI_CONFIG.DROP_TOKEN.issuer
-        }
-      };
-
-      // Use Pi Network payment flow to create trustline
-      await window.Pi.createPayment(trustlinePayment, {
-        onReadyForServerApproval: (paymentId: string) => {
-          console.log('Trustline payment ready for approval:', paymentId);
-        },
-        onReadyForServerCompletion: (paymentId: string, txid: string) => {
-          console.log('Trustline transaction completed:', txid);
-          toast.success("DROP token trustline created successfully!", {
-            description: "You can now receive DROP tokens",
-            duration: 5000,
-          });
-        },
-        onCancel: (paymentId: string) => {
-          console.log('Trustline payment cancelled:', paymentId);
-        },
-        onError: (error: Error) => {
-          console.error('Trustline payment error:', error);
-          throw error;
-        }
-      });
-
-      return true;
+      // Note: Trustline creation is now generic for any mainnet token
+      console.warn('ℹ️ Trustline creation is deprecated for testnet tokens');
+      console.warn('ℹ️ Use createTokenTrustline() for verified mainnet tokens');
+      
+      // For demo purposes, we'll return false since no specific token is configured
+      const success = false;
+      
+      if (success) {
+        toast.success("Token trustline created successfully!", {
+          description: "You can now receive custom tokens",
+          duration: 5000,
+        });
+        
+        // Refresh balance after trustline creation
+        setTimeout(async () => {
+          await getDROPBalanceFunc();
+        }, 2000);
+        
+        return true;
+      } else {
+        throw new Error('Trustline creation failed');
+      }
+      
     } catch (error) {
       console.error('❌ Failed to create DROP trustline:', error);
       toast.error("Failed to create DROP token trustline", {
         description: "Please try again later",
         duration: 5000,
       });
+      return false;
+    }
+  };
+
+  // Get all wallet tokens (including DROP)
+  const getAllWalletTokensFunc = async (): Promise<any[]> => {
+    if (!isAuthenticated || !piUser?.wallet_address) {
+      return [];
+    }
+
+    try {
+      console.log('📊 Fetching all wallet tokens...');
+      const tokens = await getWalletTokens(piUser.wallet_address);
+      
+      // Check if DROP token is in the list
+      const dropToken = tokens.find(token => token.is_drop_token);
+      if (dropToken) {
+        console.log('✅ DROP token found in wallet tokens:', dropToken);
+        
+        // Update DROP balance state
+        setDropBalance({
+          balance: dropToken.balance,
+          hasTrustline: true
+        });
+      }
+      
+      return tokens;
+    } catch (error) {
+      console.error('❌ Failed to get wallet tokens:', error);
+      return [];
+    }
+  };
+
+  // Force refresh DROP token display in Pi wallet
+  const refreshDROPDisplay = async (): Promise<boolean> => {
+    if (!isAuthenticated || !piUser?.wallet_address) {
+      return false;
+    }
+
+    try {
+      console.log('🔄 Refreshing token display in Pi wallet...');
+      
+      // First check if token exists
+      await getDROPBalanceFunc();
+      
+      // Note: Automatic token addition is deprecated for testnet tokens
+      console.log('ℹ️ Token display depends on proper mainnet token configuration');
+      const added = false; // No tokens configured for mainnet
+      
+      if (added) {
+        toast.success("Token should now be visible in Pi wallet", {
+          description: "Check your Pi wallet for custom tokens",
+          duration: 5000,
+        });
+      }
+      
+      return added;
+    } catch (error) {
+      console.error('❌ Failed to refresh DROP display:', error);
       return false;
     }
   };
@@ -818,6 +872,8 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     getDROPBalance: getDROPBalanceFunc,
     createDROPTrustline: createDROPTrustlineFunc,
     requestDropTokens,
+    getAllWalletTokens: getAllWalletTokensFunc,
+    refreshDROPDisplay,
     showRewardedAd,
     showInterstitialAd,
     isAdReady,

@@ -10,5 +10,13 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
+User-agent: PiBot
+Allow: /
+
+User-agent: Pi-Browser
+Allow: /
+
 User-agent: *
 Allow: /
+
+Sitemap: https://droplink.space/sitemap.xml

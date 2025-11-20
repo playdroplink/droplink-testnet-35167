@@ -1,38 +1,39 @@
-// Quick test for DROP token integration
+// Quick test for token integration (mainnet)
 import { usePi } from '@/contexts/PiContext';
 
 export const QuickDropTest = () => {
   const { 
     isAuthenticated, 
-    getDROPBalance, 
-    createDROPTrustline, 
-    requestDropTokens 
+    getDROPBalance
   } = usePi();
 
-  const testDropToken = async () => {
+  const testTokens = async () => {
     if (!isAuthenticated) {
       console.log('❌ Please authenticate first');
       return;
     }
 
-    console.log('🔍 Checking DROP balance...');
+    console.log('🔍 Checking wallet tokens...');
     const balance = await getDROPBalance();
-    console.log('Balance:', balance);
+    console.log('Wallet tokens:', balance);
 
-    if (!balance.hasTrustline) {
-      console.log('🔗 Creating trustline...');
-      const success = await createDROPTrustline();
-      console.log('Trustline created:', success);
-    }
-
-    // Optional: Request test tokens
-    // const tokens = await requestDropTokens(10);
-    // console.log('Tokens requested:', tokens);
+    // Note: Previous DROP-specific functions are deprecated
+    console.warn('ℹ️ This test was for testnet tokens only');
+    console.warn('ℹ️ Use generic token detection for mainnet');
   };
 
   return (
-    <button onClick={testDropToken}>
-      Test DROP Token Integration
-    </button>
+    <div className="p-4 bg-gray-100 rounded-lg">
+      <h3 className="text-lg font-bold mb-4">Mainnet Token Test</h3>
+      <button 
+        onClick={testTokens}
+        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        Test Token Detection
+      </button>
+      <p className="text-sm text-gray-600 mt-2">
+        Note: Previous DROP token was testnet-only. This now tests generic mainnet token detection.
+      </p>
+    </div>
   );
 };

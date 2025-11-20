@@ -4,11 +4,36 @@
     <meta charset="UTF-8" />
     <link rel="icon" href="/favicon.png" type="image/png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Browser Compatibility -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    
+    <!-- Pi Browser Compatibility -->
+    <meta name="pi-app" content="true" />
+    <meta name="pi-network" content="mainnet" />
+    <meta name="pi-app-name" content="DropLink" />
+    <meta name="pi-app-version" content="1.0.0" />
+    
+    <!-- Content Security Policy for Pi Browser -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.minepi.com https://api.mainnet.minepi.com https://horizon.stellar.org https://idkjfuctyukspexmijvb.supabase.co https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.minepi.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://sdk.minepi.com https://api.mainnet.minepi.com https://horizon.stellar.org https://idkjfuctyukspexmijvb.supabase.co https://*.supabase.co wss://*.supabase.co;" />
+    
     <title>Droplink - Create Your Personal Page &amp; Sell Digital Products</title>
     <meta name="description" content="Create a beautiful link in bio page with all your social links and sell digital products in one place. Simple, clean, and professional.">
     <meta name="author" content="Droplink" />
+    
     <!-- Pi Network SDK - Mainnet Production -->
-    <script src="https://sdk.minepi.com/pi-sdk.js" async></script>
+    <script src="https://sdk.minepi.com/pi-sdk.js" async crossorigin="anonymous"></script>
+    
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Additional Pi Browser Meta Tags -->
+    <meta name="pi-validation-url" content="https://droplink.space/validation-key.txt" />
+    <meta name="pi-app-url" content="https://droplink.space" />
+    <meta name="pi-mainnet-ready" content="true" />
     
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/ALLayxCo2Zd0m48xGbSaAofsXYf1/social-images/social-1762075342466-Untitled design (8) (1).png">
@@ -25,5 +50,8 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Pi Browser Troubleshooting (remove in production) -->
+    <script src="/troubleshoot.js"></script>
   </body>
 </html>

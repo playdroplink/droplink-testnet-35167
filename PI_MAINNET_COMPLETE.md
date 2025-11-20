@@ -56,7 +56,7 @@ DROP_TOKEN: {
   code: "DROP",
   issuer: "GBVTV77XFMDYSSVIG6ZGSRAGZ3S7KA4275YYLOLIROOD3Y3F3TH5U3EI",
   distributor: "GCTPMH43NGN7E4IXLQ27H2XWGGWWDY3I6UAPBFXYQSEUPEKNQE2BZXC2",
-  home_domain: "droplink.io"
+  home_domain: "droplink.space"
 }
 ```
 
