@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AboutModal } from "@/components/AboutModal";
+import { LicenseModal } from "@/components/LicenseModal";
 import droplinkLogo from "@/assets/droplink-logo.png";
 
 const PiAuth = () => {
@@ -167,6 +168,10 @@ const PiAuth = () => {
                   About
                 </button>
               </AboutModal>
+              <span className="text-muted-foreground">•</span>
+              <LicenseModal>
+                <button className="text-primary hover:underline cursor-pointer">License</button>
+              </LicenseModal>
               <span className="text-muted-foreground">•</span>
               <a href="/terms" className="text-primary hover:underline">Terms</a>
               <span className="text-muted-foreground">•</span>
