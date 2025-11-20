@@ -214,7 +214,7 @@ class PiNetworkTester {
     try {
       if (window.Pi) {
         await window.Pi.init({
-          version: \"2.0\",
+          version: "2.0",
           sandbox: false
         });
         this.addLog('✅ Pi SDK initialized successfully');

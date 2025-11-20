@@ -6,6 +6,8 @@ export const PI_CONFIG = {
   NETWORK: "mainnet",
   NETWORK_PASSPHRASE: "Pi Network", // Mainnet passphrase
   SANDBOX_MODE: false,
+  // Production policy: disallow creating extra/dev test accounts on mainnet
+  ALLOW_MULTIPLE_ACCOUNTS: false,
   
   // SDK Configuration
   SDK: {

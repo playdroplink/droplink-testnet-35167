@@ -659,6 +659,11 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       throw new Error('User not authenticated');
     }
 
+    // Enforce production/mainnet policy: disallow creating additional/dev test accounts
+    if (!PI_CONFIG.ALLOW_MULTIPLE_ACCOUNTS && availableAccounts.length > 0) {
+      throw new Error('Creating additional accounts is disabled in this deployment (mainnet only)');
+    }
+
     try {
       console.log('Creating account with:', { username, displayName, pi_user_id: piUser.uid });
       
