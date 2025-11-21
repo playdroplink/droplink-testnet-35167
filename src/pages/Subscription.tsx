@@ -36,8 +36,8 @@ const plans: Plan[] = [
   },
   {
     name: "Premium",
-    monthlyPrice: 20,
-    yearlyPrice: 192, // 20% discount
+    monthlyPrice: 10,
+    yearlyPrice: 96, // 20% discount (10 * 12 = 120, minus 20% = 96)
     features: [
       "Unlimited bio page links",
       "Unlimited social media links",
@@ -57,8 +57,8 @@ const plans: Plan[] = [
   },
   {
     name: "Pro",
-    monthlyPrice: 30,
-    yearlyPrice: 288, // 20% discount
+    monthlyPrice: 20,
+    yearlyPrice: 192, // 20% discount (20 * 12 = 240, minus 20% = 192)
     features: [
       "Everything in Premium",
       "AI-powered analytics insights",

@@ -74,8 +74,8 @@ User redirected to dashboard
 ### 3️⃣ **User Wants to Upgrade (Locked Feature)**
 
 **Pricing:**
-- **Premium**: 10 Pi/month or 100 Pi/year (save 20%)
-- **Pro**: 30 Pi/month or 300 Pi/year (save 20%)
+- **Premium**: 10 Pi/month or 96 Pi/year (save 20%)
+- **Pro**: 20 Pi/month or 192 Pi/year (save 20%)
 
 **User Action:**
 ```
@@ -319,9 +319,9 @@ if (error || !user) {
 ```typescript
 const PLAN_PRICES = {
   'premium-monthly': 10,
-  'premium-yearly': 100,
-  'pro-monthly': 30,
-  'pro-yearly': 300
+  'premium-yearly': 96,
+  'pro-monthly': 20,
+  'pro-yearly': 192
 };
 
 const planKey = `${metadata.subscriptionPlan}-${metadata.billingPeriod}`;
