@@ -108,6 +108,7 @@ const PiAuth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+
           {/* Pi Network Sign In */}
           <Button 
             onClick={handlePiSignIn} 
@@ -125,7 +126,16 @@ const PiAuth = () => {
             )}
           </Button>
 
-          {/* Email sign-in has been disabled — only Pi Network authentication allowed */}
+          {/* Gmail/Email Sign In */}
+          <Button
+            onClick={() => navigate('/droplinkofficial')}
+            className="w-full"
+            size="lg"
+            variant="outline"
+            disabled={loading}
+          >
+            Visit Droplink /droplinkofficial
+          </Button>
 
           <div className="space-y-2 text-sm text-muted-foreground">
             <p className="flex items-center gap-2">

@@ -8,7 +8,7 @@ DropLink now supports animated GIF backgrounds for your storefront, similar to p
 ### **Step 1: Access Design Settings**
 1. Open your DropLink Dashboard
 2. Navigate to the **Design** tab
-3. Scroll to the **Background Style** section
+3. Choose from **Ready-to-Use Themes** or scroll down for custom options
 
 ### **Step 2: Enable GIF Background**
 1. Select the **"GIF Background"** radio button
@@ -16,7 +16,16 @@ DropLink now supports animated GIF backgrounds for your storefront, similar to p
 
 ### **Step 3: Choose Your GIF**
 
-#### **Option A: Upload Your Own GIF**
+#### **Option A: Use Ready-to-Use Themes** ⭐ *Recommended*
+- Select themes with built-in GIF backgrounds:
+  - **Startup Vibe**: Purple gradient animation
+  - **Music Maestro**: Pink wave animations  
+  - **Cyberpunk Code**: Neon cyberpunk effects
+  - **eSports Pro**: Gaming effects
+  - **NFT Creator**: Colorful animations
+- One-click setup with professional designs
+
+#### **Option B: Upload Your Own GIF**
 1. Click **"Choose GIF File"** button
 2. Select a GIF file from your device (max 10MB)
 3. File will be instantly uploaded and previewed

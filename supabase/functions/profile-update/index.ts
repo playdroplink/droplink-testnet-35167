@@ -15,6 +15,86 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 const serviceSupabase = createClient(supabaseUrl, supabaseServiceKey);
 
+// Enhanced link metadata validation
+function validateEnhancedLinks(customLinks: any[]): any[] {
+  if (!Array.isArray(customLinks)) return [];
+  
+  return customLinks.map(link => {
+    // Ensure required fields exist
+    const enhancedLink = {
+      id: link.id || crypto.randomUUID(),
+      title: link.title || '',
+      url: link.url || '',
+      icon: link.icon || 'link',
+      description: link.description || '',
+      favicon: link.favicon || '',
+      image: link.image || '',
+      color: link.color || '#3b82f6',
+      textColor: link.textColor || '#ffffff',
+      category: link.category || 'general',
+      isVisible: link.isVisible !== false,
+      customStyling: {
+        backgroundColor: link.customStyling?.backgroundColor || '#3b82f6',
+        borderColor: link.customStyling?.borderColor || '#2563eb',
+        borderRadius: link.customStyling?.borderRadius || 8,
+        fontSize: link.customStyling?.fontSize || 16,
+        fontWeight: link.customStyling?.fontWeight || 500,
+        padding: link.customStyling?.padding || 12,
+        animation: link.customStyling?.animation || 'none'
+      }
+    };
+
+    // Validate and sanitize base64 images
+    if (enhancedLink.favicon?.startsWith('data:image/')) {
+      const sizeEstimate = (enhancedLink.favicon.length * 0.75) / (1024 * 1024);
+      if (sizeEstimate > 2) { // 2MB limit for favicons
+        console.warn(`Favicon too large (${sizeEstimate.toFixed(2)}MB), removing`);
+        enhancedLink.favicon = '';
+      }
+    }
+
+    if (enhancedLink.image?.startsWith('data:image/')) {
+      const sizeEstimate = (enhancedLink.image.length * 0.75) / (1024 * 1024);
+      if (sizeEstimate > 5) { // 5MB limit for preview images
+        console.warn(`Preview image too large (${sizeEstimate.toFixed(2)}MB), removing`);
+        enhancedLink.image = '';
+      }
+    }
+
+    return enhancedLink;
+  });
+}
+
+// Enhanced theme settings validation
+function validateThemeSettings(themeSettings: any): any {
+  if (!themeSettings || typeof themeSettings !== 'object') {
+    return {
+      primaryColor: '#3b82f6',
+      backgroundColor: '#000000',
+      backgroundType: 'color',
+      backgroundGif: '',
+      iconStyle: 'rounded',
+      buttonStyle: 'filled',
+      customLinks: []
+    };
+  }
+
+  // Validate and enhance custom links
+  if (themeSettings.customLinks) {
+    themeSettings.customLinks = validateEnhancedLinks(themeSettings.customLinks);
+  }
+
+  // Validate advanced customization settings
+  if (themeSettings.advancedSettings) {
+    console.log('Processing advanced customization settings');
+  }
+
+  return {
+    ...themeSettings,
+    customLinks: themeSettings.customLinks || []
+  };
+}
+
 async function getProfileFromPiToken(piAccessToken: string, requestedUsername?: string) {
   if (!piAccessToken) {
     throw new Error('Missing Pi access token');
@@ -69,16 +149,34 @@ serve(async (req) => {
       throw new Error("Missing required fields");
     }
 
+    // Enhanced validation and processing
+    let processedProfileData = { ...profileData };
+
+    // Validate and enhance theme settings
+    if (processedProfileData.theme_settings) {
+      processedProfileData.theme_settings = validateThemeSettings(processedProfileData.theme_settings);
+      
+      // Log enhanced link processing
+      const customLinks = processedProfileData.theme_settings.customLinks || [];
+      const enhancedLinksCount = customLinks.filter((link: any) => 
+        link.favicon || link.image || link.description || link.customStyling
+      ).length;
+      
+      if (enhancedLinksCount > 0) {
+        console.log(`Processing ${enhancedLinksCount} enhanced links with metadata for user ${username}`);
+      }
+    }
+
     // Log GIF background save attempts for Pi users
-    if (profileData.theme_settings?.backgroundGif?.startsWith?.('data:')) {
-      const gifSizeEstimate = (profileData.theme_settings.backgroundGif.length * 0.75) / (1024 * 1024);
+    if (processedProfileData.theme_settings?.backgroundGif?.startsWith?.('data:')) {
+      const gifSizeEstimate = (processedProfileData.theme_settings.backgroundGif.length * 0.75) / (1024 * 1024);
       console.log(`Pi user ${username} saving custom GIF background, estimated size: ${gifSizeEstimate.toFixed(2)}MB`);
       
       if (gifSizeEstimate > 20) { // Edge function size limit protection
         throw new Error('GIF file too large for database storage');
       }
-    } else if (profileData.theme_settings?.backgroundGif) {
-      console.log(`Pi user ${username} saving GIF background URL: ${profileData.theme_settings.backgroundGif.substring(0, 100)}...`);
+    } else if (processedProfileData.theme_settings?.backgroundGif) {
+      console.log(`Pi user ${username} saving GIF background URL: ${processedProfileData.theme_settings.backgroundGif.substring(0, 100)}...`);
     }
 
     let profile;
@@ -114,7 +212,7 @@ serve(async (req) => {
     const { data, error } = await serviceSupabase
       .from("profiles")
       .update({
-        ...profileData,
+        ...processedProfileData,
         updated_at: new Date().toISOString()
       })
       .eq("id", profile.id)
@@ -123,15 +221,31 @@ serve(async (req) => {
 
     if (error) throw error;
 
-    // Log successful GIF saves
-    if (profileData.theme_settings?.backgroundGif?.startsWith?.('data:')) {
+    // Log successful saves with enhanced features
+    if (processedProfileData.theme_settings?.backgroundGif?.startsWith?.('data:')) {
       console.log(`✅ Successfully saved custom GIF background for Pi user ${username}`);
-    } else if (profileData.theme_settings?.backgroundGif) {
+    } else if (processedProfileData.theme_settings?.backgroundGif) {
       console.log(`✅ Successfully saved GIF background URL for Pi user ${username}`);
     }
 
+    const enhancedLinksCount = processedProfileData.theme_settings?.customLinks?.filter((link: any) => 
+      link.favicon || link.image || link.description
+    ).length || 0;
+
+    if (enhancedLinksCount > 0) {
+      console.log(`✅ Successfully saved ${enhancedLinksCount} enhanced links with metadata for user ${username}`);
+    }
+
     return new Response(
-      JSON.stringify({ success: true, data }),
+      JSON.stringify({ 
+        success: true, 
+        data,
+        enhancedFeatures: {
+          customLinksProcessed: processedProfileData.theme_settings?.customLinks?.length || 0,
+          enhancedLinksCount,
+          hasGifBackground: !!processedProfileData.theme_settings?.backgroundGif
+        }
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 

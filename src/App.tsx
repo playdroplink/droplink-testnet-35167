@@ -5,6 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Dashboard from "./pages/Dashboard";
+import SwitchToMerchant from "./pages/SwitchToMerchant";
+import MerchantStoreSetup from "./pages/MerchantStoreSetup";
+import MerchantProductManager from "./pages/MerchantProductManager";
 import PublicBio from "./pages/PublicBio";
 import PaymentPage from "./pages/PaymentPage";
 import NotFound from "./pages/NotFound";
@@ -70,6 +73,9 @@ const App = () => {
             <Route path="/profile/:username" element={<PublicBio />} />
             <Route path="/:username" element={<PublicBio />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/switch-to-merchant" element={<SwitchToMerchant />} />
+            <Route path="/merchant-setup" element={<MerchantStoreSetup />} />
+            <Route path="/merchant-products" element={<MerchantProductManager />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

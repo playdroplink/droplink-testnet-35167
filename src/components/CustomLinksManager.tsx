@@ -1,17 +1,35 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, X, Link as LinkIcon, ShoppingBag, Mail, Phone, Calendar, Download, ExternalLink, Heart, Star, Zap, Lock } from "lucide-react";
+import { Plus, X, Link as LinkIcon, ShoppingBag, Mail, Phone, Calendar, Download, ExternalLink, Heart, Star, Zap, Lock, Settings } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
+import { useState } from "react";
+import LinkCustomizer from "./LinkCustomizer";
 
 interface CustomLink {
   id: string;
   title: string;
   url: string;
   icon?: string;
+  description?: string;
+  favicon?: string;
+  image?: string;
+  color?: string;
+  textColor?: string;
+  category?: string;
+  isVisible: boolean;
+  customStyling?: {
+    backgroundColor?: string;
+    borderColor?: string;
+    borderRadius?: number;
+    fontSize?: number;
+    fontWeight?: number;
+    padding?: number;
+    animation?: 'none' | 'bounce' | 'pulse' | 'glow';
+  };
 }
 
 const ICON_OPTIONS = [
@@ -34,6 +52,8 @@ interface CustomLinksManagerProps {
 
 export const CustomLinksManager = ({ links, onChange }: CustomLinksManagerProps) => {
   // UNLOCKED: All users get unlimited custom links
+  const [showLinkCustomizer, setShowLinkCustomizer] = useState(false);
+  
   const getMaxLinks = () => {
     return Infinity; // Unlimited for all users
   };
@@ -44,6 +64,23 @@ export const CustomLinksManager = ({ links, onChange }: CustomLinksManagerProps)
       id: crypto.randomUUID(),
       title: "",
       url: "",
+      icon: "link",
+      description: "",
+      favicon: "",
+      image: "",
+      color: "#3b82f6",
+      textColor: "#ffffff",
+      category: "general",
+      isVisible: true,
+      customStyling: {
+        backgroundColor: "#3b82f6",
+        borderColor: "#2563eb",
+        borderRadius: 8,
+        fontSize: 16,
+        fontWeight: 500,
+        padding: 12,
+        animation: 'none'
+      }
     };
     onChange([...links, newLink]);
   };
@@ -70,16 +107,28 @@ export const CustomLinksManager = ({ links, onChange }: CustomLinksManagerProps)
           <Label className="text-base">Custom Links</Label>
           <p className="text-sm text-muted-foreground">Add custom buttons to your profile</p>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={addLink}
-          className="gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add Link
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setShowLinkCustomizer(true)}
+            className="gap-2 bg-blue-600 text-white hover:bg-blue-700 border-blue-600"
+          >
+            <Settings className="w-4 h-4" />
+            Link Metadata
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={addLink}
+            className="gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Link
+          </Button>
+        </div>
       </div>
 
       {/* UNLOCKED: No more plan restrictions */}
@@ -147,6 +196,15 @@ export const CustomLinksManager = ({ links, onChange }: CustomLinksManagerProps)
             No custom links yet. Click "Add Link" to get started.
           </p>
         </div>
+      )}
+
+      {/* Link Customizer Modal */}
+      {showLinkCustomizer && (
+        <LinkCustomizer
+          links={links}
+          onLinksChange={onChange}
+          onClose={() => setShowLinkCustomizer(false)}
+        />
       )}
     </div>
   );

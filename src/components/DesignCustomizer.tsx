@@ -2,8 +2,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Palette, Sparkles, Upload, Image, Monitor, X } from "lucide-react";
+import { Palette, Sparkles, Upload, Image, Monitor, X, Settings, Sliders, Link } from "lucide-react";
 import { useState } from "react";
+import ReadyThemeSelector from "./ReadyThemeSelector";
+import AdvancedCustomizer from "./AdvancedCustomizer";
+import LinkCustomizer from "./LinkCustomizer";
 
 interface ThemeTemplate {
   id: string;
@@ -79,6 +82,57 @@ interface DesignCustomizerProps {
 
 export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps) => {
   const [uploadingGif, setUploadingGif] = useState(false);
+  const [customizationMode, setCustomizationMode] = useState<'simple' | 'advanced'>('simple');
+  const [showLinkCustomizer, setShowLinkCustomizer] = useState(false);
+  const [customLinks, setCustomLinks] = useState<any[]>([]);
+  const [advancedSettings, setAdvancedSettings] = useState({
+    header: {
+      layout: 'centered' as const,
+      showProfileImage: true,
+      showBio: true,
+      backgroundType: 'color' as const,
+      backgroundColor: '#ffffff',
+      backgroundGradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      backgroundImage: ''
+    },
+    wallpaper: {
+      type: 'color' as const,
+      value: theme.backgroundColor,
+      opacity: 100,
+      blur: 0,
+      overlay: 'rgba(0,0,0,0)'
+    },
+    text: {
+      fontFamily: 'Inter',
+      titleSize: 24,
+      bodySize: 16,
+      color: '#1f2937',
+      alignment: 'center' as const,
+      titleWeight: 600,
+      bodyWeight: 400
+    },
+    buttons: {
+      style: 'filled' as const,
+      roundness: 8,
+      spacing: 16,
+      animation: 'hover-lift' as const,
+      gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      shadow: true
+    },
+    colors: {
+      primary: theme.primaryColor,
+      secondary: '#6b7280',
+      accent: '#8b5cf6',
+      background: theme.backgroundColor,
+      surface: '#ffffff',
+      text: '#1f2937',
+      muted: '#6b7280'
+    },
+    presets: {
+      name: 'Custom',
+      category: 'modern' as const
+    }
+  });
 
   const handleTemplateSelect = (template: ThemeTemplate) => {
     onThemeChange({
@@ -145,16 +199,78 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
 
   return (
     <div className="space-y-6">
-      <div>
+      {/* Customization Mode Selector */}
+      <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Palette className="w-5 h-5 text-purple-600" />
+            <h3 className="text-lg font-semibold text-gray-800">Design Customization</h3>
+          </div>
+          <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+            <button
+              onClick={() => setCustomizationMode('simple')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                customizationMode === 'simple'
+                  ? 'bg-white text-purple-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              <Sliders className="w-4 h-4" />
+              Simple
+            </button>
+            <button
+              onClick={() => setCustomizationMode('advanced')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                customizationMode === 'advanced'
+                  ? 'bg-white text-purple-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              <Settings className="w-4 h-4" />
+              Advanced
+            </button>
+          </div>
+        </div>
+        
+        <div className="text-sm text-gray-600">
+          {customizationMode === 'simple' 
+            ? 'Choose from ready-made themes and basic customization options'
+            : 'Full control over every aspect of your design with advanced settings'
+          }
+        </div>
+        
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <button
+            onClick={() => setShowLinkCustomizer(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Link className="w-4 h-4" />
+            Customize Link Metadata
+          </button>
+          <p className="text-xs text-gray-500 mt-1">Add favicons, descriptions, and custom styling to your links</p>
+        </div>
+      </div>
+
+      {/* Render based on mode */}
+      {customizationMode === 'simple' ? (
+        <div className="space-y-6">
+          {/* Ready-to-Use Themes Section */}
+          <ReadyThemeSelector 
+            currentTheme={theme}
+            onThemeSelect={(selectedTheme) => onThemeChange({ ...theme, ...selectedTheme })}
+          />
+
+          {/* Divider */}
+          <div className="border-t pt-6">
         <div className="flex items-center gap-2 mb-4">
           <Sparkles className="w-5 h-5 text-primary" />
-          <h3 className="text-lg font-semibold">Ready-Made Templates</h3>
+          <h3 className="text-lg font-semibold">Template Themes</h3>
         </div>
         <p className="text-sm text-muted-foreground mb-6">
-          Choose a pre-designed theme to quickly style your profile
+          Quick template options to get you started
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {themeTemplates.map((template) => (
             <button
               key={template.id}
@@ -469,6 +585,30 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
           </div>
         </div>
       </div>
+        </div>
+      ) : (
+        <AdvancedCustomizer 
+          currentSettings={advancedSettings}
+          onSettingsChange={(settings) => {
+            setAdvancedSettings(settings);
+            // Also update the basic theme state to keep compatibility
+            onThemeChange({
+              ...theme,
+              primaryColor: settings.colors.primary,
+              backgroundColor: settings.colors.background,
+            });
+          }}
+        />
+      )}
+      
+      {/* Link Customizer Modal */}
+      {showLinkCustomizer && (
+        <LinkCustomizer
+          links={customLinks}
+          onLinksChange={setCustomLinks}
+          onClose={() => setShowLinkCustomizer(false)}
+        />
+      )}
     </div>
   );
 };

@@ -28,6 +28,8 @@ import PiAdNetwork from "../components/PiAdNetwork";
 import PiPayments from "@/components/PiPayments";
 import SubscriptionStatus from "@/components/SubscriptionStatus";
 import VotingSystem from "@/components/VotingSystem";
+import { ProfileData } from "@/types/profile";
+import LinkManager from "@/components/LinkManager";
 import {
   Drawer,
   DrawerClose,
@@ -92,51 +94,6 @@ interface PaymentLink {
   active: boolean;
   totalReceived: number;
   transactionCount: number;
-}
-
-interface ProfileData {
-  logo: string;
-  businessName: string;
-  storeUrl: string;
-  description: string;
-  email?: string;
-  piWalletAddress?: string;
-  youtubeVideoUrl: string;
-  socialLinks: {
-    twitter: string;
-    instagram: string;
-    youtube: string;
-    tiktok: string;
-    facebook: string;
-    linkedin: string;
-    twitch: string;
-    website: string;
-  };
-  customLinks: Array<{
-    id: string;
-    title: string;
-    url: string;
-    icon?: string;
-  }>;
-  theme: {
-    primaryColor: string;
-    backgroundColor: string;
-    backgroundType: 'color' | 'gif';
-    backgroundGif: string;
-    iconStyle: string;
-    buttonStyle: string;
-  };
-  products: Array<{
-    id: string;
-    title: string;
-    price: string;
-    description: string;
-    fileUrl: string;
-  }>;
-  paymentLinks?: PaymentLink[];
-  hasPremium?: boolean;
-  showShareButton?: boolean;
-  piDonationMessage?: string;
 }
 
 const Dashboard = () => {
@@ -238,8 +195,7 @@ const Dashboard = () => {
             description: data.description,
             email: data.email,
             youtube_video_url: data.youtubeVideoUrl,
-            social_links: data.socialLinks,
-            // Store custom links and payment links in theme_settings for now
+            social_links: data.socialLinks as any,
             theme_settings: {
               ...data.theme,
               customLinks: data.customLinks || [],
@@ -254,7 +210,7 @@ const Dashboard = () => {
                 totalReceived: link.totalReceived,
                 transactionCount: link.transactionCount
               }))
-            },
+            } as any,
             logo_url: data.logo,
             show_share_button: data.showShareButton,
             pi_wallet_address: data.piWalletAddress,
@@ -988,7 +944,7 @@ const Dashboard = () => {
         email: profile.email || null,
         logo: profile.logo,
         youtube_video_url: profile.youtubeVideoUrl,
-        social_links: socialLinksToSave,
+        social_links: socialLinksToSave as any,
         show_share_button: profile.showShareButton,
         theme_settings: {
           ...profile.theme,
@@ -996,7 +952,7 @@ const Dashboard = () => {
           // Explicitly ensure GIF background data is saved for Pi users
           backgroundGif: profile.theme.backgroundGif || "",
           backgroundType: profile.theme.backgroundType || "color",
-        },
+        } as any,
         // Financial data is saved separately via secure endpoint
       };
 
@@ -1468,6 +1424,15 @@ const Dashboard = () => {
                         >
                           {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           {showPreview ? 'Hide Preview' : 'Show Preview'}
+                        </Button>
+                        <Button
+                          onClick={() => navigate("/switch-to-merchant")}
+                          variant="default"
+                          size="sm"
+                          className="w-full justify-start gap-2 h-12 bg-blue-600 text-white hover:bg-blue-700"
+                        >
+                          <Sparkles className="w-4 h-4" />
+                          Switch to Merchant
                         </Button>
                       </div>
                     </div>
@@ -2019,9 +1984,13 @@ const Dashboard = () => {
             {/* Custom Links - Premium/Pro only */}
             <PlanGate minPlan="premium">
               <div className="border-t pt-6">
-                <CustomLinksManager
-                  links={profile.customLinks}
-                  onChange={(links) => setProfile({ ...profile, customLinks: links })}
+                <LinkManager
+                  customLinks={profile.customLinks || []}
+                  shortenedLinks={profile.shortenedLinks || []}
+                  onCustomLinksChange={(links) => setProfile({ ...profile, customLinks: links })}
+                  onShortenedLinksChange={(links) => setProfile({ ...profile, shortenedLinks: links })}
+                  layoutType={profile.linkLayoutType}
+                  onLayoutChange={(layout) => setProfile({ ...profile, linkLayoutType: layout })}
                 />
               </div>
             </PlanGate>
@@ -2082,6 +2051,19 @@ const Dashboard = () => {
                   />
                 </div>
                 <div>
+                  <Label htmlFor="text-color" className="mb-3 block">Text Color</Label>
+                  <Input
+                    id="text-color"
+                    type="color"
+                    value={profile.theme.textColor || '#ffffff'}
+                    onChange={(e) => setProfile({
+                      ...profile,
+                      theme: { ...profile.theme, textColor: e.target.value }
+                    })}
+                    className="h-12 w-full"
+                  />
+                </div>
+                <div>
                   <Label htmlFor="icon-style" className="mb-3 block">Icon Style</Label>
                   <select
                     id="icon-style"
@@ -2096,6 +2078,16 @@ const Dashboard = () => {
                     <option value="square">Square</option>
                     <option value="circle">Circle</option>
                   </select>
+                </div>
+
+                {/* Live preview for text visibility */}
+                <div className="mt-6 p-4 rounded border" style={{
+                  background: profile.theme.backgroundColor,
+                  color: profile.theme.textColor || '#ffffff',
+                  borderColor: profile.theme.primaryColor
+                }}>
+                  <span style={{ fontWeight: 'bold', fontSize: 18 }}>Text Preview: Always Visible</span>
+                  <p style={{ marginTop: 8 }}>This is a preview of your text color on your selected background. Make sure it is always readable!</p>
                 </div>
               </div>
               </div>

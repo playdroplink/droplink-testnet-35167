@@ -16,13 +16,7 @@ const EmailAuth = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    // Email/Gmail sign-in is temporarily disabled. Redirect users to Pi Network auth.
-    const timer = setTimeout(() => {
-      navigate('/auth');
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, [navigate]);
+
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,19 +138,62 @@ const EmailAuth = () => {
               className="w-16 h-16 object-contain"
             />
           </div>
-          <CardTitle className="text-2xl">Email Sign-In Disabled</CardTitle>
-          <CardDescription className="mt-2">For now, email/Gmail sign-in is disabled. Please use Pi Network authentication.</CardDescription>
+          <CardTitle className="text-2xl">{isLogin ? 'Sign In with Email' : 'Sign Up with Email'}</CardTitle>
+          <CardDescription className="mt-2">Sign in or sign up with your Gmail/Email account.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <p className="text-sm">You will be redirected to Pi Network authentication shortly. If not, click the button below.</p>
-            <div className="flex gap-2">
-              <Button onClick={() => navigate('/auth')} className="flex-1">Go to Pi Sign-In</Button>
+          <form onSubmit={handleAuth} className="space-y-4">
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                autoFocus
+              />
             </div>
-            <div className="text-xs text-muted-foreground mt-4">
-              If you are an admin and need email sign-in re-enabled, update the configuration or contact the developer.
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                minLength={6}
+              />
             </div>
-          </div>
+            <Button type="submit" className="w-full" size="lg" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {isLogin ? 'Signing In...' : 'Signing Up...'}
+                </>
+              ) : (
+                isLogin ? 'Sign In' : 'Sign Up'
+              )}
+            </Button>
+            <div className="flex justify-between mt-2">
+              <button
+                type="button"
+                className="text-primary hover:underline text-xs"
+                onClick={() => setIsLogin(!isLogin)}
+                disabled={loading}
+              >
+                {isLogin ? 'Need an account? Sign Up' : 'Already have an account? Sign In'}
+              </button>
+              <button
+                type="button"
+                className="text-primary hover:underline text-xs"
+                onClick={() => navigate('/auth')}
+                disabled={loading}
+              >
+                Use Pi Network
+              </button>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>

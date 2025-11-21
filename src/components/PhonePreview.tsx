@@ -29,63 +29,10 @@ import {
   FaLinkedin, 
   FaTwitch
 } from "react-icons/fa";
+import { Badge } from "@/components/ui/badge";
 import { QRCodeDisplay } from "./QRCodeDisplay";
 import { toast } from "sonner";
-
-interface PaymentLink {
-  id: string;
-  amount: number;
-  description: string;
-  type: 'product' | 'donation' | 'tip' | 'subscription' | 'group';
-  url: string;
-  created: Date;
-  active: boolean;
-  totalReceived: number;
-  transactionCount: number;
-}
-
-interface ProfileData {
-  logo: string;
-  businessName: string;
-  storeUrl: string;
-  description: string;
-  youtubeVideoUrl?: string;
-  socialLinks: {
-    twitter: string;
-    instagram: string;
-    youtube: string;
-    tiktok: string;
-    facebook: string;
-    linkedin: string;
-    twitch: string;
-    website: string;
-  };
-  customLinks: Array<{
-    id: string;
-    title: string;
-    url: string;
-    icon?: string;
-  }>;
-  theme: {
-    primaryColor: string;
-    backgroundColor: string;
-    backgroundType: 'color' | 'gif';
-    backgroundGif: string;
-    iconStyle: string;
-    buttonStyle: string;
-  };
-  products: Array<{
-    id: string;
-    title: string;
-    price: string;
-    description: string;
-    fileUrl: string;
-  }>;
-  paymentLinks?: PaymentLink[];
-  hasPremium?: boolean;
-  piWalletAddress?: string;
-  piDonationMessage?: string;
-}
+import { ProfileData } from "@/types/profile";
 
 interface PhonePreviewProps {
   profile: ProfileData;
@@ -264,17 +211,162 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
 
           {/* Custom Links */}
           {profile.customLinks && profile.customLinks.length > 0 && (
-            <div className="w-full space-y-2 pt-2">
-              {profile.customLinks.map((link) => (
-                <button
-                  key={link.id}
-                  {...getButtonStyles()}
-                  className={`${getButtonStyles().className} flex items-center justify-center gap-2`}
-                >
-                  {getCustomLinkIcon(link.icon)}
-                  <span>{link.title || "Untitled Link"}</span>
-                </button>
-              ))}
+            <div className="w-full pt-2">
+              {(() => {
+                const visibleLinks = profile.customLinks.filter(link => link.isVisible !== false);
+                const layoutType = profile.linkLayoutType || 'stack';
+                
+                // Sort links by priority
+                const sortedLinks = [...visibleLinks].sort((a, b) => (a.priority || 0) - (b.priority || 0));
+                
+                const renderLink = (link: typeof profile.customLinks[0], layoutClass?: string) => {
+                  const customStyle = link.customStyling;
+                  const hasCustomStyling = customStyle && customStyle.backgroundColor;
+                  const displayStyle = link.displayStyle || 'classic';
+                  
+                  // Enhanced display styles based on layout
+                  const getDisplayClassName = () => {
+                    let baseClass = layoutClass || '';
+                    
+                    if (displayStyle === 'featured') {
+                      return `${baseClass} p-6 rounded-xl shadow-lg border-2 border-yellow-400/30 bg-gradient-to-r from-yellow-50/10 to-orange-50/10`;
+                    } else if (displayStyle === 'animated') {
+                      return `${baseClass} p-4 rounded-lg animate-pulse hover:animate-bounce transition-all duration-300 shadow-md border border-blue-400/50`;
+                    } else {
+                      return `${baseClass} p-3 rounded-lg transition-all duration-200 hover:scale-105`;
+                    }
+                  };
+                  
+                  const iconSize = layoutType === 'showcase' || displayStyle === 'featured' ? 'w-10 h-10' : 
+                                 layoutType === 'grid' ? 'w-6 h-6' : 'w-8 h-8';
+                  const textSize = layoutType === 'showcase' || displayStyle === 'featured' ? 'text-base' : 'text-sm';
+                  const padding = layoutType === 'carousel' ? 'p-2' : layoutType === 'showcase' ? 'p-4' : 'p-3';
+                  
+                  return (
+                    <button
+                      key={link.id}
+                      className={`${getDisplayClassName()} flex items-center gap-3 relative ${
+                        hasCustomStyling ? '' : getButtonStyles().className
+                      } ${padding}`}
+                      style={hasCustomStyling ? {
+                        backgroundColor: customStyle.backgroundColor || link.color || '#3b82f6',
+                        color: link.textColor || '#ffffff',
+                        borderRadius: `${customStyle.borderRadius || 8}px`,
+                        fontSize: `${customStyle.fontSize || (displayStyle === 'featured' ? 18 : 14)}px`,
+                        fontWeight: customStyle.fontWeight || (displayStyle === 'featured' ? 600 : 500),
+                        borderColor: customStyle.borderColor || 'transparent',
+                        animation: customStyle.animation === 'pulse' ? 'pulse 2s infinite' :
+                                 customStyle.animation === 'bounce' ? 'bounce 1s infinite' :
+                                 customStyle.animation === 'glow' ? 'glow 2s infinite' :
+                                 displayStyle === 'animated' ? 'pulse 2s infinite' : 'none'
+                      } : {
+                        backgroundColor: link.color || '#3b82f6',
+                        color: link.textColor || '#ffffff'
+                      }}
+                    >
+                      {/* Icon/Favicon */}
+                      <div className={`flex-shrink-0 ${iconSize} flex items-center justify-center rounded-lg ${displayStyle === 'featured' ? 'bg-white/20' : 'bg-white/10'}`}>
+                        {link.favicon ? (
+                          <img 
+                            src={link.favicon} 
+                            alt="" 
+                            className={`${iconSize} rounded object-cover shadow-sm`}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              target.nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        {(!link.favicon || true) && (
+                          <div className={`${link.favicon ? 'hidden' : ''} ${displayStyle === 'featured' ? 'text-xl' : 'text-base'}`}>
+                            {link.icon && (link.icon.length <= 2) ? link.icon : getCustomLinkIcon(link.icon)}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Content */}
+                      <div className={`flex-1 text-left min-w-0 ${layoutType === 'carousel' ? 'hidden sm:block' : ''}`}>
+                        <div className={`font-medium truncate ${textSize} ${displayStyle === 'featured' ? 'mb-1' : ''}`}>
+                          {link.title || "Untitled Link"}
+                        </div>
+                        {link.description && layoutType !== 'carousel' && (
+                          <div className={`text-xs opacity-80 mt-1 ${displayStyle === 'featured' || layoutType === 'showcase' ? 'line-clamp-2' : 'truncate'}`}>
+                            {link.description}
+                          </div>
+                        )}
+                        {displayStyle === 'featured' && (
+                          <div className="flex items-center gap-1 mt-2">
+                            <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                            <span className="text-xs opacity-70">Featured</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Preview Image */}
+                      {link.image && layoutType !== 'carousel' && (
+                        <div className={`flex-shrink-0 ${displayStyle === 'featured' ? 'w-12 h-12' : 'w-8 h-8'}`}>
+                          <img 
+                            src={link.image} 
+                            alt="" 
+                            className={`w-full h-full rounded object-cover shadow-sm ${displayStyle === 'featured' ? 'border border-white/20' : ''}`}
+                          />
+                        </div>
+                      )}
+
+                      {/* Style Indicators */}
+                      {displayStyle === 'animated' && (
+                        <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-400 rounded-full animate-ping" />
+                      )}
+                      {link.category === 'commerce' && (
+                        <div className="absolute top-1 left-1">
+                          <ShoppingBag className="w-3 h-3 text-green-400" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                };
+                
+                // Render based on layout type
+                if (layoutType === 'grid') {
+                  return (
+                    <div className="grid grid-cols-2 gap-2">
+                      {sortedLinks.map(link => renderLink(link, 'w-full'))}
+                    </div>
+                  );
+                } else if (layoutType === 'carousel') {
+                  return (
+                    <div className="relative">
+                      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                        {sortedLinks.map(link => renderLink(link, 'flex-shrink-0 w-32 sm:w-40'))}
+                      </div>
+                      {sortedLinks.length > 3 && (
+                        <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
+                      )}
+                    </div>
+                  );
+                } else if (layoutType === 'showcase') {
+                  return (
+                    <div className="space-y-3">
+                      {sortedLinks.slice(0, 3).map(link => renderLink(link, 'w-full border-2 shadow-sm'))}
+                      {sortedLinks.length > 3 && (
+                        <div className="text-center py-2">
+                          <Badge variant="secondary" className="text-xs">
+                            +{sortedLinks.length - 3} more links
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  );
+                } else {
+                  // Stack layout (default)
+                  return (
+                    <div className="space-y-2">
+                      {sortedLinks.map(link => renderLink(link, 'w-full'))}
+                    </div>
+                  );
+                }
+              })()}
             </div>
           )}
 
