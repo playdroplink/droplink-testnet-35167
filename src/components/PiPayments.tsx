@@ -34,6 +34,7 @@ import { toast } from 'sonner';
 import { PI_CONFIG } from '@/config/pi-config';
 import { supabase } from '@/integrations/supabase/client';
 import { syncPaymentLinksToDatabase, loadPaymentLinksFromDatabase } from '@/lib/database-sync';
+import { MerchantConfigModal } from '@/components/MerchantConfigModal';
 
 interface PaymentLink {
   id: string;
@@ -52,14 +53,6 @@ interface PaymentLink {
     downloadUrl?: string;
     accessUrl?: string;
   };
-}
-
-interface MerchantConfig {
-  seedPhrase: string;
-  walletAddress: string;
-  validationKey: string;
-  apiKey: string;
-  environment: 'mainnet' | 'testnet';
 }
 
 interface Transaction {
@@ -102,24 +95,15 @@ const PiPayments: React.FC = () => {
   // Loading States
   const [loadingBalance, setLoadingBalance] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
-  
-  // Merchant Configuration State
-  const [merchantConfig, setMerchantConfig] = useState<MerchantConfig>({
-    seedPhrase: '',
-    walletAddress: '',
-    validationKey: '7511661aac4538b1832d2c9ba117f6d972b26a54640598d3fbb9824013c7079203f65b02d125be3f418605cfb89ba0e4443e3ec997e3800eb464df0bc5410d2a',
-    apiKey: import.meta.env.VITE_PI_API_KEY || '',
-    environment: PI_CONFIG.SANDBOX_MODE ? 'testnet' : 'mainnet'
-  });
-  const [showMerchantConfig, setShowMerchantConfig] = useState(false);
 
   // Pi Network payment scope creation
   const createPiPaymentScope = async (paymentLink: PaymentLink) => {
     try {
+      const apiKey = import.meta.env.VITE_PI_API_KEY || '';
       const response = await fetch('https://api.minepi.com/v2/payments', {
         method: 'POST',
         headers: {
-          'Authorization': `Key ${merchantConfig.apiKey}`,
+          'Authorization': `Key ${apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -129,8 +113,7 @@ const PiPayments: React.FC = () => {
             metadata: {
               linkId: paymentLink.id,
               type: paymentLink.type,
-              merchantWallet: merchantConfig.walletAddress,
-              validation: merchantConfig.validationKey
+              merchantWallet: walletAddress
             }
           }
         })
@@ -153,25 +136,8 @@ const PiPayments: React.FC = () => {
     if (isAuthenticated) {
       loadWalletData();
       loadPaymentLinks();
-      loadMerchantConfig();
     }
   }, [isAuthenticated]);
-
-  const loadMerchantConfig = () => {
-    try {
-      const saved = localStorage.getItem('pi_merchant_config');
-      if (saved) {
-        const config = JSON.parse(saved);
-        setMerchantConfig(prev => ({
-          ...prev,
-          ...config,
-          validationKey: '7511661aac4538b1832d2c9ba117f6d972b26a54640598d3fbb9824013c7079203f65b02d125be3f418605cfb89ba0e4443e3ec997e3800eb464df0bc5410d2a' // Keep default validation key
-        }));
-      }
-    } catch (error) {
-      console.error('Failed to load merchant config:', error);
-    }
-  };
 
   const loadWalletData = async () => {
     setLoadingBalance(true);
@@ -343,7 +309,7 @@ const PiPayments: React.FC = () => {
       savePaymentLinks(updatedLinks);
 
       // Create Pi Network payment scope for this link
-      if (merchantConfig.apiKey && merchantConfig.walletAddress) {
+      if (walletAddress) {
         try {
           await createPiPaymentScope(newLink);
         } catch (scopeError) {
@@ -435,7 +401,8 @@ const PiPayments: React.FC = () => {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
             <CardTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5 text-sky-500" />
               Pi Payments - DropPay
@@ -444,19 +411,19 @@ const PiPayments: React.FC = () => {
             <CardDescription>
               Complete payment solution for Pi Network {PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'} - Create checkout links, track payments, and manage your Pi wallet
             </CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <MerchantConfigModal />
+          </div>
         </CardHeader>
       </Card>
 
       <Tabs defaultValue="create" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="create">Create Payment</TabsTrigger>
           <TabsTrigger value="links">Payment Links</TabsTrigger>
           <TabsTrigger value="wallet">Wallet & Balance</TabsTrigger>
           <TabsTrigger value="history">Transaction History</TabsTrigger>
-          <TabsTrigger value="merchant">
-            <Wallet className="w-4 h-4 mr-1" />
-            Merchant Config
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="create">
@@ -875,150 +842,6 @@ const PiPayments: React.FC = () => {
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="merchant">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wallet className="w-5 h-5 text-green-500" />
-                Merchant Configuration
-              </CardTitle>
-              <CardDescription>
-                Configure your Pi Network merchant settings for payment processing and smart contract integration
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="environment">Environment</Label>
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="font-medium text-green-800">{PI_CONFIG.SANDBOX_MODE ? 'Sandbox (Testing)' : 'Mainnet (Production)'}</span>
-                    </div>
-                    <p className="text-sm text-green-700 mt-1">
-                      Connected to Pi Network {PI_CONFIG.SANDBOX_MODE ? 'Sandbox for testing' : 'Mainnet for live transactions'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="apiKey">Pi API Key</Label>
-                  <Input
-                    id="apiKey"
-                    type="password"
-                    placeholder="Enter your Pi Network API key"
-                    value={merchantConfig.apiKey}
-                    onChange={(e) => setMerchantConfig({...merchantConfig, apiKey: e.target.value})}
-                  />
-                  <p className="text-xs text-gray-500">
-                    Get your API key from Pi Developer Portal
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="walletAddress">Merchant Wallet Address</Label>
-                  <Input
-                    id="walletAddress"
-                    placeholder="Enter your Pi wallet address"
-                    value={merchantConfig.walletAddress}
-                    onChange={(e) => setMerchantConfig({...merchantConfig, walletAddress: e.target.value})}
-                  />
-                  <p className="text-xs text-gray-500">
-                    This is where you'll receive payments
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="seedPhrase">Seed Phrase (Optional)</Label>
-                  <Textarea
-                    id="seedPhrase"
-                    placeholder="Enter your seed phrase for advanced payment processing"
-                    value={merchantConfig.seedPhrase}
-                    onChange={(e) => setMerchantConfig({...merchantConfig, seedPhrase: e.target.value})}
-                    rows={3}
-                  />
-                  <p className="text-xs text-gray-500">
-                    Only needed for advanced smart contract features. Keep this secure!
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="validationKey">Validation Key</Label>
-                  <Input
-                    id="validationKey"
-                    placeholder="Validation key for payment verification"
-                    value={merchantConfig.validationKey}
-                    onChange={(e) => setMerchantConfig({...merchantConfig, validationKey: e.target.value})}
-                    readOnly
-                  />
-                  <p className="text-xs text-gray-500">
-                    Pre-configured validation key for your DropLink store
-                  </p>
-                </div>
-              </div>
-
-              <Alert>
-                <CheckCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Your merchant configuration will be saved securely. API keys are encrypted and seed phrases are stored locally only.
-                </AlertDescription>
-              </Alert>
-
-              <div className="flex gap-3">
-                <Button 
-                  onClick={() => {
-                    localStorage.setItem('pi_merchant_config', JSON.stringify(merchantConfig));
-                    toast.success('Merchant configuration saved successfully!');
-                  }}
-                  className="flex-1"
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Save Configuration
-                </Button>
-                
-                <Button 
-                  variant="outline"
-                  onClick={() => {
-                    const saved = localStorage.getItem('pi_merchant_config');
-                    if (saved) {
-                      setMerchantConfig(JSON.parse(saved));
-                      toast.success('Configuration loaded from storage');
-                    }
-                  }}
-                >
-                  Load Saved
-                </Button>
-              </div>
-
-              <div className="pt-4 border-t">
-                <h4 className="font-medium mb-2">Integration Status</h4>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    {merchantConfig.apiKey ? (
-                      <CheckCircle className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <AlertTriangle className="w-4 h-4 text-yellow-500" />
-                    )}
-                    <span>API Key {merchantConfig.apiKey ? 'Configured' : 'Missing'}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    {merchantConfig.walletAddress ? (
-                      <CheckCircle className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <AlertTriangle className="w-4 h-4 text-yellow-500" />
-                    )}
-                    <span>Wallet Address {merchantConfig.walletAddress ? 'Configured' : 'Missing'}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span>Environment: {merchantConfig.environment.toUpperCase()}</span>
-                  </div>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>

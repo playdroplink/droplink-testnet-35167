@@ -50,30 +50,35 @@ interface PaymentCallbacks {
   onError: (error: Error, payment?: any) => void;
 }
 
-interface AdResult {
+interface AdResponse {
+  type: 'interstitial' | 'rewarded';
   result: 'AD_CLOSED' | 'AD_REWARDED' | 'AD_DISPLAY_ERROR' | 'AD_NETWORK_ERROR' | 'AD_NOT_AVAILABLE' | 'ADS_NOT_SUPPORTED' | 'USER_UNAUTHENTICATED';
+  adId?: string;
 }
 
 declare global {
   interface Window {
     Pi: {
-      init: (config: { version: string; sandbox?: boolean; }) => Promise<void>;
+      init: (config: { version: string; sandbox?: boolean }) => Promise<void>;
       authenticate: (
         scopes: string[],
         onIncompletePaymentFound?: (payment: any) => void
       ) => Promise<AuthResult>;
-      createPayment: (paymentData: PaymentData, callbacks: PaymentCallbacks) => Promise<void>;
-      openShareDialog: (title: string, text: string) => Promise<boolean>;
-      openUrlInBrowser: (url: string) => Promise<boolean>;
-      showRewardedAd: () => Promise<AdResult>;
-      showInterstitialAd: () => Promise<AdResult>;
+      createPayment: (paymentData: PaymentData, callbacks: PaymentCallbacks) => void;
       nativeFeaturesList: () => Promise<string[]>;
-      Ads: {
-        isAdReady: () => Promise<boolean>;
+      openShareDialog: (title: string, message: string) => void;
+      openUrlInSystemBrowser: (url: string) => Promise<void>;
+      showRewardedAd?: () => Promise<AdResponse>;
+      showInterstitialAd?: () => Promise<AdResponse>;
+      Ads?: {
+        isAdReady: (adType: 'interstitial' | 'rewarded') => Promise<{ type: string; ready: boolean }>;
+        requestAd?: (adType: 'interstitial' | 'rewarded') => Promise<{ type: string; result: string }>;
+        showAd?: (adType: 'interstitial' | 'rewarded') => Promise<AdResponse>;
       };
     };
   }
 }
+
 
 // Pi Context Interface
 interface PiContextType {
@@ -121,12 +126,13 @@ interface PiContextType {
   // DROP Token Functions
   getDROPBalance: () => Promise<DropTokenBalance>;
   createDROPTrustline: () => Promise<boolean>;
-  requestDropTokens: (amount?: number) => Promise<boolean>;
+  requestDropTokens: (amount?: number, adIds?: string[]) => Promise<boolean>;
   getAllWalletTokens: () => Promise<any[]>;
   refreshDROPDisplay: () => Promise<boolean>;
   
   // Ad Functions
   showRewardedAd: () => Promise<boolean>;
+  watchAdsAndClaim: (adsToWatch: number, dropsReward: number) => Promise<boolean>;
   showInterstitialAd: () => Promise<boolean>;
   isAdReady: () => Promise<boolean>;
   
@@ -180,6 +186,17 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         console.log('Network:', PI_CONFIG.NETWORK);
         console.log('API Endpoint:', PI_CONFIG.BASE_URL);
         console.log('Sandbox Mode:', PI_CONFIG.SANDBOX_MODE);
+
+        // If Pi SDK isn't present and we're running in sandbox on localhost, install a dev mock
+        if (!isPiNetworkAvailable() && PI_CONFIG.SANDBOX_MODE && (typeof window !== 'undefined') && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+          try {
+            const mod = await import('@/utils/pi-sdk-mock');
+            mod.installMockPi();
+            console.log('Installed dev Pi SDK mock for localhost sandbox testing');
+          } catch (e) {
+            console.warn('Failed to install Pi SDK mock:', e);
+          }
+        }
 
         if (isPiNetworkAvailable()) {
           // Initialize Pi SDK using configured SDK options
@@ -260,7 +277,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           throw new Error('Pi Network is not available in this browser');
         }
       } catch (reinitError) {
-        const errorMsg = 'Pi Network is not available. Please use Pi Browser or ensure Pi SDK is loaded.';
+        const errorMsg = `Pi Network is not available (sandbox: ${PI_CONFIG.SANDBOX_MODE ? 'enabled' : 'disabled'}). Please use Pi Browser or ensure the Pi SDK is loaded.`;
         toast.error(errorMsg, {
           description: 'Please try using Pi Browser or check your connection',
           duration: 5000,
@@ -278,16 +295,29 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       
       // Verify with Pi API (configured endpoint)
       console.log(`🔍 Verifying authentication with Pi ${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'} API...`);
-      const response = await fetch(PI_CONFIG.ENDPOINTS.ME, {
-        headers: PI_CONFIG.getAuthHeaders(authResult.accessToken)
-      });
+      let verifiedUser: any = null;
+      try {
+        const response = await fetch(PI_CONFIG.ENDPOINTS.ME, {
+          headers: PI_CONFIG.getAuthHeaders(authResult.accessToken)
+        });
 
-      if (!response.ok) {
-        throw new Error(`${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'} authentication verification failed`);
+        if (!response.ok) {
+          throw new Error(`${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'} authentication verification failed (status ${response.status})`);
+        }
+
+        verifiedUser = await response.json();
+        console.log(`✅ Pi ${PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'} authentication successful:`, verifiedUser);
+      } catch (verifyErr) {
+        // If we're using the dev mock, allow auth to proceed using the authResult.user
+        const isMock = typeof window !== 'undefined' && (window as any).Pi && (window as any).Pi.__isMock;
+        if (isMock) {
+          console.warn('Pi authentication verification failed but mock detected — proceeding with mock user:', verifyErr);
+          verifiedUser = authResult.user;
+        } else {
+          // Re-throw to be handled by outer catch
+          throw verifyErr;
+        }
       }
-
-      const verifiedUser = await response.json();
-      console.log(`✅ Pi ${PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'} authentication successful:`, verifiedUser);
       
       // Use the user data from authentication result
       let finalUser = authResult.user;
@@ -698,8 +728,38 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Request DROP tokens from distributor
-  const requestDropTokens = async (amount: number = 100): Promise<boolean> => {
+  // Helpers for daily ad limit tracking (local fallback). Server-side enforcement recommended.
+  const getTodayKey = () => {
+    const d = new Date().toISOString().slice(0, 10);
+    return `ad_watch_count_${d}`;
+  };
+
+  const getTodaysAdCount = (): number => {
+    try {
+      const v = localStorage.getItem(getTodayKey()) || '0';
+      return parseInt(v, 10) || 0;
+    } catch (e) {
+      return 0;
+    }
+  };
+
+  const incrementTodaysAdCount = (n: number = 1) => {
+    try {
+      const key = getTodayKey();
+      const next = getTodaysAdCount() + n;
+      localStorage.setItem(key, String(next));
+    } catch (e) {
+      console.warn('Failed to increment todays ad count', e);
+    }
+  };
+
+  const getRemainingAdsToday = (): number => {
+    const MAX_PER_DAY = 20;
+    return Math.max(0, MAX_PER_DAY - getTodaysAdCount());
+  };
+
+  // Request DROP tokens from distributor. Accepts optional adIds for server-side dedupe.
+  const requestDropTokens = async (amount: number = 100, adIds?: string[]): Promise<boolean> => {
     if (!isAuthenticated || !piUser?.wallet_address) {
       toast("Please authenticate with Pi Network first", {
         description: "Authentication Required",
@@ -709,14 +769,18 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      console.log(`🪙 Requesting ${amount} DROP tokens...`);
-      
-      // Call backend function to distribute tokens
+      console.log(`🪙 Requesting ${amount} DROP tokens...`, { adIds });
+
+      // Call backend function to distribute tokens. Send adIds when available so server can dedupe.
+      const invokeBody: any = {
+        recipientAddress: piUser.wallet_address,
+        amount: amount.toString(),
+      };
+
+      if (adIds && adIds.length > 0) invokeBody.adIds = adIds;
+
       const { data, error } = await supabase.functions.invoke('distribute-drop-tokens', {
-        body: { 
-          recipientAddress: piUser.wallet_address,
-          amount: amount.toString()
-        },
+        body: invokeBody,
         headers: {
           'Authorization': `Bearer ${accessToken}`
         }
@@ -948,8 +1012,268 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const showRewardedAd = async (): Promise<boolean> => {
-    // Implementation pending
-    return false;
+    if ((!window.Pi && !(window as any).Pi) || !adNetworkSupported) {
+      toast("Ad Network not supported on this Pi Browser version.", {
+        description: "Ads Not Supported",
+        duration: 5000,
+      });
+      return false;
+    }
+
+    if (!isAuthenticated) {
+      toast("You must be authenticated to view rewarded ads.", {
+        description: "Authentication Required",
+        duration: 5000,
+      });
+      return false;
+    }
+
+    try {
+      // Show the ad via Pi SDK (supporting both Ads.showAd and direct showRewardedAd)
+      let response: any = null;
+      try {
+        if ((window as any).Pi && (window as any).Pi.Ads && (window as any).Pi.Ads.showAd) {
+          response = await (window as any).Pi.Ads.showAd('rewarded');
+        } else if ((window as any).Pi && (window as any).Pi.showRewardedAd) {
+          response = await (window as any).Pi.showRewardedAd();
+        } else {
+          throw new Error('Ad API not available');
+        }
+      } catch (adErr) {
+        console.error('Ad show error:', adErr);
+        toast("Failed to show rewarded ad.", { description: "Ad Error", duration: 5000 });
+        return false;
+      }
+
+      // Normalize adId
+      const adId = response?.adId || response?.ad_id || response?.id || null;
+
+      // Prevent duplicate rewards for the same ad id (client-side guard)
+      if (adId) {
+        try {
+          const grantedRaw = localStorage.getItem('ad_rewards_granted') || '[]';
+          const granted: string[] = JSON.parse(grantedRaw);
+          if (granted.includes(adId)) {
+            toast('This ad reward has already been claimed.', { duration: 3000 });
+            return false;
+          }
+        } catch (e) {
+          console.warn('Failed to read ad_rewards_granted from localStorage', e);
+        }
+      }
+
+      if (response?.result === 'AD_REWARDED') {
+        // Verify ad claim with backend if possible
+        let verified = false;
+        try {
+          if (adId) {
+            const verifyRes = await supabase.functions.invoke('pi-ad-verify', {
+              body: { adId },
+              headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            const funcErr = (verifyRes as any)?.error;
+            const funcData = (verifyRes as any)?.data;
+            if (!funcErr && funcData?.mediator_ack_status === 'granted') {
+              verified = true;
+            }
+          } else {
+            // No adId available (rare) — allow in sandbox/mock
+            const isMock = (window as any).Pi && (window as any).Pi.__isMock;
+            if (isMock) verified = true;
+          }
+        } catch (verifyErr) {
+          console.warn('Ad verification failed:', verifyErr);
+        }
+
+        // If verified or mock, distribute DROP tokens once
+        if (verified) {
+          // Double-check local grant and then call distribution
+          try {
+            if (adId) {
+              const grantedRaw = localStorage.getItem('ad_rewards_granted') || '[]';
+              const granted: string[] = JSON.parse(grantedRaw);
+              if (granted.includes(adId)) {
+                toast('This ad reward has already been claimed.', { duration: 3000 });
+                return false;
+              }
+            }
+
+            // Default per-ad reward: 10 DROP tokens; pass adId for server-side dedupe
+            const perAdAmount = 10;
+            const sent = await requestDropTokens(perAdAmount, adId ? [adId] : undefined);
+
+            if (sent) {
+              // Mark adId as granted
+              if (adId) {
+                try {
+                  const grantedRaw = localStorage.getItem('ad_rewards_granted') || '[]';
+                  const granted: string[] = JSON.parse(grantedRaw);
+                  granted.push(adId);
+                  localStorage.setItem('ad_rewards_granted', JSON.stringify(granted));
+                } catch (e) {
+                  console.warn('Failed to persist ad reward id', e);
+                }
+              }
+
+              // Increment today's ad counter
+              try {
+                incrementTodaysAdCount(1);
+              } catch (e) {
+                console.warn('Failed to increment todays ad counter', e);
+              }
+
+              toast('You have been rewarded for watching the ad!', { description: 'Ad Reward Earned', duration: 3000 });
+              return true;
+            } else {
+              toast('Ad watched but failed to distribute reward. Please try again later.', { duration: 4000 });
+              return false;
+            }
+          } catch (err) {
+            console.error('Error distributing drop tokens after ad:', err);
+            toast('Failed to distribute ad reward.', { duration: 5000 });
+            return false;
+          }
+        }
+      }
+
+      return response?.result === 'AD_REWARDED';
+    } catch (err) {
+      console.error('Error showing rewarded ad:', err);
+      toast('Failed to show rewarded ad.', { description: 'Ad Error', duration: 5000 });
+      return false;
+    }
+  };
+
+  // Watch N rewarded ads sequentially and claim package reward
+  const watchAdsAndClaim = async (adsToWatch: number, dropsReward: number): Promise<boolean> => {
+    if ((!window.Pi && !(window as any).Pi) || !adNetworkSupported) {
+      toast('Ad Network not supported on this Pi Browser version.', { duration: 4000 });
+      return false;
+    }
+
+    if (!isAuthenticated) {
+      toast('You must be authenticated to view rewarded ads.', { duration: 4000 });
+      return false;
+    }
+
+    if (!adsToWatch || adsToWatch < 1) {
+      toast('Invalid number of ads to watch.', { duration: 3000 });
+      return false;
+    }
+
+    const remaining = getRemainingAdsToday();
+    if (adsToWatch > remaining) {
+      toast(`You can only watch ${remaining} more ads today.`, { duration: 5000 });
+      return false;
+    }
+
+    const collectedAdIds: string[] = [];
+
+    for (let i = 0; i < adsToWatch; i++) {
+      try {
+        const start = Date.now();
+        let response: any = null;
+        try {
+          if ((window as any).Pi && (window as any).Pi.Ads && (window as any).Pi.Ads.showAd) {
+            response = await (window as any).Pi.Ads.showAd('rewarded');
+          } else if ((window as any).Pi && (window as any).Pi.showRewardedAd) {
+            response = await (window as any).Pi.showRewardedAd();
+          } else {
+            throw new Error('Ad API not available');
+          }
+        } catch (adErr) {
+          console.error('Ad show error during package flow:', adErr);
+          toast('Failed to show rewarded ad.', { duration: 4000 });
+          return false;
+        }
+
+        const adId = response?.adId || response?.ad_id || response?.id || null;
+
+        // Enforce minimum watch time (30s)
+        const elapsed = Date.now() - start;
+        const minMs = 30 * 1000;
+        if (elapsed < minMs) {
+          try {
+            await new Promise(res => setTimeout(res, minMs - elapsed));
+          } catch (e) { /* ignore */ }
+        }
+
+        if (response?.result !== 'AD_REWARDED') {
+          toast('Ad was not rewarded. Try again.', { duration: 4000 });
+          return false;
+        }
+
+        // Verify each ad via backend
+        let verified = false;
+        try {
+          if (adId) {
+            const verifyRes = await supabase.functions.invoke('pi-ad-verify', {
+              body: { adId },
+              headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            const funcErr = (verifyRes as any)?.error;
+            const funcData = (verifyRes as any)?.data;
+            if (!funcErr && funcData?.mediator_ack_status === 'granted') {
+              verified = true;
+            }
+          } else {
+            const isMock = (window as any).Pi && (window as any).Pi.__isMock;
+            if (isMock) verified = true;
+          }
+        } catch (verifyErr) {
+          console.warn('Ad verification failed during package flow:', verifyErr);
+        }
+
+        if (!verified) {
+          toast('Failed to verify ad watch. Aborting package.', { duration: 5000 });
+          return false;
+        }
+
+        if (adId) collectedAdIds.push(adId);
+      } catch (err) {
+        console.error('Error during watchAdsAndClaim flow:', err);
+        toast('Error while watching ads. Please try again.', { duration: 5000 });
+        return false;
+      }
+    }
+
+    // Calculate total tokens: configured as 10 DROP tokens per drop unit
+    const tokensPerDrop = 10;
+    const totalAmount = dropsReward * tokensPerDrop;
+
+    // Send collected adIds to the backend for authoritative dedupe and distribution
+    try {
+      const distributed = await requestDropTokens(totalAmount, collectedAdIds.length > 0 ? collectedAdIds : undefined);
+      if (!distributed) {
+        toast('Failed to distribute package reward. Please try again later.', { duration: 5000 });
+        return false;
+      }
+
+      // Mark all adIds as granted client-side and increment today's counter
+      try {
+        const grantedRaw = localStorage.getItem('ad_rewards_granted') || '[]';
+        const granted: string[] = JSON.parse(grantedRaw);
+        for (const id of collectedAdIds) {
+          if (!granted.includes(id)) granted.push(id);
+        }
+        localStorage.setItem('ad_rewards_granted', JSON.stringify(granted));
+      } catch (e) {
+        console.warn('Failed to persist ad reward ids', e);
+      }
+
+      try {
+        incrementTodaysAdCount(adsToWatch);
+      } catch (e) {
+        console.warn('Failed to increment todays ad counter after package distribution', e);
+      }
+
+      toast(`Package reward distributed: ${totalAmount} DROP tokens`, { duration: 5000 });
+      return true;
+    } catch (err) {
+      console.error('Failed to distribute package reward:', err);
+      toast('Failed to distribute package reward.', { duration: 5000 });
+      return false;
+    }
   };
 
   const showInterstitialAd = async (): Promise<boolean> => {
@@ -1004,6 +1328,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     getAllWalletTokens: getAllWalletTokensFunc,
     refreshDROPDisplay,
     showRewardedAd,
+    watchAdsAndClaim,
     showInterstitialAd,
     isAdReady,
     shareContent,

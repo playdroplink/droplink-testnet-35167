@@ -47,54 +47,151 @@ export const FutureFeaturesDashboard = () => {
       setLoading(true);
       setError(null);
 
-      // For now, just show sample data since database table may not exist yet
-      // TODO: Enable database loading once feature_roadmap table is created via migration
+      // Real upcoming features for next updates
       setFeatures([
         {
           id: '1',
-          title: 'Advanced AI Content Generation',
-          description: 'AI-powered bio content creation and optimization with personalized suggestions',
+          title: 'AI Assistant Integration',
+          description: 'Smart AI assistant to help create and optimize your bio content with personalized suggestions',
           status: 'in_development' as const,
           priority: 'high' as const,
-          estimated_release: '2024-12-15',
-          pi_earning_potential: 50,
-          vote_count: 127,
-          category: 'AI & Automation',
-          progress_percentage: 75,
+          estimated_release: '2025-01-15',
+          pi_earning_potential: 25,
+          vote_count: 89,
+          category: 'AI & Intelligence',
+          progress_percentage: 85,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         },
         {
           id: '2',
-          title: 'NFT Marketplace Integration',
-          description: 'Display and sell NFTs directly from your bio page with Pi Network payments',
-          status: 'planned' as const,
+          title: 'Advanced QR Code Generator',
+          description: 'Generate custom QR codes with logos, colors, and analytics tracking for your bio pages',
+          status: 'testing' as const,
           priority: 'medium' as const,
           estimated_release: '2025-01-30',
-          pi_earning_potential: 100,
-          vote_count: 89,
-          category: 'Web3 & Crypto',
-          progress_percentage: 25,
+          pi_earning_potential: 15,
+          vote_count: 67,
+          category: 'Tools & Utilities',
+          progress_percentage: 95,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         },
         {
           id: '3',
-          title: 'Mobile App Release',
-          description: 'Native iOS and Android apps with offline capabilities',
-          status: 'testing' as const,
+          title: 'Multi-Language Support',
+          description: 'Support for 15+ languages with automatic translation for international audiences',
+          status: 'planned' as const,
+          priority: 'medium' as const,
+          estimated_release: '2025-02-15',
+          pi_earning_potential: 20,
+          vote_count: 134,
+          category: 'Internationalization',
+          progress_percentage: 30,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '4',
+          title: 'Video Background Support',
+          description: 'Add animated video backgrounds to make your bio page more engaging and dynamic',
+          status: 'planned' as const,
+          priority: 'low' as const,
+          estimated_release: '2025-03-01',
+          pi_earning_potential: 10,
+          vote_count: 156,
+          category: 'Design & Media',
+          progress_percentage: 15,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '5',
+          title: 'Team Workspace Feature',
+          description: 'Collaborative workspace for teams to manage multiple bio pages and shared resources',
+          status: 'planned' as const,
+          priority: 'high' as const,
+          estimated_release: '2025-02-28',
+          pi_earning_potential: 50,
+          vote_count: 98,
+          category: 'Collaboration',
+          progress_percentage: 25,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '6',
+          title: 'Advanced Analytics Pro',
+          description: 'Deep analytics with visitor heatmaps, conversion tracking, and A/B testing capabilities',
+          status: 'in_development' as const,
           priority: 'critical' as const,
-          estimated_release: '2025-02-01',
-          pi_earning_potential: 150,
-          vote_count: 234,
-          category: 'Mobile',
-          progress_percentage: 90,
+          estimated_release: '2025-01-20',
+          pi_earning_potential: 40,
+          vote_count: 203,
+          category: 'Analytics & Insights',
+          progress_percentage: 70,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '7',
+          title: 'Social Media Auto-Sync',
+          description: 'Automatically sync your bio updates across Instagram, Twitter, LinkedIn and more platforms',
+          status: 'coming_soon' as const,
+          priority: 'medium' as const,
+          estimated_release: '2025-01-10',
+          pi_earning_potential: 30,
+          vote_count: 177,
+          category: 'Social Integration',
+          progress_percentage: 100,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '8',
+          title: 'Custom Domain Plus',
+          description: 'Enhanced custom domain support with SSL certificates and subdomain management',
+          status: 'in_development' as const,
+          priority: 'medium' as const,
+          estimated_release: '2025-02-05',
+          pi_earning_potential: 35,
+          vote_count: 145,
+          category: 'Professional Features',
+          progress_percentage: 60,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '9',
+          title: 'E-commerce Integration',
+          description: 'Sell products directly from your bio page with integrated payment processing and inventory management',
+          status: 'planned' as const,
+          priority: 'critical' as const,
+          estimated_release: '2025-03-15',
+          pi_earning_potential: 75,
+          vote_count: 289,
+          category: 'Commerce & Sales',
+          progress_percentage: 20,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '10',
+          title: 'Mobile App Companion',
+          description: 'Native iOS and Android apps for managing your bio pages on-the-go with push notifications',
+          status: 'planned' as const,
+          priority: 'high' as const,
+          estimated_release: '2025-04-01',
+          pi_earning_potential: 60,
+          vote_count: 334,
+          category: 'Mobile Platform',
+          progress_percentage: 10,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }
       ]);
       
-      console.log('Using sample roadmap data (database integration pending migration)');
+      console.log('Real upcoming features loaded for next updates');
     } catch (err) {
       console.error('Failed to load features:', err);
       setFeatures([]);

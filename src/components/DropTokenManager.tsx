@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { usePi } from '@/contexts/PiContext';
+import AdRewardPicker from '@/components/AdRewardPicker';
+import FeatureVote from '@/components/FeatureVote';
 import { PI_CONFIG } from '@/config/pi-config';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -499,6 +502,51 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
     }
   }, []);
 
+  // Ad stats (local fallback)
+  const getTodayKey = () => {
+    const d = new Date().toISOString().slice(0, 10);
+    return `ad_watch_count_${d}`;
+  };
+
+  const getTodaysAdCountLocal = (): number => {
+    try {
+      const v = localStorage.getItem(getTodayKey()) || '0';
+      return parseInt(v, 10) || 0;
+    } catch (e) {
+      return 0;
+    }
+  };
+
+  const [adsWatchedToday, setAdsWatchedToday] = useState<number>(getTodaysAdCountLocal());
+  const [todaysEarnings, setTodaysEarnings] = useState<number>(adsWatchedToday * 10);
+
+  useEffect(() => {
+    setTodaysEarnings(adsWatchedToday * 10);
+  }, [adsWatchedToday]);
+
+  // Refresh ad stats from localStorage
+  const refreshAdStats = () => {
+    setAdsWatchedToday(getTodaysAdCountLocal());
+  };
+
+  // Access Pi context
+  const piCtx = usePi();
+
+  const handleWatchSingleAd = async () => {
+    if (!piCtx) return;
+    try {
+      const ok = await piCtx.showRewardedAd();
+      // showRewardedAd will update localStorage counters; refresh local UI
+      setTimeout(() => {
+        refreshAdStats();
+        // also refresh balance if reward was distributed
+        if (ok) checkDropBalance(currentWalletAddress);
+      }, 1200);
+    } catch (err) {
+      console.error('Watch ad error', err);
+    }
+  };
+
   useEffect(() => {
     if (currentWalletAddress) {
       checkDropBalance(currentWalletAddress);
@@ -529,6 +577,22 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
         </CardContent>
       </Card>
     );
+      {/* Ad Reward Picker */}
+      <div>
+        {/* Lazy-load component to avoid increasing initial bundle too much */}
+        <React.Suspense fallback={<div>Loading ad picker...</div>}>
+          {/* @ts-ignore */}
+          <AdRewardPicker />
+        </React.Suspense>
+      </div>
+
+      {/* Feature Voting */}
+      <div>
+        <React.Suspense fallback={<div>Loading feature voting...</div>}>
+          {/* @ts-ignore */}
+          <FeatureVote />
+        </React.Suspense>
+      </div>
   }
 
   return (

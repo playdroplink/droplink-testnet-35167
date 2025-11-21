@@ -15,6 +15,11 @@ export const AdGatedFeature = ({
   featureName,
   trigger 
 }: AdGatedFeatureProps) => {
+  // UNLOCKED: All features now accessible without watching ads
+  // Ad gating temporarily disabled
+  return <>{children}</>;
+  
+  /* ORIGINAL AD GATE - DISABLED
   const { plan, loading } = useActiveSubscription();
   const [showAdModal, setShowAdModal] = useState(false);
   const [adWatched, setAdWatched] = useState(false);
@@ -58,4 +63,5 @@ export const AdGatedFeature = ({
   }
 
   return <>{children}</>;
+  */
 };

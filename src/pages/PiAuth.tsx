@@ -8,7 +8,9 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AboutModal } from "@/components/AboutModal";
+import { PI_CONFIG } from '@/config/pi-config';
 import { LicenseModal } from "@/components/LicenseModal";
+import { MerchantConfigModal } from "@/components/MerchantConfigModal";
 import droplinkLogo from "@/assets/droplink-logo.png";
 
 const PiAuth = () => {
@@ -146,7 +148,9 @@ const PiAuth = () => {
 
           <div className="pt-4 border-t space-y-2">
             <p className="text-xs text-center text-muted-foreground">
-              Please open this app in Pi Browser to use Pi authentication.
+              Pi Network access is not available in this browser ({PI_CONFIG.SANDBOX_MODE ? 'Sandbox mode active' : 'Mainnet mode'}).
+              <br />
+              Please open this app in Pi Browser to use Pi authentication, or ensure the Pi SDK is loaded in your environment.
               <br />
               Your Pi username will be used as your unique identifier.
             </p>
@@ -172,6 +176,10 @@ const PiAuth = () => {
               <LicenseModal>
                 <button className="text-primary hover:underline cursor-pointer">License</button>
               </LicenseModal>
+              <span className="text-muted-foreground">•</span>
+              <MerchantConfigModal>
+                <button className="text-primary hover:underline cursor-pointer">Merchant Config</button>
+              </MerchantConfigModal>
               <span className="text-muted-foreground">•</span>
               <a href="/terms" className="text-primary hover:underline">Terms</a>
               <span className="text-muted-foreground">•</span>

@@ -6,6 +6,11 @@ import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 import { usePi } from "@/contexts/PiContext";
 
 export const PiAdBanner = () => {
+  // DISABLED FOR FUTURE: Pi Ad Network Feature
+  // Feature disabled temporarily for future implementation
+  return null;
+  
+  /* ORIGINAL CODE - DISABLED
   const { plan, loading } = useActiveSubscription();
   const { showInterstitialAd } = usePi();
   const [dismissed, setDismissed] = useState(false);
@@ -27,7 +32,9 @@ export const PiAdBanner = () => {
   if (loading || plan !== "free" || dismissed) {
     return null;
   }
+  */
 
+  /* ORIGINAL JSX - DISABLED
   return (
     <Card className="relative bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 p-4">
       <Button
@@ -63,4 +70,5 @@ export const PiAdBanner = () => {
       </div>
     </Card>
   );
+  */
 };

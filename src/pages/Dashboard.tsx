@@ -20,6 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { performCompleteSignOut } from "@/lib/auth-utils";
 import { UserPreferencesManager } from "@/components/UserPreferencesManager";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import { AboutModal } from "@/components/AboutModal";
 import { FutureFeaturesDashboard } from "@/components/FutureFeaturesDashboard";
 import { DropTokenManager } from "@/components/DropTokenManager";
@@ -148,11 +149,13 @@ const Dashboard = () => {
   const subscription = useActiveSubscription();
   const { plan, loading: subscriptionLoading } = subscription;
   
+  const { preferences, updateDashboardLayout } = useUserPreferences();
+  
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
-  const [showPreview, setShowPreview] = useState(true);
+  const [showPreview, setShowPreview] = useState(!preferences.dashboard_layout.sidebarCollapsed);
   const [showQRCode, setShowQRCode] = useState(false);
   const [piWalletQrData, setPiWalletQrData] = useState<string>("");
   const [showPiWalletQR, setShowPiWalletQR] = useState(false);
@@ -889,36 +892,9 @@ const Dashboard = () => {
     return Object.values(profile.socialLinks).filter(link => link && link.trim() !== "").length;
   };
 
-  // Handle social link change with free plan limitation
+  // Handle social link change - UNLOCKED: No restrictions
   const handleSocialLinkChange = (platform: keyof typeof profile.socialLinks, value: string) => {
-    if (plan === "free") {
-      const currentCount = countActiveSocialLinks();
-      const currentValue = profile.socialLinks[platform];
-      const isAdding = value.trim() !== "" && currentValue.trim() === "";
-      const isRemoving = value.trim() === "" && currentValue.trim() !== "";
-      
-      // If adding a new link and already have one, clear all others first
-      if (isAdding && currentCount >= 1) {
-        toast.info("Free plan allows only 1 social link. Clearing other links...");
-        const clearedLinks = {
-          twitter: "",
-          instagram: "",
-          youtube: "",
-          tiktok: "",
-          facebook: "",
-          linkedin: "",
-          twitch: "",
-          website: "",
-        };
-        setProfile({
-          ...profile,
-          socialLinks: { ...clearedLinks, [platform]: value }
-        });
-        return;
-      }
-    }
-    
-    // Normal update
+    // UNLOCKED: All users can now add unlimited social links
     setProfile({
       ...profile,
       socialLinks: { ...profile.socialLinks, [platform]: value }
@@ -1608,7 +1584,7 @@ const Dashboard = () => {
         <div className={`flex-1 overflow-y-auto p-4 lg:p-8 ${isMobile ? 'bg-background' : 'glass-card'} m-2 rounded-xl ${showPreview ? 'hidden lg:block' : 'block'}`}>
           <div className="max-w-2xl mx-auto">
             <Tabs 
-              defaultValue="profile" 
+              defaultValue={preferences.dashboard_layout.activeTab} 
               className="w-full"
               onValueChange={(value) => {
                 // Refresh payment links when payments tab is accessed
@@ -1642,14 +1618,16 @@ const Dashboard = () => {
                   <Coins className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">DROP</span>
                 </TabsTrigger>
-                <TabsTrigger value="ad-network" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                {/* DISABLED FOR FUTURE: Ad Network Feature */}
+                {/* <TabsTrigger value="ad-network" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
                   <PlayCircle className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Ads</span>
-                </TabsTrigger>
-                <TabsTrigger value="payments" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                </TabsTrigger> */}
+                {/* Payments Tab - Disabled for next update */}
+                {/* <TabsTrigger value="payments" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
                   <CreditCard className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Pay</span>
-                </TabsTrigger>
+                </TabsTrigger> */}
                 <TabsTrigger value="subscription" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
                   <Crown className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Sub</span>
@@ -1662,12 +1640,13 @@ const Dashboard = () => {
                   <User className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Settings</span>
                 </TabsTrigger>
-                {isAuthenticated && (
+                {/* Pi Data Tab - Disabled for next update */}
+                {/* {isAuthenticated && (
                   <TabsTrigger value="pi-data" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
                     <Bot className="w-4 h-4 mr-1 sm:mr-2" />
                     <span className="hidden sm:inline">Pi Data</span>
                   </TabsTrigger>
-                )}
+                )} */}
               </TabsList>
 
               {/* Profile Tab */}
@@ -1799,28 +1778,8 @@ const Dashboard = () => {
             <div>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold">Social links</h2>
-                {plan === "free" && (
-                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                    Free: 1 link only
-                  </span>
-                )}
+                {/* UNLOCKED: No more restrictions */}
               </div>
-              {plan === "free" && (
-                <div className="mb-4 p-3 bg-muted/50 rounded-lg border border-border">
-                  <p className="text-sm text-muted-foreground">
-                    Free plan allows only <strong>1 social link</strong>. Choose your preferred platform below.
-                    <br />
-                    <Button 
-                      variant="link" 
-                      size="sm" 
-                      className="p-0 h-auto text-primary mt-1"
-                      onClick={() => navigate("/subscription")}
-                    >
-                      Upgrade to Premium/Pro for unlimited links →
-                    </Button>
-                  </p>
-                </div>
-              )}
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center">
@@ -1831,7 +1790,6 @@ const Dashboard = () => {
                     onChange={(e) => handleSocialLinkChange("twitter", e.target.value)}
                     placeholder="https://x.com/"
                     className="bg-input-bg flex-1"
-                    disabled={plan === "free" && countActiveSocialLinks() >= 1 && !profile.socialLinks.twitter}
                   />
                 </div>
 
@@ -1844,7 +1802,6 @@ const Dashboard = () => {
                     onChange={(e) => handleSocialLinkChange("instagram", e.target.value)}
                     placeholder="https://instagram.com/"
                     className="bg-input-bg flex-1"
-                    disabled={plan === "free" && countActiveSocialLinks() >= 1 && !profile.socialLinks.instagram}
                   />
                 </div>
 
@@ -1857,7 +1814,6 @@ const Dashboard = () => {
                     onChange={(e) => handleSocialLinkChange("youtube", e.target.value)}
                     placeholder="https://youtube.com/@"
                     className="bg-input-bg flex-1"
-                    disabled={plan === "free" && countActiveSocialLinks() >= 1 && !profile.socialLinks.youtube}
                   />
                 </div>
 
@@ -1870,7 +1826,6 @@ const Dashboard = () => {
                     onChange={(e) => handleSocialLinkChange("tiktok", e.target.value)}
                     placeholder="https://tiktok.com/@"
                     className="bg-input-bg flex-1"
-                    disabled={plan === "free" && countActiveSocialLinks() >= 1 && !profile.socialLinks.tiktok}
                   />
                 </div>
 
@@ -1883,7 +1838,6 @@ const Dashboard = () => {
                     onChange={(e) => handleSocialLinkChange("facebook", e.target.value)}
                     placeholder="https://facebook.com/"
                     className="bg-input-bg flex-1"
-                    disabled={plan === "free" && countActiveSocialLinks() >= 1 && !profile.socialLinks.facebook}
                   />
                 </div>
 
@@ -1896,7 +1850,6 @@ const Dashboard = () => {
                     onChange={(e) => handleSocialLinkChange("linkedin", e.target.value)}
                     placeholder="https://linkedin.com/in/"
                     className="bg-input-bg flex-1"
-                    disabled={plan === "free" && countActiveSocialLinks() >= 1 && !profile.socialLinks.linkedin}
                   />
                 </div>
 
@@ -1909,7 +1862,6 @@ const Dashboard = () => {
                     onChange={(e) => handleSocialLinkChange("twitch", e.target.value)}
                     placeholder="https://twitch.tv/"
                     className="bg-input-bg flex-1"
-                    disabled={plan === "free" && countActiveSocialLinks() >= 1 && !profile.socialLinks.twitch}
                   />
                 </div>
 
@@ -1922,7 +1874,6 @@ const Dashboard = () => {
                     onChange={(e) => handleSocialLinkChange("website", e.target.value)}
                     placeholder="Enter website URL"
                     className="bg-input-bg flex-1"
-                    disabled={plan === "free" && countActiveSocialLinks() >= 1 && !profile.socialLinks.website}
                   />
                 </div>
               </div>
@@ -2265,15 +2216,15 @@ const Dashboard = () => {
                 <DropTokenManager piUser={piUser} piWallet={piUser?.wallet_address} />
               </TabsContent>
 
-              {/* Pi Ad Network Tab */}
-              <TabsContent value="ad-network" className="pb-8">
+              {/* DISABLED FOR FUTURE: Pi Ad Network Tab */}
+              {/* <TabsContent value="ad-network" className="pb-8">
                 <PiAdNetwork />
-              </TabsContent>
+              </TabsContent> */}
 
-              {/* Pi Payments Tab */}
-              <TabsContent value="payments" className="pb-8">
+              {/* Pi Payments Tab - Disabled for next update */}
+              {/* <TabsContent value="payments" className="pb-8">
                 <PiPayments />
-              </TabsContent>
+              </TabsContent> */}
 
               {/* Subscription Tab */}
               <TabsContent value="subscription" className="pb-8">
@@ -2290,12 +2241,12 @@ const Dashboard = () => {
                 <UserPreferencesManager />
               </TabsContent>
 
-              {/* Pi Data Tab */}
-              {isAuthenticated && (
+              {/* Pi Data Tab Content - Disabled for next update */}
+              {/* {isAuthenticated && (
                 <TabsContent value="pi-data" className="pb-8">
                   <PiDataManager />
                 </TabsContent>
-              )}
+              )} */}
             </Tabs>
           </div>
         </div>

@@ -83,7 +83,7 @@ export const UserPreferencesManager = () => {
             User Preferences
           </h2>
           <p className="text-muted-foreground">
-            Customize your DropLink experience. Changes are saved automatically.
+            Customize your DropLink experience. These settings control what visitors see on your public profile and how your dashboard works. Changes are saved automatically.
           </p>
         </div>
         <Button variant="outline" onClick={handleReset}>
@@ -181,6 +181,30 @@ export const UserPreferencesManager = () => {
                   />
                   <Button onClick={handleColorChange}>Apply</Button>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  This color will be used for buttons, links, and accents throughout your profile
+                </p>
+              </div>
+
+              {/* Color Preview */}
+              <div className="p-4 rounded-lg border bg-muted/50">
+                <Label className="text-sm font-medium">Color Preview</Label>
+                <div className="mt-2 flex gap-2 items-center">
+                  <div 
+                    className="w-8 h-8 rounded-full"
+                    style={{ backgroundColor: customColor }}
+                  />
+                  <Button 
+                    size="sm" 
+                    style={{ backgroundColor: customColor }}
+                    className="text-white"
+                  >
+                    Sample Button
+                  </Button>
+                  <div className="text-sm" style={{ color: customColor }}>
+                    Sample Link
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -211,7 +235,7 @@ export const UserPreferencesManager = () => {
             <CardHeader>
               <CardTitle>Dashboard Layout</CardTitle>
               <CardDescription>
-                Configure how your dashboard is organized and displayed
+                Configure how your DropLink dashboard is organized and displayed. These settings affect your editing experience.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -219,32 +243,39 @@ export const UserPreferencesManager = () => {
                 <div>
                   <Label>Collapsed Sidebar</Label>
                   <p className="text-sm text-muted-foreground">
-                    Start with sidebar collapsed for more space
+                    Start with the sidebar collapsed to have more editing space
                   </p>
                 </div>
                 <Switch
                   checked={preferences.dashboard_layout.sidebarCollapsed}
-                  onCheckedChange={(checked) =>
-                    updateDashboardLayout({ sidebarCollapsed: checked })
-                  }
+                  onCheckedChange={(checked) => {
+                    updateDashboardLayout({ sidebarCollapsed: checked });
+                    toast.success(checked ? 'Sidebar will start collapsed' : 'Sidebar will start expanded');
+                  }}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label>Default Preview Mode</Label>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Choose which device preview to show by default in the dashboard
+                </p>
                 <Select
                   value={preferences.dashboard_layout.previewMode}
-                  onValueChange={(value: 'phone' | 'tablet' | 'desktop') =>
-                    updateDashboardLayout({ previewMode: value })
-                  }
+                  onValueChange={(value: 'phone' | 'tablet' | 'desktop') => {
+                    updateDashboardLayout({ previewMode: value });
+                    toast.success(`Default preview set to ${value}`);
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="phone">
-                      <Smartphone className="w-4 h-4 mr-2" />
-                      Phone
+                      <div className="flex items-center gap-2">
+                        <Smartphone className="w-4 h-4" />
+                        Phone
+                      </div>
                     </SelectItem>
                     <SelectItem value="tablet">Tablet</SelectItem>
                     <SelectItem value="desktop">Desktop</SelectItem>
@@ -254,11 +285,15 @@ export const UserPreferencesManager = () => {
 
               <div className="space-y-2">
                 <Label>Default Active Tab</Label>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Which tab to open first when you access the dashboard
+                </p>
                 <Select
                   value={preferences.dashboard_layout.activeTab}
-                  onValueChange={(value) =>
-                    updateDashboardLayout({ activeTab: value })
-                  }
+                  onValueChange={(value) => {
+                    updateDashboardLayout({ activeTab: value });
+                    toast.success(`Dashboard will open to ${value} tab`);
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -282,7 +317,7 @@ export const UserPreferencesManager = () => {
             <CardHeader>
               <CardTitle>Store & Bio Settings</CardTitle>
               <CardDescription>
-                Configure what information is displayed on your public bio page
+                Control what information visitors see on your public bio page. These settings affect how your DropLink profile appears to others.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -290,14 +325,15 @@ export const UserPreferencesManager = () => {
                 <div>
                   <Label>Show Follower Count</Label>
                   <p className="text-sm text-muted-foreground">
-                    Display follower count on your bio
+                    Display your follower count on your public bio page for social proof
                   </p>
                 </div>
                 <Switch
                   checked={preferences.store_settings.showFollowerCount}
-                  onCheckedChange={(checked) =>
-                    updateStoreSettings({ showFollowerCount: checked })
-                  }
+                  onCheckedChange={(checked) => {
+                    updateStoreSettings({ showFollowerCount: checked });
+                    toast.success(checked ? 'Follower count will now be visible' : 'Follower count is now hidden');
+                  }}
                 />
               </div>
 
@@ -305,14 +341,15 @@ export const UserPreferencesManager = () => {
                 <div>
                   <Label>Show Visit Count</Label>
                   <p className="text-sm text-muted-foreground">
-                    Display total visit count
+                    Display total view count to show your profile's popularity
                   </p>
                 </div>
                 <Switch
                   checked={preferences.store_settings.showVisitCount}
-                  onCheckedChange={(checked) =>
-                    updateStoreSettings({ showVisitCount: checked })
-                  }
+                  onCheckedChange={(checked) => {
+                    updateStoreSettings({ showVisitCount: checked });
+                    toast.success(checked ? 'Visit count will now be visible' : 'Visit count is now hidden');
+                  }}
                 />
               </div>
 
@@ -320,14 +357,15 @@ export const UserPreferencesManager = () => {
                 <div>
                   <Label>Enable Comments</Label>
                   <p className="text-sm text-muted-foreground">
-                    Allow visitors to leave comments
+                    Allow visitors to leave comments on your profile (coming soon)
                   </p>
                 </div>
                 <Switch
                   checked={preferences.store_settings.enableComments}
-                  onCheckedChange={(checked) =>
-                    updateStoreSettings({ enableComments: checked })
-                  }
+                  onCheckedChange={(checked) => {
+                    updateStoreSettings({ enableComments: checked });
+                    toast.success(checked ? 'Comments enabled for future feature' : 'Comments disabled');
+                  }}
                 />
               </div>
 
@@ -335,14 +373,15 @@ export const UserPreferencesManager = () => {
                 <div>
                   <Label>Allow Gifts</Label>
                   <p className="text-sm text-muted-foreground">
-                    Enable Pi Network gifts from visitors
+                    Enable the "Gift" button for visitors to send you Pi Network tokens
                   </p>
                 </div>
                 <Switch
                   checked={preferences.store_settings.allowGifts}
-                  onCheckedChange={(checked) =>
-                    updateStoreSettings({ allowGifts: checked })
-                  }
+                  onCheckedChange={(checked) => {
+                    updateStoreSettings({ allowGifts: checked });
+                    toast.success(checked ? 'Gift button is now visible to visitors' : 'Gift button is now hidden');
+                  }}
                 />
               </div>
 
@@ -350,14 +389,15 @@ export const UserPreferencesManager = () => {
                 <div>
                   <Label>Show Social Links</Label>
                   <p className="text-sm text-muted-foreground">
-                    Display your social media links
+                    Display your social media icons on your public profile
                   </p>
                 </div>
                 <Switch
                   checked={preferences.store_settings.showSocialLinks}
-                  onCheckedChange={(checked) =>
-                    updateStoreSettings({ showSocialLinks: checked })
-                  }
+                  onCheckedChange={(checked) => {
+                    updateStoreSettings({ showSocialLinks: checked });
+                    toast.success(checked ? 'Social links will now be visible' : 'Social links are now hidden');
+                  }}
                 />
               </div>
             </CardContent>

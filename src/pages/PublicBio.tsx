@@ -9,6 +9,7 @@ import { FollowersSection } from "@/components/FollowersSection";
 import { GiftDialog } from "@/components/GiftDialog";
 import { AIChatWidget } from "@/components/AIChatWidget";
 import { PiAdBanner } from "@/components/PiAdBanner";
+import type { UserPreferences } from "@/contexts/UserPreferencesContext";
 import {
   Twitter,
   Instagram,
@@ -99,10 +100,14 @@ const PublicBio = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [showGiftDialog, setShowGiftDialog] = useState(false);
   const [showPiWalletTip, setShowPiWalletTip] = useState(false);
+  const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [visitCount, setVisitCount] = useState(0);
 
   useEffect(() => {
     loadProfile();
     loadCurrentUserProfile();
+    loadVisitorCounts();
   }, [username]);
 
   useEffect(() => {
@@ -123,6 +128,59 @@ const PublicBio = () => {
       if (profile) {
         setCurrentUserProfileId(profile.id);
       }
+    }
+  };
+
+  const loadUserPreferences = async (userId: string) => {
+    try {
+      const { data: preferences } = await supabase
+        .from('user_preferences')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (preferences) {
+        setUserPreferences(preferences);
+      }
+    } catch (error) {
+      console.error('Failed to load user preferences:', error);
+    }
+  };
+
+  const loadVisitorCounts = async () => {
+    if (!username) return;
+    
+    try {
+      // Get profile data to find the owner
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("id, user_id")
+        .eq("username", username)
+        .maybeSingle();
+      
+      if (profileData) {
+        // Load user preferences for the profile owner
+        await loadUserPreferences(profileData.user_id);
+        
+        // Load follower count
+        const { data: followers, count: followerCount } = await supabase
+          .from('followers')
+          .select('id', { count: 'exact' })
+          .eq('following_profile_id', profileData.id);
+        
+        setFollowerCount(followerCount || 0);
+        
+        // Load/update visit count
+        const { data: analytics, count: visitCount } = await supabase
+          .from('analytics')
+          .select('id', { count: 'exact' })
+          .eq('profile_id', profileData.id)
+          .eq('event_type', 'view');
+        
+        setVisitCount(visitCount || 0);
+      }
+    } catch (error) {
+      console.error('Failed to load visitor counts:', error);
     }
   };
 
@@ -506,6 +564,26 @@ const PublicBio = () => {
             {profile.businessName}
           </h1>
           
+          {/* Follower and Visit Counts - Controlled by Preferences */}
+          <div className="flex gap-6 justify-center text-sm text-gray-300">
+            {userPreferences?.store_settings?.showFollowerCount !== false && (
+              <div className="text-center">
+                <div className="font-semibold text-lg" style={{ color: profile.theme.primaryColor }}>
+                  {followerCount.toLocaleString()}
+                </div>
+                <div>Followers</div>
+              </div>
+            )}
+            {userPreferences?.store_settings?.showVisitCount !== false && (
+              <div className="text-center">
+                <div className="font-semibold text-lg" style={{ color: profile.theme.primaryColor }}>
+                  {visitCount.toLocaleString()}
+                </div>
+                <div>Views</div>
+              </div>
+            )}
+          </div>
+          
           {profile.description && (
             <p className="text-gray-300 max-w-md mx-auto">
               {profile.description}
@@ -538,18 +616,21 @@ const PublicBio = () => {
                   </>
                 )}
               </Button>
-              <Button
-                onClick={() => setShowGiftDialog(true)}
-                className={`${getIconStyle(profile.theme.iconStyle)} gap-2 px-6 py-3`}
-                style={{ 
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  border: `2px solid ${profile.theme.primaryColor}`
-                }}
-                variant="outline"
-              >
-                <Gift className="w-5 h-5" />
-                Gift
-              </Button>
+              {/* Gift button - only show if allowed in preferences */}
+              {userPreferences?.store_settings?.allowGifts !== false && (
+                <Button
+                  onClick={() => setShowGiftDialog(true)}
+                  className={`${getIconStyle(profile.theme.iconStyle)} gap-2 px-6 py-3`}
+                  style={{ 
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    border: `2px solid ${profile.theme.primaryColor}`
+                  }}
+                  variant="outline"
+                >
+                  <Gift className="w-5 h-5" />
+                  Gift
+                </Button>
+              )}
             </div>
           )}
 
@@ -588,8 +669,8 @@ const PublicBio = () => {
           </div>
         )}
 
-        {/* Social Links */}
-        {socialLinksArray.length > 0 && (
+        {/* Social Links - Controlled by Preferences */}
+        {socialLinksArray.length > 0 && userPreferences?.store_settings?.showSocialLinks !== false && (
           <div className="flex flex-wrap justify-center gap-3">
             {socialLinksArray.map(({ platform, url }) => (
               <a

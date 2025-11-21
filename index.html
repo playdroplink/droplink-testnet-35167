@@ -70,13 +70,19 @@
 
         async function runChecks(){
           const issues = [];
-          // validation-key
+          // validation-key (allow local override via localStorage for dev/test)
           try{
-            const r = await fetch('/validation-key.txt', {cache:'no-store'});
-            if(!r.ok) issues.push('validation-key.txt not reachable (HTTP '+r.status+')');
-            else {
-              const text = (await r.text()).trim();
-              if(!text) issues.push('validation-key.txt is empty');
+            const localKey = (typeof localStorage !== 'undefined') ? localStorage.getItem('merchant_validation_key') : null;
+            if (localKey && localKey.trim().length > 0) {
+              // Treat local override as valid for local testing
+              console.log('Using local merchant_validation_key from localStorage (dev override)');
+            } else {
+              const r = await fetch('/validation-key.txt', {cache:'no-store'});
+              if(!r.ok) issues.push('validation-key.txt not reachable (HTTP '+r.status+')');
+              else {
+                const text = (await r.text()).trim();
+                if(!text) issues.push('validation-key.txt is empty');
+              }
             }
           }catch(e){ issues.push('validation-key.txt fetch failed: '+e.message); }
 
