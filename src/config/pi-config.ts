@@ -4,17 +4,17 @@ export const PI_CONFIG = {
   API_KEY: "96tnxytg82pevnvvxfowap4bwctcxo6wkp2dexoraevtj8svh0mvqxttpbtwvjm5",
   // For testing you can enable sandbox mode. When sandbox is true the SDK
   // and endpoints will use Pi's sandbox/test endpoints. Toggle as needed.
-  BASE_URL: "https://api.sandbox.minepi.com",
-  NETWORK: "sandbox",
+  BASE_URL: "https://api.minepi.com",
+  NETWORK: "mainnet",
   NETWORK_PASSPHRASE: "Pi Network", // Mainnet passphrase
-  SANDBOX_MODE: true,
+  SANDBOX_MODE: false,
   // Production policy: disallow creating extra/dev test accounts on mainnet
   ALLOW_MULTIPLE_ACCOUNTS: false,
   
   // SDK Configuration
   SDK: {
     version: "2.0",
-    sandbox: true,
+    sandbox: false,
   },
   
   // Scopes for authentication (include wallet_address for token detection)
@@ -61,22 +61,22 @@ export const PI_CONFIG = {
   
   // Mainnet endpoints
   ENDPOINTS: {
-    ME: "https://api.sandbox.minepi.com/v2/me",
-    WALLETS: "https://api.sandbox.minepi.com/v2/wallets",
-    TRANSACTIONS: "https://api.sandbox.minepi.com/v2/transactions",
-    PAYMENTS: "https://api.sandbox.minepi.com/v2/payments",
-    OPERATIONS: "https://api.sandbox.minepi.com/v2/operations",
-    LEDGERS: "https://api.sandbox.minepi.com/v2/ledgers",
-    EFFECTS: "https://api.sandbox.minepi.com/v2/effects",
-    FEE_STATS: "https://api.sandbox.minepi.com/v2/fee_stats",
+    ME: "https://api.minepi.com/v2/me",
+    WALLETS: "https://api.minepi.com/v2/wallets",
+    TRANSACTIONS: "https://api.minepi.com/v2/transactions",
+    PAYMENTS: "https://api.minepi.com/v2/payments",
+    OPERATIONS: "https://api.minepi.com/v2/operations",
+    LEDGERS: "https://api.minepi.com/v2/ledgers",
+    EFFECTS: "https://api.minepi.com/v2/effects",
+    FEE_STATS: "https://api.minepi.com/v2/fee_stats",
     // Pi Blockchain endpoints
-    PI_BLOCKCHAIN: "https://api.sandbox.minepi.com/v2/blockchain",
-    PI_ASSETS: "https://api.sandbox.minepi.com/v2/assets",
-    PI_ACCOUNT_BALANCES: "https://api.sandbox.minepi.com/v2/accounts",
+    PI_BLOCKCHAIN: "https://api.minepi.com/v2/blockchain",
+    PI_ASSETS: "https://api.minepi.com/v2/assets",
+    PI_ACCOUNT_BALANCES: "https://api.minepi.com/v2/accounts",
     // Stellar Horizon endpoints for mainnet token detection
     HORIZON: "https://horizon.stellar.org",
     // Pi Network specific asset discovery
-    PI_ASSET_DISCOVERY: "https://api.sandbox.minepi.com/v2/assets"
+    PI_ASSET_DISCOVERY: "https://api.minepi.com/v2/assets"
   }
 };
 
