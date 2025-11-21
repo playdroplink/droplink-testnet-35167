@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 
 const MerchantStoreSetup: React.FC = () => {
   const [store, setStore] = useState({
@@ -7,6 +9,7 @@ const MerchantStoreSetup: React.FC = () => {
     theme: "",
     contact: "",
   });
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setStore({ ...store, [e.target.name]: e.target.value });
@@ -15,7 +18,8 @@ const MerchantStoreSetup: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Save store info to backend or state
-    alert("Store created! (Demo)");
+    // Redirect to merchant dashboard (product manager)
+    navigate("/merchant-products");
   };
 
   return (

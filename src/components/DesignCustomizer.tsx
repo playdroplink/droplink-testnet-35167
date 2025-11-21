@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Palette, Sparkles, Upload, Image, Monitor, X, Settings, Sliders, Link } from "lucide-react";
 import { useState } from "react";
+import { PlanGate } from "@/components/PlanGate";
 import ReadyThemeSelector from "./ReadyThemeSelector";
 import AdvancedCustomizer from "./AdvancedCustomizer";
 import LinkCustomizer from "./LinkCustomizer";
@@ -85,18 +86,19 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
   const [customizationMode, setCustomizationMode] = useState<'simple' | 'advanced'>('simple');
   const [showLinkCustomizer, setShowLinkCustomizer] = useState(false);
   const [customLinks, setCustomLinks] = useState<any[]>([]);
-  const [advancedSettings, setAdvancedSettings] = useState({
+  // Use a type that matches CustomizationSettings, or cast as needed
+  const [advancedSettings, setAdvancedSettings] = useState<any>({
     header: {
-      layout: 'centered' as const,
+      layout: 'centered', // allow any valid layout string
       showProfileImage: true,
       showBio: true,
-      backgroundType: 'color' as const,
+      backgroundType: 'color',
       backgroundColor: '#ffffff',
       backgroundGradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       backgroundImage: ''
     },
     wallpaper: {
-      type: 'color' as const,
+      type: 'color',
       value: theme.backgroundColor,
       opacity: 100,
       blur: 0,
@@ -107,15 +109,15 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
       titleSize: 24,
       bodySize: 16,
       color: '#1f2937',
-      alignment: 'center' as const,
+      alignment: 'center',
       titleWeight: 600,
       bodyWeight: 400
     },
     buttons: {
-      style: 'filled' as const,
+      style: 'filled',
       roundness: 8,
       spacing: 16,
-      animation: 'hover-lift' as const,
+      animation: 'hover-lift',
       gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       shadow: true
     },
@@ -130,7 +132,7 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
     },
     presets: {
       name: 'Custom',
-      category: 'modern' as const
+      category: 'modern'
     }
   });
 
@@ -198,8 +200,9 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
   };
 
   return (
-    <div className="space-y-6">
-      {/* Customization Mode Selector */}
+    <PlanGate minPlan="premium">
+      <div className="space-y-6">
+      {/* Customization Mode Selector (Premium/Pro only) */}
       <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -251,7 +254,7 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
         </div>
       </div>
 
-      {/* Render based on mode */}
+      {/* Render based on mode (Premium/Pro only) */}
       {customizationMode === 'simple' ? (
         <div className="space-y-6">
           {/* Ready-to-Use Themes Section */}
@@ -601,7 +604,7 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
         />
       )}
       
-      {/* Link Customizer Modal */}
+      {/* Link Customizer Modal (Premium/Pro only) */}
       {showLinkCustomizer && (
         <LinkCustomizer
           links={customLinks}
@@ -610,5 +613,6 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
         />
       )}
     </div>
+    </PlanGate>
   );
 };

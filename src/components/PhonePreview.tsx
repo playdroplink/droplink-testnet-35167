@@ -45,14 +45,14 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
   const buttonStyle = profile.theme?.buttonStyle || 'filled';
 
   const socialLinkData = [
-    { key: 'twitter', icon: FaTwitter, url: profile.socialLinks.twitter },
-    { key: 'instagram', icon: FaInstagram, url: profile.socialLinks.instagram },
-    { key: 'youtube', icon: FaYoutube, url: profile.socialLinks.youtube },
-    { key: 'tiktok', icon: FaSpotify, url: profile.socialLinks.tiktok },
-    { key: 'facebook', icon: FaFacebook, url: profile.socialLinks.facebook },
-    { key: 'linkedin', icon: FaLinkedin, url: profile.socialLinks.linkedin },
-    { key: 'twitch', icon: FaTwitch, url: profile.socialLinks.twitch },
-    { key: 'website', icon: Globe, url: profile.socialLinks.website },
+    { key: 'twitter', icon: FaTwitter, url: profile.socialLinks.find(l => l.type === 'twitter')?.url },
+    { key: 'instagram', icon: FaInstagram, url: profile.socialLinks.find(l => l.type === 'instagram')?.url },
+    { key: 'youtube', icon: FaYoutube, url: profile.socialLinks.find(l => l.type === 'youtube')?.url },
+    { key: 'tiktok', icon: FaSpotify, url: profile.socialLinks.find(l => l.type === 'tiktok')?.url },
+    { key: 'facebook', icon: FaFacebook, url: profile.socialLinks.find(l => l.type === 'facebook')?.url },
+    { key: 'linkedin', icon: FaLinkedin, url: profile.socialLinks.find(l => l.type === 'linkedin')?.url },
+    { key: 'twitch', icon: FaTwitch, url: profile.socialLinks.find(l => l.type === 'twitch')?.url },
+    { key: 'website', icon: Globe, url: profile.socialLinks.find(l => l.type === 'website')?.url },
   ].filter(link => link.url);
 
   const getButtonStyles = () => {

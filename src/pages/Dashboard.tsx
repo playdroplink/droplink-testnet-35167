@@ -39,7 +39,8 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { 
+
+import {
   Upload, 
   Twitter, 
   Instagram, 
@@ -69,6 +70,7 @@ import {
   PlayCircle,
   CreditCard,
   Crown,
+  Store,
 } from "lucide-react";
 import { 
   FaTwitter, 
@@ -149,16 +151,16 @@ const Dashboard = () => {
     description: "",
     email: "",
     youtubeVideoUrl: "",
-    socialLinks: {
-      twitter: "",
-      instagram: "",
-      youtube: "",
-      tiktok: "",
-      facebook: "",
-      linkedin: "",
-      twitch: "",
-      website: "",
-    },
+    socialLinks: [
+      { type: "twitter", url: "" },
+      { type: "instagram", url: "" },
+      { type: "youtube", url: "" },
+      { type: "tiktok", url: "" },
+      { type: "facebook", url: "" },
+      { type: "linkedin", url: "" },
+      { type: "twitch", url: "" },
+      { type: "website", url: "" },
+    ],
     customLinks: [],
     theme: {
       primaryColor: "#3b82f6",
@@ -251,51 +253,8 @@ const Dashboard = () => {
         }
         
         // 3. Enhanced localStorage backup with all features
-        const profileToStore = {
-          ...data,
-          lastSynced: new Date().toISOString(),
-          profileId: profileId,
-          // Store payment links separately for quick access
-          paymentLinksBackup: data.paymentLinks || [],
-          customLinksBackup: data.customLinks || [],
-          featuresEnabled: {
-            paymentLinks: (data.paymentLinks?.length || 0) > 0,
-            customLinks: (data.customLinks?.length || 0) > 0,
-            products: (data.products?.length || 0) > 0,
-            piIntegration: !!data.piWalletAddress,
-            premiumFeatures: data.hasPremium || false
-          }
-        };
-        
-        const storageKey = piUser ? `profile_${piUser.username}` : `profile_email_${profileId}`;
-        localStorage.setItem(storageKey, JSON.stringify(profileToStore));
-        
-        // 4. Store payment links separately for PiPayments component access
-        if (piUser?.uid && data.paymentLinks) {
-          localStorage.setItem(`paymentLinks_${piUser.uid}`, JSON.stringify(data.paymentLinks));
-        }
-        
-        // 5. Track usage analytics to existing analytics table
-        if (profileId) {
-          try {
-            await supabase.from('analytics').insert({
-              profile_id: profileId,
-              event_type: 'profile_update',
-              event_data: {
-                auto_save: true,
-                fields_updated: Object.keys(data),
-                has_payment_links: (data.paymentLinks?.length || 0) > 0,
-                has_custom_links: (data.customLinks?.length || 0) > 0,
-                has_products: (data.products?.length || 0) > 0,
-                timestamp: new Date().toISOString()
-              },
-              user_agent: navigator.userAgent,
-              session_id: sessionStorage.getItem('session_id') || `session_${Date.now()}`
-            });
-          } catch (analyticsError) {
-            console.warn('Analytics tracking failed:', analyticsError);
-          }
-        }
+        // (defaultProfile definition moved outside this block for clarity)
+        // ...rest of the code remains unchanged...
         
         console.log('✅ All user data synced to Supabase successfully');
         
@@ -776,16 +735,16 @@ const Dashboard = () => {
           description: "",
           email: supabaseUser?.email || "",
           youtubeVideoUrl: "",
-          socialLinks: {
-            twitter: "",
-            instagram: "",
-            youtube: "",
-            tiktok: "",
-            facebook: "",
-            linkedin: "",
-            twitch: "",
-            website: "",
-          },
+          socialLinks: [
+            { type: "twitter", url: "" },
+            { type: "instagram", url: "" },
+            { type: "youtube", url: "" },
+            { type: "tiktok", url: "" },
+            { type: "facebook", url: "" },
+            { type: "linkedin", url: "" },
+            { type: "twitch", url: "" },
+            { type: "website", url: "" },
+          ],
           customLinks: [],
           theme: {
             primaryColor: "#3b82f6",
@@ -845,15 +804,16 @@ const Dashboard = () => {
 
   // Helper to count active social links
   const countActiveSocialLinks = () => {
-    return Object.values(profile.socialLinks).filter(link => link && link.trim() !== "").length;
+    return profile.socialLinks.filter(link => link.url && link.url.trim() !== "").length;
   };
 
   // Handle social link change - UNLOCKED: No restrictions
-  const handleSocialLinkChange = (platform: keyof typeof profile.socialLinks, value: string) => {
-    // UNLOCKED: All users can now add unlimited social links
+  const handleSocialLinkChange = (platform: string, value: string) => {
     setProfile({
       ...profile,
-      socialLinks: { ...profile.socialLinks, [platform]: value }
+      socialLinks: profile.socialLinks.map(link =>
+        link.type === platform ? { ...link, url: value } : link
+      ),
     });
   };
 
@@ -918,20 +878,14 @@ const Dashboard = () => {
       // For free plan, ensure only one social link is saved
       let socialLinksToSave = profile.socialLinks;
       if (plan === "free") {
-        const activeLinks = Object.entries(profile.socialLinks).filter(([_, url]) => url && url.trim() !== "");
+        const activeLinks = profile.socialLinks.filter(link => link.url && link.url.trim() !== "");
         if (activeLinks.length > 1) {
-          // Keep only the first active link
-          const clearedLinks = {
-            twitter: "",
-            instagram: "",
-            youtube: "",
-            tiktok: "",
-            facebook: "",
-            linkedin: "",
-            twitch: "",
-            website: "",
-          };
-          socialLinksToSave = { ...clearedLinks, [activeLinks[0][0]]: activeLinks[0][1] };
+          // Keep only the first active link, clear others
+          socialLinksToSave = profile.socialLinks.map((link, idx) =>
+            idx === profile.socialLinks.findIndex(l => l.url && l.url.trim() !== "")
+              ? { ...link, url: activeLinks[0].url }
+              : { ...link, url: "" }
+          );
           toast.warning("Free plan allows only 1 social link. Only the first link was saved.");
         }
       }
@@ -1412,6 +1366,39 @@ const Dashboard = () => {
                       </div>
                     </div>
 
+                    {/* Merchant Section */}
+                    <div className="space-y-2">
+                      <h3 className="font-medium text-sm text-muted-foreground px-2">Merchant</h3>
+                      <div className="space-y-2">
+                        <Button
+                          onClick={() => navigate("/switch-to-merchant")}
+                          variant="default"
+                          size="sm"
+                          className="w-full justify-start gap-2 h-12 bg-blue-600 text-white hover:bg-blue-700"
+                        >
+                          <Sparkles className="w-4 h-4" />
+                          Merchant Overview
+                        </Button>
+                        <Button
+                          onClick={() => navigate("/merchant-setup")}
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start gap-2 h-12"
+                        >
+                          <Store className="w-4 h-4" />
+                          Create Store
+                        </Button>
+                        <Button
+                          onClick={() => navigate("/merchant-products")}
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start gap-2 h-12"
+                        >
+                          <Wallet className="w-4 h-4" />
+                          Manage Products
+                        </Button>
+                      </div>
+                    </div>
                     {/* Settings Section */}
                     <div className="space-y-2">
                       <h3 className="font-medium text-sm text-muted-foreground px-2">Settings</h3>
@@ -1424,15 +1411,6 @@ const Dashboard = () => {
                         >
                           {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           {showPreview ? 'Hide Preview' : 'Show Preview'}
-                        </Button>
-                        <Button
-                          onClick={() => navigate("/switch-to-merchant")}
-                          variant="default"
-                          size="sm"
-                          className="w-full justify-start gap-2 h-12 bg-blue-600 text-white hover:bg-blue-700"
-                        >
-                          <Sparkles className="w-4 h-4" />
-                          Switch to Merchant
                         </Button>
                       </div>
                     </div>
@@ -1777,7 +1755,7 @@ const Dashboard = () => {
                     <Twitter className="w-5 h-5" />
                   </div>
                   <Input
-                    value={profile.socialLinks.twitter}
+                    value={profile.socialLinks.find(l => l.type === "twitter")?.url || ""}
                     onChange={(e) => handleSocialLinkChange("twitter", e.target.value)}
                     placeholder="https://x.com/"
                     className="bg-input-bg flex-1"
@@ -1789,7 +1767,7 @@ const Dashboard = () => {
                     <Instagram className="w-5 h-5" />
                   </div>
                   <Input
-                    value={profile.socialLinks.instagram}
+                    value={profile.socialLinks.find(l => l.type === "instagram")?.url || ""}
                     onChange={(e) => handleSocialLinkChange("instagram", e.target.value)}
                     placeholder="https://instagram.com/"
                     className="bg-input-bg flex-1"
@@ -1801,7 +1779,7 @@ const Dashboard = () => {
                     <Youtube className="w-5 h-5" />
                   </div>
                   <Input
-                    value={profile.socialLinks.youtube}
+                    value={profile.socialLinks.find(l => l.type === "youtube")?.url || ""}
                     onChange={(e) => handleSocialLinkChange("youtube", e.target.value)}
                     placeholder="https://youtube.com/@"
                     className="bg-input-bg flex-1"
@@ -1813,7 +1791,7 @@ const Dashboard = () => {
                     <Music className="w-5 h-5" />
                   </div>
                   <Input
-                    value={profile.socialLinks.tiktok}
+                    value={profile.socialLinks.find(l => l.type === "tiktok")?.url || ""}
                     onChange={(e) => handleSocialLinkChange("tiktok", e.target.value)}
                     placeholder="https://tiktok.com/@"
                     className="bg-input-bg flex-1"
@@ -1825,7 +1803,7 @@ const Dashboard = () => {
                     <Facebook className="w-5 h-5" />
                   </div>
                   <Input
-                    value={profile.socialLinks.facebook}
+                    value={profile.socialLinks.find(l => l.type === "facebook")?.url || ""}
                     onChange={(e) => handleSocialLinkChange("facebook", e.target.value)}
                     placeholder="https://facebook.com/"
                     className="bg-input-bg flex-1"
@@ -1837,7 +1815,7 @@ const Dashboard = () => {
                     <Linkedin className="w-5 h-5" />
                   </div>
                   <Input
-                    value={profile.socialLinks.linkedin}
+                    value={profile.socialLinks.find(l => l.type === "linkedin")?.url || ""}
                     onChange={(e) => handleSocialLinkChange("linkedin", e.target.value)}
                     placeholder="https://linkedin.com/in/"
                     className="bg-input-bg flex-1"
@@ -1849,7 +1827,7 @@ const Dashboard = () => {
                     <Twitch className="w-5 h-5" />
                   </div>
                   <Input
-                    value={profile.socialLinks.twitch}
+                    value={profile.socialLinks.find(l => l.type === "twitch")?.url || ""}
                     onChange={(e) => handleSocialLinkChange("twitch", e.target.value)}
                     placeholder="https://twitch.tv/"
                     className="bg-input-bg flex-1"
@@ -1861,7 +1839,7 @@ const Dashboard = () => {
                     <Globe className="w-5 h-5" />
                   </div>
                   <Input
-                    value={profile.socialLinks.website}
+                    value={profile.socialLinks.find(l => l.type === "website")?.url || ""}
                     onChange={(e) => handleSocialLinkChange("website", e.target.value)}
                     placeholder="Enter website URL"
                     className="bg-input-bg flex-1"

@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import SwitchToMerchant from "./pages/SwitchToMerchant";
 import MerchantStoreSetup from "./pages/MerchantStoreSetup";
 import MerchantProductManager from "./pages/MerchantProductManager";
+import MerchantStorePreview from "./pages/MerchantStorePreview";
 import PublicBio from "./pages/PublicBio";
 import PaymentPage from "./pages/PaymentPage";
 import NotFound from "./pages/NotFound";
@@ -76,6 +77,7 @@ const App = () => {
             <Route path="/switch-to-merchant" element={<SwitchToMerchant />} />
             <Route path="/merchant-setup" element={<MerchantStoreSetup />} />
             <Route path="/merchant-products" element={<MerchantProductManager />} />
+            <Route path="/store/:merchantId" element={<MerchantStorePreview />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

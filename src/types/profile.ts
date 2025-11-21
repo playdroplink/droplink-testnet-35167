@@ -30,16 +30,14 @@ export interface CustomLink {
   };
 }
 
-export interface SocialLinks {
-  twitter: string;
-  instagram: string;
-  youtube: string;
-  tiktok: string;
-  facebook: string;
-  linkedin: string;
-  twitch: string;
-  website: string;
+export interface SocialLink {
+  type: string; // e.g. 'twitter', 'instagram', etc.
+  url: string;
+  icon?: string; // icon name or url
+  label?: string; // custom label
 }
+
+export type SocialLinks = SocialLink[];
 
 export interface ThemeData {
   primaryColor: string;
@@ -48,6 +46,30 @@ export interface ThemeData {
   backgroundGif: string;
   iconStyle: string;
   buttonStyle: string;
+  textColor?: string;
+}
+
+export interface ProductItem {
+  id: string;
+  name: string;
+  price: number;
+  description?: string;
+  image?: string;
+  quantity?: number;
+  details?: string;
+}
+
+export interface CartItem extends ProductItem {
+  cartQuantity: number;
+}
+
+export interface Order {
+  id: string;
+  items: CartItem[];
+  total: number;
+  status: 'pending' | 'paid' | 'cancelled';
+  createdAt: string;
+  paymentLink?: string;
 }
 
 export interface PaymentLink {
