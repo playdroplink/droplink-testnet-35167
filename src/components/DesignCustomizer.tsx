@@ -115,12 +115,21 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
       reader.onload = (e) => {
         const result = e.target?.result as string;
         if (result) {
+          // Validate the data URL format
+          if (!result.startsWith('data:image/gif;base64,')) {
+            alert('Invalid GIF file format. Please select a valid GIF file.');
+            return;
+          }
+          
           // Update theme with the data URL
           onThemeChange({ 
             ...theme, 
             backgroundGif: result,
             backgroundType: 'gif'
           });
+          
+          // Log successful upload for debugging
+          console.log(`GIF uploaded successfully, data URL length: ${result.length} characters`);
         }
       };
       reader.readAsDataURL(file);

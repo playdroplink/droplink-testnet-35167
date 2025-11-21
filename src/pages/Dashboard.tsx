@@ -928,6 +928,17 @@ const Dashboard = () => {
         }
       }
 
+      // Validate GIF size if it's a base64 upload (estimate size)
+      if (profile.theme.backgroundGif && profile.theme.backgroundGif.startsWith('data:')) {
+        const gifSizeEstimate = (profile.theme.backgroundGif.length * 0.75) / (1024 * 1024); // Convert base64 to MB estimate
+        if (gifSizeEstimate > 15) { // Allow slightly more than 10MB due to base64 encoding overhead
+          toast.error("GIF file too large for database storage. Please use a smaller file or compress it.");
+          setSaving(false);
+          return;
+        }
+        console.log(`Saving uploaded GIF, estimated size: ${gifSizeEstimate.toFixed(2)}MB`);
+      }
+
       if (!profile.storeUrl) {
         toast.error("Store URL is required");
         return;
@@ -982,6 +993,9 @@ const Dashboard = () => {
         theme_settings: {
           ...profile.theme,
           customLinks: profile.customLinks,
+          // Explicitly ensure GIF background data is saved for Pi users
+          backgroundGif: profile.theme.backgroundGif || "",
+          backgroundType: profile.theme.backgroundType || "color",
         },
         // Financial data is saved separately via secure endpoint
       };
@@ -1253,7 +1267,16 @@ const Dashboard = () => {
         console.error("Error saving to localStorage:", storageError);
       }
 
-      toast.success("Profile saved successfully!");
+      // Show appropriate success message based on GIF background type
+      if (profile.theme.backgroundGif && profile.theme.backgroundGif.startsWith('data:')) {
+        toast.success("Profile saved with custom GIF background!");
+        console.log("✅ Custom GIF background data saved to Supabase successfully");
+      } else if (profile.theme.backgroundGif) {
+        toast.success("Profile saved with GIF background!");
+        console.log("✅ GIF background URL saved to Supabase successfully");
+      } else {
+        toast.success("Profile saved successfully!");
+      }
     } catch (error: any) {
       console.error("Save error:", error);
       if (error.code === "23505") {

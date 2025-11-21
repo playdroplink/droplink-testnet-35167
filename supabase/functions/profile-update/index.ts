@@ -69,6 +69,18 @@ serve(async (req) => {
       throw new Error("Missing required fields");
     }
 
+    // Log GIF background save attempts for Pi users
+    if (profileData.theme_settings?.backgroundGif?.startsWith?.('data:')) {
+      const gifSizeEstimate = (profileData.theme_settings.backgroundGif.length * 0.75) / (1024 * 1024);
+      console.log(`Pi user ${username} saving custom GIF background, estimated size: ${gifSizeEstimate.toFixed(2)}MB`);
+      
+      if (gifSizeEstimate > 20) { // Edge function size limit protection
+        throw new Error('GIF file too large for database storage');
+      }
+    } else if (profileData.theme_settings?.backgroundGif) {
+      console.log(`Pi user ${username} saving GIF background URL: ${profileData.theme_settings.backgroundGif.substring(0, 100)}...`);
+    }
+
     let profile;
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -110,6 +122,13 @@ serve(async (req) => {
       .single();
 
     if (error) throw error;
+
+    // Log successful GIF saves
+    if (profileData.theme_settings?.backgroundGif?.startsWith?.('data:')) {
+      console.log(`✅ Successfully saved custom GIF background for Pi user ${username}`);
+    } else if (profileData.theme_settings?.backgroundGif) {
+      console.log(`✅ Successfully saved GIF background URL for Pi user ${username}`);
+    }
 
     return new Response(
       JSON.stringify({ success: true, data }),
