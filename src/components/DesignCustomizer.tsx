@@ -2,7 +2,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Palette, Sparkles, Upload, Image, Monitor } from "lucide-react";
+import { Palette, Sparkles, Upload, Image, Monitor, X } from "lucide-react";
+import { useState } from "react";
 
 interface ThemeTemplate {
   id: string;
@@ -77,6 +78,8 @@ interface DesignCustomizerProps {
 }
 
 export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps) => {
+  const [uploadingGif, setUploadingGif] = useState(false);
+
   const handleTemplateSelect = (template: ThemeTemplate) => {
     onThemeChange({
       primaryColor: template.primaryColor,
@@ -86,6 +89,49 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
       iconStyle: template.iconStyle,
       buttonStyle: theme.buttonStyle, // Preserve existing button style
     });
+  };
+
+  const handleGifUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.includes('gif')) {
+      alert('Please select a GIF file only.');
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB. Please compress your GIF and try again.');
+      return;
+    }
+
+    setUploadingGif(true);
+
+    try {
+      // Convert file to base64 data URL for immediate preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        if (result) {
+          // Update theme with the data URL
+          onThemeChange({ 
+            ...theme, 
+            backgroundGif: result,
+            backgroundType: 'gif'
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Error uploading GIF:', error);
+      alert('Failed to upload GIF. Please try again.');
+    } finally {
+      setUploadingGif(false);
+      // Clear the input
+      event.target.value = '';
+    }
   };
 
   return (
@@ -216,26 +262,68 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
               <div className="space-y-3 bg-muted/30 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Image className="w-4 h-4 text-primary" />
-                  <Label htmlFor="gif-upload" className="text-sm font-medium">
+                  <Label className="text-sm font-medium">
                     GIF Background
                   </Label>
                 </div>
                 
-                {/* GIF URL Input */}
+                {/* Upload Section */}
+                <div className="space-y-3 border rounded-lg p-3 bg-background/50">
+                  <Label className="text-sm font-medium text-primary">Upload Your Own GIF</Label>
+                  <div className="flex gap-2">
+                    <label htmlFor="gif-file-upload" className="flex-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-10 cursor-pointer"
+                        disabled={uploadingGif}
+                        asChild
+                      >
+                        <div className="flex items-center gap-2">
+                          <Upload className="w-4 h-4" />
+                          {uploadingGif ? "Uploading..." : "Choose GIF File"}
+                        </div>
+                      </Button>
+                      <input
+                        id="gif-file-upload"
+                        type="file"
+                        accept=".gif,image/gif"
+                        onChange={handleGifUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    {theme.backgroundGif && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => onThemeChange({ ...theme, backgroundGif: "" })}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Max file size: 10MB • Recommended: 1080x1920px
+                  </p>
+                </div>
+
+                <div className="text-center text-xs text-muted-foreground">— OR —</div>
+                
+                {/* URL Input Section */}
                 <div className="space-y-2">
-                  <Label htmlFor="gif-url" className="text-xs text-muted-foreground">
-                    Enter GIF URL or choose from samples
+                  <Label htmlFor="gif-url" className="text-sm text-muted-foreground">
+                    Enter GIF URL
                   </Label>
                   <div className="flex gap-2">
                     <Input
                       id="gif-url"
                       type="url"
-                      value={theme.backgroundGif}
+                      value={theme.backgroundGif?.startsWith('data:') ? '' : theme.backgroundGif || ''}
                       onChange={(e) => onThemeChange({ ...theme, backgroundGif: e.target.value })}
                       placeholder="https://example.com/background.gif"
                       className="flex-1"
                     />
-                    {theme.backgroundGif && (
+                    {theme.backgroundGif && !theme.backgroundGif.startsWith('data:') && (
                       <Button 
                         variant="outline" 
                         size="sm" 
@@ -272,20 +360,25 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
                 {/* GIF Preview */}
                 {theme.backgroundGif && (
                   <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">Preview</Label>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs text-muted-foreground">Preview</Label>
+                      <span className="text-xs text-muted-foreground">
+                        {theme.backgroundGif.startsWith('data:') ? '📁 Uploaded File' : '🔗 URL'}
+                      </span>
+                    </div>
                     <div className="relative w-full h-32 border rounded-lg overflow-hidden bg-black">
                       <img
                         src={theme.backgroundGif}
                         alt="Background GIF Preview"
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          console.error('GIF preview failed to load:', theme.backgroundGif);
+                          console.error('GIF preview failed to load:', theme.backgroundGif?.substring(0, 100) + '...');
                           e.currentTarget.style.display = 'none';
                           const errorDiv = e.currentTarget.nextElementSibling as HTMLElement;
                           errorDiv?.classList.remove('hidden');
                         }}
                         onLoad={() => {
-                          console.log('GIF preview loaded successfully:', theme.backgroundGif);
+                          console.log('GIF preview loaded successfully');
                         }}
                       />
                       <div className="hidden absolute inset-0 flex items-center justify-center text-muted-foreground text-sm bg-gray-100">
@@ -299,10 +392,11 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
                 <div className="text-xs text-muted-foreground space-y-1">
                   <p><strong>Tips:</strong></p>
                   <ul className="space-y-0.5 ml-2">
-                    <li>• Use high-quality GIFs for best results</li>
+                    <li>• Upload your own GIF files directly (max 10MB)</li>
+                    <li>• Or use GIF URLs from Giphy, Tenor, etc.</li>
                     <li>• Recommended size: 1080x1920 (vertical) or larger</li>
-                    <li>• Keep file size under 5MB for better performance</li>
-                    <li>• Ensure the GIF URL is publicly accessible</li>
+                    <li>• Smaller file sizes load faster on mobile devices</li>
+                    <li>• Use tools like EZGIF.com to compress large files</li>
                   </ul>
                 </div>
               </div>

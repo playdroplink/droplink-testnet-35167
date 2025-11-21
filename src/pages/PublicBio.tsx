@@ -534,6 +534,17 @@ const PublicBio = () => {
             alt="Background"
             className="w-full h-full object-cover"
             style={{ minHeight: '100vh' }}
+            onError={(e) => {
+              console.log('GIF background failed to load in PublicBio:', profile.theme.backgroundGif);
+              (e.target as HTMLImageElement).style.display = 'none';
+              const parent = e.currentTarget.parentElement;
+              if (parent && parent.parentElement) {
+                parent.parentElement.style.backgroundColor = profile.theme.backgroundColor || '#000000';
+              }
+            }}
+            onLoad={() => {
+              console.log('GIF background loaded successfully in PublicBio:', profile.theme.backgroundGif);
+            }}
           />
           <div className="absolute inset-0 bg-black/30" /> {/* Overlay for better readability */}
         </div>
