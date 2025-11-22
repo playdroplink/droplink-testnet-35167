@@ -6,19 +6,13 @@ import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 import { usePi } from "@/contexts/PiContext";
 
 export const PiAdBanner = () => {
-  // DISABLED FOR FUTURE: Pi Ad Network Feature
-  // Feature disabled temporarily for future implementation
-  return null;
-  
-  /* ORIGINAL CODE - DISABLED
-  const { plan, loading } = useActiveSubscription();
   const { showInterstitialAd } = usePi();
   const [dismissed, setDismissed] = useState(false);
   const [adShown, setAdShown] = useState(false);
 
   useEffect(() => {
-    // Show interstitial ad periodically for free users
-    if (plan === "free" && !loading && !adShown) {
+    // Always show interstitial ad periodically
+    if (!adShown) {
       const timer = setTimeout(() => {
         showInterstitialAd();
         setAdShown(true);
@@ -26,15 +20,12 @@ export const PiAdBanner = () => {
 
       return () => clearTimeout(timer);
     }
-  }, [plan, loading, adShown, showInterstitialAd]);
+  }, [adShown, showInterstitialAd]);
 
-  // Don't show banner for premium/pro users or if dismissed
-  if (loading || plan !== "free" || dismissed) {
+  if (dismissed) {
     return null;
   }
-  */
 
-  /* ORIGINAL JSX - DISABLED
   return (
     <Card className="relative bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 p-4">
       <Button
@@ -52,7 +43,7 @@ export const PiAdBanner = () => {
             🎉 Enjoying Droplink?
           </p>
           <p className="text-xs text-muted-foreground">
-            This app is supported by Pi Ad Network. Upgrade to Premium or Pro to remove ads and unlock more features!
+            This app is supported by Pi Ad Network. All users see this banner (no plan restrictions).
           </p>
         </div>
       </div>
@@ -70,5 +61,4 @@ export const PiAdBanner = () => {
       </div>
     </Card>
   );
-  */
 };

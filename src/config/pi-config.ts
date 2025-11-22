@@ -1,43 +1,23 @@
-// Pi Network Configuration (Mainnet Production)
 export const PI_CONFIG = {
-  // Mainnet Configuration
-  API_KEY: "96tnxytg82pevnvvxfowap4bwctcxo6wkp2dexoraevtj8svh0mvqxttpbtwvjm5",
-  // For testing you can enable sandbox mode. When sandbox is true the SDK
-  // and endpoints will use Pi's sandbox/test endpoints. Toggle as needed.
-  BASE_URL: "https://api.minepi.com",
-  NETWORK: "mainnet",
-  NETWORK_PASSPHRASE: "Pi Network", // Mainnet passphrase
-  SANDBOX_MODE: false,
-  // Production policy: disallow creating extra/dev test accounts on mainnet
-  ALLOW_MULTIPLE_ACCOUNTS: false,
+  API_KEY: "your-pi-sandbox-api-key", // Replace with your sandbox API key
+  BASE_URL: "https://api.sandbox.minepi.com",
+  NETWORK: "testnet",
+  NETWORK_PASSPHRASE: "Pi Testnet", 
+  SANDBOX_MODE: true,
+  ALLOW_MULTIPLE_ACCOUNTS: true,
   
-  // SDK Configuration
   SDK: {
     version: "2.0",
-    sandbox: false,
+    sandbox: true,
   },
   
-  // Scopes for authentication (include wallet_address for token detection)
   scopes: ['username', 'payments', 'wallet_address', 'openid'],
   
-  // Payment callback handlers
   onIncompletePaymentFound: (payment: any) => {
     console.log('Incomplete payment found:', payment);
-    // Handle incomplete payment
   },
   
-  // IMPORTANT: DROP Token Configuration Removed
-  // The previous DROP token configuration was for testnet only.
-  // For mainnet tokens, they must be:
-  // 1. Properly issued on Pi Mainnet (not testnet)
-  // 2. Have valid home domain and pi.toml file
-  // 3. Be verified by Pi Network servers
-  // 4. Follow Pi Network token standards
-  
-  // Token Detection Configuration
   CUSTOM_TOKENS: {
-    // Example structure for detecting custom tokens
-    // Replace with actual mainnet tokens when available
     example: {
       code: "EXAMPLE",
       issuer: "EXAMPLE_ISSUER_ADDRESS",
@@ -46,20 +26,16 @@ export const PI_CONFIG = {
     }
   },
   
-  // Validation
   VALIDATION_KEY: "7511661aac4538b1832d2c9ba117f6d972b26a54640598d3fbb9824013c7079203f65b02d125be3f418605cfb89ba0e4443e3ec997e3800eb464df0bc5410d2a",
   
-  // Platform URLs
   PLATFORM_URL: "https://droplink.space",
   MAINNET_URL: "https://droplink.space",
   
-  // Headers for API requests
   getAuthHeaders: (accessToken: string) => ({
     'Authorization': `Bearer ${accessToken}`,
     'Content-Type': 'application/json',
   }),
   
-  // Mainnet endpoints
   ENDPOINTS: {
     ME: "https://api.minepi.com/v2/me",
     WALLETS: "https://api.minepi.com/v2/wallets",
@@ -69,13 +45,10 @@ export const PI_CONFIG = {
     LEDGERS: "https://api.minepi.com/v2/ledgers",
     EFFECTS: "https://api.minepi.com/v2/effects",
     FEE_STATS: "https://api.minepi.com/v2/fee_stats",
-    // Pi Blockchain endpoints
     PI_BLOCKCHAIN: "https://api.minepi.com/v2/blockchain",
     PI_ASSETS: "https://api.minepi.com/v2/assets",
     PI_ACCOUNT_BALANCES: "https://api.minepi.com/v2/accounts",
-    // Stellar Horizon endpoints for mainnet token detection
     HORIZON: "https://horizon.stellar.org",
-    // Pi Network specific asset discovery
     PI_ASSET_DISCOVERY: "https://api.minepi.com/v2/assets"
   }
 };

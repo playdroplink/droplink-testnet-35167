@@ -1576,46 +1576,40 @@ const Dashboard = () => {
                   <BarChart3 className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Analytics</span>
                 </TabsTrigger>
-                {/* Future Features Tab - Disabled for next update */}
-                {/* <TabsTrigger value="features" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                <TabsTrigger value="features" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
                   <Sparkles className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Features</span>
-                </TabsTrigger> */}
-                {/* DROP Tokens Tab - Disabled for next update */}
-                {/* <TabsTrigger value="drop-tokens" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                </TabsTrigger>
+                <TabsTrigger value="drop-tokens" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
                   <Coins className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">DROP</span>
-                </TabsTrigger> */}
-                {/* DISABLED FOR FUTURE: Ad Network Feature */}
-                {/* <TabsTrigger value="ad-network" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                </TabsTrigger>
+                <TabsTrigger value="ad-network" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
                   <PlayCircle className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Ads</span>
-                </TabsTrigger> */}
-                {/* Payments Tab - Disabled for next update */}
-                {/* <TabsTrigger value="payments" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                </TabsTrigger>
+                <TabsTrigger value="payments" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
                   <CreditCard className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Pay</span>
-                </TabsTrigger> */}
+                </TabsTrigger>
                 <TabsTrigger value="subscription" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
                   <Crown className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Sub</span>
                 </TabsTrigger>
-                {/* Voting System Tab - Disabled for next update */}
-                {/* <TabsTrigger value="voting" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                <TabsTrigger value="voting" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
                   <TrendingUp className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Vote</span>
-                </TabsTrigger> */}
+                </TabsTrigger>
                 <TabsTrigger value="preferences" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
                   <User className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Settings</span>
                 </TabsTrigger>
-                {/* Pi Data Tab - Disabled for next update */}
-                {/* {isAuthenticated && (
+                {isAuthenticated && (
                   <TabsTrigger value="pi-data" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
                     <Bot className="w-4 h-4 mr-1 sm:mr-2" />
                     <span className="hidden sm:inline">Pi Data</span>
                   </TabsTrigger>
-                )} */}
+                )}
               </TabsList>
 
               {/* Profile Tab */}
@@ -2202,47 +2196,43 @@ const Dashboard = () => {
                 </AdGatedFeature>
               </TabsContent>
 
-              {/* Future Features Tab Content - Disabled for next update */}
-              {/* <TabsContent value="features" className="pb-8">
+
+              <TabsContent value="features" className="pb-8">
                 <FutureFeaturesDashboard />
-              </TabsContent> */}
+              </TabsContent>
 
-              {/* DROP Token Tab Content - Disabled for next update */}
-              {/* <TabsContent value="drop-tokens" className="pb-8"> */}
-                {/* <DropTokenManager piUser={piUser} piWallet={piUser?.wallet_address} /> */}
-              {/* </TabsContent> */}
+              <TabsContent value="drop-tokens" className="pb-8">
+                <DropTokenManager piUser={piUser} piWallet={piUser?.wallet_address} />
+              </TabsContent>
 
-              {/* DISABLED FOR FUTURE: Pi Ad Network Tab */}
-              {/* <TabsContent value="ad-network" className="pb-8">
+              <TabsContent value="ad-network" className="pb-8">
                 <PiAdNetwork />
-              </TabsContent> */}
+              </TabsContent>
 
-              {/* Pi Payments Tab - Disabled for next update */}
-              {/* <TabsContent value="payments" className="pb-8">
+              <TabsContent value="payments" className="pb-8">
                 <PiPayments />
-              </TabsContent> */}
+              </TabsContent>
 
               {/* Subscription Tab */}
               <TabsContent value="subscription" className="pb-8">
                 <SubscriptionStatus />
               </TabsContent>
 
-              {/* Voting System Tab Content - Disabled for next update */}
-              {/* <TabsContent value="voting" className="pb-8">
+
+              <TabsContent value="voting" className="pb-8">
                 <VotingSystem />
-              </TabsContent> */}
+              </TabsContent>
 
               {/* User Preferences Tab */}
               <TabsContent value="preferences" className="pb-8">
                 <UserPreferencesManager />
               </TabsContent>
 
-              {/* Pi Data Tab Content - Disabled for next update */}
-              {/* {isAuthenticated && (
+              {isAuthenticated && (
                 <TabsContent value="pi-data" className="pb-8">
                   <PiDataManager />
                 </TabsContent>
-              )} */}
+              )}
             </Tabs>
           </div>
         </div>
