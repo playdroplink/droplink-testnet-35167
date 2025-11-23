@@ -1,77 +1,240 @@
-# DropLink - Decentralized Link Management Platform
 
-A modern, AI-powered link management platform built with React, TypeScript, and Supabase, featuring Pi Network integration for cryptocurrency payments.
+# 🚀 **Droplink — Pi Network Link-in-Bio Storefront Builder**
 
-## 🚀 Features
+*A modern, customizable LinkTree-style storefront built for the Pi Network ecosystem.*
 
-- **Personalized Bio Links**: Create custom landing pages with your links
-- **AI Support Chat**: Integrated AI assistant for user support
-- **Pi Network Integration**: Accept Pi cryptocurrency payments
-- **Custom Domains**: Use your own domain name
-- **Analytics**: Track link clicks and engagement
-- **Responsive Design**: Works on all devices
-- **Dark/Light Theme**: User-friendly interface
+Droplink lets creators, sellers, businesses, and Pi Pioneers build a **personal storefront**, connect their **.pi domain**, sell products, accept Pi payments, and manage all links in one beautiful page.
 
-## 🛠️ Tech Stack
+Droplink is designed to be fast, simple, customizable, and fully integrated with Pi Network authentication, Pi payments, and Supabase.
 
-- **Frontend**: React 18 + TypeScript + Vite
-- **Styling**: Tailwind CSS + shadcn/ui components
-- **Backend**: Supabase (Database + Edge Functions)
-- **Deployment**: Vercel
-- **AI**: OpenAI GPT-4
-- **Authentication**: Supabase Auth
-- **Payments**: Pi Network SDK
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🏆 **Key Features**
 
-Follow these steps:
+### 🔗 Link-in-Bio System
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+* Stack, Grid, Carousel, and Showcase layouts
+* Smart categories (Commerce, Social, Media, Events, Contact, Notes)
+* Inline editing + drag-and-drop sorting
+* Advanced customization: icons, favicons, metadata, animations
+* Real-time preview + fully responsive design
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### 🎨 Customization & Themes
 
-# Step 3: Install the necessary dependencies.
-npm i
+* 18+ professional themes (business, lifestyle, creative, tech)
+* Header, backgrounds, wallpapers, color palettes
+* Upload / URL GIF backgrounds
+* Typography presets
+* Quick style presets
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### 🛒 Storefront & Commerce
+
+* Sell digital or physical products
+* Public payment pages
+* Pi Network mainnet payments
+* Smart contract integrations
+* DropPay + future DROP token support
+* Real-time transaction status
+
+### 💰 Monetization & Plans
+
+* Free, Premium, and Pro accounts
+* Pi payment subscription system
+* Feature gating: analytics, themes, advanced blocks
+* Pi Ad Network for free users
+
+### 📊 Analytics
+
+* Link clicks, views, visitor metrics
+* A/B testing (Pro)
+* Location, device, and behavior data
+* Export analytics (CSV/JSON/API)
+
+### 🛡 Backend & Security
+
+* Supabase database
+* Row-level security (RLS)
+* Edge functions for updates, analytics, themes
+* Secure profile + domain + payment storage
+
+---
+
+# 🧱 **Architecture**
+
+### **Frontend**
+
+* Next.js 14 + App Router
+* TailwindCSS
+* Supabase Auth
+* Pi SDK for payments & login
+* Realtime updates + server actions
+
+### **Backend (Supabase)**
+
+* PostgreSQL
+* Edge Functions:
+
+  * `profile-update`
+  * `link-analytics`
+  * `theme-management`
+  * `payment-callback`
+* Storage buckets for images, GIFs, themes
+* RLS-level security across all tables
+
+### **Payments**
+
+* Pi Network mainnet
+* Smart contracts
+* Pi Wallet connect
+* DropPay integration
+
+---
+
+# 📂 **Project Structure**
+
+```
+/app
+  /dashboard
+  /theme
+  /store
+  /api
+/components
+/lib
+/styles
+/supabase
+/docs
+```
+
+---
+
+# 🧩 **Core Database Tables**
+
+* `profiles`
+* `links`
+* `themes`
+* `subscriptions`
+* `store_products`
+* `store_orders`
+* `payments`
+* `domains`
+* `analytics`
+
+Each table includes full RLS and FK relations.
+
+---
+
+# ⚙️ **Environment Variables**
+
+Create a `.env.local` file:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+PI_API_KEY=
+PI_ENVIRONMENT=mainnet
+PI_WEBHOOK_SECRET=
+
+DROPLINK_APP_URL=https://droplink.app
+```
+
+---
+
+# 🚀 **Getting Started**
+
+### **1. Install dependencies**
+
+```
+npm install
+```
+
+### **2. Start Dev Server**
+
+```
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### **3. Supabase Setup**
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Run migrations and seed data:
 
-**Use GitHub Codespaces**
+```
+supabase db push
+supabase db seed
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### **4. Deploy Edge Functions**
 
-## What technologies are used for this project?
+```
+supabase functions deploy profile-update
+supabase functions deploy link-analytics
+supabase functions deploy theme-management
+supabase functions deploy payment-callback
+```
 
-This project is built with:
+---
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# 📦 **Deployment**
 
-## How can I deploy this project?
+### **Vercel + Supabase recommended**
 
-Simply open [Lovable](https://lovable.dev/projects/ed547f02-1974-4fdd-861c-11fa366f21cb) and click on Share -> Publish.
+* Connect repo to Vercel
+* Add environment variables
+* Auto-deploy on push
 
-## Can I connect a custom domain to my Lovable project?
+### **Custom Domains**
 
-Yes, you can!
+Droplink supports connecting:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+* `yourname.pi`
+* Custom Pi domains (future marketplace)
+* SSL auto-generation
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+---
+
+# 🛣 **Roadmap**
+
+* Full .pi domain integration
+* Multi-profile support
+* Marketplace for themes + blocks
+* Pi recurring subscriptions
+* Pi Ad Network full release
+* AI analytics
+* AI storefront builder
+* Team management + agencies
+* Desktop version
+
+Full roadmap in `/docs/ROADMAP.md`
+
+---
+
+# 🤝 **Contributing**
+
+1. Fork repo
+2. Create a feature branch
+3. Submit PR
+4. Follow code formatting via ESLint + Prettier
+
+---
+
+# 📄 **License**
+
+MIT License — free for personal and commercial use.
+
+---
+
+# 🔥 **Status**
+
+✔ Core platform complete
+🔄 Expanding AI, commerce, and domain ecosystem
+🚀 Preparing Pi mainnet release
+
+---
+
+If you want, I can also:
+✅ Create `/docs/ROADMAP.md`
+✅ Create `/docs/API.md`
+✅ Create `/docs/SETUP.md`
+✅ Create `/docs/DB_SCHEMA.md`
+Just tell me which ones you want!
