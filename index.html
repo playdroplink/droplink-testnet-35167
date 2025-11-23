@@ -26,6 +26,43 @@
     
     <!-- Pi Network SDK -->
     <script src="https://sdk.minepi.com/pi-sdk.js" async crossorigin="anonymous"></script>
+
+    <!-- Pi SDK Diagnostic: Show banner if window.Pi is not available (for debugging in Pi Browser) -->
+    <script>
+      (function(){
+        function showPiBanner(msg) {
+          if(document.getElementById('pi-sdk-banner')) return;
+          var banner = document.createElement('div');
+          banner.id = 'pi-sdk-banner';
+          banner.style.position = 'fixed';
+          banner.style.top = '0';
+          banner.style.left = '0';
+          banner.style.right = '0';
+          banner.style.background = '#fff6f6';
+          banner.style.color = '#6b0f0f';
+          banner.style.padding = '12px 16px';
+          banner.style.zIndex = 999999;
+          banner.style.fontFamily = 'sans-serif';
+          banner.style.fontSize = '14px';
+          banner.style.borderBottom = '1px solid #f5c6cb';
+          banner.innerText = msg;
+          var btn = document.createElement('button');
+          btn.innerText = 'Dismiss';
+          btn.style.marginLeft = '12px';
+          btn.onclick = function(){ banner.remove(); };
+          banner.appendChild(btn);
+          document.body.appendChild(banner);
+        }
+        function checkPi() {
+          if(typeof window.Pi === 'undefined') {
+            showPiBanner('❌ Pi SDK not loaded: window.Pi is not available. Make sure you are in Pi Browser and the SDK is loaded.');
+          } else {
+            console.log('✅ Pi SDK loaded: window.Pi is available.');
+          }
+        }
+        if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', checkPi); else checkPi();
+      })();
+    </script>
     
     <!-- Web App Manifest -->
     <link rel="manifest" href="/manifest.json" />
