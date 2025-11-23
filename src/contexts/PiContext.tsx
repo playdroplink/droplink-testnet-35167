@@ -188,15 +188,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         console.log('Sandbox Mode:', PI_CONFIG.SANDBOX_MODE);
 
         // If Pi SDK isn't present and we're running in sandbox on localhost, install a dev mock
-        if (!isPiNetworkAvailable() && PI_CONFIG.SANDBOX_MODE && (typeof window !== 'undefined') && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-          try {
-            const mod = await import('@/utils/pi-sdk-mock');
-            mod.installMockPi();
-            console.log('Installed dev Pi SDK mock for localhost sandbox testing');
-          } catch (e) {
-            console.warn('Failed to install Pi SDK mock:', e);
-          }
-        }
+        // Pi SDK mock removed: use only real Pi Network SDK in production/mainnet.
 
         if (isPiNetworkAvailable()) {
           // Initialize Pi SDK using configured SDK options

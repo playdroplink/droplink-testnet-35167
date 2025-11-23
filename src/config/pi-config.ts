@@ -1,14 +1,14 @@
 export const PI_CONFIG = {
-  API_KEY: "your-pi-sandbox-api-key", // Replace with your sandbox API key
-  BASE_URL: "https://api.sandbox.minepi.com",
-  NETWORK: "testnet",
-  NETWORK_PASSPHRASE: "Pi Testnet", 
-  SANDBOX_MODE: true,
+  API_KEY: "96tnxytg82pevnvvxfowap4bwctcxo6wkp2dexoraevtj8svh0mvqxttpbtwvjm5", // Mainnet API key
+  BASE_URL: "https://api.minepi.com",
+  NETWORK: "mainnet",
+  NETWORK_PASSPHRASE: "Pi Mainnet",
+  SANDBOX_MODE: false,
   ALLOW_MULTIPLE_ACCOUNTS: true,
   
   SDK: {
     version: "2.0",
-    sandbox: true,
+    sandbox: false,
   },
   
   scopes: ['username', 'payments', 'wallet_address', 'openid'],
@@ -60,18 +60,18 @@ export const isPiNetworkAvailable = (): boolean => {
          window.Pi !== null;
 };
 
-// Helper to validate Pi configuration
+// Helper to validate Pi configuration (mainnet only)
 export const validatePiConfig = (): boolean => {
   return PI_CONFIG.API_KEY.length > 0 &&
          PI_CONFIG.VALIDATION_KEY.length > 0 &&
-         (PI_CONFIG.NETWORK === "sandbox" || PI_CONFIG.NETWORK === "mainnet");
+         PI_CONFIG.NETWORK === "mainnet";
 };
 
 // Helper to validate mainnet configuration
 export const validateMainnetConfig = (): boolean => {
   return PI_CONFIG.NETWORK === "mainnet" &&
          !PI_CONFIG.SANDBOX_MODE &&
-         PI_CONFIG.BASE_URL.includes("mainnet") &&
+         PI_CONFIG.BASE_URL.includes("minepi.com") &&
          validatePiConfig();
 };
 
