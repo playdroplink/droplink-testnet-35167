@@ -12,13 +12,13 @@
   "pi_app": {
     "name": "DropLink",
     "version": "1.0.0",
-    "network": "sandbox",
+    "network": "mainnet",
     "api_key": "zmktsxulfrvpddlpnerv0kuz5bblddbh9seuzv270wiaebxzaq5miaixzulavp8r",
     "validation_key": "7511661aac4538b1832d2c9ba117f6d972b26a54640598d3fbb9824013c7079203f65b02d125be3f418605cfb89ba0e4443e3ec997e3800eb464df0bc5410d2a",
     "scopes": ["username", "payments", "wallet_address"],
     "features": ["drop_token", "payments", "social"],
-    "mainnet": false,
-    "sandbox": true
+    "mainnet": true,
+    "sandbox": false
   },
   "icons": [
     {
