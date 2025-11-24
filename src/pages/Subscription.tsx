@@ -8,6 +8,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { usePi } from "@/contexts/PiContext";
+import { PI_CONFIG, validateMainnetConfig } from "@/config/pi-config";
+// Helper to check if Drop is available (mainnet only)
+const isDropAvailable = validateMainnetConfig();
 
 interface Plan {
   name: string;
@@ -378,14 +381,28 @@ const Subscription = () => {
                       </li>
                     ))}
                   </ul>
+
+                  {/* Pi Pay Button */}
                   <Button 
-                    className="w-full" 
+                    className="w-full mb-2"
                     variant={plan.popular ? "default" : "outline"}
                     disabled={isCurrent || loading}
                     onClick={() => handleSubscribe(plan.name, price)}
                   >
                     {isCurrent ? "Current Plan" : price === 0 ? "Current Plan" : "Subscribe with Pi"}
                   </Button>
+
+                  {/* Drop Pay Button (coming soon if not mainnet) */}
+                  {plan.name !== "Free" && (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center mb-1">
+                        <span className="text-sm font-medium">Pay with Drop</span>
+                      </div>
+                      <Button className="w-full" variant="secondary" disabled>
+                        {isDropAvailable ? `Pay with Drop (Coming Soon)` : `Drop Coming Soon (Mainnet Only)`}
+                      </Button>
+                    </div>
+                  )}
                   
                   {subscription && isCurrent && subscription.end_date && (
                     <p className="text-xs text-center mt-2 text-muted-foreground">

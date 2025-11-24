@@ -1,9 +1,9 @@
 export const PI_CONFIG = {
-  API_KEY: "6dxche8cvknkiozfe7no9eucsi5ohlqy6oyrlclq9jx03gt9z10icujzbfaiaev7", // Mainnet API key
+  API_KEY: "testnet-api-key", // Testnet API key (replace with actual if needed)
   BASE_URL: "https://api.minepi.com",
-  NETWORK: "mainnet",
-  NETWORK_PASSPHRASE: "Pi Mainnet",
-  SANDBOX_MODE: false,
+  NETWORK: "testnet",
+  NETWORK_PASSPHRASE: "Pi Testnet",
+  SANDBOX_MODE: true,
   ALLOW_MULTIPLE_ACCOUNTS: true,
   
   SDK: {
@@ -52,12 +52,12 @@ export const PI_CONFIG = {
     PI_ASSET_DISCOVERY: "https://api.minepi.com/v2/assets"
   },
 
-  // Mainnet DROP token configuration
+  // Testnet DROP token configuration
   DROP_TOKEN: {
     code: "DROP",
-    issuer: "GBVTV77XFMDYSSVIG6ZGSRAGZ3S7KA4275YYLOLIROOD3Y3F3TH5U3EI",
-    distributor: "GCTPMH43NGN7E4IXLQ27H2XWGGWWDY3I6UAPBFXYQSEUPEKNQE2BZXC2",
-    name: "DropLink Token",
+    issuer: "GDR0PTESTNETISSUERADDRESS1234567890TESTNET", // Replace with actual testnet issuer
+    distributor: "GDR0PTESTNETDISTRIBUTORADDRESS1234567890TESTNET", // Replace with actual testnet distributor
+    name: "DropLink Token (Testnet)",
     home_domain: "droplink.space"
   }
 };
