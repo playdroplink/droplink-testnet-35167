@@ -1363,6 +1363,10 @@ const Dashboard = () => {
                           <Globe className="w-4 h-4" />
                           Domain
                         </Button>
+                        <Button onClick={() => navigate("/storefront/your-store-id")} variant="outline" size="sm" className="inline-flex justify-start gap-2 h-12">
+                          <Store className="w-4 h-4" />
+                          Store
+                        </Button>
                       </div>
                     </div>
 
@@ -1749,7 +1753,7 @@ const Dashboard = () => {
                     <Twitter className="w-5 h-5" />
                   </div>
                   <Input
-                    value={profile.socialLinks.find(l => l.type === "twitter")?.url || ""}
+                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "twitter")?.url || "" : ""}
                     onChange={(e) => handleSocialLinkChange("twitter", e.target.value)}
                     placeholder="https://x.com/"
                     className="bg-input-bg flex-1"
@@ -1761,7 +1765,7 @@ const Dashboard = () => {
                     <Instagram className="w-5 h-5" />
                   </div>
                   <Input
-                    value={profile.socialLinks.find(l => l.type === "instagram")?.url || ""}
+                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "instagram")?.url || "" : ""}
                     onChange={(e) => handleSocialLinkChange("instagram", e.target.value)}
                     placeholder="https://instagram.com/"
                     className="bg-input-bg flex-1"
@@ -1773,7 +1777,7 @@ const Dashboard = () => {
                     <Youtube className="w-5 h-5" />
                   </div>
                   <Input
-                    value={profile.socialLinks.find(l => l.type === "youtube")?.url || ""}
+                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "youtube")?.url || "" : ""}
                     onChange={(e) => handleSocialLinkChange("youtube", e.target.value)}
                     placeholder="https://youtube.com/@"
                     className="bg-input-bg flex-1"
@@ -1785,7 +1789,7 @@ const Dashboard = () => {
                     <Music className="w-5 h-5" />
                   </div>
                   <Input
-                    value={profile.socialLinks.find(l => l.type === "tiktok")?.url || ""}
+                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "tiktok")?.url || "" : ""}
                     onChange={(e) => handleSocialLinkChange("tiktok", e.target.value)}
                     placeholder="https://tiktok.com/@"
                     className="bg-input-bg flex-1"
@@ -1797,7 +1801,7 @@ const Dashboard = () => {
                     <Facebook className="w-5 h-5" />
                   </div>
                   <Input
-                    value={profile.socialLinks.find(l => l.type === "facebook")?.url || ""}
+                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "facebook")?.url || "" : ""}
                     onChange={(e) => handleSocialLinkChange("facebook", e.target.value)}
                     placeholder="https://facebook.com/"
                     className="bg-input-bg flex-1"
@@ -1809,7 +1813,7 @@ const Dashboard = () => {
                     <Linkedin className="w-5 h-5" />
                   </div>
                   <Input
-                    value={profile.socialLinks.find(l => l.type === "linkedin")?.url || ""}
+                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "linkedin")?.url || "" : ""}
                     onChange={(e) => handleSocialLinkChange("linkedin", e.target.value)}
                     placeholder="https://linkedin.com/in/"
                     className="bg-input-bg flex-1"
@@ -1821,7 +1825,7 @@ const Dashboard = () => {
                     <Twitch className="w-5 h-5" />
                   </div>
                   <Input
-                    value={profile.socialLinks.find(l => l.type === "twitch")?.url || ""}
+                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "twitch")?.url || "" : ""}
                     onChange={(e) => handleSocialLinkChange("twitch", e.target.value)}
                     placeholder="https://twitch.tv/"
                     className="bg-input-bg flex-1"
@@ -1833,7 +1837,7 @@ const Dashboard = () => {
                     <Globe className="w-5 h-5" />
                   </div>
                   <Input
-                    value={profile.socialLinks.find(l => l.type === "website")?.url || ""}
+                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "website")?.url || "" : ""}
                     onChange={(e) => handleSocialLinkChange("website", e.target.value)}
                     placeholder="Enter website URL"
                     className="bg-input-bg flex-1"

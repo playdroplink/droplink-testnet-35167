@@ -45,14 +45,14 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
   const buttonStyle = profile.theme?.buttonStyle || 'filled';
 
   const socialLinkData = [
-    { key: 'twitter', icon: FaTwitter, url: profile.socialLinks.find(l => l.type === 'twitter')?.url },
-    { key: 'instagram', icon: FaInstagram, url: profile.socialLinks.find(l => l.type === 'instagram')?.url },
-    { key: 'youtube', icon: FaYoutube, url: profile.socialLinks.find(l => l.type === 'youtube')?.url },
-    { key: 'tiktok', icon: FaSpotify, url: profile.socialLinks.find(l => l.type === 'tiktok')?.url },
-    { key: 'facebook', icon: FaFacebook, url: profile.socialLinks.find(l => l.type === 'facebook')?.url },
-    { key: 'linkedin', icon: FaLinkedin, url: profile.socialLinks.find(l => l.type === 'linkedin')?.url },
-    { key: 'twitch', icon: FaTwitch, url: profile.socialLinks.find(l => l.type === 'twitch')?.url },
-    { key: 'website', icon: Globe, url: profile.socialLinks.find(l => l.type === 'website')?.url },
+    { key: 'twitter', icon: FaTwitter, url: Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === 'twitter')?.url : undefined },
+    { key: 'instagram', icon: FaInstagram, url: Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === 'instagram')?.url : undefined },
+    { key: 'youtube', icon: FaYoutube, url: Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === 'youtube')?.url : undefined },
+    { key: 'tiktok', icon: FaSpotify, url: Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === 'tiktok')?.url : undefined },
+    { key: 'facebook', icon: FaFacebook, url: Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === 'facebook')?.url : undefined },
+    { key: 'linkedin', icon: FaLinkedin, url: Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === 'linkedin')?.url : undefined },
+    { key: 'twitch', icon: FaTwitch, url: Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === 'twitch')?.url : undefined },
+    { key: 'website', icon: Globe, url: Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === 'website')?.url : undefined },
   ].filter(link => link.url);
 
   const getButtonStyles = () => {

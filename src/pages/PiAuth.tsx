@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePi } from "@/contexts/PiContext";
 import { Loader2 } from "lucide-react";
+import EmailAuthForm from "@/components/EmailAuthForm";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AboutModal } from "@/components/AboutModal";
@@ -109,6 +110,7 @@ const PiAuth = () => {
         </CardHeader>
         <CardContent className="space-y-4">
 
+
           {/* Pi Network Sign In */}
           <Button 
             onClick={handlePiSignIn} 
@@ -126,16 +128,10 @@ const PiAuth = () => {
             )}
           </Button>
 
-          {/* Gmail/Email Sign In */}
-          <Button
-            onClick={() => navigate('/droplinkofficial')}
-            className="w-full"
-            size="lg"
-            variant="outline"
-            disabled={loading}
-          >
-            Visit Droplink /droplinkofficial
-          </Button>
+          {/* Supabase Email Sign In/Sign Up */}
+          <div className="pt-2">
+            <EmailAuthForm />
+          </div>
 
           <div className="space-y-2 text-sm text-muted-foreground">
             <p className="flex items-center gap-2">

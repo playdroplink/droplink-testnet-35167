@@ -9,6 +9,7 @@ import SwitchToMerchant from "./pages/SwitchToMerchant";
 import MerchantStoreSetup from "./pages/MerchantStoreSetup";
 import MerchantProductManager from "./pages/MerchantProductManager";
 import MerchantStorePreview from "./pages/MerchantStorePreview";
+import StoreFront from "./pages/StoreFront";
 import PublicBio from "./pages/PublicBio";
 import PaymentPage from "./pages/PaymentPage";
 import NotFound from "./pages/NotFound";
@@ -78,6 +79,7 @@ const App = () => {
             <Route path="/merchant-setup" element={<MerchantStoreSetup />} />
             <Route path="/merchant-products" element={<MerchantProductManager />} />
             <Route path="/store/:merchantId" element={<MerchantStorePreview />} />
+            <Route path="/storefront/:storeId" element={<StoreFront />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
