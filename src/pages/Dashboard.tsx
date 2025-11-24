@@ -23,6 +23,7 @@ import { performCompleteSignOut } from "@/lib/auth-utils";
 import { UserPreferencesManager } from "@/components/UserPreferencesManager";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import { AboutModal } from "@/components/AboutModal";
+import { RandomAvatarGenerator } from "@/components/RandomAvatarGenerator";
 import { FutureFeaturesDashboard } from "@/components/FutureFeaturesDashboard";
 import { DropTokenManager } from "@/components/DropTokenManager";
 import PiAdNetwork from "../components/PiAdNetwork";
@@ -1249,7 +1250,30 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div
+      className="min-h-screen"
+      style={{
+        background: "linear-gradient(135deg, #d1c4e9 0%, #b3e5fc 40%, #f8bbd0 80%, #b2dfdb 100%)",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      {/* Material You Glow Effect */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          pointerEvents: "none",
+          zIndex: 0,
+          background:
+            "radial-gradient(circle at 60% 20%, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 60%, transparent 100%)",
+          filter: "blur(32px)",
+        }}
+      />
       <header className={`px-3 sm:px-4 lg:px-6 py-3 sm:py-4 shadow-sm border-b border-border ${isMobile ? 'bg-background' : 'glass-surface'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-4">
@@ -1592,86 +1616,93 @@ const Dashboard = () => {
                 <div>
                   <h2 className="text-lg font-semibold mb-6">Business details</h2>
               
-              {/* Logo Upload & AI Generation */}
-              <div className="mb-6">
-                <Label className="mb-3 block">Business logo</Label>
-                <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 rounded-2xl bg-card border border-border flex items-center justify-center overflow-hidden">
-                    {profile.logo ? (
-                      <img src={profile.logo} alt="Logo" className="w-full h-full object-cover" />
-                    ) : (
-                      <Upload className="w-6 h-6 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <div className="flex gap-2">
-                      <label htmlFor="logo-upload">
-                        <Button variant="secondary" size="sm" asChild>
-                          <span>{profile.logo ? "Change" : "Upload"}</span>
-                        </Button>
-                        <input
-                          id="logo-upload"
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleLogoUpload}
-                        />
-                      </label>
-                      {profile.logo && (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => setProfile({ ...profile, logo: "" })}
-                        >
-                          Remove
-                        </Button>
+
+              {/* Logo Upload, AI Logo, and Random Avatar Generator */}
+              <div className="mb-6 flex flex-col gap-4">
+                <div>
+                  <Label className="mb-3 block">Business logo</Label>
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 h-20 rounded-2xl bg-card border border-border flex items-center justify-center overflow-hidden">
+                      {profile.logo ? (
+                        <img src={profile.logo} alt="Logo" className="w-full h-full object-cover" />
+                      ) : (
+                        <Upload className="w-6 h-6 text-muted-foreground" />
                       )}
                     </div>
-                    {/* AI Logo Generation */}
-                    <div className="flex gap-2 mt-2">
-                      <input
-                        type="text"
-                        placeholder="Describe your logo (e.g. blue tech rocket)"
-                        className="border rounded px-2 py-1 text-sm flex-1"
-                        value={aiLogoPrompt || ""}
-                        onChange={e => setAiLogoPrompt(e.target.value)}
-                        disabled={aiLogoLoading}
-                        style={{ minWidth: 0 }}
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={async () => {
-                          if (!aiLogoPrompt) return;
-                          setAiLogoLoading(true);
-                          setAiLogoError("");
-                          try {
-                            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(aiLogoPrompt)}`;
-                            // Preload image to check for errors
-                            const img = new window.Image();
-                            img.crossOrigin = "anonymous";
-                            img.onload = () => {
-                              setProfile(prev => ({ ...prev, logo: url }));
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <label htmlFor="logo-upload">
+                          <Button variant="secondary" size="sm" asChild>
+                            <span>{profile.logo ? "Change" : "Upload"}</span>
+                          </Button>
+                          <input
+                            id="logo-upload"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleLogoUpload}
+                          />
+                        </label>
+                        {profile.logo && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setProfile({ ...profile, logo: "" })}
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                      {/* AI Logo Generation */}
+                      <div className="flex gap-2 mt-2">
+                        <input
+                          type="text"
+                          placeholder="Describe your logo (e.g. blue tech rocket)"
+                          className="border rounded px-2 py-1 text-sm flex-1"
+                          value={aiLogoPrompt || ""}
+                          onChange={e => setAiLogoPrompt(e.target.value)}
+                          disabled={aiLogoLoading}
+                          style={{ minWidth: 0 }}
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            if (!aiLogoPrompt) return;
+                            setAiLogoLoading(true);
+                            setAiLogoError("");
+                            try {
+                              const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(aiLogoPrompt)}`;
+                              // Preload image to check for errors
+                              const img = new window.Image();
+                              img.crossOrigin = "anonymous";
+                              img.onload = () => {
+                                setProfile(prev => ({ ...prev, logo: url }));
+                                setAiLogoLoading(false);
+                              };
+                              img.onerror = () => {
+                                setAiLogoError("Failed to generate image. Try a different prompt.");
+                                setAiLogoLoading(false);
+                              };
+                              img.src = url;
+                            } catch (e) {
+                              setAiLogoError("Error generating image");
                               setAiLogoLoading(false);
-                            };
-                            img.onerror = () => {
-                              setAiLogoError("Failed to generate image. Try a different prompt.");
-                              setAiLogoLoading(false);
-                            };
-                            img.src = url;
-                          } catch (e) {
-                            setAiLogoError("Error generating image");
-                            setAiLogoLoading(false);
-                          }
-                        }}
-                        disabled={aiLogoLoading || !aiLogoPrompt}
-                      >
-                        {aiLogoLoading ? "Generating..." : "Generate with AI"}
-                      </Button>
+                            }
+                          }}
+                          disabled={aiLogoLoading || !aiLogoPrompt}
+                        >
+                          {aiLogoLoading ? "Generating..." : "Generate with AI"}
+                        </Button>
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">Generate a logo using AI by prompt</div>
                     </div>
-                    {/* {aiLogoError && <div className="text-xs text-red-500 mt-1">{aiLogoError}</div>} */}
-                    <div className="text-xs text-muted-foreground mt-1">Generate a logo using AI by prompt</div>
                   </div>
+                </div>
+                {/* Random Avatar Generator */}
+                <div>
+                  <Label className="mb-2 block">Or generate a random avatar</Label>
+                  <RandomAvatarGenerator onAvatarGenerated={(url) => setProfile(prev => ({ ...prev, logo: url }))} />
                 </div>
               </div>
 
