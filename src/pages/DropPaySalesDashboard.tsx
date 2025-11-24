@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { usePi } from "@/contexts/PiContext";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function DropPaySalesDashboard() {
   const { piUser } = usePi();
@@ -9,13 +10,16 @@ export default function DropPaySalesDashboard() {
   const [balance, setBalance] = useState(0);
 
   useEffect(() => {
-    // TODO: Fetch sales and Drop balance from backend
-    setSales([
-      { id: 1, product: "Demo Product", amount: 10, buyer: "GBUYER1...", date: "2025-11-25" },
-      { id: 2, product: "Another Product", amount: 20, buyer: "GBUYER2...", date: "2025-11-24" },
-    ]);
-    setBalance(30);
-  }, []);
+    if (!piUser) return;
+    supabase
+      .from('drop_sales')
+      .select('*')
+      .eq('seller_id', piUser.uid)
+      .then(({ data }) => {
+        setSales(data || []);
+        setBalance((data || []).reduce((sum, s) => sum + Number(s.amount), 0));
+      });
+  }, [piUser]);
 
   return (
     <div className="max-w-2xl mx-auto py-8">
@@ -29,10 +33,10 @@ export default function DropPaySalesDashboard() {
           <div className="space-y-2">
             {sales.map(sale => (
               <div key={sale.id} className="flex justify-between border-b pb-1 text-sm">
-                <span>{sale.product}</span>
+                <span>{sale.product_id}</span>
                 <span>{sale.amount} Drop</span>
-                <span>{sale.buyer}</span>
-                <span>{sale.date}</span>
+                <span>{sale.buyer_id}</span>
+                <span>{sale.created_at?.slice(0, 10)}</span>
               </div>
             ))}
           </div>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,12 +17,25 @@ export default function CreateDropProduct() {
 
   const handleCreate = async () => {
     setCreating(true);
-    // TODO: Save product to backend/db and generate public link
-    // For now, mock a public link
-    setTimeout(() => {
-      setPublicUrl(`/pay/mock-product-id`);
+    if (!piUser) return;
+    const { data, error } = await supabase
+      .from('drop_products')
+      .insert({
+        seller_id: piUser.uid,
+        name,
+        description,
+        price,
+        product_link: productLink
+      })
+      .select()
+      .single();
+    if (error) {
+      alert('Error creating product: ' + error.message);
       setCreating(false);
-    }, 1000);
+      return;
+    }
+    setPublicUrl(`/pay/${data.id}`);
+    setCreating(false);
   };
 
   return (

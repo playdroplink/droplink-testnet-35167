@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useParams } from "react-router-dom";
@@ -7,28 +8,38 @@ import { useParams } from "react-router-dom";
 const skyBlueBg = "bg-sky-100 min-h-screen flex items-center justify-center";
 
 export default function DropPayCheckout() {
-  // In real app, fetch product by ID from backend
   const { productId } = useParams();
-  // Mock product data
-  const product = {
-    name: "Demo Product",
-    description: "This is a demo product for DropPay.",
-    price: 10,
-    seller: "GSELLERADDRESS1234567890",
-    link: "https://example.com/download/demo-product"
-  };
+  const [product, setProduct] = useState<any>(null);
   const [paying, setPaying] = useState(false);
   const [paid, setPaid] = useState(false);
+
+  useEffect(() => {
+    if (!productId) return;
+    supabase
+      .from('drop_products')
+      .select('*')
+      .eq('id', productId)
+      .single()
+      .then(({ data }) => setProduct(data));
+  }, [productId]);
 
   const handleDropPay = async () => {
     setPaying(true);
     // TODO: Integrate Drop smart contract/payment logic
-    setTimeout(() => {
-      setPaid(true);
-      setPaying(false);
-    }, 2000);
+    // For now, just mark as paid and insert payment record
+    if (!product) return;
+    await supabase.from('drop_payments').insert({
+      product_id: product.id,
+      buyer_id: 'BUYER_UID', // Replace with real buyer id from auth
+      amount: product.price,
+      status: 'confirmed',
+      tx_hash: 'demo_tx_hash'
+    });
+    setPaid(true);
+    setPaying(false);
   };
 
+  if (!product) return <div className={skyBlueBg}><div>Loading...</div></div>;
   return (
     <div className={skyBlueBg}>
       <Card className="w-full max-w-md shadow-xl">
@@ -45,7 +56,7 @@ export default function DropPayCheckout() {
           ) : (
             <div className="text-center space-y-2">
               <div className="text-lg font-semibold text-sky-700">Thank you for your purchase!</div>
-              <Button className="w-full" onClick={() => navigator.clipboard.writeText(product.link)}>
+              <Button className="w-full" onClick={() => navigator.clipboard.writeText(product.product_link)}>
                 Copy Product Link
               </Button>
               <div className="text-xs text-gray-500 mt-2">Or check your email for the download link.</div>

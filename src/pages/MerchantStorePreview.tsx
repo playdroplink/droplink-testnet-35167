@@ -95,15 +95,27 @@ const MerchantStorePreview: React.FC = () => {
             ))}
           </ul>
         </div>
-        <div className="flex justify-between items-center mt-6">
-          <span className="text-xs text-gray-500">Share this store:</span>
-          <input
-            type="text"
-            readOnly
-            value={window.location.href}
-            className="border px-2 py-1 rounded w-64 text-xs bg-gray-100"
-            onFocus={e => e.target.select()}
-          />
+        <div className="flex flex-col gap-2 mt-6">
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-gray-500">Preview URL:</span>
+            <input
+              type="text"
+              readOnly
+              value={window.location.href}
+              className="border px-2 py-1 rounded w-64 text-xs bg-gray-100"
+              onFocus={e => e.target.select()}
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-gray-500">Actual Store URL:</span>
+            <input
+              type="text"
+              readOnly
+              value={`${window.location.origin}/storefront/${merchantId || 'your-merchant-id'}`}
+              className="border px-2 py-1 rounded w-64 text-xs bg-blue-50"
+              onFocus={e => e.target.select()}
+            />
+          </div>
         </div>
         <div className="mt-6 flex justify-end">
           <button
