@@ -399,9 +399,9 @@ const Subscription = () => {
         </div>
 
         <div className="mt-12 text-center text-sm text-muted-foreground space-y-2">
-          <p>All plans include a 14-day money-back guarantee.</p>
+          <p>All plans include a 14-day Pi-back guarantee.</p>
           <p>Payments are processed securely through Pi Network blockchain.</p>
-          <p>Questions? Contact support@droplink.com</p>
+          <p>Questions? Contact support@droplink.space</p>
         </div>
       </div>
     </div>
