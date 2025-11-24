@@ -554,46 +554,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
     }
   }, [currentWalletAddress]);
 
-  // Show authentication required message if user is not authenticated
-  if (!piUser) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Droplets className="h-5 w-5" style={{ color: DROP_TOKEN.colors.primary }} />
-            DROP Wallet
-          </CardTitle>
-          <CardDescription>
-            Your DropLink Platform Wallet
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Please authenticate with Pi Network to access your DROP wallet.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
-    );
-      {/* Ad Reward Picker */}
-      <div>
-        {/* Lazy-load component to avoid increasing initial bundle too much */}
-        <React.Suspense fallback={<div>Loading ad picker...</div>}>
-          {/* @ts-ignore */}
-          <AdRewardPicker />
-        </React.Suspense>
-      </div>
-
-      {/* Feature Voting */}
-      <div>
-        <React.Suspense fallback={<div>Loading feature voting...</div>}>
-          {/* @ts-ignore */}
-          <FeatureVote />
-        </React.Suspense>
-      </div>
-  }
+  // Pi authentication bypassed: always show wallet UI
 
   return (
     <div className="space-y-6">

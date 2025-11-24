@@ -24,7 +24,7 @@ interface Transaction {
 
 const Wallet = () => {
   const navigate = useNavigate();
-  const { piUser, isAuthenticated, dropBalance, checkDropBalance } = usePi();
+  const { piUser, isAuthenticated, dropBalance, getDROPBalance } = usePi();
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,9 +78,9 @@ const Wallet = () => {
       setBalance(wallet?.drop_tokens || 0);
 
       // Load DROP token balance from Pi Network
-      if (checkDropBalance) {
+      if (getDROPBalance) {
         try {
-          const dropBalance = await checkDropBalance();
+          const dropBalance = await getDROPBalance();
           setDropTokenBalance(dropBalance?.balance || '0');
           setPiNetworkConnected(true);
         } catch (error) {
@@ -291,15 +291,15 @@ const Wallet = () => {
                   <div className="grid grid-cols-3 gap-3">
                     <Button onClick={() => buyTokens(100)} className="flex flex-col h-auto py-4">
                       <span className="text-2xl font-bold">100</span>
-                      <span className="text-xs">$0.99</span>
+                      <span className="text-xs">0.99 Pi</span>
                     </Button>
                     <Button onClick={() => buyTokens(500)} className="flex flex-col h-auto py-4">
                       <span className="text-2xl font-bold">500</span>
-                      <span className="text-xs">$4.99</span>
+                      <span className="text-xs">4.99 Pi</span>
                     </Button>
                     <Button onClick={() => buyTokens(1000)} className="flex flex-col h-auto py-4">
                       <span className="text-2xl font-bold">1000</span>
-                      <span className="text-xs">$9.99</span>
+                      <span className="text-xs">9.99 Pi</span>
                     </Button>
                   </div>
                 </div>

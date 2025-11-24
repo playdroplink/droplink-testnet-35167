@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -2118,14 +2119,16 @@ const Dashboard = () => {
             </PlanGate>
 
                 {/* Action Buttons */}
-                <div className={`flex gap-4 pt-6 pb-6 mt-8 border-t border-border sticky bottom-0 z-50 w-full bg-background/95 backdrop-blur-sm shadow-lg`}>
-                  <Button variant="outline" className="flex-1 h-12">
-                    Cancel
-                  </Button>
-                  <Button onClick={handleSave} className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium" disabled={saving}>
-                    {saving ? "Saving..." : "Save changes"}
-                  </Button>
-                </div>
+                <Card className="border-0 rounded-none shadow-none sticky bottom-0 z-50 w-full p-0 m-0">
+                  <div className="flex gap-4 border-t border-border bg-background/95 backdrop-blur-sm w-full p-0 m-0">
+                    <Button variant="outline" className="flex-1 h-12 rounded-none">
+                      Cancel
+                    </Button>
+                    <Button onClick={handleSave} className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-none" disabled={saving}>
+                      {saving ? "Saving..." : "Save changes"}
+                    </Button>
+                  </div>
+                </Card>
               </TabsContent>
 
               {/* Design Tab - Premium/Pro only */}
