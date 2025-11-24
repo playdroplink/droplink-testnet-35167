@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Gift as GiftIcon, Coins } from "lucide-react";
+import { Gift as GiftIcon, Droplets } from "lucide-react";
 
 interface Gift {
   id: string;
@@ -126,7 +126,7 @@ export const GiftDialog = ({
         <div className="flex items-center justify-between p-3 bg-muted rounded-lg mb-4">
           <span className="text-sm font-medium">Your Balance</span>
           <span className="flex items-center gap-1 font-bold">
-            <Coins className="w-4 h-4" />
+            <Droplets className="w-4 h-4" />
             {balance} DropTokens
           </span>
         </div>
@@ -143,7 +143,7 @@ export const GiftDialog = ({
               <span className="text-3xl">{gift.icon}</span>
               <span className="text-xs font-medium">{gift.name}</span>
               <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <Coins className="w-3 h-3" />
+                <Droplets className="w-3 h-3" />
                 {gift.drop_token_cost}
               </span>
             </Button>

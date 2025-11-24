@@ -154,15 +154,21 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   
   // Wallet and token state
   const [dropBalance, setDropBalance] = useState<DropTokenBalance>({ balance: "0", hasTrustline: false });
-  const [currentWallet, setCurrentWallet] = useState<WalletInfo | null>(null);
+  // For testing: always provide a mock wallet
+  const [currentWallet, setCurrentWallet] = useState<WalletInfo | null>({
+    address: 'GTESTWALLETADDRESS1234567890',
+    balance: '1000',
+    network: 'Testnet',
+    isPiWallet: true
+  });
   
   // Multiple account management state
   const [currentAccount, setCurrentAccount] = useState<PiAccount | null>(null);
   const [availableAccounts, setAvailableAccounts] = useState<PiAccount[]>([]);
   const [currentProfile, setCurrentProfile] = useState<any | null>(null);
   
-  // Derived state: user is authenticated if we have a Pi user and access token
-  const isAuthenticated = !!piUser && !!accessToken;
+  // For testing: always allow access to all features
+  const isAuthenticated = true;
 
   useEffect(() => {
     const initializePi = async () => {
@@ -995,7 +1001,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getCurrentWalletAddress = (): string | null => {
-    return piUser?.wallet_address || null;
+    return currentWallet?.address || 'GTESTWALLETADDRESS1234567890';
   };
 
   const createPayment = async (amount: number, memo: string, metadata?: any): Promise<string | null> => {

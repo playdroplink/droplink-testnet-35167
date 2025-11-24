@@ -65,7 +65,7 @@ import {
   Bot,
   Info,
   Sparkles,
-  Coins,
+  Droplets,
   TrendingUp,
   PlayCircle,
   CreditCard,
@@ -556,10 +556,7 @@ const Dashboard = () => {
             description: p.description || "",
             fileUrl: p.file_url || "",
           })) || [],
-          wallets: {
-            crypto: cryptoWallets?.wallets || [],
-            bank: bankDetails?.accounts || [],
-          },
+          // wallets property removed to match ProfileData type and avoid React object error
           hasPremium: profileData.has_premium || false,
           showShareButton: (profileData as any).show_share_button !== false,
           piWalletAddress: financialData.pi_wallet_address || "",
@@ -1559,7 +1556,7 @@ const Dashboard = () => {
                   <span className="hidden sm:inline">Features</span>
                 </TabsTrigger> */}
                 <TabsTrigger value="drop-tokens" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
-                  <Coins className="w-4 h-4 mr-1 sm:mr-2" />
+                  <Droplets className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">DROP</span>
                 </TabsTrigger>
                 <TabsTrigger value="ad-network" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
@@ -1582,12 +1579,7 @@ const Dashboard = () => {
                   <User className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Settings</span>
                 </TabsTrigger>
-                {isAuthenticated && (
-                  <TabsTrigger value="pi-data" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
-                    <Bot className="w-4 h-4 mr-1 sm:mr-2" />
-                    <span className="hidden sm:inline">Pi Data</span>
-                  </TabsTrigger>
-                )}
+                {/* Pi Data tab removed for production */}
               </TabsList>
 
               {/* Profile Tab */}
@@ -2126,7 +2118,7 @@ const Dashboard = () => {
             </PlanGate>
 
                 {/* Action Buttons */}
-                <div className={`flex gap-4 pt-6 pb-6 mt-8 border-t border-border sticky bottom-0 z-50 mx-auto max-w-2xl ${isMobile ? 'bg-background shadow-md' : 'bg-background/95 backdrop-blur-sm shadow-lg'}`}>
+                <div className={`flex gap-4 pt-6 pb-6 mt-8 border-t border-border sticky bottom-0 z-50 w-full bg-background/95 backdrop-blur-sm shadow-lg`}>
                   <Button variant="outline" className="flex-1 h-12">
                     Cancel
                   </Button>
@@ -2145,7 +2137,7 @@ const Dashboard = () => {
                   />
                   
                   {/* Save Button */}
-                  <div className={`flex gap-4 pt-6 pb-6 mt-8 border-t border-border sticky bottom-0 z-50 mx-auto max-w-2xl ${isMobile ? 'bg-background shadow-md' : 'bg-background/95 backdrop-blur-sm shadow-lg'}`}>
+                  <div className={`flex gap-4 pt-6 pb-6 mt-8 border-t border-border sticky bottom-0 z-50 w-full bg-background/95 backdrop-blur-sm shadow-lg`}>
                     <Button variant="outline" className="flex-1 h-12">
                       Cancel
                     </Button>
@@ -2206,11 +2198,7 @@ const Dashboard = () => {
                 <UserPreferencesManager />
               </TabsContent>
 
-              {isAuthenticated && (
-                <TabsContent value="pi-data" className="pb-8">
-                  <PiDataManager />
-                </TabsContent>
-              )}
+              {/* Pi Data content removed for production */}
             </Tabs>
           </div>
         </div>

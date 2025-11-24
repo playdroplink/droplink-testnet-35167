@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, Users, CreditCard, CheckCircle, AlertCircle, Coins, User, Crown } from "lucide-react";
+import { UserPlus, Users, CreditCard, CheckCircle, AlertCircle, Droplets, User, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { usePi } from "@/contexts/PiContext";
@@ -296,7 +296,7 @@ export const MultipleAccountManager: React.FC<MultipleAccountManagerProps> = ({
               <DialogContent className="max-w-md">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <Coins className="h-5 w-5 text-yellow-500" />
+                    <Droplets className="h-5 w-5 text-yellow-500" />
                     Create Additional Account
                   </DialogTitle>
                   <DialogDescription>
@@ -408,7 +408,7 @@ export const MultipleAccountManager: React.FC<MultipleAccountManagerProps> = ({
                       </>
                     ) : accounts.length > 0 ? (
                       <>
-                        <Coins className="h-4 w-4 mr-2" />
+                        <Droplets className="h-4 w-4 mr-2" />
                         Pay {ACCOUNT_CREATION_FEE} PI & Create
                       </>
                     ) : (

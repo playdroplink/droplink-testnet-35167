@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { PlayCircle, Coins, Clock, CheckCircle } from 'lucide-react';
+import { PlayCircle, Droplets, Clock, CheckCircle } from 'lucide-react';
 import { PI_CONFIG } from '@/config/pi-config';
 import { usePi } from '@/contexts/PiContext';
 
@@ -166,7 +166,7 @@ const PiAdNetwork: React.FC = () => {
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center p-4 bg-green-50 rounded-lg">
             <div className="flex items-center justify-center gap-2 mb-1">
-              <Coins className="h-4 w-4 text-green-600" />
+              <Droplets className="h-4 w-4 text-green-600" />
               <span className="text-sm font-medium text-green-600">Today's Earnings</span>
             </div>
             <div className="text-2xl font-bold text-green-700">
@@ -226,7 +226,7 @@ const PiAdNetwork: React.FC = () => {
         {/* Last Reward */}
         {lastAdReward && (
           <Alert>
-            <Coins className="h-4 w-4" />
+            <Droplets className="h-4 w-4" />
             <AlertDescription>
               Last reward: +{lastAdReward.amount} {lastAdReward.currency} at{' '}
               {lastAdReward.timestamp.toLocaleTimeString()}

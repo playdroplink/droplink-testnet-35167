@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Droplets, Coins, Gift, ArrowDownLeft, ArrowUpRight, Wallet as WalletIcon, TrendingUp, History, Settings, ExternalLink, CheckCircle, AlertCircle } from "lucide-react";
+import { Droplets, Gift, ArrowDownLeft, ArrowUpRight, Wallet as WalletIcon, TrendingUp, History, Settings, ExternalLink, CheckCircle, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { usePi } from "@/contexts/PiContext";
@@ -210,7 +210,7 @@ const Wallet = () => {
             {/* Legacy Platform Balance */}
             <div className="bg-card border border-border rounded-lg p-6">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <Coins className="w-6 h-6 text-white" />
+                <Droplets className="w-6 h-6 text-white" />
                 <span className="text-white font-medium">Platform</span>
               </div>
               <div className="text-3xl font-bold text-white mb-1">
@@ -282,7 +282,7 @@ const Wallet = () => {
                 {/* Legacy Platform Earning */}
                 <div className="border rounded-lg p-4">
                   <h3 className="font-semibold mb-3 flex items-center gap-2">
-                    <Coins className="w-4 h-4" />
+                    <Droplets className="w-4 h-4" />
                     Platform DropTokens
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">
