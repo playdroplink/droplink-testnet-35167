@@ -42,7 +42,7 @@ export const QRCodeDialog = ({ open, onOpenChange, url, username }: QRCodeDialog
           <DialogTitle>Share Your Store</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col items-center space-y-4 py-4">
-          <div className="bg-white p-4 rounded-lg">
+          <div className="bg-white p-4 rounded-lg relative w-[272px] h-[272px] flex items-center justify-center">
             <QRCodeSVG
               id="qr-code-svg"
               value={url}
@@ -50,6 +50,12 @@ export const QRCodeDialog = ({ open, onOpenChange, url, username }: QRCodeDialog
               level="H"
               includeMargin={true}
             />
+              <img
+                src="/droplink-logo.png"
+                alt="Droplink Logo"
+                className="absolute left-1/2 top-1/2 w-16 h-16 -translate-x-1/2 -translate-y-1/2 shadow-lg border-2 border-white"
+                style={{ pointerEvents: 'none', background: 'white', borderRadius: '0.5rem' }}
+              />
           </div>
           <p className="text-sm text-muted-foreground text-center">
             Scan this QR code to visit your store

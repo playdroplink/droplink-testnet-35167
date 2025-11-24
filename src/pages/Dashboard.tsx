@@ -1375,39 +1375,6 @@ const Dashboard = () => {
                       </div>
                     </div>
 
-                    {/* Merchant Section */}
-                    <div className="space-y-2">
-                      <h3 className="font-medium text-sm text-muted-foreground px-2">Merchant</h3>
-                      <div className="space-y-2">
-                        <Button
-                          onClick={() => navigate("/switch-to-merchant")}
-                          variant="default"
-                          size="sm"
-                          className="w-full justify-start gap-2 h-12 bg-blue-600 text-white hover:bg-blue-700"
-                        >
-                          <Sparkles className="w-4 h-4" />
-                          Merchant Overview
-                        </Button>
-                        <Button
-                          onClick={() => navigate("/merchant-setup")}
-                          variant="outline"
-                          size="sm"
-                          className="w-full justify-start gap-2 h-12"
-                        >
-                          <Store className="w-4 h-4" />
-                          Create Store
-                        </Button>
-                        <Button
-                          onClick={() => navigate("/merchant-products")}
-                          variant="outline"
-                          size="sm"
-                          className="w-full justify-start gap-2 h-12"
-                        >
-                          <Wallet className="w-4 h-4" />
-                          Manage Products
-                        </Button>
-                      </div>
-                    </div>
                     {/* Settings Section */}
                     <div className="space-y-2">
                       <h3 className="font-medium text-sm text-muted-foreground px-2">Settings</h3>

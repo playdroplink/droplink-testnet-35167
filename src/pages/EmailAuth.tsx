@@ -62,13 +62,12 @@ const EmailAuth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
             data: {
               auth_method: 'email'
             }
           }
         });
-        
+
         if (error) {
           if (error.message.includes("already registered")) {
             toast.error("This email is already registered. Please log in instead.");
@@ -82,7 +81,8 @@ const EmailAuth = () => {
         if (data.user) {
           // Create profile for new user
           await ensureProfileExists(data.user);
-          toast.success("Account created successfully! Please check your email to verify your account.");
+          toast.success("Account created successfully! Welcome!");
+          navigate("/");
         }
       }
     } catch (error: any) {

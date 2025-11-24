@@ -443,7 +443,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
                 >
                   <div className="flex justify-between items-start mb-1">
                     <h4 className="text-xs font-semibold text-white truncate">{product.title || "Untitled"}</h4>
-                    <span className="text-xs font-bold text-white/90">{product.price || "$0"}</span>
+                    <span className="text-xs font-bold text-white/90">{product.price ? product.price : "0"}</span>
                   </div>
                   <p className="text-[10px] text-white/70 line-clamp-2">{product.description || "No description"}</p>
                 </div>
