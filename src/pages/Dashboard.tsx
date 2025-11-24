@@ -1585,10 +1585,10 @@ const Dashboard = () => {
                   <BarChart3 className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Analytics</span>
                 </TabsTrigger>
-                <TabsTrigger value="features" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                {/* <TabsTrigger value="features" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
                   <Sparkles className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Features</span>
-                </TabsTrigger>
+                </TabsTrigger> */}
                 <TabsTrigger value="drop-tokens" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
                   <Coins className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">DROP</span>
@@ -1605,10 +1605,10 @@ const Dashboard = () => {
                   <Crown className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Sub</span>
                 </TabsTrigger>
-                <TabsTrigger value="voting" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                {/* <TabsTrigger value="voting" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
                   <TrendingUp className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Vote</span>
-                </TabsTrigger>
+                </TabsTrigger> */}
                 <TabsTrigger value="preferences" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
                   <User className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Settings</span>
@@ -2206,9 +2206,9 @@ const Dashboard = () => {
               </TabsContent>
 
 
-              <TabsContent value="features" className="pb-8">
+              {/* <TabsContent value="features" className="pb-8">
                 <FutureFeaturesDashboard />
-              </TabsContent>
+              </TabsContent> */}
 
               <TabsContent value="drop-tokens" className="pb-8">
                 <DropTokenManager piUser={piUser} piWallet={piUser?.wallet_address} />
@@ -2228,9 +2228,9 @@ const Dashboard = () => {
               </TabsContent>
 
 
-              <TabsContent value="voting" className="pb-8">
+              {/* <TabsContent value="voting" className="pb-8">
                 <VotingSystem />
-              </TabsContent>
+              </TabsContent> */}
 
               {/* User Preferences Tab */}
               <TabsContent value="preferences" className="pb-8">

@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Palette, Sparkles, Upload, Image, Monitor, X, Settings, Sliders, Link } from "lucide-react";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { PlanGate } from "@/components/PlanGate";
 import ReadyThemeSelector from "./ReadyThemeSelector";
 import AdvancedCustomizer from "./AdvancedCustomizer";
@@ -75,10 +76,11 @@ interface DesignCustomizerProps {
     backgroundColor: string;
     backgroundType: 'color' | 'gif' | 'video';
     backgroundGif: string;
+    backgroundVideo?: string;
     iconStyle: string;
     buttonStyle: string;
   };
-  onThemeChange: (theme: { primaryColor: string; backgroundColor: string; backgroundType: 'color' | 'gif' | 'video'; backgroundGif: string; iconStyle: string; buttonStyle: string }) => void;
+  onThemeChange: (theme: { primaryColor: string; backgroundColor: string; backgroundType: 'color' | 'gif' | 'video'; backgroundGif: string; backgroundVideo?: string; iconStyle: string; buttonStyle: string }) => void;
 }
 
 export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps) => {
@@ -171,28 +173,56 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
     setUploadingGif(true);
 
     try {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        if (result) {
-          if (type === 'gif' && !result.startsWith('data:image/gif;base64,')) {
-            alert('Invalid GIF file format.');
-            return;
-          }
-          if (type === 'video' && !result.startsWith('data:video/')) {
-            alert('Invalid video file format.');
-            return;
-          }
-          onThemeChange({
-            ...theme,
-            backgroundGif: result,
-            backgroundType: type
-          });
-          console.log(`${type.toUpperCase()} uploaded successfully, data URL length: ${result.length} characters`);
+      let publicUrl = '';
+      if (type === 'video') {
+        // Upload video to Supabase Storage
+        const fileExt = file.name.split('.').pop();
+        const filePath = `user-videos/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+        const { data, error } = await supabase.storage.from('media').upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+        if (error) {
+          alert('Failed to upload video: ' + error.message);
+          setUploadingGif(false);
+          return;
         }
-      };
-      if (type === 'gif') reader.readAsDataURL(file);
-      if (type === 'video') reader.readAsDataURL(file);
+        // Get public URL
+        const { data: urlData } = supabase.storage.from('media').getPublicUrl(filePath);
+        publicUrl = urlData?.publicUrl || '';
+        if (!publicUrl) {
+          alert('Failed to get public video URL.');
+          setUploadingGif(false);
+          return;
+        }
+        onThemeChange({
+          ...theme,
+          backgroundVideo: publicUrl,
+          backgroundType: 'video',
+          backgroundGif: '', // clear GIF if switching to video
+        });
+        console.log('Video uploaded and URL set:', publicUrl);
+      } else {
+        // GIF: use base64 for now (could also use storage for large GIFs)
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target?.result as string;
+          if (result) {
+            if (!result.startsWith('data:image/gif;base64,')) {
+              alert('Invalid GIF file format.');
+              return;
+            }
+            onThemeChange({
+              ...theme,
+              backgroundGif: result,
+              backgroundType: 'gif',
+              backgroundVideo: '', // clear video if switching to gif
+            });
+            console.log('GIF uploaded as base64');
+          }
+        };
+        reader.readAsDataURL(file);
+      }
     } catch (error) {
       console.error('Error uploading media:', error);
       alert('Failed to upload file. Please try again.');

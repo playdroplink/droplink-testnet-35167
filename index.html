@@ -27,7 +27,7 @@
     <!-- Pi Network SDK -->
     <script src="https://sdk.minepi.com/pi-sdk.js" async crossorigin="anonymous"></script>
 
-    <!-- Pi SDK Diagnostic: Show banner if window.Pi is not available (for debugging in Pi Browser) -->
+    <!-- Pi SDK Diagnostic: (DISABLED by request) Show banner if window.Pi is not available (for debugging in Pi Browser)
     <script>
       (function(){
         function showPiBanner(msg) {
@@ -63,6 +63,7 @@
         if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', checkPi); else checkPi();
       })();
     </script>
+    -->
     
     <!-- Web App Manifest -->
     <link rel="manifest" href="/manifest.json" />
@@ -72,7 +73,7 @@
     <meta name="pi-app-url" content="https://droplink.space" />
     <meta name="pi-mainnet-ready" content="true" />
     
-    <!-- Inline pre-flight diagnostic script (shows banner if critical Pi checks fail) -->
+    <!-- Inline pre-flight diagnostic script (DISABLED by request) (shows banner if critical Pi checks fail)
     <script>
       (function(){
         const containerId = 'pi-preflight-banner';
@@ -167,6 +168,7 @@
         if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', runChecks); else runChecks();
       })();
     </script>
+    -->
     
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/ALLayxCo2Zd0m48xGbSaAofsXYf1/social-images/social-1762075342466-Untitled design (8) (1).png">

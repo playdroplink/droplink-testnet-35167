@@ -13,7 +13,8 @@ import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 
 const CustomDomain = () => {
   const navigate = useNavigate();
-  const { piUser, isAuthenticated } = usePi();
+  // Pi auth disabled: open to all users
+  // const { piUser, isAuthenticated } = usePi();
   const { plan } = useActiveSubscription();
   const isPremiumPlan = plan === "premium" || plan === "pro";
   const [loading, setLoading] = useState(true);
@@ -29,10 +30,7 @@ const CustomDomain = () => {
 
   const loadDomainSettings = async () => {
     try {
-      if (!isAuthenticated || !piUser) {
-        navigate("/auth");
-        return;
-      }
+      // Pi auth disabled: allow all users
 
       const { data: profile } = await supabase
         .from("profiles")

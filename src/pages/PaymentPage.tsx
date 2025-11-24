@@ -45,7 +45,8 @@ interface PaymentLink {
 const PaymentPage: React.FC = () => {
   const { linkId } = useParams();
   const navigate = useNavigate();
-  const { createPayment, isAuthenticated, piUser } = usePi();
+  // Pi auth disabled: open to all users
+  // const { createPayment, isAuthenticated, piUser } = usePi();
   
   const [paymentLink, setPaymentLink] = useState<PaymentLink | null>(null);
   const [loading, setLoading] = useState(true);
@@ -203,8 +204,8 @@ const PaymentPage: React.FC = () => {
   };
 
   const processPayment = async () => {
-    if (!paymentLink || !isAuthenticated) {
-      toast.error('Please authenticate with Pi Network to make payments');
+    if (!paymentLink) {
+      toast.error('No payment link found');
       return;
     }
 

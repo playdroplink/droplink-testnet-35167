@@ -15,7 +15,8 @@ import { usePi } from "@/contexts/PiContext";
 
 const AISupport = () => {
   const navigate = useNavigate();
-  const { piUser, isAuthenticated } = usePi();
+  // Pi auth disabled: open to all users
+  // const { piUser, isAuthenticated } = usePi();
   const [profileId, setProfileId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -32,11 +33,7 @@ const AISupport = () => {
 
   const loadProfile = async () => {
     try {
-      if (!isAuthenticated || !piUser) {
-        toast.error("Please sign in with Pi Network");
-        navigate("/auth");
-        return;
-      }
+      // Pi auth disabled: allow all users
 
       const { data: profile } = await supabase
         .from("profiles")
