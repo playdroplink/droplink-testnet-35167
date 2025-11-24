@@ -6,10 +6,14 @@ import { UserPreferencesProvider } from "./contexts/UserPreferencesContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { validatePiEnvironment } from "./utils/pi-env-check";
 
-// Set light mode as default if no theme preference exists
-if (!localStorage.getItem('theme')) {
-  localStorage.setItem('theme', 'light');
+
+// Set theme from localStorage or default to light
+const theme = localStorage.getItem('theme');
+if (theme === 'dark') {
+  document.documentElement.classList.add('dark');
+} else {
   document.documentElement.classList.remove('dark');
+  localStorage.setItem('theme', 'light');
 }
 
 // Run Pi environment validation before rendering to avoid silent white screens in Pi Browser

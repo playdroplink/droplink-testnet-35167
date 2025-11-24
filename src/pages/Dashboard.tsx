@@ -79,8 +79,10 @@ import {
   FaSpotify, 
   FaFacebook, 
   FaLinkedin, 
-  FaTwitch
+  FaTwitch, 
+  FaTiktok
 } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 import { toast } from "sonner";
 import { QRCodeDialog } from "@/components/QRCodeDialog";
 import PiDataManager from "@/components/PiDataManager";
@@ -1722,7 +1724,7 @@ const Dashboard = () => {
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center">
-                    <Twitter className="w-5 h-5" />
+                    <FaXTwitter className="w-5 h-5" />
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "twitter")?.url || "" : ""}
@@ -1758,7 +1760,7 @@ const Dashboard = () => {
 
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center">
-                    <Music className="w-5 h-5" />
+                    <FaTiktok className="w-5 h-5" />
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "tiktok")?.url || "" : ""}
@@ -2227,12 +2229,13 @@ const Dashboard = () => {
         </div>
       </div>
       
-      {/* QR Code Dialog */}
+
+      {/* QR Code Dialog for Store Link */}
       <QRCodeDialog
         open={showQRCode}
         onOpenChange={setShowQRCode}
-        url={`${window.location.origin}/${profile.storeUrl}`}
-        username={profile.storeUrl}
+        url={profile.storeUrl ? `${window.location.origin}/${profile.storeUrl}` : ''}
+        username={profile.storeUrl || 'store'}
       />
 
       {/* Pi Wallet QR Code Dialog */}
