@@ -165,8 +165,9 @@ const Dashboard = () => {
     theme: {
       primaryColor: "#3b82f6",
       backgroundColor: "#000000",
-      backgroundType: "color" as const,
+      backgroundType: "color",
       backgroundGif: "",
+      backgroundVideo: "",
       iconStyle: "rounded",
       buttonStyle: "filled",
     },

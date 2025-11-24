@@ -15,12 +15,14 @@ const getStoreUrl = () => {
 
 
 // Demo MP4 background URL (replace with user input or store setting as needed)
-const DEMO_MP4_URL = "https://www.w3schools.com/html/mov_bbb.mp4";
+
 
 const StoreFront: React.FC = () => {
   const [showPreview, setShowPreview] = useState(true);
+  // Theme and video background state lifted here
+  const [theme, setTheme] = useState({ background: "#f5f5f5", text: "#222222" });
   const [useVideoBg, setUseVideoBg] = useState(false);
-  const [videoUrl, setVideoUrl] = useState(DEMO_MP4_URL);
+  const [videoUrl, setVideoUrl] = useState("https://www.w3schools.com/html/mov_bbb.mp4");
 
   // Example: Send Supabase JWT to your backend
   const sendJwtToBackend = async () => {
@@ -44,7 +46,7 @@ const StoreFront: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-screen relative" style={{ background: !useVideoBg ? theme.background : undefined }}>
       {/* MP4 Video Background */}
       {useVideoBg && videoUrl && (
         <video
@@ -69,25 +71,7 @@ const StoreFront: React.FC = () => {
             <span className="text-xs text-muted-foreground">Your Storefront</span>
           </div>
           <div className="flex items-center gap-2">
-            {/* Toggle for MP4 background (demo) */}
-            <label className="flex items-center gap-1 text-xs">
-              <input
-                type="checkbox"
-                checked={useVideoBg}
-                onChange={e => setUseVideoBg(e.target.checked)}
-              />
-              MP4 Video Background
-            </label>
-            {useVideoBg && (
-              <input
-                type="text"
-                value={videoUrl}
-                onChange={e => setVideoUrl(e.target.value)}
-                placeholder="MP4 video URL"
-                className="border p-1 rounded text-xs w-48"
-                style={{ marginLeft: 8 }}
-              />
-            )}
+            {/* MP4 background controls moved to ThemeCustomizer */}
             <input
               type="text"
               value={getStoreUrl()}
@@ -131,7 +115,14 @@ const StoreFront: React.FC = () => {
             </div>
             <div className="bg-card border border-border rounded-lg p-6 mb-6">
               <h2 className="text-lg font-semibold mb-4">Theme & Appearance</h2>
-              <ThemeCustomizer />
+              <ThemeCustomizer
+                theme={theme}
+                setTheme={setTheme}
+                useVideoBg={useVideoBg}
+                setUseVideoBg={setUseVideoBg}
+                videoUrl={videoUrl}
+                setVideoUrl={setVideoUrl}
+              />
             </div>
           </div>
         </div>

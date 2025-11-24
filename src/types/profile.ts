@@ -42,8 +42,9 @@ export type SocialLinks = SocialLink[];
 export interface ThemeData {
   primaryColor: string;
   backgroundColor: string;
-  backgroundType: 'color' | 'gif';
+  backgroundType: 'color' | 'gif' | 'video';
   backgroundGif: string;
+  backgroundVideo?: string;
   iconStyle: string;
   buttonStyle: string;
   textColor?: string;

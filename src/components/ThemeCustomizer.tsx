@@ -1,16 +1,22 @@
-import React, { useState } from "react";
+import React from "react";
 
-const ThemeCustomizer: React.FC = () => {
-  const [theme, setTheme] = useState({
-    background: "#f5f5f5",
-    text: "#222222",
-  });
-  // MP4 video background state (demo only, not persisted)
-  const [useVideoBg, setUseVideoBg] = useState(false);
-  const [videoUrl, setVideoUrl] = useState("https://www.w3schools.com/html/mov_bbb.mp4");
+interface ThemeCustomizerProps {
+  theme: { background: string; text: string };
+  setTheme: (theme: { background: string; text: string }) => void;
+  useVideoBg: boolean;
+  setUseVideoBg: (v: boolean) => void;
+  videoUrl: string;
+  setVideoUrl: (v: string) => void;
+}
 
-  // TODO: Save theme to backend or context
-
+const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
+  theme,
+  setTheme,
+  useVideoBg,
+  setUseVideoBg,
+  videoUrl,
+  setVideoUrl,
+}) => {
   return (
     <div className="bg-white p-6 rounded shadow max-w-xl mx-auto mt-8">
       <h2 className="text-xl font-bold mb-2">Theme & Background</h2>

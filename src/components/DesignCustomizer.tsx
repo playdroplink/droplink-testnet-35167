@@ -73,12 +73,12 @@ interface DesignCustomizerProps {
   theme: {
     primaryColor: string;
     backgroundColor: string;
-    backgroundType: 'color' | 'gif';
+    backgroundType: 'color' | 'gif' | 'video';
     backgroundGif: string;
     iconStyle: string;
     buttonStyle: string;
   };
-  onThemeChange: (theme: { primaryColor: string; backgroundColor: string; backgroundType: 'color' | 'gif'; backgroundGif: string; iconStyle: string; buttonStyle: string }) => void;
+  onThemeChange: (theme: { primaryColor: string; backgroundColor: string; backgroundType: 'color' | 'gif' | 'video'; backgroundGif: string; iconStyle: string; buttonStyle: string }) => void;
 }
 
 export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps) => {

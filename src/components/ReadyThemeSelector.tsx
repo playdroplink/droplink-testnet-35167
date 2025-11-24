@@ -761,7 +761,7 @@ interface ReadyThemeSelectorProps {
   currentTheme: {
     primaryColor: string;
     backgroundColor: string;
-    backgroundType: 'color' | 'gif';
+    backgroundType: 'color' | 'gif' | 'video';
     backgroundGif: string;
     iconStyle: string;
     buttonStyle: string;

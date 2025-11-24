@@ -34,6 +34,7 @@ import { QRCodeDisplay } from "./QRCodeDisplay";
 import { toast } from "sonner";
 import { ProfileData } from "@/types/profile";
 
+import type { ThemeData } from "@/types/profile";
 interface PhonePreviewProps {
   profile: ProfileData;
 }
@@ -124,11 +125,38 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
   return (
     <div className="relative w-[280px] h-[570px] rounded-[3rem] border-[10px] border-foreground/20 shadow-2xl overflow-hidden"
          style={
-           profile.theme?.backgroundType === 'gif' && profile.theme?.backgroundGif
+           (profile.theme?.backgroundType === 'gif' && profile.theme?.backgroundGif) || (profile.theme?.backgroundType === 'video' && profile.theme?.backgroundVideo)
              ? {}
              : { backgroundColor: profile.theme?.backgroundColor || '#000000' }
          }>
-      
+
+      {/* Video Background for Phone Preview */}
+      {profile.theme?.backgroundType === 'video' && profile.theme?.backgroundVideo && (
+        <div className="absolute inset-0 z-0">
+          <video
+            src={profile.theme.backgroundVideo}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+            style={{ objectFit: 'cover' }}
+            onError={(e) => {
+              console.log('Video background failed to load:', profile.theme?.backgroundVideo);
+              (e.target as HTMLVideoElement).style.display = 'none';
+              const parent = e.currentTarget.parentElement;
+              if (parent) {
+                parent.style.backgroundColor = profile.theme?.backgroundColor || '#000000';
+              }
+            }}
+            onLoadedData={() => {
+              console.log('Video background loaded successfully:', profile.theme?.backgroundVideo);
+            }}
+          />
+          <div className="absolute inset-0 bg-black/20"></div>
+        </div>
+      )}
+
       {/* GIF Background for Phone Preview */}
       {profile.theme?.backgroundType === 'gif' && profile.theme?.backgroundGif && (
         <div className="absolute inset-0 z-0">
