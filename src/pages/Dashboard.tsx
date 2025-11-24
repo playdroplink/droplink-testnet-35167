@@ -1622,7 +1622,16 @@ const Dashboard = () => {
                 <div>
                   <Label className="mb-3 block">Business logo</Label>
                   <div className="flex items-center gap-4">
-                    <div className="w-20 h-20 rounded-2xl bg-card border border-border flex items-center justify-center overflow-hidden">
+                    <div
+                      className={
+                        `w-20 h-20 bg-card border border-border flex items-center justify-center overflow-hidden ` +
+                        (profile.theme?.iconStyle === 'circle'
+                          ? 'rounded-full'
+                          : profile.theme?.iconStyle === 'square'
+                          ? 'rounded-none'
+                          : 'rounded-2xl')
+                      }
+                    >
                       {profile.logo ? (
                         <img src={profile.logo} alt="Logo" className="w-full h-full object-cover" />
                       ) : (
@@ -1696,6 +1705,27 @@ const Dashboard = () => {
                         </Button>
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">Generate a logo using AI by prompt</div>
+                      {/* Logo Style Selector */}
+                      <div className="flex gap-2 mt-2 items-center">
+                        <Label htmlFor="logo-style" className="text-xs">Logo style:</Label>
+                        <select
+                          id="logo-style"
+                          value={profile.theme?.iconStyle || 'rounded'}
+                          onChange={e => setProfile({
+                            ...profile,
+                            theme: {
+                              ...profile.theme,
+                              iconStyle: e.target.value as 'rounded' | 'square' | 'circle',
+                            },
+                          })}
+                          className="border rounded px-2 py-1 text-xs"
+                          style={{ minWidth: 90 }}
+                        >
+                          <option value="rounded">Rounded</option>
+                          <option value="square">Square</option>
+                          <option value="circle">Circle</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
                 </div>

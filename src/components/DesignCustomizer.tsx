@@ -21,54 +21,92 @@ interface ThemeTemplate {
 
 const themeTemplates: ThemeTemplate[] = [
   {
-    id: 'ocean',
-    name: 'Ocean Blue',
-    primaryColor: '#3b82f6',
-    backgroundColor: '#0f172a',
+    id: 'pastel-purple-glass',
+    name: 'Pastel Purple Glass',
+    primaryColor: '#b39ddb',
+    backgroundColor: 'linear-gradient(135deg, #d1c4e9 0%, #ede7f6 100%)',
     iconStyle: 'rounded',
-    description: 'Professional blue theme'
+    description: 'Soft 3D pastel purple gradient with glassmorphism panels, glowing particles, Material You curves, warm rim lighting.'
   },
   {
-    id: 'sunset',
-    name: 'Sunset Orange',
-    primaryColor: '#f97316',
-    backgroundColor: '#1a1a1a',
+    id: 'neon-gold-wave',
+    name: 'Neon Gold Wave',
+    primaryColor: '#ffd700',
+    backgroundColor: 'linear-gradient(135deg, #4b006e 0%, #ffd700 100%)',
     iconStyle: 'circle',
-    description: 'Warm and inviting'
+    description: 'Futuristic neon-gold waves flowing across a dark plum background, soft Pixar glow, clean drop shadows.'
   },
   {
-    id: 'forest',
-    name: 'Forest Green',
-    primaryColor: '#10b981',
-    backgroundColor: '#111827',
+    id: 'sunset-teal-blur',
+    name: 'Sunset Teal Blur',
+    primaryColor: '#ffb347',
+    backgroundColor: 'linear-gradient(135deg, #43e97b 0%, #ffb347 100%)',
     iconStyle: 'rounded',
-    description: 'Natural and fresh'
+    description: 'Sunset teal and mango orange blended gradients, bokeh blur particles, smooth abstract curves.'
   },
   {
-    id: 'lavender',
-    name: 'Lavender Dream',
-    primaryColor: '#a855f7',
-    backgroundColor: '#1e1b4b',
+    id: 'galaxy-purple-night',
+    name: 'Galaxy Purple Night',
+    primaryColor: '#7c3aed',
+    backgroundColor: 'linear-gradient(135deg, #2d0036 0%, #7c3aed 100%)',
     iconStyle: 'circle',
-    description: 'Creative and modern'
+    description: 'Deep galaxy purple backdrop with floating orbs, subtle Pi neon edges, holographic shimmer.'
   },
   {
-    id: 'rose',
-    name: 'Rose Gold',
-    primaryColor: '#ec4899',
-    backgroundColor: '#18181b',
+    id: 'strawberry-pink-matte',
+    name: 'Strawberry Pink Matte',
+    primaryColor: '#ffb6b9',
+    backgroundColor: 'linear-gradient(135deg, #ffb6b9 0%, #f8bbd0 100%)',
     iconStyle: 'rounded',
-    description: 'Elegant and stylish'
+    description: 'Matte clay 3D blobs in soft strawberry pink tones, cozy lighting, minimal clean design.'
   },
   {
-    id: 'midnight',
-    name: 'Midnight',
-    primaryColor: '#6366f1',
-    backgroundColor: '#000000',
+    id: 'frosted-blue-glass',
+    name: 'Frosted Blue Glass',
+    primaryColor: '#90caf9',
+    backgroundColor: 'linear-gradient(135deg, #e3f2fd 0%, #90caf9 100%)',
     iconStyle: 'square',
-    description: 'Sleek and minimal'
+    description: 'Frosted blue glass blocks, particle glow, soft white highlights, Material You glass aesthetic.'
+  },
+  {
+    id: 'coral-peach-waves',
+    name: 'Coral Peach Waves',
+    primaryColor: '#ffbfae',
+    backgroundColor: 'linear-gradient(135deg, #ffbfae 0%, #ffd6e0 100%)',
+    iconStyle: 'rounded',
+    description: 'Coral peach gradients with smooth flowing waves, Pixar-inspired warm lighting, gentle depth.'
+  },
+  {
+    id: 'mint-green-glow',
+    name: 'Mint Green Glow',
+    primaryColor: '#a7ffeb',
+    backgroundColor: 'linear-gradient(135deg, #a7ffeb 0%, #b2dfdb 100%)',
+    iconStyle: 'circle',
+    description: 'Mint green pastel gradient, soft neon rim light, bubbly circular patterns floating softly.'
+  },
+  {
+    id: 'purple-gold-pi',
+    name: 'Purple–Gold Pi Network',
+    primaryColor: '#a084e8',
+    backgroundColor: 'linear-gradient(135deg, #a084e8 0%, #ffd700 100%)',
+    iconStyle: 'rounded',
+    description: 'Pi Network-inspired purple and gold holographic strands, warm ambient glow, futuristic elegance.'
+  },
+  {
+    id: 'minimal-white-cloud',
+    name: 'Minimal White Cloud',
+    primaryColor: '#f5f5f5',
+    backgroundColor: 'linear-gradient(135deg, #f5f5f5 0%, #fffde4 100%)',
+    iconStyle: 'square',
+    description: 'Soft white and cream gradient with floating cloud-like blobs, tiny sparkles, airy & clean feel.'
   },
 ];
+  // Random Theme Button Handler
+  const handleRandomTheme = () => {
+    const randomIndex = Math.floor(Math.random() * themeTemplates.length);
+    const template = themeTemplates[randomIndex];
+    handleTemplateSelect(template);
+  };
 
 interface DesignCustomizerProps {
   theme: {
@@ -288,6 +326,7 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
       </div>
 
       {/* Render based on mode (Premium/Pro only) */}
+
       {customizationMode === 'simple' ? (
         <div className="space-y-6">
           {/* Ready-to-Use Themes Section */}
@@ -295,6 +334,13 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
             currentTheme={theme}
             onThemeSelect={(selectedTheme) => onThemeChange({ ...theme, ...selectedTheme })}
           />
+
+          {/* Random Theme Button */}
+          <div className="flex justify-center my-4">
+            <Button variant="outline" onClick={handleRandomTheme}>
+              🔥 Random Theme
+            </Button>
+          </div>
 
           {/* Divider */}
           <div className="border-t pt-6">

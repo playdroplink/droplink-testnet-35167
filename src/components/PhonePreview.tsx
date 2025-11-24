@@ -188,7 +188,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
       <div className="h-full overflow-y-auto pt-8 px-6 pb-6 relative z-10">
         <div className="flex flex-col items-center text-center space-y-6">
           {/* Logo */}
-          <div className="w-20 h-20 rounded-2xl bg-muted border border-border flex items-center justify-center overflow-hidden">
+          <div className={`w-20 h-20 ${iconRadius} bg-muted border border-border flex items-center justify-center overflow-hidden`}>
             {profile.logo ? (
               <img src={profile.logo} alt="Logo" className="w-full h-full object-cover" />
             ) : (
