@@ -1,5 +1,6 @@
 
 import React, { useState } from "react";
+import StorefrontWalletQR from "../components/StorefrontWalletQR";
 import { supabase } from "@/integrations/supabase/client";
 import StoreCustomizer from "../components/StoreCustomizer";
 import ProductCategoryManager from "../components/ProductCategoryManager";
@@ -23,6 +24,9 @@ const StoreFront: React.FC = () => {
   const [theme, setTheme] = useState({ background: "#f5f5f5", text: "#222222" });
   const [useVideoBg, setUseVideoBg] = useState(false);
   const [videoUrl, setVideoUrl] = useState("https://www.w3schools.com/html/mov_bbb.mp4");
+  // Wallet QR and tip text state
+  const [walletAddress, setWalletAddress] = useState("");
+  const [tipText, setTipText] = useState("Tip Pi or DROP");
 
   // Example: Send Supabase JWT to your backend
   const sendJwtToBackend = async () => {
@@ -140,9 +144,28 @@ const StoreFront: React.FC = () => {
             >Copy link</button>
           </div>
           {/* Replace below with your actual store preview component */}
-          <div className="w-full h-full flex items-center justify-center bg-white border rounded-xl shadow-inner min-h-[400px]">
-            <span className="text-muted-foreground">[Store Preview Here]</span>
-          </div>
+            <div className="w-full h-full flex flex-col items-center justify-center bg-white border rounded-xl shadow-inner min-h-[400px] p-4">
+              {/* Wallet QR code and tip section */}
+              <StorefrontWalletQR walletAddress={walletAddress} tipText={tipText} />
+              <div className="w-full max-w-xs mt-4">
+                <label className="block text-xs font-medium text-gray-700 mb-1">Wallet Address</label>
+                <input
+                  type="text"
+                  className="w-full border rounded px-2 py-1 text-sm mb-2"
+                  placeholder="Enter your Pi wallet address"
+                  value={walletAddress}
+                  onChange={e => setWalletAddress(e.target.value)}
+                />
+                <label className="block text-xs font-medium text-gray-700 mb-1">Tip Message</label>
+                <input
+                  type="text"
+                  className="w-full border rounded px-2 py-1 text-sm"
+                  placeholder="e.g. Buy me a coffee ☕"
+                  value={tipText}
+                  onChange={e => setTipText(e.target.value)}
+                />
+              </div>
+            </div>
         </div>
       </div>
     </div>

@@ -454,6 +454,25 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
             </div>
           )}
 
+
+          {/* Pi Wallet QR Code and Tip Section (always visible if wallet set) */}
+          {profile.piWalletAddress && (
+            <div className="w-full flex flex-col items-center pt-6 pb-2">
+              <div className="relative w-[120px] h-[120px] mb-2">
+                {/* QR code with Droplink logo overlay */}
+                <QRCodeDisplay value={profile.piWalletAddress} size={120} />
+                <img
+                  src="/droplink-logo.png"
+                  alt="Droplink Logo"
+                  className="absolute left-1/2 top-1/2 w-10 h-10 -translate-x-1/2 -translate-y-1/2 shadow-lg border-2 border-white bg-white rounded-lg"
+                  style={{ pointerEvents: 'none' }}
+                />
+              </div>
+              <div className="text-xs text-white/80 text-center break-all mb-1">{profile.piWalletAddress}</div>
+              <div className="text-xs text-sky-300 text-center">Tip Pi or DROP</div>
+            </div>
+          )}
+
           {/* Droplink Branding */}
           {!profile.hasPremium && profile.storeUrl && (
             <div className="w-full pt-6 pb-2 text-center">
