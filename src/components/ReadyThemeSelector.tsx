@@ -62,8 +62,8 @@ const readyThemes: ReadyTheme[] = [
     category: 'Business',
     description: 'Clean, professional look for corporate professionals and consultants',
     icon: Briefcase,
-    primaryColor: '#1e40af',
-    backgroundColor: '#f8fafc',
+    primaryColor: '#e0e7ff', // Blue-tinted for business/corporate
+    backgroundColor: '#2563eb', // Brighter blue for better contrast
     backgroundType: 'color',
     backgroundGif: '',
     iconStyle: 'rounded',
@@ -97,12 +97,12 @@ const readyThemes: ReadyTheme[] = [
     category: 'Business',
     description: 'Sophisticated dark theme for executives and business leaders',
     icon: Briefcase,
-    primaryColor: '#d4af37',
-    backgroundColor: '#0f172a',
+    primaryColor: '#23272f', // Deep slate for luxury dark
+    backgroundColor: '#ffd700', // True gold for luxury
     backgroundType: 'color',
     backgroundGif: '',
     iconStyle: 'square',
-    buttonStyle: 'outline',
+    buttonStyle: 'filled', // Gold looks better filled on dark
     preview: 'Dark theme with gold accents',
     templateData: {
       businessName: 'Executive Leadership',
@@ -131,13 +131,13 @@ const readyThemes: ReadyTheme[] = [
     category: 'Business',
     description: 'Modern gradient theme perfect for startups and innovation',
     icon: TrendingUp,
-    primaryColor: '#6366f1',
-    backgroundColor: '#1e293b',
-    backgroundType: 'gif',
-    backgroundGif: 'https://i.giphy.com/26BRrSvJUa0crqw4E.gif',
+    primaryColor: '#ede9fe', // Gradient purple base
+    backgroundColor: '#a21caf', // Vibrant purple for energy
+    backgroundType: 'color',
+    backgroundGif: '',
     iconStyle: 'rounded',
     buttonStyle: 'glass',
-    preview: 'Purple gradient with animated background',
+    preview: 'Purple gradient theme',
     templateData: {
       businessName: 'Innovative Startup',
       description: 'Revolutionary startup transforming industries through cutting-edge technology and disruptive innovation. Join us in building the future.',
@@ -167,8 +167,8 @@ const readyThemes: ReadyTheme[] = [
     category: 'Creators',
     description: 'Vibrant theme designed for YouTubers and content creators',
     icon: Video,
-    primaryColor: '#ff0000',
-    backgroundColor: '#fef2f2',
+    primaryColor: '#fee2e2', // YouTube red/pinkish
+    backgroundColor: '#dc2626', // Softer red for less eye strain
     backgroundType: 'color',
     backgroundGif: '',
     iconStyle: 'rounded',
@@ -202,12 +202,12 @@ const readyThemes: ReadyTheme[] = [
     category: 'Creators',
     description: 'Creative purple theme for artists and designers',
     icon: Palette,
-    primaryColor: '#8b5cf6',
-    backgroundColor: '#faf5ff',
+    primaryColor: '#ede9fe', // Artistic purple base
+    backgroundColor: '#a78bfa', // Softer purple for harmony
     backgroundType: 'color',
     backgroundGif: '',
     iconStyle: 'rounded',
-    buttonStyle: 'outline',
+    buttonStyle: 'filled', // More visual pop for artists
     preview: 'Purple artistic theme',
     templateData: {
       businessName: 'Artistic Vision Studio',
@@ -236,12 +236,12 @@ const readyThemes: ReadyTheme[] = [
     category: 'Creators',
     description: 'Elegant black & white theme for photographers',
     icon: Camera,
-    primaryColor: '#f59e0b',
-    backgroundColor: '#111827',
+    primaryColor: '#111827', // Elegant deep gray/black
+    backgroundColor: '#fbbf24', // Softer gold for elegance
     backgroundType: 'color',
     backgroundGif: '',
     iconStyle: 'square',
-    buttonStyle: 'filled',
+    buttonStyle: 'outline', // Gold outline for elegance
     preview: 'Black theme with golden accents',
     templateData: {
       businessName: 'Photography Pro Studio',
@@ -268,15 +268,15 @@ const readyThemes: ReadyTheme[] = [
     id: 'musician',
     name: 'Music Maestro',
     category: 'Creators',
-    description: 'Dynamic theme with animated background for musicians',
+    description: 'Dynamic theme for musicians',
     icon: Music,
-    primaryColor: '#ec4899',
-    backgroundColor: '#0c0a09',
-    backgroundType: 'gif',
-    backgroundGif: 'https://i.giphy.com/l0HlDDyxBfSaPpU88.gif',
+    primaryColor: '#0c0a09', // Music dark for animation
+    backgroundColor: '#f472b6', // Lighter pink for vibrance
+    backgroundType: 'color',
+    backgroundGif: '',
     iconStyle: 'circle',
     buttonStyle: 'glass',
-    preview: 'Pink theme with wave animations',
+    preview: 'Pink music theme',
     templateData: {
       businessName: 'Music Maestro',
       description: 'Creating soulful music that touches hearts and moves spirits. Original compositions, live performances, and musical collaborations.',
@@ -306,8 +306,8 @@ const readyThemes: ReadyTheme[] = [
     category: 'Developer',
     description: 'Green matrix-style theme for developers and coders',
     icon: Code,
-    primaryColor: '#10b981',
-    backgroundColor: '#000000',
+    primaryColor: '#0a192f', // Matrix blue-black
+    backgroundColor: '#22d3ee', // Neon cyan for matrix effect
     backgroundType: 'color',
     backgroundGif: '',
     iconStyle: 'square',
@@ -341,8 +341,8 @@ const readyThemes: ReadyTheme[] = [
     category: 'Developer',
     description: 'Clean minimalist theme for tech professionals',
     icon: Code,
-    primaryColor: '#3b82f6',
-    backgroundColor: '#ffffff',
+    primaryColor: '#f1f5f9', // Minimalist blue/white
+    backgroundColor: '#2563eb', // Brighter blue for clarity
     backgroundType: 'color',
     backgroundGif: '',
     iconStyle: 'rounded',
@@ -377,8 +377,8 @@ const readyThemes: ReadyTheme[] = [
     icon: Code,
     primaryColor: '#06ffa5',
     backgroundColor: '#0a0118',
-    backgroundType: 'gif',
-    backgroundGif: 'https://i.giphy.com/l0HlGrpCUrKNhN1ZK.gif',
+    backgroundType: 'color',
+    backgroundGif: '',
     iconStyle: 'square',
     buttonStyle: 'glass',
     preview: 'Cyberpunk neon theme',
@@ -412,8 +412,8 @@ const readyThemes: ReadyTheme[] = [
     category: 'Entrepreneur',
     description: 'Luxurious gold theme for successful entrepreneurs',
     icon: TrendingUp,
-    primaryColor: '#f59e0b',
-    backgroundColor: '#1f2937',
+    primaryColor: '#fef3c7', // Gold/yellow for entrepreneur
+    backgroundColor: '#f59e0b',
     backgroundType: 'color',
     backgroundGif: '',
     iconStyle: 'rounded',
@@ -446,8 +446,8 @@ const readyThemes: ReadyTheme[] = [
     category: 'Entrepreneur',
     description: 'Modern theme for innovators and visionaries',
     icon: Zap,
-    primaryColor: '#06b6d4',
-    backgroundColor: '#f0f9ff',
+    primaryColor: '#e0f2fe', // Light blue for innovation
+    backgroundColor: '#06b6d4',
     backgroundType: 'color',
     backgroundGif: '',
     iconStyle: 'circle',
@@ -482,8 +482,8 @@ const readyThemes: ReadyTheme[] = [
     category: 'Gaming',
     description: 'Electric neon theme perfect for gamers and streamers',
     icon: Gamepad2,
-    primaryColor: '#a855f7',
-    backgroundColor: '#0f0f23',
+    primaryColor: '#1e1b4b', // Neon purple for gaming
+    backgroundColor: '#a855f7',
     backgroundType: 'color',
     backgroundGif: '',
     iconStyle: 'rounded',
@@ -549,15 +549,15 @@ const readyThemes: ReadyTheme[] = [
     id: 'esports-pro',
     name: 'eSports Pro',
     category: 'Gaming',
-    description: 'Professional esports theme with animated background',
+    description: 'Professional esports theme',
     icon: Gamepad2,
     primaryColor: '#ef4444',
     backgroundColor: '#0c0a09',
-    backgroundType: 'gif',
-    backgroundGif: 'https://i.giphy.com/26BRrSvJUa0crqw4E.gif',
+    backgroundType: 'color',
+    backgroundGif: '',
     iconStyle: 'circle',
     buttonStyle: 'glass',
-    preview: 'Red esports theme with effects',
+    preview: 'Red esports theme',
     new: true,
     templateData: {
       businessName: 'eSports Pro Team',
@@ -655,15 +655,15 @@ const readyThemes: ReadyTheme[] = [
     id: 'nft-rainbow',
     name: 'NFT Creator',
     category: 'Crypto',
-    description: 'Colorful animated theme for NFT creators and collectors',
+    description: 'Colorful theme for NFT creators and collectors',
     icon: Bitcoin,
     primaryColor: '#8b5cf6',
     backgroundColor: '#1e1b4b',
-    backgroundType: 'gif',
-    backgroundGif: 'https://i.giphy.com/l0HlDDyxBfSaPpU88.gif',
+    backgroundType: 'color',
+    backgroundGif: '',
     iconStyle: 'rounded',
     buttonStyle: 'glass',
-    preview: 'Purple NFT theme with animations',
+    preview: 'Purple NFT theme',
     templateData: {
       businessName: 'NFT Creator Studio',
       description: 'Digital artist creating unique NFT collections that blend creativity with blockchain innovation. Exploring the intersection of art and technology.',

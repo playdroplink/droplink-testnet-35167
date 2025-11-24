@@ -15,7 +15,6 @@ import {
   ShieldCheck,
   CreditCard
 } from 'lucide-react';
-import { usePi } from '@/contexts/PiContext';
 import { PI_CONFIG } from '@/config/pi-config';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -45,8 +44,6 @@ interface PaymentLink {
 const PaymentPage: React.FC = () => {
   const { linkId } = useParams();
   const navigate = useNavigate();
-  // Pi auth disabled: open to all users
-  // const { createPayment, isAuthenticated, piUser } = usePi();
   
   const [paymentLink, setPaymentLink] = useState<PaymentLink | null>(null);
   const [loading, setLoading] = useState(true);
@@ -90,19 +87,16 @@ const PaymentPage: React.FC = () => {
             description: (dbLink as any).description || 'Payment Link',
             amount: parseFloat((dbLink as any).amount?.toString() || '0'),
             type: ((dbLink as any).payment_type || 'payment') as any,
-            active: (dbLink as any).is_active !== false,
-            totalReceived: parseFloat((dbLink as any).total_received?.toString() || '0'),
-            transactionCount: (dbLink as any).transaction_count || 0,
-            memo: (dbLink as any).description || 'Payment Link',
-            productInfo: (dbLink as any).payment_type === 'product' ? {
-              name: (dbLink as any).description || 'Product',
-              description: (dbLink as any).description || 'Product'
-            } : undefined,
-            merchantProfile: {
-              username: profileData?.username || 'Unknown',
-              businessName: profileData?.business_name || profileData?.username || 'Unknown Business',
-              logoUrl: profileData?.logo || ''
-            }
+            active: (dbLink as any).is_active ?? true,
+            totalReceived: (dbLink as any).total_received ?? 0,
+            transactionCount: (dbLink as any).transaction_count ?? 0,
+            memo: (dbLink as any).memo,
+            productInfo: (dbLink as any).product_info,
+            merchantProfile: profileData ? {
+              username: profileData.username,
+              businessName: profileData.business_name,
+              logoUrl: profileData.logo
+            } : undefined
           });
           return;
         }
@@ -203,75 +197,6 @@ const PaymentPage: React.FC = () => {
     }
   };
 
-  const processPayment = async () => {
-    if (!paymentLink) {
-      toast.error('No payment link found');
-      return;
-    }
-
-    setProcessing(true);
-    setPaymentStatus('processing');
-    
-    try {
-      const paymentData = {
-        amount: paymentLink.amount,
-        memo: paymentLink.memo || paymentLink.description,
-        metadata: {
-          linkId: paymentLink.id,
-          type: paymentLink.type,
-          merchantUsername: paymentLink.merchantProfile?.username
-        }
-      };
-
-      // Create Pi Network payment
-      const payment = await createPayment(paymentData.amount, paymentData.memo, paymentData.metadata);
-      
-      if (payment) {
-        setTransactionHash(payment || '');
-        setPaymentStatus('completed');
-        
-        // Track payment in database
-        try {
-          await supabase.from('payment_transactions' as any).insert({
-            payment_link_id: null, // Will be linked later
-            transaction_id: payment,
-            payment_id: payment,
-            amount: paymentLink.amount,
-            sender_address: piUser?.uid || '',
-            receiver_address: paymentLink.merchantProfile?.username || '',
-            status: 'pending',
-            memo: paymentLink.memo || paymentLink.description,
-            pi_metadata: payment
-          });
-          
-          toast.success('Payment submitted successfully!', {
-            description: 'Your payment is being processed on the Pi Network'
-          });
-          
-          // If this is a product payment, provide access instructions
-          if (paymentLink.type === 'product' && paymentLink.productInfo) {
-            setTimeout(() => {
-              toast.success('Product access granted!', {
-                description: 'Check your email or Pi messages for download links'
-              });
-            }, 2000);
-          }
-          
-        } catch (trackingError) {
-          console.warn('Failed to track payment in database:', trackingError);
-        }
-      }
-      
-    } catch (error) {
-      console.error('Payment failed:', error);
-      setPaymentStatus('failed');
-      setError('Payment failed. Please try again.');
-      toast.error('Payment failed. Please try again.');
-    } finally {
-      setProcessing(false);
-    }
-  };
-
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'product': return <CreditCard className="w-5 h-5" />;
@@ -346,140 +271,9 @@ const PaymentPage: React.FC = () => {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Merchant Info */}
-          {paymentLink.merchantProfile && (
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              {paymentLink.merchantProfile.logoUrl && (
-                <img 
-                  src={paymentLink.merchantProfile.logoUrl} 
-                  alt="Merchant"
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-              )}
-              <div>
-                <p className="font-medium">{paymentLink.merchantProfile.businessName}</p>
-                <p className="text-sm text-gray-500">@{paymentLink.merchantProfile.username}</p>
-              </div>
-              <ShieldCheck className="w-5 h-5 text-green-500 ml-auto" />
-            </div>
-          )}
-
-          {/* Payment Details */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-lg">
-              <span className="font-medium">Amount</span>
-              <div className="flex items-center gap-2">
-                <Pi className="w-5 h-5 text-yellow-500" />
-                <span className="font-bold">{formatPiAmount(paymentLink.amount)}</span>
-              </div>
-            </div>
-            
-            <Separator />
-            
-            <div className="flex items-center justify-between text-sm">
-              <span>Payment Type</span>
-              <Badge variant="secondary" className="capitalize">
-                {paymentLink.type}
-              </Badge>
-            </div>
-
-            {paymentLink.productInfo && (
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <h4 className="font-medium text-sm">Product Details</h4>
-                <p className="text-sm text-gray-600 mt-1">
-                  {paymentLink.productInfo.description}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Payment Status */}
-          {paymentStatus !== 'pending' && (
-            <Alert className={
-              paymentStatus === 'completed' ? 'border-green-200 bg-green-50' :
-              paymentStatus === 'processing' ? 'border-yellow-200 bg-yellow-50' :
-              'border-red-200 bg-red-50'
-            }>
-              {paymentStatus === 'completed' ? <CheckCircle className="h-4 w-4 text-green-600" /> :
-               paymentStatus === 'processing' ? <Clock className="h-4 w-4 text-yellow-600" /> :
-               <AlertTriangle className="h-4 w-4 text-red-600" />}
-              <AlertDescription>
-                {paymentStatus === 'completed' ? 'Payment completed successfully!' :
-                 paymentStatus === 'processing' ? 'Processing your payment...' :
-                 'Payment failed. Please try again.'}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Transaction Hash */}
-          {transactionHash && (
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <p className="text-xs text-gray-500 mb-1">Transaction ID</p>
-              <p className="text-xs font-mono break-all">{transactionHash}</p>
-            </div>
-          )}
-
-          {/* Payment Button */}
-          <div className="space-y-3">
-            {!isAuthenticated ? (
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  Please authenticate with Pi Network to make payments
-                </AlertDescription>
-              </Alert>
-            ) : null}
-
-            <Button 
-              onClick={processPayment}
-              disabled={processing || !isAuthenticated || paymentStatus === 'completed'}
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-              size="lg"
-            >
-              {processing ? (
-                <>
-                  <Clock className="w-5 h-5 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : paymentStatus === 'completed' ? (
-                <>
-                  <CheckCircle className="w-5 h-5 mr-2" />
-                  Payment Completed
-                </>
-              ) : (
-                <>
-                  <Pi className="w-5 h-5 mr-2" />
-                  Pay {formatPiAmount(paymentLink.amount)}
-                </>
-              )}
-            </Button>
-
-            <p className="text-xs text-center text-gray-500">
-              Secured by Pi Network • Processed on {PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'} blockchain
-            </p>
-          </div>
-
-          {/* Footer Actions */}
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/')} 
-              className="flex-1"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            
-            {paymentLink.merchantProfile?.username && (
-              <Button 
-                variant="outline" 
-                onClick={() => navigate(`/u/${paymentLink.merchantProfile?.username}`)} 
-                className="flex-1"
-              >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Visit Store
-              </Button>
-            )}
+          <div className="p-6 text-center text-gray-500">
+            <h2 className="text-xl font-semibold mb-2">The pay feature is currently disabled.</h2>
+            <p>This section is unavailable for now. Please check back later.</p>
           </div>
         </CardContent>
       </Card>

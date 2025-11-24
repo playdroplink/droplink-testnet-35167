@@ -102,6 +102,10 @@ interface PaymentLink {
 }
 
 const Dashboard = () => {
+  // AI Logo Generation State (fix ReferenceError)
+  const [aiLogoPrompt, setAiLogoPrompt] = useState("");
+  const [aiLogoLoading, setAiLogoLoading] = useState(false);
+  const [aiLogoError, setAiLogoError] = useState("");
   const navigate = useNavigate();
   
   // Hooks must be called unconditionally
@@ -1368,10 +1372,7 @@ const Dashboard = () => {
                           <Globe className="w-4 h-4" />
                           Domain
                         </Button>
-                        <Button onClick={() => navigate("/storefront/your-store-id")} variant="outline" size="sm" className="inline-flex justify-start gap-2 h-12">
-                          <Store className="w-4 h-4" />
-                          Store
-                        </Button>
+                        {/* Store button removed as requested */}
                       </div>
                     </div>
 
@@ -1564,10 +1565,10 @@ const Dashboard = () => {
                   <PlayCircle className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Ads</span>
                 </TabsTrigger>
-                <TabsTrigger value="payments" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                {/* <TabsTrigger value="payments" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
                   <CreditCard className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Pay</span>
-                </TabsTrigger>
+                </TabsTrigger> */}
                 <TabsTrigger value="subscription" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
                   <Crown className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Sub</span>
@@ -1591,7 +1592,7 @@ const Dashboard = () => {
                 <div>
                   <h2 className="text-lg font-semibold mb-6">Business details</h2>
               
-              {/* Logo Upload */}
+              {/* Logo Upload & AI Generation */}
               <div className="mb-6">
                 <Label className="mb-3 block">Business logo</Label>
                 <div className="flex items-center gap-4">
@@ -1602,31 +1603,78 @@ const Dashboard = () => {
                       <Upload className="w-6 h-6 text-muted-foreground" />
                     )}
                   </div>
-                  <div className="flex gap-2">
-                    <label htmlFor="logo-upload">
-                      <Button variant="secondary" size="sm" asChild>
-                        <span>{profile.logo ? "Change" : "Upload"}</span>
-                      </Button>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <label htmlFor="logo-upload">
+                        <Button variant="secondary" size="sm" asChild>
+                          <span>{profile.logo ? "Change" : "Upload"}</span>
+                        </Button>
+                        <input
+                          id="logo-upload"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleLogoUpload}
+                        />
+                      </label>
+                      {profile.logo && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setProfile({ ...profile, logo: "" })}
+                        >
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                    {/* AI Logo Generation */}
+                    <div className="flex gap-2 mt-2">
                       <input
-                        id="logo-upload"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleLogoUpload}
+                        type="text"
+                        placeholder="Describe your logo (e.g. blue tech rocket)"
+                        className="border rounded px-2 py-1 text-sm flex-1"
+                        value={aiLogoPrompt || ""}
+                        onChange={e => setAiLogoPrompt(e.target.value)}
+                        disabled={aiLogoLoading}
+                        style={{ minWidth: 0 }}
                       />
-                    </label>
-                    {profile.logo && (
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
-                        onClick={() => setProfile({ ...profile, logo: "" })}
+                        onClick={async () => {
+                          if (!aiLogoPrompt) return;
+                          setAiLogoLoading(true);
+                          setAiLogoError("");
+                          try {
+                            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(aiLogoPrompt)}`;
+                            // Preload image to check for errors
+                            const img = new window.Image();
+                            img.crossOrigin = "anonymous";
+                            img.onload = () => {
+                              setProfile(prev => ({ ...prev, logo: url }));
+                              setAiLogoLoading(false);
+                            };
+                            img.onerror = () => {
+                              setAiLogoError("Failed to generate image. Try a different prompt.");
+                              setAiLogoLoading(false);
+                            };
+                            img.src = url;
+                          } catch (e) {
+                            setAiLogoError("Error generating image");
+                            setAiLogoLoading(false);
+                          }
+                        }}
+                        disabled={aiLogoLoading || !aiLogoPrompt}
                       >
-                        Remove
+                        {aiLogoLoading ? "Generating..." : "Generate with AI"}
                       </Button>
-                    )}
+                    </div>
+                    {/* {aiLogoError && <div className="text-xs text-red-500 mt-1">{aiLogoError}</div>} */}
+                    <div className="text-xs text-muted-foreground mt-1">Generate a logo using AI by prompt</div>
                   </div>
                 </div>
               </div>
+
 
               {/* Business Name */}
               <div className="mb-6">
