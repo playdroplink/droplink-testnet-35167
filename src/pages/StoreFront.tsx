@@ -1,6 +1,8 @@
 
 import React, { useState } from "react";
+import { useStoreProfile } from "../hooks/useStoreProfile";
 import StorefrontWalletQR from "../components/StorefrontWalletQR";
+import StorefrontGiftButton from "../components/StorefrontGiftButton";
 import { supabase } from "@/integrations/supabase/client";
 import StoreCustomizer from "../components/StoreCustomizer";
 import ProductCategoryManager from "../components/ProductCategoryManager";
@@ -27,6 +29,14 @@ const StoreFront: React.FC = () => {
   // Wallet QR and tip text state
   const [walletAddress, setWalletAddress] = useState("");
   const [tipText, setTipText] = useState("Tip Pi or DROP");
+
+  // Get store username from URL
+  let storeUsername = "";
+  if (typeof window !== "undefined") {
+    const match = window.location.pathname.match(/\/storefront\/([^/]+)/);
+    storeUsername = match ? match[1] : "";
+  }
+  useStoreProfile(storeUsername, setWalletAddress, setTipText);
 
   // Example: Send Supabase JWT to your backend
   const sendJwtToBackend = async () => {
@@ -147,6 +157,8 @@ const StoreFront: React.FC = () => {
             <div className="w-full h-full flex flex-col items-center justify-center bg-white border rounded-xl shadow-inner min-h-[400px] p-4">
               {/* Wallet QR code and tip section */}
               <StorefrontWalletQR walletAddress={walletAddress} tipText={tipText} />
+              {/* TODO: Replace demo-profile-id with real profile id if needed */}
+              <StorefrontGiftButton receiverProfileId={storeUsername} receiverName={storeUsername || "Store Owner"} />
               <div className="w-full max-w-xs mt-4">
                 <label className="block text-xs font-medium text-gray-700 mb-1">Wallet Address</label>
                 <input

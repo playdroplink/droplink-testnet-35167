@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Gift as GiftIcon, Droplets } from "lucide-react";
+import StorefrontWalletQR from "./StorefrontWalletQR";
 
 interface Gift {
   id: string;
@@ -12,12 +13,15 @@ interface Gift {
   drop_token_cost: number;
 }
 
+
 interface GiftDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   receiverProfileId: string;
   receiverName: string;
   senderProfileId?: string;
+  walletAddress?: string;
+  tipText?: string;
 }
 
 export const GiftDialog = ({
@@ -26,6 +30,8 @@ export const GiftDialog = ({
   receiverProfileId,
   receiverName,
   senderProfileId,
+  walletAddress,
+  tipText,
 }: GiftDialogProps) => {
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [balance, setBalance] = useState(0);
@@ -122,6 +128,13 @@ export const GiftDialog = ({
             Send Gift to {receiverName}
           </DialogTitle>
         </DialogHeader>
+
+        {/* Show QR code and wallet address for tips */}
+        {walletAddress && (
+          <div className="mb-4">
+            <StorefrontWalletQR walletAddress={walletAddress} tipText={tipText} />
+          </div>
+        )}
 
         <div className="flex items-center justify-between p-3 bg-muted rounded-lg mb-4">
           <span className="text-sm font-medium">Your Balance</span>
