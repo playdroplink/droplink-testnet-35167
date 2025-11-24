@@ -147,54 +147,57 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
     });
   };
 
-  const handleGifUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Unified handler for GIF or video upload
+  const handleMediaUpload = async (event: React.ChangeEvent<HTMLInputElement>, type: 'gif' | 'video') => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     // Validate file type
-    if (!file.type.includes('gif')) {
+    if (type === 'gif' && !file.type.includes('gif')) {
       alert('Please select a GIF file only.');
       return;
     }
+    if (type === 'video' && !file.type.startsWith('video/')) {
+      alert('Please select a video file only.');
+      return;
+    }
 
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      alert('File size must be less than 10MB. Please compress your GIF and try again.');
+    // Validate file size (max 20MB for video, 10MB for gif)
+    if ((type === 'gif' && file.size > 10 * 1024 * 1024) || (type === 'video' && file.size > 20 * 1024 * 1024)) {
+      alert(type === 'gif' ? 'GIF must be <10MB.' : 'Video must be <20MB.');
       return;
     }
 
     setUploadingGif(true);
 
     try {
-      // Convert file to base64 data URL for immediate preview
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
         if (result) {
-          // Validate the data URL format
-          if (!result.startsWith('data:image/gif;base64,')) {
-            alert('Invalid GIF file format. Please select a valid GIF file.');
+          if (type === 'gif' && !result.startsWith('data:image/gif;base64,')) {
+            alert('Invalid GIF file format.');
             return;
           }
-          
-          // Update theme with the data URL
-          onThemeChange({ 
-            ...theme, 
+          if (type === 'video' && !result.startsWith('data:video/')) {
+            alert('Invalid video file format.');
+            return;
+          }
+          onThemeChange({
+            ...theme,
             backgroundGif: result,
-            backgroundType: 'gif'
+            backgroundType: type
           });
-          
-          // Log successful upload for debugging
-          console.log(`GIF uploaded successfully, data URL length: ${result.length} characters`);
+          console.log(`${type.toUpperCase()} uploaded successfully, data URL length: ${result.length} characters`);
         }
       };
-      reader.readAsDataURL(file);
+      if (type === 'gif') reader.readAsDataURL(file);
+      if (type === 'video') reader.readAsDataURL(file);
     } catch (error) {
-      console.error('Error uploading GIF:', error);
-      alert('Failed to upload GIF. Please try again.');
+      console.error('Error uploading media:', error);
+      alert('Failed to upload file. Please try again.');
     } finally {
       setUploadingGif(false);
-      // Clear the input
       event.target.value = '';
     }
   };
@@ -368,7 +371,7 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
             </div>
             <RadioGroup
               value={theme.backgroundType}
-              onValueChange={(value: 'color' | 'gif') => onThemeChange({ ...theme, backgroundType: value })}
+              onValueChange={(value: 'color' | 'gif' | 'video') => onThemeChange({ ...theme, backgroundType: value })}
               className="flex gap-6"
             >
               <div className="flex items-center space-x-2">
@@ -383,6 +386,12 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
                   GIF Background
                 </Label>
               </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="video" id="bg-video-type" />
+                <Label htmlFor="bg-video-type" className="font-normal cursor-pointer">
+                  Video Background
+                </Label>
+              </div>
             </RadioGroup>
 
             {/* GIF Background Upload */}
@@ -394,7 +403,6 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
                     GIF Background
                   </Label>
                 </div>
-                
                 {/* Upload Section */}
                 <div className="space-y-3 border rounded-lg p-3 bg-background/50">
                   <Label className="text-sm font-medium text-primary">Upload Your Own GIF</Label>
@@ -416,7 +424,7 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
                         id="gif-file-upload"
                         type="file"
                         accept=".gif,image/gif"
-                        onChange={handleGifUpload}
+                        onChange={(e) => handleMediaUpload(e, 'gif')}
                         className="hidden"
                       />
                     </label>
@@ -434,9 +442,7 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
                     Max file size: 10MB • Recommended: 1080x1920px
                   </p>
                 </div>
-
                 <div className="text-center text-xs text-muted-foreground">— OR —</div>
-                
                 {/* URL Input Section */}
                 <div className="space-y-2">
                   <Label htmlFor="gif-url" className="text-sm text-muted-foreground">
@@ -462,7 +468,6 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
                     )}
                   </div>
                 </div>
-
                 {/* Sample GIFs */}
                 <div className="space-y-2">
                   <Label className="text-xs text-muted-foreground">Sample Backgrounds</Label>
@@ -484,7 +489,6 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
                     ))}
                   </div>
                 </div>
-
                 {/* GIF Preview */}
                 {theme.backgroundGif && (
                   <div className="space-y-2">
@@ -515,7 +519,6 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
                     </div>
                   </div>
                 )}
-
                 {/* Tips */}
                 <div className="text-xs text-muted-foreground space-y-1">
                   <p><strong>Tips:</strong></p>
@@ -525,6 +528,147 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
                     <li>• Recommended size: 1080x1920 (vertical) or larger</li>
                     <li>• Smaller file sizes load faster on mobile devices</li>
                     <li>• Use tools like EZGIF.com to compress large files</li>
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {/* Video Background Upload */}
+            {theme.backgroundType === 'video' && (
+              <div className="space-y-3 bg-muted/30 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Monitor className="w-4 h-4 text-primary" />
+                  <Label className="text-sm font-medium">
+                    Video Background
+                  </Label>
+                </div>
+                {/* Upload Section */}
+                <div className="space-y-3 border rounded-lg p-3 bg-background/50">
+                  <Label className="text-sm font-medium text-primary">Upload Your Own Video</Label>
+                  <div className="flex gap-2">
+                    <label htmlFor="video-file-upload" className="flex-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-10 cursor-pointer"
+                        disabled={uploadingGif}
+                        asChild
+                      >
+                        <div className="flex items-center gap-2">
+                          <Upload className="w-4 h-4" />
+                          {uploadingGif ? "Uploading..." : "Choose Video File"}
+                        </div>
+                      </Button>
+                      <input
+                        id="video-file-upload"
+                        type="file"
+                        accept="video/*"
+                        onChange={(e) => handleMediaUpload(e, 'video')}
+                        className="hidden"
+                      />
+                    </label>
+                    {theme.backgroundGif && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => onThemeChange({ ...theme, backgroundGif: "" })}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Max file size: 20MB • Recommended: short, looping videos
+                  </p>
+                </div>
+                <div className="text-center text-xs text-muted-foreground">— OR —</div>
+                {/* URL Input Section */}
+                <div className="space-y-2">
+                  <Label htmlFor="video-url" className="text-sm text-muted-foreground">
+                    Enter Video URL
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="video-url"
+                      type="url"
+                      value={theme.backgroundGif?.startsWith('data:') ? '' : theme.backgroundGif || ''}
+                      onChange={(e) => onThemeChange({ ...theme, backgroundGif: e.target.value })}
+                      placeholder="https://example.com/background.mp4"
+                      className="flex-1"
+                    />
+                    {theme.backgroundGif && !theme.backgroundGif.startsWith('data:') && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => onThemeChange({ ...theme, backgroundGif: "" })}
+                      >
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                {/* Sample Videos */}
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Sample Videos</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { name: "Looping Abstract", url: "https://www.w3schools.com/html/mov_bbb.mp4" },
+                      { name: "Nature Loop", url: "https://www.w3schools.com/html/movie.mp4" }
+                    ].map((sample) => (
+                      <Button
+                        key={sample.name}
+                        variant="outline"
+                        size="sm"
+                        className="text-xs h-8 px-2"
+                        onClick={() => onThemeChange({ ...theme, backgroundGif: sample.url })}
+                      >
+                        {sample.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                {/* Video Preview */}
+                {theme.backgroundGif && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs text-muted-foreground">Preview</Label>
+                      <span className="text-xs text-muted-foreground">
+                        {theme.backgroundGif.startsWith('data:') ? '📁 Uploaded File' : '🔗 URL'}
+                      </span>
+                    </div>
+                    <div className="relative w-full h-32 border rounded-lg overflow-hidden bg-black">
+                      <video
+                        src={theme.backgroundGif}
+                        className="w-full h-full object-cover"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        controls={false}
+                        onError={(e) => {
+                          console.error('Video preview failed to load:', theme.backgroundGif?.substring(0, 100) + '...');
+                          (e.currentTarget as HTMLVideoElement).style.display = 'none';
+                          const errorDiv = (e.currentTarget.nextElementSibling as HTMLElement);
+                          errorDiv?.classList.remove('hidden');
+                        }}
+                        onLoadedData={() => {
+                          console.log('Video preview loaded successfully');
+                        }}
+                      />
+                      <div className="hidden absolute inset-0 flex items-center justify-center text-muted-foreground text-sm bg-gray-100">
+                        Failed to load video
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {/* Tips */}
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p><strong>Tips:</strong></p>
+                  <ul className="space-y-0.5 ml-2">
+                    <li>• Upload short, looping MP4/WebM videos (max 20MB)</li>
+                    <li>• Or use direct video URLs (MP4/WebM)</li>
+                    <li>• Recommended: 1080x1920 (vertical) or 1920x1080 (horizontal)</li>
+                    <li>• Keep videos short for fast loading</li>
                   </ul>
                 </div>
               </div>
