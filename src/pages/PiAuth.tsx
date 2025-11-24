@@ -72,6 +72,20 @@ const PiAuth = () => {
   const handlePiSignIn = async () => {
     try {
       await signIn();
+      // After sign in, get Supabase session and Pi user
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (token && piUser) {
+        // Send JWT and Pi user data to backend to save all user data
+        await fetch("/api/save-pi-user", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ piUser })
+        });
+      }
       // Post-auth redirect is handled in useEffect
     } catch (error: any) {
       console.error("Sign in error:", error);

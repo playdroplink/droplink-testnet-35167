@@ -580,7 +580,10 @@ const Dashboard = () => {
           })()
         };
         
-        setProfile(loadedProfile);
+        setProfile({
+          ...loadedProfile,
+          socialLinks: Array.isArray(loadedProfile.socialLinks) ? loadedProfile.socialLinks : [],
+        });
         
         // Welcome back existing users (only on first load of session)
         if (!isNewUser && !sessionStorage.getItem(`welcomed_${profileData.id}`)) {
@@ -592,6 +595,7 @@ const Dashboard = () => {
         try {
           const profileToStore = {
             ...loadedProfile,
+            socialLinks: Array.isArray(loadedProfile.socialLinks) ? loadedProfile.socialLinks : [],
             lastSynced: new Date().toISOString(),
             profileId: profileData.id
           };

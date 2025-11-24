@@ -10,10 +10,37 @@ import { toast } from "sonner";
 import { ArrowLeft, Upload, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePi } from "@/contexts/PiContext";
+import { supabase as supabaseClient } from "@/integrations/supabase/client";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { piUser, isAuthenticated } = usePi();
+  const { piUser, isAuthenticated, signIn: piSignIn } = usePi();
+  const [linkingPi, setLinkingPi] = useState(false);
+    // Link Pi Network to current email-auth user
+    const handleLinkPiNetwork = async () => {
+      setLinkingPi(true);
+      try {
+        await piSignIn();
+        // After Pi auth, get Supabase session and Pi user
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        const userId = session?.user?.id;
+        if (userId && piUser) {
+          // Update the current user's profile with Pi info
+          await supabaseClient.from('profiles').update({
+            pi_username: piUser.username,
+            pi_data: piUser
+          }).eq('user_id', userId);
+          toast.success('Pi Network account linked!');
+        } else {
+          toast.error('Failed to link Pi Network account.');
+        }
+      } catch (error) {
+        console.error('Link Pi error:', error);
+        toast.error('Failed to link Pi Network account.');
+      } finally {
+        setLinkingPi(false);
+      }
+    };
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -237,13 +264,16 @@ const Profile = () => {
               </p>
             </div>
 
-            {/* Save Button */}
+            {/* Save Button and Link Pi Network */}
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => navigate("/")}>
+              <Button variant="outline" onClick={() => navigate("/")}> 
                 Cancel
               </Button>
               <Button onClick={handleSave} disabled={saving}>
                 {saving ? "Saving..." : "Save Changes"}
+              </Button>
+              <Button onClick={handleLinkPiNetwork} disabled={linkingPi} variant="secondary">
+                {linkingPi ? "Linking Pi..." : "Link Pi Network"}
               </Button>
             </div>
           </CardContent>

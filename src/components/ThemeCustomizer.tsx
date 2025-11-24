@@ -5,6 +5,9 @@ const ThemeCustomizer: React.FC = () => {
     background: "#f5f5f5",
     text: "#222222",
   });
+  // MP4 video background state (demo only, not persisted)
+  const [useVideoBg, setUseVideoBg] = useState(false);
+  const [videoUrl, setVideoUrl] = useState("https://www.w3schools.com/html/mov_bbb.mp4");
 
   // TODO: Save theme to backend or context
 
@@ -19,6 +22,32 @@ const ThemeCustomizer: React.FC = () => {
           onChange={e => setTheme({ ...theme, background: e.target.value })}
           className="w-16 h-8 border rounded"
         />
+      </div>
+      <div className="mb-4">
+        <label className="block mb-1 font-semibold">Background Style</label>
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={useVideoBg}
+            onChange={e => setUseVideoBg(e.target.checked)}
+            id="mp4-bg-toggle"
+          />
+          <label htmlFor="mp4-bg-toggle" className="text-sm">Use MP4 Video Background</label>
+        </div>
+        {useVideoBg && (
+          <input
+            type="text"
+            value={videoUrl}
+            onChange={e => setVideoUrl(e.target.value)}
+            placeholder="MP4 video URL"
+            className="border p-1 rounded text-xs w-full mt-2"
+          />
+        )}
+        {useVideoBg && videoUrl && (
+          <div className="mt-2 rounded overflow-hidden border">
+            <video src={videoUrl} autoPlay loop muted playsInline className="w-full h-32 object-cover" />
+          </div>
+        )}
       </div>
       <div className="mb-4">
         <label className="block mb-1">Text Color</label>
