@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Palette, Sparkles, Upload, Image, Monitor, X, Settings, Sliders, Link } from "lucide-react";
 import { useState } from "react";
+// Giphy API key (public beta key for demo)
+const GIPHY_API_KEY = "dc6zaTOxFJmzC";
 import { supabase } from "@/integrations/supabase/client";
 import { PlanGate } from "@/components/PlanGate";
 import ReadyThemeSelector from "./ReadyThemeSelector";
@@ -101,6 +103,19 @@ const themeTemplates: ThemeTemplate[] = [
     description: 'Soft white and cream gradient with floating cloud-like blobs, tiny sparkles, airy & clean feel.'
   },
 ];
+
+  // Template select handler (move above handleRandomTheme for hoisting)
+  const handleTemplateSelect = (template: ThemeTemplate) => {
+    onThemeChange({
+      primaryColor: template.primaryColor,
+      backgroundColor: template.backgroundColor,
+      backgroundType: theme.backgroundType, // Preserve current background type
+      backgroundGif: theme.backgroundGif, // Preserve current GIF
+      iconStyle: template.iconStyle,
+      buttonStyle: theme.buttonStyle, // Preserve existing button style
+    });
+  };
+
   // Random Theme Button Handler
   const handleRandomTheme = () => {
     const randomIndex = Math.floor(Math.random() * themeTemplates.length);
@@ -187,6 +202,27 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
     });
   };
 
+  // Fetch a random GIF from Giphy
+  const handleRandomGif = async () => {
+    try {
+      const res = await fetch(`https://api.giphy.com/v1/gifs/random?api_key=${GIPHY_API_KEY}&rating=pg&tag=background`);
+      const data = await res.json();
+      const gifUrl = data?.data?.images?.original?.url;
+      if (gifUrl) {
+        onThemeChange({
+          ...theme,
+          backgroundGif: gifUrl,
+          backgroundType: 'gif',
+          backgroundVideo: '',
+        });
+      } else {
+        alert('Could not fetch a random GIF.');
+      }
+    } catch (e) {
+      alert('Failed to fetch random GIF.');
+    }
+  };
+
   // Unified handler for GIF or video upload
   const handleMediaUpload = async (event: React.ChangeEvent<HTMLInputElement>, type: 'gif' | 'video') => {
     const file = event.target.files?.[0];
@@ -244,11 +280,11 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
         // GIF: use base64 for now (could also use storage for large GIFs)
         const reader = new FileReader();
         reader.onload = (e) => {
-          const result = e.target?.result as string;
+          let result = e.target?.result as string;
           if (result) {
-            if (!result.startsWith('data:image/gif;base64,')) {
-              alert('Invalid GIF file format.');
-              return;
+            // Ensure the data URL is correct
+            if (!result.startsWith('data:image/gif')) {
+              result = 'data:image/gif;base64,' + result.split(',')[1];
             }
             onThemeChange({
               ...theme,
@@ -473,6 +509,12 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
             {/* GIF Background Upload */}
             {theme.backgroundType === 'gif' && (
               <div className="space-y-3 bg-muted/30 rounded-lg p-4">
+                {/* Random GIF Button */}
+                <div className="flex justify-center mb-2">
+                  <Button variant="outline" onClick={handleRandomGif}>
+                    🎲 Random GIF from Giphy
+                  </Button>
+                </div>
                 <div className="flex items-center gap-2 mb-2">
                   <Image className="w-4 h-4 text-primary" />
                   <Label className="text-sm font-medium">

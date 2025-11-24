@@ -536,6 +536,11 @@ const PublicBio = () => {
               if (parent && parent.parentElement) {
                 parent.parentElement.style.backgroundColor = profile.theme.backgroundColor || '#000000';
               }
+              // Show fallback message
+              const fallback = document.createElement('div');
+              fallback.className = 'absolute inset-0 flex items-center justify-center text-white bg-black/60';
+              fallback.innerText = 'Failed to load GIF';
+              parent?.appendChild(fallback);
             }}
             onLoad={() => {
               console.log('GIF background loaded successfully in PublicBio:', profile.theme.backgroundGif);
