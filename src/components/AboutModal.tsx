@@ -323,7 +323,7 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
 
           {/* Legal */}
           <div className="text-center text-sm text-muted-foreground space-y-2">
-            <p>© 2024 DropLink by Mrwain Organization. Built for the Pi Network ecosystem.</p>
+            <p>© 2025 DropLink by Mrwain Organization. Built for the Pi Network ecosystem.</p>
             <p>
               <Button variant="link" size="sm" className="p-0 h-auto">Privacy Policy</Button>
               {" • "}

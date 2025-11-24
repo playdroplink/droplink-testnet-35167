@@ -198,7 +198,7 @@ const PiAuth = () => {
               </LicenseModal>
               <span className="text-muted-foreground">•</span>
               <MerchantConfigModal>
-                <button className="text-primary hover:underline cursor-pointer">Merchant Config</button>
+                <button className="text-primary hover:underline cursor-pointer">Merchant</button>
               </MerchantConfigModal>
               <span className="text-muted-foreground">•</span>
               <a href="/terms" className="text-primary hover:underline">Terms</a>
