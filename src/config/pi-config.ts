@@ -50,6 +50,15 @@ export const PI_CONFIG = {
     PI_ACCOUNT_BALANCES: "https://api.minepi.com/v2/accounts",
     HORIZON: "https://horizon.stellar.org",
     PI_ASSET_DISCOVERY: "https://api.minepi.com/v2/assets"
+  },
+
+  // Mainnet DROP token configuration
+  DROP_TOKEN: {
+    code: "DROP",
+    issuer: "GBVTV77XFMDYSSVIG6ZGSRAGZ3S7KA4275YYLOLIROOD3Y3F3TH5U3EI",
+    distributor: "GCTPMH43NGN7E4IXLQ27H2XWGGWWDY3I6UAPBFXYQSEUPEKNQE2BZXC2",
+    name: "DropLink Token",
+    home_domain: "droplink.space"
   }
 };
 
