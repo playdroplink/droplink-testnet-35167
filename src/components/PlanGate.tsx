@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useActiveSubscription, PlanType } from "@/hooks/useActiveSubscription";
 
 
-const planOrder = ["free", "premium", "pro"];
+const planOrder = ["free", "basic", "premium", "pro"];
 
 export const PlanGate = ({
   minPlan,

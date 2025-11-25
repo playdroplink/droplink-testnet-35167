@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { usePublicSubscription } from "@/hooks/usePublicSubscription";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { QRCodeSVG } from "qrcode.react";
@@ -45,6 +46,9 @@ import type { ProfileData } from "@/types/profile";
 const PublicBio = () => {
   const { username } = useParams();
   const navigate = useNavigate();
+  // Subscription for viewed profile (must be after username is defined)
+  const { plan, expiresAt, loading: subLoading } = usePublicSubscription(username ? String(username) : "");
+  const isPlanExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [currentUserProfileId, setCurrentUserProfileId] = useState<string | null>(null);
@@ -277,30 +281,58 @@ const PublicBio = () => {
       const cryptoWallets = financialData.crypto_wallets as any;
       const bankDetails = financialData.bank_details as any;
 
+      // Social links: convert object to array if needed
+      let socialLinksArr = [];
+      if (Array.isArray(profileData.social_links)) {
+        socialLinksArr = profileData.social_links;
+      } else if (profileData.social_links && typeof profileData.social_links === 'object') {
+        socialLinksArr = Object.entries(profileData.social_links).map(([platform, url]) => ({ platform, url }));
+      }
+
+      // Custom links: only if present and array (fallback to empty array)
+      let customLinksArr = [];
+      let showPiWalletTips = true;
+      let themeSettingsObj: any = {};
+      if (profileData.theme_settings && typeof profileData.theme_settings === 'object' && !Array.isArray(profileData.theme_settings)) {
+        themeSettingsObj = profileData.theme_settings;
+        if (Array.isArray(themeSettingsObj.customLinks)) {
+          customLinksArr = themeSettingsObj.customLinks;
+        }
+        if (typeof themeSettingsObj.showPiWalletTips === 'boolean') {
+          showPiWalletTips = themeSettingsObj.showPiWalletTips;
+        }
+      }
+
+      // Wallets: build from crypto_wallets and bank_details
+      let walletsObj = { crypto: [], bank: [] };
+      if (Array.isArray(profileData.crypto_wallets)) walletsObj.crypto = profileData.crypto_wallets;
+      if (Array.isArray(profileData.bank_details)) walletsObj.bank = profileData.bank_details;
+
       setProfile({
         id: profileData.id,
+        username: profileData.username || (username ? String(username) : ""),
         email: profileData.email,
         logo: profileData.logo || "",
         businessName: profileData.business_name || "",
         description: profileData.description || "",
         youtubeVideoUrl: profileData.youtube_video_url || "",
-        socialLinks: profileData.social_links || [],
-        customLinks: profileData.custom_links || [],
+        socialLinks: socialLinksArr,
+        customLinks: customLinksArr,
         theme: {
-          primaryColor: profileData.theme_primary_color || "#000000",
-          backgroundColor: profileData.theme_background_color || "#FFFFFF",
-          backgroundType: profileData.theme_background_type || "color",
-          backgroundGif: profileData.theme_background_gif || "",
-          iconStyle: profileData.theme_icon_style || "default",
-          buttonStyle: profileData.theme_button_style || "default",
+          primaryColor: themeSettingsObj.primaryColor || "#000000",
+          backgroundColor: themeSettingsObj.backgroundColor || "#FFFFFF",
+          backgroundType: themeSettingsObj.backgroundType || "color",
+          backgroundGif: themeSettingsObj.backgroundGif || "",
+          iconStyle: themeSettingsObj.iconStyle || "default",
+          buttonStyle: themeSettingsObj.buttonStyle || "default",
         },
-        wallets: profileData.wallets || { crypto: [], bank: [] },
+        wallets: walletsObj,
         hasPremium: profileData.has_premium || false,
         piWalletAddress: profileData.pi_wallet_address || "",
         piDonationMessage: profileData.pi_donation_message || "",
         showShareButton: profileData.show_share_button || false,
-        storeUrl: profileData.store_url || "",
-        showPiWalletTips: profileData.show_pi_wallet_tips || true,
+        storeUrl: "",
+        showPiWalletTips,
       });
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -486,8 +518,8 @@ const PublicBio = () => {
           : { backgroundColor: profile.theme.backgroundColor }
       }
     >
-      {/* GIF Background */}
-      {profile.theme.backgroundType === 'gif' && profile.theme.backgroundGif && (
+      {/* GIF Background - lock if expired */}
+      {profile.theme.backgroundType === 'gif' && profile.theme.backgroundGif && !isPlanExpired && (
         <div className="fixed inset-0 z-0">
           <img
             src={profile.theme.backgroundGif}
@@ -512,6 +544,11 @@ const PublicBio = () => {
             }}
           />
           <div className="absolute inset-0 bg-black/30" /> {/* Overlay for better readability */}
+        </div>
+      )}
+      {profile.theme.backgroundType === 'gif' && profile.theme.backgroundGif && isPlanExpired && (
+        <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/70">
+          <span className="text-white text-lg font-semibold">GIF background is locked. Renew plan to unlock.</span>
         </div>
       )}
       
@@ -648,18 +685,18 @@ const PublicBio = () => {
         {/* Social Links - Controlled by Preferences */}
         {socialLinksArray.length > 0 && userPreferences?.store_settings?.showSocialLinks !== false && (
           <div className="flex flex-wrap justify-center gap-3">
-            {socialLinksArray.map(({ platform, url }) => (
+            {socialLinksArray.map((link) => (
               <a
-                key={platform}
-                href={url}
+                key={link.platform}
+                href={typeof link.url === 'string' ? link.url : ''}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => profileId && handleSocialClick(platform, profileId)}
+                onClick={() => profileId && handleSocialClick(link.platform, profileId)}
                 className={`w-12 h-12 ${getIconStyle(profile.theme.iconStyle)} flex items-center justify-center transition-opacity hover:opacity-80`}
                 style={{ backgroundColor: profile.theme.primaryColor }}
               >
                 <span className="text-white">
-                  {getSocialIcon(platform)}
+                  {getSocialIcon(link.platform)}
                 </span>
               </a>
             ))}
@@ -773,14 +810,14 @@ const PublicBio = () => {
                 {profile.wallets.bank.map((account) => (
                   <button
                     key={account.id}
-                    onClick={() => handleWalletClick('bank', account.name, account.details)}
+                    onClick={() => handleWalletClick('bank', account.bankName, account.details)}
                     className={`w-full p-4 ${getIconStyle(profile.theme.iconStyle)} border glass transition-all hover:opacity-90`}
                     style={{ 
                       borderColor: profile.theme.primaryColor
                     }}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-white font-medium">{account.name}</span>
+                      <span className="text-white font-medium">{account.bankName}</span>
                       <span className="text-gray-400 text-sm">Tap for details</span>
                     </div>
                   </button>
@@ -791,7 +828,8 @@ const PublicBio = () => {
         )}
 
         {/* Pi Wallet Tips - show only if enabled */}
-        {profile.showPiWalletTips !== false && (
+        {/* Pi Wallet Tips - lock if expired */}
+        {profile.showPiWalletTips !== false && !isPlanExpired && (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-white text-center mb-6 flex items-center justify-center gap-2">
               <Wallet className="w-5 h-5 text-blue-400" />
@@ -875,6 +913,13 @@ const PublicBio = () => {
                 </div>
               )}
             </div>
+          </div>
+        )}
+        {profile.showPiWalletTips !== false && isPlanExpired && (
+          <div className="bg-blue-900/80 rounded-lg border border-blue-400/30 p-6 text-center my-6">
+            <Wallet className="w-6 h-6 text-blue-300 mx-auto mb-2" />
+            <div className="text-blue-200 font-semibold mb-1">Pi Tips are locked</div>
+            <div className="text-blue-100 text-sm mb-2">This feature is locked because the plan has expired. Renew to unlock Pi Tips.</div>
           </div>
         )}
 

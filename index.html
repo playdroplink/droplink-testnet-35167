@@ -18,7 +18,7 @@
     <meta name="pi-app-version" content="1.0.0" />
 
     <!-- Content Security Policy for Pi Browser -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.minepi.com https://api.minepi.com https://horizon.stellar.org https://idkjfuctyukspexmijvb.supabase.co https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.minepi.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://sdk.minepi.com https://api.minepi.com https://horizon.stellar.org https://idkjfuctyukspexmijvb.supabase.co https://*.supabase.co wss://*.supabase.co; frame-src 'self' https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://www.youtube.googleapis.com;" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.minepi.com https://api.minepi.com https://horizon.stellar.org https://idkjfuctyukspexmijvb.supabase.co https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.minepi.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://sdk.minepi.com https://api.minepi.com https://horizon.stellar.org https://idkjfuctyukspexmijvb.supabase.co https://*.supabase.co wss://*.supabase.co; frame-src 'self' https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://www.youtube.googleapis.com;" />
 
     <title>Droplink - Create Your Personal Page &amp; Sell Digital Products</title>
     <meta name="description" content="Create a beautiful link in bio page with all your social links and sell digital products in one place. Simple, clean, and professional.">
@@ -27,7 +27,11 @@
     <!-- Pi Network SDK -->
     <script src="https://sdk.minepi.com/pi-sdk.js" async crossorigin="anonymous"></script>
     <script>
-      Pi.init({ version: "2.0" });
+      if (typeof Pi !== 'undefined' && Pi.init) {
+        Pi.init({ version: "2.0" });
+      } else {
+        console.warn('Pi SDK not loaded or not available.');
+      }
     </script>
 
     <!-- Supabase Configuration -->

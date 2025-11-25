@@ -15,14 +15,15 @@ const plans: Plan[] = [
 		monthlyPrice: 0,
 		yearlyPrice: 0,
 		features: [
-			"1 custom link only",
-			"1 social media link only",
+			"1 custom link only (no additional links)",
+			"1 social media link only (no additional socials)",
+			"No Pi tips or product sales",
 			"Basic profile customization",
 			"Basic QR code sharing",
 			"Public bio page visibility",
 			"DropLink watermark displayed",
 			"Pi Ad Network banners shown",
-			"Analytics require watching ads",
+			// No analytics access in Free plan
 			"Limited theme options",
 			"Community support only",
 			"Watch ads to temporarily access premium features",

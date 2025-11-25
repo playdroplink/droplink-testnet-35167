@@ -14,6 +14,7 @@ import { PiAdBanner } from "@/components/PiAdBanner";
 import { AdGatedFeature } from "@/components/AdGatedFeature";
 import { PlanGate } from "@/components/PlanGate";
 import { useActiveSubscription } from "@/hooks/useActiveSubscription";
+import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { supabase } from "@/integrations/supabase/client";
 import { usePi } from "@/contexts/PiContext";
@@ -114,7 +115,25 @@ const Dashboard = () => {
   const { piUser, isAuthenticated, signOut: piSignOut, loading: piLoading, getCurrentWalletAddress } = piContext;
   
   const subscription = useActiveSubscription();
-  const { plan, loading: subscriptionLoading } = subscription;
+  const { plan, expiresAt, loading: subscriptionLoading } = subscription;
+  const [showRenewModal, setShowRenewModal] = useState(false);
+
+  // Check expiration and show modal if expired or near expiration
+  useEffect(() => {
+    if (!subscriptionLoading && expiresAt) {
+      const now = new Date();
+      const expires = new Date(expiresAt);
+      // Show modal if expired or within 3 days
+      if (expires < now || (expires.getTime() - now.getTime()) < 3 * 24 * 60 * 60 * 1000) {
+        setShowRenewModal(true);
+      } else {
+        setShowRenewModal(false);
+      }
+    }
+  }, [expiresAt, subscriptionLoading]);
+
+  // Helper: is plan expired?
+  const isPlanExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
   
   const { preferences, updateDashboardLayout } = useUserPreferences();
   
@@ -153,6 +172,8 @@ const Dashboard = () => {
   }, [loading]);
 
   const [profile, setProfile] = useState<ProfileData>({
+    id: "",
+    username: "",
     logo: "",
     businessName: "",
     storeUrl: "",
@@ -530,22 +551,24 @@ const Dashboard = () => {
         const displayName = isPiUser && piUser ? piUser.username : (supabaseUser?.email?.split("@")[0] || "user");
         
         const loadedProfile = {
+          id: profileData.id || "",
+          username: profileData.username || displayName,
           logo: profileData.logo || "",
           businessName: profileData.business_name || displayName,
           storeUrl: profileData.username || displayName,
           description: profileData.description || "",
           email: (profileData as any).email || supabaseUser?.email || "",
           youtubeVideoUrl: (profileData as any).youtube_video_url || "",
-          socialLinks: socialLinks || {
-            twitter: "",
-            instagram: "",
-            youtube: "",
-            tiktok: "",
-            facebook: "",
-            linkedin: "",
-            twitch: "",
-            website: "",
-          },
+          socialLinks: Array.isArray(socialLinks) ? socialLinks : [
+            { type: "twitter", url: "" },
+            { type: "instagram", url: "" },
+            { type: "youtube", url: "" },
+            { type: "tiktok", url: "" },
+            { type: "facebook", url: "" },
+            { type: "linkedin", url: "" },
+            { type: "twitch", url: "" },
+            { type: "website", url: "" },
+          ],
           customLinks: (themeSettings?.customLinks as any) || [],
           theme: {
             primaryColor: themeSettings?.primaryColor || "#3b82f6",
@@ -588,6 +611,8 @@ const Dashboard = () => {
         
         setProfile({
           ...loadedProfile,
+          id: loadedProfile.id || "",
+          username: loadedProfile.username || "",
           socialLinks: Array.isArray(loadedProfile.socialLinks) ? loadedProfile.socialLinks : [],
         });
         
@@ -739,6 +764,8 @@ const Dashboard = () => {
         }
         
         const defaultProfile = {
+          id: newProfileId || "",
+          username: defaultName || "",
           logo: "",
           businessName: defaultName,
           storeUrl: defaultName,
@@ -1481,16 +1508,104 @@ const Dashboard = () => {
             <div>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold">Social links</h2>
-                {/* UNLOCKED: No more restrictions */}
+                {/* Social link plan gating */}
+                {(() => {
+                  let maxLinks = 1;
+                  if (plan === "basic") maxLinks = 3;
+                  if (plan === "premium" || plan === "pro") maxLinks = 99;
+                  return (
+                    <span className="text-xs text-muted-foreground">
+                      {plan === "free" && "Limit: 1 social link"}
+                      {plan === "basic" && "Limit: 3 social links"}
+                      {(plan === "premium" || plan === "pro") && "Unlimited social links"}
+                    </span>
+                  );
+                })()}
               </div>
               <div className="space-y-4">
+                {/* For Premium/Pro: Add/Remove custom social links with icon picker */}
+                {(plan === "premium" || plan === "pro") && (
+                  <>
+                    {profile.socialLinks.map((link, idx) => (
+                      <div key={idx} className="flex items-center gap-3">
+                        {/* Icon Picker */}
+                        <select
+                          value={link.icon || link.type}
+                          onChange={e => {
+                            const newLinks = [...profile.socialLinks];
+                            newLinks[idx].icon = e.target.value;
+                            setProfile({ ...profile, socialLinks: newLinks });
+                          }}
+                          className="w-12 h-10 rounded-lg border border-border bg-card text-center"
+                        >
+                          <option value="twitter">🐦</option>
+                          <option value="instagram">📸</option>
+                          <option value="youtube">▶️</option>
+                          <option value="tiktok">🎵</option>
+                          <option value="facebook">📘</option>
+                          <option value="linkedin">💼</option>
+                          <option value="twitch">🎮</option>
+                          <option value="website">🌐</option>
+                          <option value="custom">⭐ Custom</option>
+                        </select>
+                        <Input
+                          value={link.url}
+                          onChange={e => {
+                            const newLinks = [...profile.socialLinks];
+                            newLinks[idx].url = e.target.value;
+                            setProfile({ ...profile, socialLinks: newLinks });
+                          }}
+                          placeholder="Enter social link URL"
+                          className="bg-input-bg flex-1"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const newLinks = profile.socialLinks.filter((_, i) => i !== idx);
+                            setProfile({ ...profile, socialLinks: newLinks });
+                          }}
+                          title="Remove"
+                        >
+                          ✖️
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setProfile({
+                          ...profile,
+                          socialLinks: [
+                            ...profile.socialLinks,
+                            { type: "custom", url: "", icon: "custom" },
+                          ],
+                        });
+                      }}
+                      className="mt-2"
+                    >
+                      + Add Social Link
+                    </Button>
+                  </>
+                )}
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center">
                     <FaXTwitter className="w-5 h-5" />
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "twitter")?.url || "" : ""}
-                    onChange={(e) => handleSocialLinkChange("twitter", e.target.value)}
+                    onChange={(e) => {
+                      // Enforce plan-based social link limits
+                      const maxLinks = plan === "free" ? 1 : plan === "basic" ? 3 : 99;
+                      const activeLinks = countActiveSocialLinks();
+                      const isAdding = !profile.socialLinks.find(l => l.type === "twitter")?.url && e.target.value.trim() !== "";
+                      if (isAdding && activeLinks >= maxLinks) {
+                        toast.error(`You have reached your plan's social link limit. Upgrade to add more.`);
+                        return;
+                      }
+                      handleSocialLinkChange("twitter", e.target.value);
+                    }}
                     placeholder="https://x.com/"
                     className="bg-input-bg flex-1"
                   />
@@ -1502,7 +1617,16 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "instagram")?.url || "" : ""}
-                    onChange={(e) => handleSocialLinkChange("instagram", e.target.value)}
+                    onChange={(e) => {
+                      const maxLinks = plan === "free" ? 1 : plan === "basic" ? 3 : 99;
+                      const activeLinks = countActiveSocialLinks();
+                      const isAdding = !profile.socialLinks.find(l => l.type === "instagram")?.url && e.target.value.trim() !== "";
+                      if (isAdding && activeLinks >= maxLinks) {
+                        toast.error(`You have reached your plan's social link limit. Upgrade to add more.`);
+                        return;
+                      }
+                      handleSocialLinkChange("instagram", e.target.value);
+                    }}
                     placeholder="https://instagram.com/"
                     className="bg-input-bg flex-1"
                   />
@@ -1514,7 +1638,16 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "youtube")?.url || "" : ""}
-                    onChange={(e) => handleSocialLinkChange("youtube", e.target.value)}
+                    onChange={(e) => {
+                      const maxLinks = plan === "free" ? 1 : plan === "basic" ? 3 : 99;
+                      const activeLinks = countActiveSocialLinks();
+                      const isAdding = !profile.socialLinks.find(l => l.type === "youtube")?.url && e.target.value.trim() !== "";
+                      if (isAdding && activeLinks >= maxLinks) {
+                        toast.error(`You have reached your plan's social link limit. Upgrade to add more.`);
+                        return;
+                      }
+                      handleSocialLinkChange("youtube", e.target.value);
+                    }}
                     placeholder="https://youtube.com/@"
                     className="bg-input-bg flex-1"
                   />
@@ -1526,7 +1659,16 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "tiktok")?.url || "" : ""}
-                    onChange={(e) => handleSocialLinkChange("tiktok", e.target.value)}
+                    onChange={(e) => {
+                      const maxLinks = plan === "free" ? 1 : plan === "basic" ? 3 : 99;
+                      const activeLinks = countActiveSocialLinks();
+                      const isAdding = !profile.socialLinks.find(l => l.type === "tiktok")?.url && e.target.value.trim() !== "";
+                      if (isAdding && activeLinks >= maxLinks) {
+                        toast.error(`You have reached your plan's social link limit. Upgrade to add more.`);
+                        return;
+                      }
+                      handleSocialLinkChange("tiktok", e.target.value);
+                    }}
                     placeholder="https://tiktok.com/@"
                     className="bg-input-bg flex-1"
                   />
@@ -1538,7 +1680,16 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "facebook")?.url || "" : ""}
-                    onChange={(e) => handleSocialLinkChange("facebook", e.target.value)}
+                    onChange={(e) => {
+                      const maxLinks = plan === "free" ? 1 : plan === "basic" ? 3 : 99;
+                      const activeLinks = countActiveSocialLinks();
+                      const isAdding = !profile.socialLinks.find(l => l.type === "facebook")?.url && e.target.value.trim() !== "";
+                      if (isAdding && activeLinks >= maxLinks) {
+                        toast.error(`You have reached your plan's social link limit. Upgrade to add more.`);
+                        return;
+                      }
+                      handleSocialLinkChange("facebook", e.target.value);
+                    }}
                     placeholder="https://facebook.com/"
                     className="bg-input-bg flex-1"
                   />
@@ -1550,7 +1701,16 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "linkedin")?.url || "" : ""}
-                    onChange={(e) => handleSocialLinkChange("linkedin", e.target.value)}
+                    onChange={(e) => {
+                      const maxLinks = plan === "free" ? 1 : plan === "basic" ? 3 : 99;
+                      const activeLinks = countActiveSocialLinks();
+                      const isAdding = !profile.socialLinks.find(l => l.type === "linkedin")?.url && e.target.value.trim() !== "";
+                      if (isAdding && activeLinks >= maxLinks) {
+                        toast.error(`You have reached your plan's social link limit. Upgrade to add more.`);
+                        return;
+                      }
+                      handleSocialLinkChange("linkedin", e.target.value);
+                    }}
                     placeholder="https://linkedin.com/in/"
                     className="bg-input-bg flex-1"
                   />
@@ -1562,7 +1722,16 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "twitch")?.url || "" : ""}
-                    onChange={(e) => handleSocialLinkChange("twitch", e.target.value)}
+                    onChange={(e) => {
+                      const maxLinks = plan === "free" ? 1 : plan === "basic" ? 3 : 99;
+                      const activeLinks = countActiveSocialLinks();
+                      const isAdding = !profile.socialLinks.find(l => l.type === "twitch")?.url && e.target.value.trim() !== "";
+                      if (isAdding && activeLinks >= maxLinks) {
+                        toast.error(`You have reached your plan's social link limit. Upgrade to add more.`);
+                        return;
+                      }
+                      handleSocialLinkChange("twitch", e.target.value);
+                    }}
                     placeholder="https://twitch.tv/"
                     className="bg-input-bg flex-1"
                   />
@@ -1574,7 +1743,16 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "website")?.url || "" : ""}
-                    onChange={(e) => handleSocialLinkChange("website", e.target.value)}
+                    onChange={(e) => {
+                      const maxLinks = plan === "free" ? 1 : plan === "basic" ? 3 : 99;
+                      const activeLinks = countActiveSocialLinks();
+                      const isAdding = !profile.socialLinks.find(l => l.type === "website")?.url && e.target.value.trim() !== "";
+                      if (isAdding && activeLinks >= maxLinks) {
+                        toast.error(`You have reached your plan's social link limit. Upgrade to add more.`);
+                        return;
+                      }
+                      handleSocialLinkChange("website", e.target.value);
+                    }}
                     placeholder="Enter website URL"
                     className="bg-input-bg flex-1"
                   />
@@ -1583,171 +1761,159 @@ const Dashboard = () => {
             </div>
 
             {/* Pi Wallet Address for Tips & Payments + Pi Tip/Send Me a Coffee */}
-            {isAuthenticated && (
-              <div className="border-t pt-6">
-                <div className="flex items-center justify-between p-4 bg-card border border-border rounded-lg mb-4">
-                  <div className="space-y-0.5">
-                    <label htmlFor="show-pi-wallet-tips" className="text-base font-medium">
-                      Show Pi Wallet for Tips
-                    </label>
-                    <p className="text-sm text-muted-foreground">
-                      Allow visitors to see your Pi wallet tip QR and message on your public profile
-                    </p>
+            {/* Pi Wallet for Tips - Basic and above only, auto-lock if expired */}
+            <PlanGate minPlan="basic" featureName="Pi Wallet for Tips">
+              {isAuthenticated && !isPlanExpired && (
+                <div className="border-t pt-6">
+                  <div className="flex items-center justify-between p-4 bg-card border border-border rounded-lg mb-4">
+                    <div className="space-y-0.5">
+                      <label htmlFor="show-pi-wallet-tips" className="text-base font-medium">
+                        Show Pi Wallet for Tips
+                      </label>
+                      <p className="text-sm text-muted-foreground">
+                        Allow visitors to see your Pi wallet tip QR and message on your public profile
+                      </p>
+                    </div>
+                    <Switch
+                      id="show-pi-wallet-tips"
+                      checked={profile.showPiWalletTips !== false}
+                      onCheckedChange={(checked) => setProfile({ ...profile, showPiWalletTips: checked })}
+                    />
                   </div>
-                  <Switch
-                    id="show-pi-wallet-tips"
-                    checked={profile.showPiWalletTips !== false}
-                    onCheckedChange={(checked) => setProfile({ ...profile, showPiWalletTips: checked })}
-                  />
-                </div>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-semibold flex items-center gap-2">
-                    <Wallet className="w-5 h-5 text-blue-500" />
-                    Pi Wallet for Tips
-                  </h2>
-                  <span className="text-xs text-muted-foreground bg-blue-50 px-2 py-1 rounded">
-                    Pi Network
-                  </span>
-                </div>
-                <div className="space-y-4">
-                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="flex flex-col md:flex-row gap-6 items-start">
-                      <div className="flex-1">
-                        <h3 className="font-medium text-blue-900 mb-1">Receive DROP or Pi Tips</h3>
-                        <div className="flex items-center gap-2 mb-3">
-                          <Input
-                            value={profile.piDonationMessage || ''}
-                            onChange={(e) => setProfile({ ...profile, piDonationMessage: e.target.value })}
-                            placeholder="Send me a coffee ☕"
-                            className="bg-background border-primary text-xs font-mono flex-1"
-                            maxLength={64}
-                          />
-                          <span className="text-xs text-muted-foreground">Custom message</span>
-                        </div>
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                      <Wallet className="w-5 h-5 text-blue-500" />
+                      Pi Wallet for Tips
+                    </h2>
+                    <span className="text-xs text-muted-foreground bg-blue-50 px-2 py-1 rounded">
+                      Pi Network
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex flex-col md:flex-row gap-6 items-start">
+                        <div className="flex-1">
+                          <h3 className="font-medium text-blue-900 mb-1">Receive DROP or Pi Tips</h3>
+                          <div className="flex items-center gap-2 mb-3">
                             <Input
-                              value={profile.piWalletAddress || ''}
-                              onChange={(e) => setProfile({ ...profile, piWalletAddress: e.target.value })}
-                              placeholder="G... (Pi Network wallet address)"
-                              className="bg-background border-primary text-xs font-mono"
-                              maxLength={56}
+                              value={profile.piDonationMessage || ''}
+                              onChange={(e) => setProfile({ ...profile, piDonationMessage: e.target.value })}
+                              placeholder="Send me a coffee ☕"
+                              className="bg-background border-primary text-xs font-mono flex-1"
+                              maxLength={64}
                             />
-                            {profile.piWalletAddress && (
-                              <>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(profile.piWalletAddress!);
-                                    toast.success('Wallet address copied!');
-                                  }}
-                                  className="text-xs border-blue-300"
-                                >
-                                  Copy Address
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setShowPiWalletQR(true)}
-                                  className="text-xs border-blue-300"
-                                >
-                                  View QR Code
-                                </Button>
-                              </>
-                            )}
+                            <span className="text-xs text-muted-foreground">Custom message</span>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={profile.piWalletAddress || ''}
+                                onChange={(e) => setProfile({ ...profile, piWalletAddress: e.target.value })}
+                                placeholder="G... (Pi Network wallet address)"
+                                className="bg-background border-primary text-xs font-mono"
+                                maxLength={56}
+                              />
+                              {profile.piWalletAddress && (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(profile.piWalletAddress!);
+                                      toast.success('Wallet address copied!');
+                                    }}
+                                    className="text-xs border-blue-300"
+                                  >
+                                    Copy Address
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setShowPiWalletQR(true)}
+                                    className="text-xs border-blue-300"
+                                  >
+                                    View QR Code
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={async () => {
+                                  if (getCurrentWalletAddress) {
+                                    const walletAddr = getCurrentWalletAddress();
+                                    if (walletAddr) {
+                                      setProfile({ ...profile, piWalletAddress: walletAddr });
+                                      toast.success('Wallet address imported from Pi Network!');
+                                    } else {
+                                      toast.error('No Pi wallet found. Please authenticate or import a wallet first.');
+                                    }
+                                  } else {
+                                    toast.error('Please go to the Wallet section to set up your Pi Network wallet first.');
+                                  }
+                                }}
+                                className="text-xs border-blue-300"
+                              >
+                                <Wallet className="w-3 h-3 mr-1" />
+                                Import from Wallet
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-center gap-2 min-w-[160px]">
+                          <div className="font-semibold text-blue-900 mb-1">Tip / Send Me a Coffee</div>
+                          {profile.piWalletAddress ? (
+                            <>
+                              <div className="relative w-[160px] h-[160px] mx-auto">
+                                <svg width="160" height="160" className="rounded border border-blue-300 bg-white">
+                                  <foreignObject width="160" height="160">
+                                    <div style={{ width: '160px', height: '160px', position: 'relative' }}>
+                                      <img
+                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(profile.piWalletAddress)}`}
+                                        alt="Wallet QR Code"
+                                        style={{ width: 160, height: 160, borderRadius: 8, background: '#fff' }}
+                                      />
+                                      <img
+                                        src="/droplink-logo.png"
+                                        alt="Droplink Logo"
+                                        style={{ position: 'absolute', left: '50%', top: '50%', width: 48, height: 48, transform: 'translate(-50%, -50%)', borderRadius: 12, border: '2px solid #fff', background: '#fff', boxShadow: '0 2px 8px #0001' }}
+                                      />
+                                    </div>
+                                  </foreignObject>
+                                </svg>
+                              </div>
+                              <div className="text-xs text-blue-700 break-all text-center mt-1">
+                                <span>Scan to tip Pi or DROP</span>
+                              </div>
+                              <div className="text-xs text-blue-700 break-all text-center mt-1">
+                                <span>{profile.piWalletAddress}</span>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="text-xs text-blue-400 text-center">Enter your wallet address to generate a QR code</div>
+                          )}
+                          {profile.piWalletQrUrl && (
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={async () => {
-                                if (getCurrentWalletAddress) {
-                                  const walletAddr = getCurrentWalletAddress();
-                                  if (walletAddr) {
-                                    setProfile({ ...profile, piWalletAddress: walletAddr });
-                                    toast.success('Wallet address imported from Pi Network!');
-                                  } else {
-                                    toast.error('No Pi wallet found. Please authenticate or import a wallet first.');
-                                  }
-                                } else {
-                                  toast.error('Please go to the Wallet section to set up your Pi Network wallet first.');
-                                }
+                              className="mt-2"
+                              onClick={() => {
+                                navigator.clipboard.writeText(profile.piWalletQrUrl!);
+                                toast.success('QR code image URL copied!');
                               }}
-                              className="text-xs border-blue-300"
                             >
-                              <Wallet className="w-3 h-3 mr-1" />
-                              Import from Wallet
+                              Copy QR Code URL
                             </Button>
-                          </div>
+                          )}
                         </div>
-                        <div className="mt-3 p-3 bg-blue-100 rounded border">
-                          <div className="flex items-start gap-2">
-                            <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                            <div className="text-xs text-blue-800">
-                              <p className="font-medium mb-1">How it works:</p>
-                              <ul className="space-y-1 list-disc list-inside">
-                                <li>Visitors can send DROP or Pi tokens to this address</li>
-                                <li>QR code and tip link will be shown on your public bio page</li>
-                                <li>Only enter addresses you own and control</li>
-                                <li>This feature works with Pi Network blockchain</li>
-                              </ul>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      {/* QR Code Preview and Tip Section */}
-                      <div className="flex flex-col items-center gap-2 min-w-[160px]">
-                        <div className="font-semibold text-blue-900 mb-1">Tip / Send Me a Coffee</div>
-                        {profile.piWalletAddress ? (
-                          <>
-                            <div className="relative w-[160px] h-[160px] mx-auto">
-                              <svg width="160" height="160" className="rounded border border-blue-300 bg-white">
-                                <foreignObject width="160" height="160">
-                                  <div style={{ width: '160px', height: '160px', position: 'relative' }}>
-                                    <img
-                                      src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(profile.piWalletAddress)}`}
-                                      alt="Wallet QR Code"
-                                      style={{ width: 160, height: 160, borderRadius: 8, background: '#fff' }}
-                                    />
-                                    <img
-                                      src="/droplink-logo.png"
-                                      alt="Droplink Logo"
-                                      style={{ position: 'absolute', left: '50%', top: '50%', width: 48, height: 48, transform: 'translate(-50%, -50%)', borderRadius: 12, border: '2px solid #fff', background: '#fff', boxShadow: '0 2px 8px #0001' }}
-                                    />
-                                  </div>
-                                </foreignObject>
-                              </svg>
-                            </div>
-                            <div className="text-xs text-blue-700 break-all text-center mt-1">
-                              <span>Scan to tip Pi or DROP</span>
-                            </div>
-                            <div className="text-xs text-blue-700 break-all text-center mt-1">
-                              <span>{profile.piWalletAddress}</span>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="text-xs text-blue-400 text-center">Enter your wallet address to generate a QR code</div>
-                        )}
-                        {profile.piWalletQrUrl && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-2"
-                            onClick={() => {
-                              navigator.clipboard.writeText(profile.piWalletQrUrl!);
-                              toast.success('QR code image URL copied!');
-                            }}
-                          >
-                            Copy QR Code URL
-                          </Button>
-                        )}
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </PlanGate>
 
             {/* Custom Links - Premium/Pro only */}
             <PlanGate minPlan="premium" featureName="Custom Links">
@@ -1757,7 +1923,7 @@ const Dashboard = () => {
                   shortenedLinks={profile.shortenedLinks || []}
                   onCustomLinksChange={(links) => setProfile({ ...profile, customLinks: links })}
                   onShortenedLinksChange={(links) => setProfile({ ...profile, shortenedLinks: links })}
-                  layoutType={profile.linkLayoutType}
+                  layoutType={profile.linkLayoutType as any || 'stack'}
                   onLayoutChange={(layout) => setProfile({ ...profile, linkLayoutType: layout })}
                 />
               </div>
@@ -1958,40 +2124,65 @@ const Dashboard = () => {
 
               {/* Design Tab - Premium/Pro only */}
               <TabsContent value="design" className="space-y-6">
-                <PlanGate minPlan="premium">
-                  <DesignCustomizer 
-                    theme={profile.theme}
-                    onThemeChange={(newTheme) => setProfile({ ...profile, theme: newTheme })}
-                  />
-                  
-                  {/* Save Button */}
-                  <div className={`flex gap-4 pt-6 pb-6 mt-8 border-t border-border sticky bottom-0 z-50 w-full bg-background/95 backdrop-blur-sm shadow-lg`}>
-                    <Button variant="outline" className="flex-1 h-12">
-                      Cancel
-                    </Button>
-                    <Button 
-                      onClick={handleSave} 
-                      className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium" 
-                      disabled={saving}
-                    >
-                      {saving ? "Saving..." : "Save changes"}
-                    </Button>
-                  </div>
+                <PlanGate minPlan="premium" featureName="GIF Background (Premium)">
+                  {!isPlanExpired && (
+                    <>
+                      <DesignCustomizer 
+                        theme={profile.theme}
+                        onThemeChange={(newTheme) => setProfile({ ...profile, theme: newTheme })}
+                      />
+                      {/* Save Button */}
+                      <div className={`flex gap-4 pt-6 pb-6 mt-8 border-t border-border sticky bottom-0 z-50 w-full bg-background/95 backdrop-blur-sm shadow-lg`}>
+                        <Button variant="outline" className="flex-1 h-12">
+                          Cancel
+                        </Button>
+                        <Button 
+                          onClick={handleSave} 
+                          className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium" 
+                          disabled={saving}
+                        >
+                          {saving ? "Saving..." : "Save changes"}
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </PlanGate>
               </TabsContent>
 
-              {/* Analytics Tab */}
+              {/* Analytics Tab - locked for Free plan */}
               <TabsContent value="analytics" className="pb-8">
-                <AdGatedFeature featureName="Analytics">
-                  {profileId ? (
-                    <Analytics profileId={profileId} />
-                  ) : (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>Save your profile first to see analytics</p>
-                    </div>
+                <PlanGate minPlan="pro" featureName="Analytics">
+                  {!isPlanExpired && (
+                    <>
+                      {/* Expiration/Renewal Modal */}
+                      <Dialog open={showRenewModal} onOpenChange={setShowRenewModal}>
+                        <DialogContent>
+                          <DialogTitle>{isPlanExpired ? "Your plan has expired" : "Your plan is about to expire"}</DialogTitle>
+                          <DialogDescription>
+                            {isPlanExpired
+                              ? "Your subscription plan has expired. Features like GIF backgrounds, Pi Tips, and Analytics are now locked. Renew your plan to regain access."
+                              : "Your subscription plan will expire soon. Renew now to avoid losing access to premium features."}
+                            <br />
+                            <strong>Expiration date:</strong> {expiresAt ? new Date(expiresAt).toLocaleString() : "-"}
+                          </DialogDescription>
+                          <DialogFooter>
+                            <Button onClick={() => { setShowRenewModal(false); navigate("/subscription"); }}>
+                              Renew Plan
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                      {profileId ? (
+                        <Analytics profileId={profileId} />
+                      ) : (
+                        <div className="text-center py-12 text-muted-foreground">
+                          <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                          <p>Save your profile first to see analytics</p>
+                        </div>
+                      )}
+                    </>
                   )}
-                </AdGatedFeature>
+                </PlanGate>
               </TabsContent>
 
 
@@ -2000,7 +2191,9 @@ const Dashboard = () => {
               </TabsContent> */}
 
               <TabsContent value="drop-tokens" className="pb-8">
-                <DropTokenManager piUser={piUser} piWallet={piUser?.wallet_address} />
+                <PlanGate minPlan="basic" featureName="Pi Wallet for Tips">
+                  <DropTokenManager piUser={piUser} piWallet={piUser?.wallet_address} />
+                </PlanGate>
               </TabsContent>
 
               <TabsContent value="ad-network" className="pb-8">

@@ -1,21 +1,16 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { usePi } from "@/contexts/PiContext";
 
 export type PlanType = "free" | "basic" | "premium" | "pro";
 
-interface ActiveSubscription {
+interface PublicSubscription {
   plan: PlanType;
   expiresAt: Date | null;
   status: string | null;
   loading: boolean;
-  subscription: any | null;
-  isLoading: boolean;
-  isActive: boolean;
 }
 
-export const useActiveSubscription = (): ActiveSubscription => {
-  const { piUser } = usePi();
+export const usePublicSubscription = (usernameOrProfileId: string, byProfileId = false): PublicSubscription => {
   const [plan, setPlan] = useState<PlanType>("free");
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -24,31 +19,27 @@ export const useActiveSubscription = (): ActiveSubscription => {
   useEffect(() => {
     const load = async () => {
       try {
-        // Use Pi username to find profile
-        if (!piUser?.username) {
-          setLoading(false);
-          return;
+        let profileId = usernameOrProfileId;
+        if (!byProfileId) {
+          // Lookup profileId by username
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("username", usernameOrProfileId)
+            .maybeSingle();
+          if (!profile?.id) {
+            setLoading(false);
+            return;
+          }
+          profileId = profile.id;
         }
-
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("username", piUser.username)
-          .maybeSingle();
-
-        if (!profile?.id) {
-          setLoading(false);
-          return;
-        }
-
         const { data: sub } = await supabase
           .from("subscriptions")
           .select("plan_type, end_date, status")
-          .eq("profile_id", profile.id)
+          .eq("profile_id", profileId)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
-
         if (sub && new Date(sub.end_date) > new Date()) {
           setPlan((sub.plan_type as PlanType) || "free");
           setExpiresAt(new Date(sub.end_date));
@@ -59,22 +50,13 @@ export const useActiveSubscription = (): ActiveSubscription => {
           setStatus(null);
         }
       } catch (e) {
-        console.error("Failed to load subscription", e);
+        console.error("Failed to load public subscription", e);
       } finally {
         setLoading(false);
       }
     };
+    if (usernameOrProfileId) load();
+  }, [usernameOrProfileId, byProfileId]);
 
-    load();
-  }, [piUser]);
-
-  return { 
-    plan, 
-    expiresAt, 
-    status, 
-    loading, 
-    subscription: null,
-    isLoading: loading,
-    isActive: status === "active"
-  };
+  return { plan, expiresAt, status, loading };
 };

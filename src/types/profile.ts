@@ -131,4 +131,9 @@ export interface ProfileData {
   showShareButton?: boolean;
   storeUrl?: string;
   showPiWalletTips?: boolean;
+  socialLinks?: SocialLinks;
+  paymentLinks?: PaymentLink[];
+  shortenedLinks?: ShortenedLink[];
+  linkLayoutType?: string;
+  piWalletQrUrl?: string;
 }
