@@ -152,6 +152,11 @@ interface PiContextType {
 const PiContext = createContext<PiContextType | undefined>(undefined);
 
 export const PiProvider = ({ children }: { children: ReactNode }) => {
+    // Debug: Log Pi Browser detection on load
+    useEffect(() => {
+      const isPi = isPiBrowserEnv();
+      console.log(`[PiContext] Pi Browser detected:`, isPi, '| UserAgent:', typeof window !== 'undefined' ? window.navigator.userAgent : 'N/A');
+    }, []);
   // Authentication state
   const [piUser, setPiUser] = useState<PiUser | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
