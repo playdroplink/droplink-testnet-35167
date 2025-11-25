@@ -124,6 +124,19 @@ const PiAuth = () => {
         </CardHeader>
         <CardContent className="space-y-4">
 
+
+          {/* Go to Landing Page Button */}
+          <Button
+            asChild
+            className="w-full mb-2"
+            size="lg"
+            variant="secondary"
+          >
+            <a href="https://www.droplink.space" target="_blank" rel="noopener noreferrer">
+              Go to Droplink Landing Page
+            </a>
+          </Button>
+
           {/* Pi Network Sign In - Only show if Pi SDK is available */}
           {isPiBrowserEnv() ? (
             <Button 
@@ -172,6 +185,8 @@ const PiAuth = () => {
 
           <div className="pt-4 border-t space-y-2">
             <div className="flex justify-center gap-4 text-xs">
+              <a href="/" className="text-primary hover:underline cursor-pointer">Home</a>
+              <span className="text-muted-foreground">•</span>
               <AboutModal>
                 <button className="text-primary hover:underline cursor-pointer">
                   About

@@ -15,21 +15,77 @@ const plans: Plan[] = [
 		monthlyPrice: 0,
 		yearlyPrice: 0,
 		features: [
-			"1 bio page link only",
-			"1 social media link only"
+			"1 custom link only",
+			"1 social media link only",
+			"Basic profile customization",
+			"Basic QR code sharing",
+			"Public bio page visibility",
+			"DropLink watermark displayed",
+			"Pi Ad Network banners shown",
+			"Analytics require watching ads",
+			"Limited theme options",
+			"Community support only",
+			"Watch ads to temporarily access premium features",
+			"Earn DROP tokens by watching ads"
 		]
 	},
 	{
-		name: "Pro",
-		monthlyPrice: 1,
-		yearlyPrice: 10,
-		popular: true,
+		name: "Basic",
+		monthlyPrice: 10,
+		yearlyPrice: 96,
 		features: [
-			"Unlimited bio pages",
-			"Unlimited social links",
-			"No ads or watermark",
-			"Analytics dashboard",
-			"AI support assistant"
+			"Up to 5 custom links",
+			"Up to 3 social media links",
+			"Standard profile customization",
+			"Standard QR code sharing",
+			"No DropLink watermark",
+			"Ad-free experience",
+			"Access to analytics dashboard (basic)",
+			"Email support (standard)",
+			"More theme options (3+)",
+			"Product listings (up to 3)",
+			"Priority for new features"
+		],
+		savings: "20% savings on yearly"
+	},
+	{
+		name: "Premium",
+		monthlyPrice: 20,
+		yearlyPrice: 192,
+		features: [
+			"Everything in Basic, plus:",
+			"Unlimited custom links with icon selection",
+			"Unlimited social media links",
+			"YouTube video integration",
+			"Custom themes & colors (6+ options)",
+			"Advanced analytics dashboard",
+			"Pi Network wallet integration",
+			"DROP token receiving",
+			"Product listings with pricing",
+			"Priority email support",
+			"Custom domain support (coming soon)"
+		],
+		popular: true,
+		savings: "20% savings on yearly"
+	},
+	{
+		name: "Pro",
+		monthlyPrice: 30,
+		yearlyPrice: 288,
+		features: [
+			"Everything in Premium, plus:",
+			"AI-powered analytics insights",
+			"Advanced visitor & location-based tracking",
+			"A/B testing for links",
+			"API access for integrations",
+			"White-label solutions",
+			"24/7 priority support",
+			"Bulk link management",
+			"Export analytics data",
+			"Pi Payments integration (DropPay)",
+			"Transaction history & management",
+			"AI chat widget",
+			"Multi-profile management"
 		]
 	}
 ];

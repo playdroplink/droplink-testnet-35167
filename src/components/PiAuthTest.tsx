@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
+import { isPiBrowserEnv } from '@/contexts/PiContext';
 import { usePi } from '@/contexts/PiContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+
+import { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, CheckCircle, XCircle, Wallet } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, User, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const PiAuthTest: React.FC = () => {
@@ -26,11 +30,24 @@ export const PiAuthTest: React.FC = () => {
   const [profileData, setProfileData] = useState<any>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [isLookingUp, setIsLookingUp] = useState(false);
+  const [sdkError, setSdkError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && typeof window.Pi === 'undefined') {
+      setSdkError('Pi SDK not loaded. Please use the Pi Browser.');
+    }
+  }, []);
 
   const handleSignIn = async () => {
+    setSdkError(null);
+    if (typeof window === 'undefined' || typeof window.Pi === 'undefined') {
+      setSdkError('Pi SDK not loaded. Please use the Pi Browser.');
+      return;
+    }
     try {
       await signIn();
     } catch (error) {
+      setSdkError('Sign in failed: ' + (error instanceof Error ? error.message : String(error)));
       console.error('Sign in failed:', error);
     }
   };
@@ -40,7 +57,6 @@ export const PiAuthTest: React.FC = () => {
       toast.error('Please enter a username to check');
       return;
     }
-
     setIsChecking(true);
     try {
       const isAvailable = await checkUsernameAvailability(testUsername);
@@ -59,18 +75,14 @@ export const PiAuthTest: React.FC = () => {
       toast.error('Please enter a username or ID to lookup');
       return;
     }
-
     setIsLookingUp(true);
+    setProfileData(null);
     try {
-      const profile = await getPiUserProfile(profileLookup);
-      setProfileData(profile);
-      if (profile) {
-        toast.success('Profile found!');
-      } else {
-        toast.error('Profile not found');
-      }
+      const data = await getPiUserProfile(profileLookup);
+      setProfileData(data);
     } catch (error) {
-      toast.error('Failed to lookup profile');
+      setProfileData(null);
+      toast.error('Profile lookup failed');
       console.error('Profile lookup failed:', error);
     } finally {
       setIsLookingUp(false);
@@ -78,13 +90,11 @@ export const PiAuthTest: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6 max-w-4xl">
+    <div>
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold mb-2">Pi Network Authentication Test</h1>
         <p className="text-muted-foreground">Test the Pi Network authentication system</p>
       </div>
-
-      {/* Authentication Status */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -93,13 +103,17 @@ export const PiAuthTest: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {sdkError && (
+            <Alert variant="destructive">
+              <AlertDescription>{sdkError}</AlertDescription>
+            </Alert>
+          )}
           <div className="flex items-center gap-2">
             <Badge variant={isAuthenticated ? "default" : "secondary"}>
               {isAuthenticated ? "Authenticated" : "Not Authenticated"}
             </Badge>
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
           </div>
-
           {!isAuthenticated ? (
             <Button onClick={handleSignIn} disabled={loading} className="w-full">
               {loading ? (
@@ -127,7 +141,6 @@ export const PiAuthTest: React.FC = () => {
                   <p><strong>Access Token:</strong> {accessToken ? '✓ Present' : '✗ Missing'}</p>
                 </div>
               </div>
-
               {currentProfile && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
                   <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
@@ -144,7 +157,6 @@ export const PiAuthTest: React.FC = () => {
                   </div>
                 </div>
               )}
-
               <Button onClick={signOut} variant="outline" className="w-full">
                 Sign Out
               </Button>
@@ -152,8 +164,6 @@ export const PiAuthTest: React.FC = () => {
           )}
         </CardContent>
       </Card>
-
-      {/* Username Availability Check */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -183,7 +193,6 @@ export const PiAuthTest: React.FC = () => {
               )}
             </Button>
           </div>
-
           {usernameCheckResult !== null && (
             <div className={`p-3 rounded-lg flex items-center gap-2 ${
               usernameCheckResult 
@@ -205,8 +214,6 @@ export const PiAuthTest: React.FC = () => {
           )}
         </CardContent>
       </Card>
-
-      {/* Profile Lookup */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -236,7 +243,6 @@ export const PiAuthTest: React.FC = () => {
               )}
             </Button>
           </div>
-
           {profileData && (
             <div className="bg-gray-50 dark:bg-gray-900/20 p-4 rounded-lg">
               <h3 className="font-semibold mb-2">Profile Found</h3>
@@ -256,7 +262,6 @@ export const PiAuthTest: React.FC = () => {
               </div>
             </div>
           )}
-
           {profileData === null && profileLookup && !isLookingUp && (
             <div className="bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 p-3 rounded-lg">
               No profile found for "{profileLookup}"
