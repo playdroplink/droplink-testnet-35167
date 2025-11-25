@@ -1,5 +1,5 @@
 export const PI_CONFIG = {
-  API_KEY: "6dxche8cvknkiozfe7no9eucsi5ohlqy6oyrlclq9jx03gt9z10icujzbfaiaev7", // Mainnet API key
+  API_KEY: "rfjwwiyaysjsinhjrkhvplkrrmf5rjnwd3blmzuxdmek1t5mhy4avy6s6k96znwc", // Mainnet API key
   BASE_URL: "https://api.minepi.com",
   NETWORK: "mainnet",
   NETWORK_PASSPHRASE: "Pi Mainnet",
@@ -63,10 +63,10 @@ export const PI_CONFIG = {
 };
 
 // Helper to check if Pi Network is available
+import { isPiBrowserEnv } from "@/contexts/PiContext";
+
 export const isPiNetworkAvailable = (): boolean => {
-  return typeof window !== 'undefined' && 
-         typeof window.Pi !== 'undefined' &&
-         window.Pi !== null;
+  return isPiBrowserEnv();
 };
 
 // Helper to validate Pi configuration (mainnet only)

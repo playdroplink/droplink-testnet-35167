@@ -169,7 +169,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         console.log('Network:', PI_CONFIG.NETWORK);
         console.log('Sandbox Mode:', PI_CONFIG.SANDBOX_MODE);
 
-        if (isPiNetworkAvailable()) {
+        if (isPiBrowserEnv()) {
           // Initialize Pi SDK for mainnet using config
           await window.Pi.init(PI_CONFIG.SDK);
           console.log(`✅ Pi SDK initialized successfully (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'} Mode)`);
@@ -512,7 +512,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       });
       
       try {
-        if (isPiNetworkAvailable()) {
+        if (isPiBrowserEnv()) {
           await window.Pi.init(PI_CONFIG.SDK);
           setIsInitialized(true);
           console.log('✅ Pi SDK reinitialized successfully (Mainnet)');

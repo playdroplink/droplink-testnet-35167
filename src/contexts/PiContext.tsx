@@ -1,3 +1,11 @@
+// Utility: Robust Pi Browser detection
+export function isPiBrowserEnv(): boolean {
+  if (typeof window === 'undefined' || !window.navigator) return false;
+  const ua = window.navigator.userAgent || '';
+  const isPiUA = /PiBrowser/i.test(ua);
+  const hasPiObj = typeof window.Pi !== 'undefined';
+  return isPiUA || hasPiObj;
+}
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -157,9 +165,8 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   // For testing: always provide a mock wallet
   const [currentWallet, setCurrentWallet] = useState<WalletInfo | null>({
     address: 'GTESTWALLETADDRESS1234567890',
-    balance: '1000',
-    network: 'Testnet',
-    isPiWallet: true
+    type: 'pi_network',
+    hasPrivateKey: false
   });
   
   // Multiple account management state
@@ -196,7 +203,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         // If Pi SDK isn't present and we're running in sandbox on localhost, install a dev mock
         // Pi SDK mock removed: use only real Pi Network SDK in production/mainnet.
 
-        if (isPiNetworkAvailable()) {
+        if (isPiBrowserEnv()) {
           // Initialize Pi SDK using configured SDK options
           await window.Pi.init(PI_CONFIG.SDK);
           console.log(`✅ Pi SDK initialized successfully (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})`);
@@ -267,7 +274,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       });
       
       try {
-        if (isPiNetworkAvailable()) {
+        if (isPiBrowserEnv()) {
           await window.Pi.init(PI_CONFIG.SDK);
           setIsInitialized(true);
           console.log(`✅ Pi SDK reinitialized successfully (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})`);

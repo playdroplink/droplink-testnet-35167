@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { isPiNetworkAvailable } from "@/config/pi-config";
+import { isPiBrowserEnv } from "@/contexts/PiContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -125,7 +125,7 @@ const PiAuth = () => {
         <CardContent className="space-y-4">
 
           {/* Pi Network Sign In - Only show if Pi SDK is available */}
-          {isPiNetworkAvailable() ? (
+          {isPiBrowserEnv() ? (
             <Button 
               onClick={handlePiSignIn} 
               className="w-full" 
