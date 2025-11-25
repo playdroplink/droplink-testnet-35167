@@ -267,7 +267,7 @@ const Dashboard = () => {
             profile_id: profileId,
             title: product.title,
             description: product.description,
-            price: product.price,
+            price: typeof product.price === 'string' ? product.price : product.price?.toString?.() ?? "",
             file_url: product.fileUrl
           }));
           
@@ -581,7 +581,7 @@ const Dashboard = () => {
           products: productsData?.map((p: any) => ({
             id: p.id,
             title: p.title,
-            price: p.price,
+            price: typeof p.price === 'string' ? parseFloat(p.price) : p.price,
             description: p.description || "",
             fileUrl: p.file_url || "",
           })) || [],
@@ -2059,7 +2059,7 @@ const Dashboard = () => {
                     />
                     <Input
                       placeholder="Price (e.g., $9.99)"
-                      value={product.price}
+                      value={product.price?.toString() ?? ""}
                       onChange={(e) => {
                         const newProducts = [...profile.products];
                         newProducts[index].price = e.target.value;

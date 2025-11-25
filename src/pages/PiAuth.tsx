@@ -185,7 +185,7 @@ const PiAuth = () => {
 
           <div className="pt-4 border-t space-y-2">
             <div className="flex justify-center gap-4 text-xs">
-              <a href="/" className="text-primary hover:underline cursor-pointer">Home</a>
+              <a href="https://www.droplink.space" className="text-primary hover:underline cursor-pointer" target="_blank" rel="noopener noreferrer">Home</a>
               <span className="text-muted-foreground">•</span>
               <AboutModal>
                 <button className="text-primary hover:underline cursor-pointer">
