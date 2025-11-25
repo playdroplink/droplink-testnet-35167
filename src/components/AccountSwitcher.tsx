@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { ChevronDown, User, Crown, CheckCircle, UserPlus, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -87,6 +87,56 @@ export const AccountSwitcher: React.FC<AccountSwitcherProps> = ({
     }
   };
 
+  const fetchAvatarFromPollination = async () => {
+    const prompt = `Generate a 3D stylized profile avatar character in a warm, friendly Pixar-inspired style mixed with Google Material You softness. Rounded facial features, expressive eyes, clean soft shadows, and pastel color accents. No real humans — entirely animated style. Include random variations such as: [RANDOM GENDER: male / female / nonbinary] [RANDOM AGE: 18–60] [RANDOM OCCUPATION: baker, creator, coder, seller, mompreneur, rider, artist, student, boutique owner] [RANDOM HAIR STYLE: short fade, curly bob, long waves, ponytail, textured curls] [RANDOM HAIR COLOR: brown, black, blonde, pastel pink, purple highlights] [RANDOM SKIN TONE: light, tan, olive, rich brown, deep] [RANDOM OUTFIT: hoodie, apron, jacket, casual shirt, business casual] [RANDOM ACCESSORY: glasses, earrings, headset, cap, scarf] Background: simple pastel gradient (purple, blue, pink, soft teal) with a subtle Material You glow. Lighting: soft Pixar ambient light + gentle rim light. Mood: friendly, warm, welcoming. Camera: clean portrait, centered, head and shoulders. Resolution: crisp 4K.`;
+
+    const response = await fetch("https://api.pollination.com/generate-avatar", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer YOUR_API_KEY`, // Replace with your Pollination API key
+      },
+      body: JSON.stringify({ prompt }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch avatar from Pollination API");
+    }
+
+    const data = await response.json();
+    return data.avatarUrl; // Assuming the API returns the avatar URL in this field
+  };
+
+  const AvatarWithPollination: React.FC<{ displayName: string; username: string }> = ({
+    displayName,
+    username,
+  }) => {
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+      const fetchAvatar = async () => {
+        try {
+          const url = await fetchAvatarFromPollination();
+          setAvatarUrl(url);
+        } catch (error) {
+          console.error("Error fetching avatar:", error);
+        }
+      };
+
+      fetchAvatar();
+    }, []);
+
+    return (
+      <Avatar className="h-8 w-8">
+        {avatarUrl ? (
+          <AvatarImage src={avatarUrl} alt={`${displayName}'s avatar`} />
+        ) : (
+          <div className="bg-gray-300 h-full w-full rounded-full" />
+        )}
+      </Avatar>
+    );
+  };
+
   const getAccountInitials = (displayName: string, username: string) => {
     if (displayName && displayName !== username) {
       return displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -101,12 +151,12 @@ export const AccountSwitcher: React.FC<AccountSwitcherProps> = ({
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="flex items-center gap-2 px-3 py-2 h-auto">
           <Avatar className="h-8 w-8">
-            <AvatarFallback className="text-xs bg-gradient-to-r from-blue-500 to-purple-500 text-white">
-              {currentDisplayAccount ? 
-                getAccountInitials(currentDisplayAccount.display_name, currentDisplayAccount.pi_username) : 
-                'UN'
-              }
-            </AvatarFallback>
+            <AvatarImage src={
+              <AvatarWithPollination
+                displayName={currentDisplayAccount?.display_name || "Unknown"}
+                username={currentDisplayAccount?.pi_username || "unknown"}
+              />
+            } alt={`${currentDisplayAccount?.display_name}'s avatar`} />
           </Avatar>
           
           <div className="flex flex-col items-start text-left min-w-0">
@@ -154,9 +204,9 @@ export const AccountSwitcher: React.FC<AccountSwitcherProps> = ({
               >
                 <div className="flex items-center gap-3 w-full">
                   <Avatar className="h-10 w-10">
-                    <AvatarFallback className="text-sm bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                    <AvatarImage className="text-sm bg-gradient-to-r from-blue-500 to-purple-500 text-white">
                       {getAccountInitials(account.display_name, account.pi_username)}
-                    </AvatarFallback>
+                    </AvatarImage>
                   </Avatar>
                   
                   <div className="flex-1 min-w-0">

@@ -5,6 +5,8 @@ import { X, ExternalLink } from "lucide-react";
 import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 import { usePi } from "@/contexts/PiContext";
 
+declare const Pi: any;
+
 export const PiAdBanner = () => {
   const { showInterstitialAd } = usePi();
   const [dismissed, setDismissed] = useState(false);
@@ -22,6 +24,24 @@ export const PiAdBanner = () => {
     }
   }, [adShown, showInterstitialAd]);
 
+  useEffect(() => {
+    if (typeof Pi !== "undefined" && Pi.ad) {
+      Pi.ad.showBannerAd({
+        position: "bottom", // Position the ad at the bottom of the screen
+        onAdDismissed: () => {
+          console.log("Ad dismissed");
+        },
+        onAdError: (error: any) => {
+          console.error("Ad error:", error);
+        },
+      });
+    } else {
+      console.warn(
+        "Pi Ad Network is not available. Ensure you are in the Pi Browser."
+      );
+    }
+  }, []);
+
   if (dismissed) {
     return null;
   }
@@ -36,21 +56,20 @@ export const PiAdBanner = () => {
       >
         <X className="h-4 w-4" />
       </Button>
-      
+
       <div className="flex items-start gap-3 pr-8">
         <div className="flex-1 space-y-1">
-          <p className="text-sm font-medium">
-            🎉 Enjoying Droplink?
-          </p>
+          <p className="text-sm font-medium">🎉 Enjoying Droplink?</p>
           <p className="text-xs text-muted-foreground">
-            This app is supported by Pi Ad Network. All users see this banner (no plan restrictions).
+            This app is supported by Pi Ad Network. All users see this banner (no
+            plan restrictions).
           </p>
         </div>
       </div>
-      
+
       <div className="mt-3 flex gap-2">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           size="sm"
           onClick={() => window.open("/subscription", "_self")}
           className="gap-2"
