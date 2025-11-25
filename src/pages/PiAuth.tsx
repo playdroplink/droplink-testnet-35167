@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePi } from "@/contexts/PiContext";
 import { Loader2 } from "lucide-react";
-import EmailAuthForm from "@/components/EmailAuthForm";
+// import EmailAuthForm from "@/components/EmailAuthForm"; // Disabled for Pi-only auth
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AboutModal } from "@/components/AboutModal";
@@ -143,9 +143,9 @@ const PiAuth = () => {
           </Button>
 
           {/* Supabase Email Sign In/Sign Up */}
-          <div className="pt-2">
+          {/* <div className="pt-2">
             <EmailAuthForm />
-          </div>
+          </div> */}
 
           <div className="space-y-2 text-sm text-muted-foreground">
             <p className="flex items-center gap-2">
