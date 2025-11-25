@@ -38,7 +38,7 @@ function generatePrompt() {
   const bg = getRandom(BG_GRADIENTS);
 
   return {
-    prompt: `3D Pixar-style character avatar, full color, head and shoulders, white background, no text, no watermark, stylized 3D render, animated style, friendly, warm, expressive eyes, rounded facial features, clean soft shadows, pastel color accents, Gender: ${gender}, Age: ${age}, Occupation: ${occupation}, Hair Style: ${hairStyle}, Hair Color: ${hairColor}, Skin Tone: ${skinTone}, Outfit: ${outfit}, Accessory: ${accessory}`,
+    prompt: `Generate a 3D stylized profile avatar character in a warm, friendly Pixar-inspired style mixed with Google Material You softness. Rounded facial features, expressive eyes, clean soft shadows, and pastel color accents. No real humans — entirely animated style.\n\nInclude random variations such as: Gender: ${gender}, Age: ${age}, Occupation: ${occupation}, Hair Style: ${hairStyle}, Hair Color: ${hairColor}, Skin Tone: ${skinTone}, Outfit: ${outfit}, Accessory: ${accessory}.\n\nBackground: simple pastel gradient (purple, blue, pink, soft teal) with a subtle Material You glow. Lighting: soft Pixar ambient light + gentle rim light. Mood: friendly, warm, welcoming. Camera: clean portrait, centered, head and shoulders. Resolution: crisp 4K.`,
     bg,
     fallback: `${gender[0].toUpperCase()}${occupation[0].toUpperCase()}`
   };

@@ -187,13 +187,25 @@ const StoreFront: React.FC = () => {
               <StorefrontGiftButton receiverProfileId={storeUsername} receiverName={storeUsername || "Store Owner"} />
               <div className="w-full max-w-xs mt-4 space-y-2">
                 <label className="block text-xs font-medium text-gray-700 mb-1">Wallet Address</label>
-                <input
-                  type="text"
-                  className="w-full border rounded px-2 py-1 text-sm mb-2"
-                  placeholder="Enter your Pi wallet address"
-                  value={walletAddress}
-                  onChange={e => setWalletAddress(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    className="w-full border rounded px-2 py-1 text-sm mb-2"
+                    placeholder="Enter your Pi wallet address"
+                    value={walletAddress}
+                    onChange={e => setWalletAddress(e.target.value)}
+                  />
+                  {walletAddress && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs border-blue-300 h-8 mt-1"
+                      onClick={() => setShowWalletQRDialog(true)}
+                    >
+                      View QR Code
+                    </Button>
+                  )}
+                </div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Tip Message (shown below QR)</label>
                 <input
                   type="text"

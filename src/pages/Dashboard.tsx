@@ -1925,6 +1925,21 @@ const Dashboard = () => {
             {/* Pi Wallet Address for Tips & Payments + Pi Tip/Send Me a Coffee */}
             {isAuthenticated && (
               <div className="border-t pt-6">
+                <div className="flex items-center justify-between p-4 bg-card border border-border rounded-lg mb-4">
+                  <div className="space-y-0.5">
+                    <label htmlFor="show-pi-wallet-tips" className="text-base font-medium">
+                      Show Pi Wallet for Tips
+                    </label>
+                    <p className="text-sm text-muted-foreground">
+                      Allow visitors to see your Pi wallet tip QR and message on your public profile
+                    </p>
+                  </div>
+                  <Switch
+                    id="show-pi-wallet-tips"
+                    checked={profile.showPiWalletTips !== false}
+                    onCheckedChange={(checked) => setProfile({ ...profile, showPiWalletTips: checked })}
+                  />
+                </div>
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-semibold flex items-center gap-2">
                     <Wallet className="w-5 h-5 text-blue-500" />
@@ -1939,9 +1954,16 @@ const Dashboard = () => {
                     <div className="flex flex-col md:flex-row gap-6 items-start">
                       <div className="flex-1">
                         <h3 className="font-medium text-blue-900 mb-1">Receive DROP or Pi Tips</h3>
-                        <p className="text-sm text-blue-700 mb-3">
-                          Set your Pi wallet address to receive DROP or Pi token tips from visitors to your store.
-                        </p>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Input
+                            value={profile.piDonationMessage || ''}
+                            onChange={(e) => setProfile({ ...profile, piDonationMessage: e.target.value })}
+                            placeholder="Send me a coffee ☕"
+                            className="bg-background border-primary text-xs font-mono flex-1"
+                            maxLength={64}
+                          />
+                          <span className="text-xs text-muted-foreground">Custom message</span>
+                        </div>
                         <div className="space-y-3">
                           <div className="flex items-center gap-2">
                             <Input
@@ -1952,17 +1974,27 @@ const Dashboard = () => {
                               maxLength={56}
                             />
                             {profile.piWalletAddress && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(profile.piWalletAddress!);
-                                  toast.success('Wallet address copied!');
-                                }}
-                                className="text-xs border-blue-300"
-                              >
-                                Copy Address
-                              </Button>
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(profile.piWalletAddress!);
+                                    toast.success('Wallet address copied!');
+                                  }}
+                                  className="text-xs border-blue-300"
+                                >
+                                  Copy Address
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setShowPiWalletQR(true)}
+                                  className="text-xs border-blue-300"
+                                >
+                                  View QR Code
+                                </Button>
+                              </>
                             )}
                           </div>
                           <div className="flex items-center gap-2">
@@ -2009,18 +2041,24 @@ const Dashboard = () => {
                         <div className="font-semibold text-blue-900 mb-1">Tip / Send Me a Coffee</div>
                         {profile.piWalletAddress ? (
                           <>
-                            <img
-                              src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(profile.piWalletAddress)}`}
-                              alt="Wallet QR Code"
-                              className="rounded border border-blue-300 bg-white"
-                              style={{ width: 160, height: 160 }}
-                              onLoad={e => {
-                                // Store QR code image URL for sharing
-                                if (profile.piWalletAddress) {
-                                  setProfile(prev => ({ ...prev, piWalletQrUrl: (e.target as HTMLImageElement).src }));
-                                }
-                              }}
-                            />
+                            <div className="relative w-[160px] h-[160px] mx-auto">
+                              <svg width="160" height="160" className="rounded border border-blue-300 bg-white">
+                                <foreignObject width="160" height="160">
+                                  <div style={{ width: '160px', height: '160px', position: 'relative' }}>
+                                    <img
+                                      src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(profile.piWalletAddress)}`}
+                                      alt="Wallet QR Code"
+                                      style={{ width: 160, height: 160, borderRadius: 8, background: '#fff' }}
+                                    />
+                                    <img
+                                      src="/droplink-logo.png"
+                                      alt="Droplink Logo"
+                                      style={{ position: 'absolute', left: '50%', top: '50%', width: 48, height: 48, transform: 'translate(-50%, -50%)', borderRadius: 12, border: '2px solid #fff', background: '#fff', boxShadow: '0 2px 8px #0001' }}
+                                    />
+                                  </div>
+                                </foreignObject>
+                              </svg>
+                            </div>
                             <div className="text-xs text-blue-700 break-all text-center mt-1">
                               <span>Scan to tip Pi or DROP</span>
                             </div>

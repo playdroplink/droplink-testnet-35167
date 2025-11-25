@@ -39,52 +39,7 @@ import {
   Gift,
 } from "lucide-react";
 
-interface ProfileData {
-  logo: string;
-  businessName: string;
-  description: string;
-  youtubeVideoUrl: string;
-  socialLinks: {
-    twitter: string;
-    instagram: string;
-    youtube: string;
-    tiktok: string;
-    facebook: string;
-    linkedin: string;
-    twitch: string;
-    website: string;
-  };
-  customLinks: Array<{
-    id: string;
-    title: string;
-    url: string;
-    icon?: string;
-  }>;
-  theme: {
-    primaryColor: string;
-    backgroundColor: string;
-    backgroundType: 'color' | 'gif';
-    backgroundGif: string;
-    iconStyle: string;
-    buttonStyle: string;
-  };
-  products: Array<{
-    id: string;
-    title: string;
-    price: string;
-    description: string;
-    fileUrl: string;
-  }>;
-  wallets: {
-    crypto: Array<{ name: string; address: string; id: string }>;
-    bank: Array<{ name: string; details: string; id: string }>;
-  };
-  username: string;
-  hasPremium: boolean;
-  showShareButton: boolean;
-  piWalletAddress?: string;
-  piDonationMessage?: string;
-}
+import type { ProfileData } from "@/types/profile";
 
 const PublicBio = () => {
   const { username } = useParams();
@@ -358,6 +313,9 @@ const PublicBio = () => {
         username: profileData.username || "",
         hasPremium: profileData.has_premium || false,
         showShareButton: profileData.show_share_button !== false,
+        // Always map wallet address and donation message from profileData
+        piWalletAddress: profileData.pi_wallet_address || "",
+        piDonationMessage: profileData.pi_donation_message || "Send me DROP tokens on Pi Network!",
       });
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -825,12 +783,12 @@ const PublicBio = () => {
           </div>
         )}
 
-        {/* Pi Wallet Tips */}
-        {profile.piWalletAddress && (
+        {/* Pi Wallet Tips - show only if enabled */}
+        {profile.showPiWalletTips !== false && (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-white text-center mb-6 flex items-center justify-center gap-2">
               <Wallet className="w-5 h-5 text-blue-400" />
-              Send DROP Tokens
+              Receive DROP or Pi Tips
               <span className="relative group ml-2">
                 <Info className="w-4 h-4 text-blue-300 cursor-pointer" />
                 <span className="absolute left-1/2 -translate-x-1/2 mt-2 w-56 bg-blue-900 text-white text-xs rounded p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -839,59 +797,76 @@ const PublicBio = () => {
               </span>
             </h2>
             <div className="text-center space-y-4">
-              <div className="bg-blue-500/20 backdrop-blur rounded-lg border border-blue-400/30 p-4">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <Wallet className="w-5 h-5 text-blue-400" />
-                  <span className="text-blue-300 font-medium">Pi Network Wallet</span>
-                </div>
-                <p className="text-gray-300 text-sm mb-4">
-                  {profile.piDonationMessage || "Send me DROP tokens on Pi Network!"}
-                </p>
-                <div className="flex flex-col md:flex-row md:items-center md:justify-center gap-4 mb-4">
-                  {/* Inline QR code for wallet address */}
-                  <div className="flex flex-col items-center">
-                    <QRCodeSVG value={profile.piWalletAddress} size={96} bgColor="#fff" fgColor="#2563eb" />
-                    <span className="text-xs text-blue-400 mt-1">Scan to send DROP</span>
+              {profile.piWalletAddress ? (
+                <div className="bg-blue-500/20 backdrop-blur rounded-lg border border-blue-400/30 p-4">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Wallet className="w-5 h-5 text-blue-400" />
+                    <span className="text-blue-300 font-medium">Pi Network Wallet</span>
                   </div>
-                  <div className="flex-1 flex flex-col gap-2 items-center justify-center">
-                    <input
-                      type="text"
-                      value={profile.piWalletAddress}
-                      readOnly
-                      className="w-full bg-black/50 border border-blue-400/30 rounded px-3 py-2 text-white text-xs font-mono"
-                    />
-                    <div className="flex gap-2 w-full justify-center">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          navigator.clipboard.writeText(profile.piWalletAddress!);
-                          setCopied(true);
-                          setTimeout(() => setCopied(false), 2000);
-                          toast.success("Wallet address copied!");
-                        }}
-                        className="border-blue-400/30 text-blue-300 hover:bg-blue-500/20"
-                      >
-                        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                        <span className="ml-1">Copy</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const shareUrl = `${window.location.origin}/pay/${profile.piWalletAddress}`;
-                          navigator.clipboard.writeText(shareUrl);
-                          toast.success("Shareable wallet link copied!");
-                        }}
-                        className="border-blue-400/30 text-blue-300 hover:bg-blue-500/20"
-                      >
-                        <Share2 className="w-4 h-4" />
-                        <span className="ml-1">Share Wallet</span>
-                      </Button>
+                  <p className="text-gray-300 text-sm mb-4">
+                    {profile.piDonationMessage || "Send me DROP tokens on Pi Network!"}
+                  </p>
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-center gap-4 mb-4">
+                    {/* Inline QR code for wallet address */}
+                    <div className="flex flex-col items-center">
+                      <div className="relative w-[96px] h-[96px]">
+                        <QRCodeSVG value={profile.piWalletAddress} size={96} bgColor="#fff" fgColor="#2563eb" />
+                        <img
+                          src="/droplink-logo.png"
+                          alt="Droplink Logo"
+                          className="absolute left-1/2 top-1/2 w-8 h-8 -translate-x-1/2 -translate-y-1/2 z-10 shadow-lg border-2 border-white bg-white rounded-lg"
+                          style={{ pointerEvents: 'none' }}
+                        />
+                      </div>
+                      <span className="text-xs text-blue-400 mt-1">Scan to send DROP</span>
+                    </div>
+                    <div className="flex-1 flex flex-col gap-2 items-center justify-center">
+                      <input
+                        type="text"
+                        value={profile.piWalletAddress}
+                        readOnly
+                        className="w-full bg-black/50 border border-blue-400/30 rounded px-3 py-2 text-white text-xs font-mono"
+                      />
+                      <div className="flex gap-2 w-full justify-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(profile.piWalletAddress!);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                            toast.success("Wallet address copied!");
+                          }}
+                          className="border-blue-400/30 text-blue-300 hover:bg-blue-500/20"
+                        >
+                          {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                          <span className="ml-1">Copy</span>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const shareUrl = `${window.location.origin}/pay/${profile.piWalletAddress}`;
+                            navigator.clipboard.writeText(shareUrl);
+                            toast.success("Shareable wallet link copied!");
+                          }}
+                          className="border-blue-400/30 text-blue-300 hover:bg-blue-500/20"
+                        >
+                          <Share2 className="w-4 h-4" />
+                          <span className="ml-1">Share Wallet</span>
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-blue-500/10 rounded-lg border border-blue-400/10 p-6 text-center">
+                  <Wallet className="w-6 h-6 text-blue-300 mx-auto mb-2" />
+                  <div className="text-blue-200 font-semibold mb-1">No Pi Network Wallet Set</div>
+                  <div className="text-blue-100 text-sm mb-2">The profile owner has not set a Pi wallet address yet.</div>
+                  <div className="text-xs text-blue-300">Once a wallet is set in the dashboard, it will appear here for tips and DROP tokens.</div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1039,12 +1014,20 @@ const PublicBio = () => {
               </div>
               
               <div className="flex justify-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
-                <QRCodeSVG 
-                  value={profile.piWalletAddress || ''} 
-                  size={200}
-                  bgColor="#f8fafc"
-                  fgColor="#1e40af"
-                />
+                <div className="relative w-[200px] h-[200px]">
+                  <QRCodeSVG 
+                    value={profile.piWalletAddress || ''} 
+                    size={200}
+                    bgColor="#f8fafc"
+                    fgColor="#1e40af"
+                  />
+                  <img
+                    src="/droplink-logo.png"
+                    alt="Droplink Logo"
+                    className="absolute left-1/2 top-1/2 w-16 h-16 -translate-x-1/2 -translate-y-1/2 z-10 shadow-lg border-2 border-white bg-white rounded-lg"
+                    style={{ pointerEvents: 'none' }}
+                  />
+                </div>
               </div>
               
               <div className="space-y-2">

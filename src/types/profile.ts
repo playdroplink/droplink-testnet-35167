@@ -126,4 +126,6 @@ export interface ProfileData {
   shortenedLinks?: ShortenedLink[];
   hasPremium?: boolean;
   showShareButton?: boolean;
+  showPiWalletTips?: boolean;
+  piWalletQrUrl?: string;
 }
