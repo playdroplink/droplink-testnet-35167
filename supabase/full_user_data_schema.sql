@@ -52,4 +52,16 @@ CREATE TABLE IF NOT EXISTS payments (
   created_at timestamptz DEFAULT now()
 );
 
+-- Subscriptions Table
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id text REFERENCES profiles(pi_user_id),
+  plan text NOT NULL, -- e.g. 'free', 'pro', 'premium'
+  status text NOT NULL, -- e.g. 'active', 'expired', 'cancelled', 'pending'
+  start_date timestamptz DEFAULT now(),
+  end_date timestamptz,
+  payment_id uuid REFERENCES payments(id),
+  created_at timestamptz DEFAULT now()
+);
+
 -- Add more tables as needed for other user-generated content or features.

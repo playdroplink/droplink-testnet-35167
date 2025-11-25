@@ -1460,7 +1460,7 @@ const Dashboard = () => {
               </div>
 
               {/* YouTube Video URL - Premium/Pro only */}
-              <PlanGate minPlan="premium">
+              <PlanGate minPlan="premium" featureName="YouTube Video">
                 <div className="mb-6">
                   <Label htmlFor="youtube-video" className="mb-3 block">YouTube Video</Label>
                   <Input
@@ -1750,7 +1750,7 @@ const Dashboard = () => {
             )}
 
             {/* Custom Links - Premium/Pro only */}
-            <PlanGate minPlan="premium">
+            <PlanGate minPlan="premium" featureName="Custom Links">
               <div className="border-t pt-6">
                 <LinkManager
                   customLinks={profile.customLinks || []}
@@ -1788,7 +1788,7 @@ const Dashboard = () => {
             </div>
 
             {/* Theme Customization - Premium/Pro only */}
-            <PlanGate minPlan="premium">
+            <PlanGate minPlan="premium" featureName="Theme Customization">
               <div className="border-t pt-6">
                 <h2 className="text-lg font-semibold mb-6">Theme Customization</h2>
               <div className="space-y-4">
@@ -1862,7 +1862,7 @@ const Dashboard = () => {
             </PlanGate>
 
             {/* Digital Products - Premium/Pro only */}
-            <PlanGate minPlan="premium">
+            <PlanGate minPlan="premium" featureName="Digital Products">
               <div>
                 <h2 className="text-lg font-semibold mb-6">Digital Products</h2>
               <div className="space-y-4">
