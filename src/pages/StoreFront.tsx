@@ -1,5 +1,8 @@
 
 import React, { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { QRCodeSVG } from "qrcode.react";
 import { useStoreProfile } from "../hooks/useStoreProfile";
 import StorefrontWalletQR from "../components/StorefrontWalletQR";
 import StorefrontGiftButton from "../components/StorefrontGiftButton";
@@ -29,6 +32,11 @@ const StoreFront: React.FC = () => {
   // Wallet QR and tip text state
   const [walletAddress, setWalletAddress] = useState("");
   const [tipText, setTipText] = useState("Tip Pi or DROP");
+
+  // Share dialog state
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  // Wallet QR dialog state
+  const [showWalletQRDialog, setShowWalletQRDialog] = useState(false);
 
   // Get store username from URL
   let storeUsername = "";
@@ -145,21 +153,39 @@ const StoreFront: React.FC = () => {
         <div className={`lg:w-[400px] xl:w-[500px] ${showPreview ? 'flex' : 'hidden lg:flex'} bg-background border-l border-border/30 p-6 lg:p-8 flex-col items-center`}>
           <div className="mb-4 flex items-center justify-between w-full">
             <h3 className="text-sm font-medium text-muted-foreground">Preview</h3>
-            <button
-              className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
-              onClick={() => {
-                navigator.clipboard.writeText(getStoreUrl());
-                window.alert("Store URL copied!");
-              }}
-            >Copy link</button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => setShowWalletQRDialog(true)}
+              >
+                Pi Wallet QR
+              </Button>
+              <button
+                className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
+                onClick={() => {
+                  navigator.clipboard.writeText(getStoreUrl());
+                  window.alert("Store URL copied!");
+                }}
+              >Copy link</button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => setShowShareDialog(true)}
+              >
+                Share
+              </Button>
+            </div>
           </div>
           {/* Replace below with your actual store preview component */}
             <div className="w-full h-full flex flex-col items-center justify-center bg-white border rounded-xl shadow-inner min-h-[400px] p-4">
-              {/* Wallet QR code and tip section */}
-              <StorefrontWalletQR walletAddress={walletAddress} tipText={tipText} />
+              {/* Wallet QR code and tip section (legacy inline, now in dialog) */}
+              {/* <StorefrontWalletQR walletAddress={walletAddress} tipText={tipText} /> */}
               {/* TODO: Replace demo-profile-id with real profile id if needed */}
               <StorefrontGiftButton receiverProfileId={storeUsername} receiverName={storeUsername || "Store Owner"} />
-              <div className="w-full max-w-xs mt-4">
+              <div className="w-full max-w-xs mt-4 space-y-2">
                 <label className="block text-xs font-medium text-gray-700 mb-1">Wallet Address</label>
                 <input
                   type="text"
@@ -168,15 +194,84 @@ const StoreFront: React.FC = () => {
                   value={walletAddress}
                   onChange={e => setWalletAddress(e.target.value)}
                 />
-                <label className="block text-xs font-medium text-gray-700 mb-1">Tip Message</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Tip Message (shown below QR)</label>
                 <input
                   type="text"
                   className="w-full border rounded px-2 py-1 text-sm"
-                  placeholder="e.g. Buy me a coffee ☕"
+                  placeholder="e.g. Buy me a coffee ☕ or Donate Pi"
                   value={tipText}
                   onChange={e => setTipText(e.target.value)}
                 />
               </div>
+                            {/* Wallet QR Dialog */}
+                            <Dialog open={showWalletQRDialog} onOpenChange={setShowWalletQRDialog}>
+                              <DialogContent className="sm:max-w-md">
+                                <DialogHeader>
+                                  <DialogTitle>Pi Wallet QR Code</DialogTitle>
+                                </DialogHeader>
+                                <div className="flex flex-col items-center space-y-4 py-4">
+                                  <div className="bg-white p-4 rounded-lg relative w-[220px] h-[220px] flex items-center justify-center">
+                                    <QRCodeSVG
+                                      id="wallet-qr-svg"
+                                      value={walletAddress || ' '}
+                                      size={180}
+                                      level="H"
+                                      includeMargin={true}
+                                    />
+                                    <img
+                                      src="/droplink-logo.png"
+                                      alt="Droplink Logo"
+                                      className="absolute left-1/2 top-1/2 w-12 h-12 -translate-x-1/2 -translate-y-1/2 shadow-lg border-2 border-white bg-white rounded-lg"
+                                      style={{ pointerEvents: 'none' }}
+                                    />
+                                  </div>
+                                  <div className="text-xs text-gray-800 text-center break-all mb-1">{walletAddress}</div>
+                                  <div className="text-xs text-blue-600 text-center">{tipText || 'Tip Pi or DROP'}</div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+              {/* Share Dialog for Store Link with QR and logo */}
+              <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Share Your Store</DialogTitle>
+                  </DialogHeader>
+                  <div className="flex flex-col items-center space-y-4 py-4">
+                    <div className="bg-white p-4 rounded-lg relative w-[272px] h-[272px] flex items-center justify-center">
+                      <QRCodeSVG
+                        id="store-link-qr-svg"
+                        value={getStoreUrl()}
+                        size={256}
+                        level="H"
+                        includeMargin={true}
+                        fgColor="#222"
+                        bgColor="#fff"
+                      />
+                      <img
+                        src="/droplink-logo.png"
+                        alt="Droplink Logo"
+                        className="absolute left-1/2 top-1/2 w-16 h-16 -translate-x-1/2 -translate-y-1/2 z-10 shadow-lg border-2 border-white bg-white rounded-lg"
+                        style={{ pointerEvents: 'none' }}
+                      />
+                    </div>
+                    <p className="text-base font-semibold text-center text-gray-900" style={{wordBreak:'break-word'}}>
+                      {getStoreUrl()}
+                    </p>
+                    <p className="text-sm text-blue-700 text-center font-medium">
+                      Scan this QR code to visit your store
+                    </p>
+                    <Button
+                      onClick={() => {
+                        navigator.clipboard.writeText(getStoreUrl());
+                        window.alert("Store URL copied!");
+                      }}
+                      className="w-full gap-2"
+                    >
+                      Copy Store Link
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
         </div>
       </div>

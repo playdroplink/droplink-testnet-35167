@@ -901,11 +901,11 @@ const PublicBio = () => {
           <div className="flex justify-center py-6">
             <Button
               onClick={() => setShowShareDialog(true)}
-              className="gap-2"
-              style={{ backgroundColor: profile.theme.primaryColor }}
+              className="gap-2 text-gray-900 bg-white border border-gray-300 hover:bg-gray-100"
+              style={{ backgroundColor: '#fff', color: '#111', borderColor: '#e5e7eb' }}
             >
               <Share2 className="w-4 h-4" />
-              Share Profile
+              <span style={{color:'#111'}}>Share Profile</span>
             </Button>
           </div>
         )}
@@ -976,31 +976,34 @@ const PublicBio = () => {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="flex justify-center p-4 bg-white rounded-lg">
-              <QRCodeSVG 
-                value={`${window.location.origin}/${profile.username}`} 
-                size={200} 
+            <div className="flex justify-center p-4 bg-white rounded-lg relative w-[240px] h-[240px] mx-auto items-center">
+              <QRCodeSVG
+                value={`${window.location.origin}/${profile.username}`}
+                size={200}
+                fgColor="#222"
+                bgColor="#fff"
+              />
+              <img
+                src="/droplink-logo.png"
+                alt="Droplink Logo"
+                className="absolute left-1/2 top-1/2 w-12 h-12 -translate-x-1/2 -translate-y-1/2 z-10 shadow-lg border-2 border-white bg-white rounded-lg"
+                style={{ pointerEvents: 'none' }}
               />
             </div>
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Profile URL</p>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={`${window.location.origin}/${profile.username}`}
-                  readOnly
-                  className="flex-1 px-3 py-2 bg-muted rounded-md text-sm"
-                />
-                <Button 
-                  size="sm" 
-                  onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/${profile.username}`);
-                    toast.success("Link copied!");
-                  }}
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-              </div>
+            <p className="text-base font-semibold text-center text-gray-900" style={{wordBreak:'break-word'}}>
+              {`${window.location.origin}/${profile.username}`}
+            </p>
+            <div className="flex gap-2 justify-center">
+              <Button 
+                size="sm" 
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/${profile.username}`);
+                  toast.success("Link copied!");
+                }}
+              >
+                <Copy className="w-4 h-4" />
+                Copy Profile Link
+              </Button>
             </div>
           </div>
         </DialogContent>

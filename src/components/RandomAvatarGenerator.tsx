@@ -38,7 +38,7 @@ function generatePrompt() {
   const bg = getRandom(BG_GRADIENTS);
 
   return {
-    prompt: `Generate a 3D stylized profile avatar character in a warm, friendly Pixar-inspired style mixed with Google Material You softness. Rounded facial features, expressive eyes, clean soft shadows, and pastel color accents. No real humans — entirely animated style. Gender: ${gender}, Age: ${age}, Occupation: ${occupation}, Hair Style: ${hairStyle}, Hair Color: ${hairColor}, Skin Tone: ${skinTone}, Outfit: ${outfit}, Accessory: ${accessory}. Background: simple pastel gradient with a subtle Material You glow. Lighting: soft Pixar ambient light + gentle rim light. Mood: friendly, warm, welcoming. Camera: clean portrait, centered, head and shoulders. Resolution: crisp 4K.`,
+    prompt: `3D Pixar-style character avatar, full color, head and shoulders, white background, no text, no watermark, stylized 3D render, animated style, friendly, warm, expressive eyes, rounded facial features, clean soft shadows, pastel color accents, Gender: ${gender}, Age: ${age}, Occupation: ${occupation}, Hair Style: ${hairStyle}, Hair Color: ${hairColor}, Skin Tone: ${skinTone}, Outfit: ${outfit}, Accessory: ${accessory}`,
     bg,
     fallback: `${gender[0].toUpperCase()}${occupation[0].toUpperCase()}`
   };
@@ -53,11 +53,14 @@ export const RandomAvatarGenerator: React.FC<{
   const [bg, setBg] = useState<string>(BG_GRADIENTS[0]);
   const [fallback, setFallback] = useState<string>("AV");
 
+  const FALLBACK_IMAGE =
+    "https://ui-avatars.com/api/?name=Avatar&background=random&size=128";
+
   const handleGenerate = async () => {
     setLoading(true);
     setError("");
     const { prompt, bg, fallback } = generatePrompt();
-    setBg(bg);
+    setBg(typeof bg === 'string' ? bg : BG_GRADIENTS[0]);
     setFallback(fallback);
     try {
       const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
@@ -70,13 +73,17 @@ export const RandomAvatarGenerator: React.FC<{
         if (onAvatarGenerated) onAvatarGenerated(url);
       };
       img.onerror = () => {
-        setError("Failed to generate avatar. Try again.");
+        setError("Failed to generate avatar from AI. Showing fallback avatar.");
+        setAvatarUrl(FALLBACK_IMAGE);
         setLoading(false);
+        if (onAvatarGenerated) onAvatarGenerated(FALLBACK_IMAGE);
       };
       img.src = url;
     } catch (e) {
-      setError("Error generating avatar");
+      setError("Error generating avatar. Showing fallback avatar.");
+      setAvatarUrl(FALLBACK_IMAGE);
       setLoading(false);
+      if (onAvatarGenerated) onAvatarGenerated(FALLBACK_IMAGE);
     }
   };
 
@@ -101,7 +108,11 @@ export const RandomAvatarGenerator: React.FC<{
       <Button onClick={handleGenerate} disabled={loading} variant="outline">
         {loading ? "Generating..." : "Random Avatar"}
       </Button>
-      {error && <div className="text-xs text-red-500 mt-1">{error}</div>}
+      {error && (
+        <div className="text-xs text-red-500 mt-1">
+          {error}
+        </div>
+      )}
       <div className="text-xs text-muted-foreground text-center max-w-xs">
         Generates a Pixar/Material You style 3D avatar with random friendly features and pastel background.
       </div>
