@@ -73,6 +73,9 @@ serve(async (req) => {
         pi_user_id: piUserData.uid,
         business_name: piUserData.username,
         description: "",
+        first_name: piUserData.first_name || "",
+        last_name: piUserData.last_name || "",
+        profile_photo: piUserData.profile_photo || ""
       })
       .select()
       .single();

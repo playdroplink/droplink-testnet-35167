@@ -1,0 +1,55 @@
+-- User Profile Table (already exists, shown for reference)
+CREATE TABLE IF NOT EXISTS profiles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  username text UNIQUE,
+  pi_user_id text UNIQUE,
+  business_name text,
+  description text,
+  first_name text,
+  last_name text,
+  profile_photo text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- Activity Log Table
+CREATE TABLE IF NOT EXISTS activity_logs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id text REFERENCES profiles(pi_user_id),
+  action text NOT NULL,
+  details jsonb,
+  created_at timestamptz DEFAULT now()
+);
+
+-- Profile Change History Table
+CREATE TABLE IF NOT EXISTS profile_changes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id text REFERENCES profiles(pi_user_id),
+  changed_fields jsonb,
+  old_values jsonb,
+  new_values jsonb,
+  changed_at timestamptz DEFAULT now()
+);
+
+-- User Links Table
+CREATE TABLE IF NOT EXISTS user_links (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id text REFERENCES profiles(pi_user_id),
+  url text NOT NULL,
+  title text,
+  description text,
+  created_at timestamptz DEFAULT now()
+);
+
+-- Payments Table
+CREATE TABLE IF NOT EXISTS payments (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id text REFERENCES profiles(pi_user_id),
+  amount numeric,
+  currency text,
+  status text,
+  payment_data jsonb,
+  created_at timestamptz DEFAULT now()
+);
+
+-- Add more tables as needed for other user-generated content or features.

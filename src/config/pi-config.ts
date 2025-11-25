@@ -1,5 +1,5 @@
 export const PI_CONFIG = {
-  API_KEY: "mainnet-api-key", // Mainnet API key (replace with actual)
+  API_KEY: "6dxche8cvknkiozfe7no9eucsi5ohlqy6oyrlclq9jx03gt9z10icujzbfaiaev7", // Mainnet API key
   BASE_URL: "https://api.minepi.com",
   NETWORK: "mainnet",
   NETWORK_PASSPHRASE: "Pi Mainnet",

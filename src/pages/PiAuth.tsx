@@ -124,28 +124,32 @@ const PiAuth = () => {
         </CardHeader>
         <CardContent className="space-y-4">
 
-
-          {/* Pi Network Sign In */}
-          <Button 
-            onClick={handlePiSignIn} 
-            className="w-full" 
-            size="lg"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Connecting...
-              </>
-            ) : (
-              "Sign in with Pi Network"
-            )}
-          </Button>
-
-          {/* Supabase Email Sign In/Sign Up */}
-          {/* <div className="pt-2">
-            <EmailAuthForm />
-          </div> */}
+          {/* Pi Network Sign In - Only show if Pi SDK is available */}
+          {isPiNetworkAvailable() ? (
+            <Button 
+              onClick={handlePiSignIn} 
+              className="w-full" 
+              size="lg"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                "Sign in with Pi Network"
+              )}
+            </Button>
+          ) : (
+            <div className="flex flex-col items-center gap-4">
+              <div className="text-red-500 text-sm font-medium text-center">
+                Pi Network is not available.<br />
+                Please open this app in <b>Pi Browser</b> or ensure the Pi SDK is loaded.<br />
+                <a href="https://minepi.com/Wain2020" target="_blank" rel="noopener noreferrer" className="underline text-blue-600">Download Pi Browser</a>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2 text-sm text-muted-foreground">
             <p className="flex items-center gap-2">
@@ -167,25 +171,6 @@ const PiAuth = () => {
           </div>
 
           <div className="pt-4 border-t space-y-2">
-            <p className="text-xs text-center text-muted-foreground">
-              Pi Network access is not available in this browser ({PI_CONFIG.SANDBOX_MODE ? 'Sandbox mode active' : 'Mainnet mode'}).
-              <br />
-              Please open this app in Pi Browser to use Pi authentication, or ensure the Pi SDK is loaded in your environment.
-              <br />
-              Your Pi username will be used as your unique identifier.
-            </p>
-
-            {/* If Pi Browser/SDK is not available, show download link */}
-            {!isPiNetworkAvailable() && (
-              <div className="flex justify-center mt-2">
-                <Button
-                  variant="outline"
-                  onClick={() => window.open('https://minepi.com/Wain2020', '_blank')}
-                >
-                  Download Pi Browser
-                </Button>
-              </div>
-            )}
             <div className="flex justify-center gap-4 text-xs">
               <AboutModal>
                 <button className="text-primary hover:underline cursor-pointer">
