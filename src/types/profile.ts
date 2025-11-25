@@ -88,8 +88,8 @@ export interface PaymentLink {
 export interface Product {
   id: string;
   title: string;
-  price: string;
   description: string;
+  price: number;
   fileUrl: string;
 }
 
@@ -108,24 +108,27 @@ export interface ShortenedLink {
   active: boolean;
 }
 
+export interface Wallets {
+  crypto: { id: string; address: string; name: string }[];
+  bank: { id: string; accountNumber: string; bankName: string; details: string }[];
+}
+
 export interface ProfileData {
-  logo: string;
-  businessName: string;
-  storeUrl: string;
-  description: string;
-  email?: string;
+  id: string;
+  username: string;
+  email: string;
+  logo?: string;
+  businessName?: string;
+  description?: string;
+  youtubeVideoUrl?: string;
+  customLinks?: CustomLink[];
+  products?: Product[];
+  theme?: ThemeData;
+  wallets?: Wallets;
+  hasPremium?: boolean;
   piWalletAddress?: string;
   piDonationMessage?: string;
-  youtubeVideoUrl?: string;
-  socialLinks: SocialLinks;
-  customLinks: CustomLink[];
-  linkLayoutType?: LayoutType;
-  theme: ThemeData;
-  products: Product[];
-  paymentLinks?: PaymentLink[];
-  shortenedLinks?: ShortenedLink[];
-  hasPremium?: boolean;
   showShareButton?: boolean;
+  storeUrl?: string;
   showPiWalletTips?: boolean;
-  piWalletQrUrl?: string;
 }

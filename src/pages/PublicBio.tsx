@@ -59,6 +59,7 @@ const PublicBio = () => {
   const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
   const [followerCount, setFollowerCount] = useState(0);
   const [visitCount, setVisitCount] = useState(0);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     loadProfile();
@@ -276,46 +277,29 @@ const PublicBio = () => {
       const bankDetails = financialData.bank_details as any;
 
       setProfile({
+        id: profileData.id,
+        email: profileData.email,
         logo: profileData.logo || "",
         businessName: profileData.business_name || "",
         description: profileData.description || "",
         youtubeVideoUrl: profileData.youtube_video_url || "",
-        socialLinks: socialLinks || {
-          twitter: "",
-          instagram: "",
-          youtube: "",
-          tiktok: "",
-          facebook: "",
-          linkedin: "",
-          twitch: "",
-          website: "",
-        },
-        customLinks: (themeSettings?.customLinks as any) || [],
+        socialLinks: profileData.social_links || [],
+        customLinks: profileData.custom_links || [],
         theme: {
-          primaryColor: themeSettings?.primaryColor || "#3b82f6",
-          backgroundColor: themeSettings?.backgroundColor || "#000000",
-          backgroundType: (themeSettings?.backgroundType as 'color' | 'gif') || "color",
-          backgroundGif: themeSettings?.backgroundGif || "",
-          iconStyle: themeSettings?.iconStyle || "rounded",
-          buttonStyle: themeSettings?.buttonStyle || "filled",
+          primaryColor: profileData.theme_primary_color || "#000000",
+          backgroundColor: profileData.theme_background_color || "#FFFFFF",
+          backgroundType: profileData.theme_background_type || "color",
+          backgroundGif: profileData.theme_background_gif || "",
+          iconStyle: profileData.theme_icon_style || "default",
+          buttonStyle: profileData.theme_button_style || "default",
         },
-        products: productsData?.map((p: any) => ({
-          id: p.id,
-          title: p.title,
-          price: p.price,
-          description: p.description || "",
-          fileUrl: p.file_url || "",
-        })) || [],
-        wallets: {
-          crypto: cryptoWallets?.wallets || [],
-          bank: bankDetails?.accounts || [],
-        },
-        username: profileData.username || "",
+        wallets: profileData.wallets || { crypto: [], bank: [] },
         hasPremium: profileData.has_premium || false,
-        showShareButton: profileData.show_share_button !== false,
-        // Always map wallet address and donation message from profileData
         piWalletAddress: profileData.pi_wallet_address || "",
-        piDonationMessage: profileData.pi_donation_message || "Send me DROP tokens on Pi Network!",
+        piDonationMessage: profileData.pi_donation_message || "",
+        showShareButton: profileData.show_share_button || false,
+        storeUrl: profileData.store_url || "",
+        showPiWalletTips: profileData.show_pi_wallet_tips || true,
       });
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -357,6 +341,28 @@ const PublicBio = () => {
       navigator.clipboard.writeText(selectedWallet.value);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!message.trim()) return;
+
+    try {
+      const { error } = await supabase.from("messages").insert({
+        sender: profileId,
+        content: message,
+        created_at: new Date().toISOString(),
+      });
+
+      if (error) {
+        toast.error("Failed to send message. Please try again.");
+      } else {
+        toast.success("Message sent successfully!");
+        setMessage("");
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("An unexpected error occurred.");
     }
   };
 
@@ -893,6 +899,27 @@ const PublicBio = () => {
           />
         )}
 
+        {/* Message Input Section - Only for followers */}
+        {currentUserProfileId && currentUserProfileId !== profileId && (
+          <div className="mt-8">
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Write a message to the merchant..."
+              className="w-full p-4 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none h-24"
+            />
+            <div className="flex justify-end gap-2 mt-4">
+              <Button
+                onClick={sendMessage}
+                className="flex-shrink-0"
+                style={{ backgroundColor: profile.theme.primaryColor }}
+              >
+                Send Message
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Droplink Branding Footer */}
         {!profile.hasPremium && (
           <div className="text-center py-8 border-t border-white/10">
@@ -953,7 +980,7 @@ const PublicBio = () => {
           <div className="space-y-4">
             <div className="flex justify-center p-4 bg-white rounded-lg relative w-[240px] h-[240px] mx-auto items-center">
               <QRCodeSVG
-                value={`${window.location.origin}/${profile.username}`}
+                value={`${window.location.origin}/${profile.storeUrl}`}
                 size={200}
                 fgColor="#222"
                 bgColor="#fff"
@@ -966,13 +993,13 @@ const PublicBio = () => {
               />
             </div>
             <p className="text-base font-semibold text-center text-gray-900" style={{wordBreak:'break-word'}}>
-              {`${window.location.origin}/${profile.username}`}
+              {`${window.location.origin}/${profile.storeUrl}`}
             </p>
             <div className="flex gap-2 justify-center">
               <Button 
                 size="sm" 
                 onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/${profile.username}`);
+                  navigator.clipboard.writeText(`${window.location.origin}/${profile.storeUrl}`);
                   toast.success("Link copied!");
                 }}
               >
