@@ -1,5 +1,5 @@
 export const PI_CONFIG = {
-  API_KEY: "YOUR_MAINNET_API_KEY_HERE", // Mainnet API key (replace with your real key)
+  API_KEY: "rfjwwiyaysjsinhjrkhvplkrrmf5rjnwd3blmzuxdmek1t5mhy4avy6s6k96znwc", // Mainnet API key
   BASE_URL: "https://api.minepi.com",
   NETWORK: "mainnet",
   NETWORK_PASSPHRASE: "Pi Network",
@@ -26,10 +26,10 @@ export const PI_CONFIG = {
     }
   },
   
-  VALIDATION_KEY: "26ec4458680b98edc16b18ed68c2fb7841ee2c9d3b9cfdcfa82de36bea71f64074a2ee5d1fbea04762df431edb1458b44a2ff50679b16d93935b0b645e98174a",
+  VALIDATION_KEY: "7511661aac4538b1832d2c9ba117f6d972b26a54640598d3fbb9824013c7079203f65b02d125be3f418605cfb89ba0e4443e3ec997e3800eb464df0bc5410d2a",
   
-  PLATFORM_URL: "https://droplink.space",
-  MAINNET_URL: "https://droplink.space",
+  PLATFORM_URL: "https://droplink2920.pinet.com",
+  MAINNET_URL: "https://droplink2920.pinet.com",
   
   getAuthHeaders: (accessToken: string) => ({
     'Authorization': `Bearer ${accessToken}`,

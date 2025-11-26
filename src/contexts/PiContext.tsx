@@ -1351,22 +1351,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     openExternalUrl,
   };
 
-  // Show debug info on screen for mobile screenshotting
-  const [showDebug, setShowDebug] = useState(true); // Set to true for now; you can toggle with a flag or env
-  const [debugInfo, setDebugInfo] = useState<any>(null);
 
-  useEffect(() => {
-    if (showDebug) {
-      setDebugInfo({
-        PI_CONFIG,
-        location: typeof window !== 'undefined' ? window.location.href : '',
-        userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : '',
-        isPiBrowserEnv: typeof isPiBrowserEnv === 'function' ? isPiBrowserEnv() : false,
-        piSDK: typeof window !== 'undefined' && typeof window.Pi !== 'undefined',
-        error,
-      });
-    }
-  }, [showDebug, error]);
 
   return (
     <PiContext.Provider value={value}>
