@@ -123,7 +123,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
   };
 
   return (
-    <div className="relative w-[280px] h-[570px] rounded-[3rem] border-[10px] border-foreground/20 shadow-2xl overflow-hidden"
+    <div className="relative w-[340px] h-[700px] rounded-[3rem] border-[10px] border-foreground/20 shadow-2xl overflow-hidden"
          style={
            (profile.theme?.backgroundType === 'gif' && profile.theme?.backgroundGif) || (profile.theme?.backgroundType === 'video' && profile.theme?.backgroundVideo)
              ? {}

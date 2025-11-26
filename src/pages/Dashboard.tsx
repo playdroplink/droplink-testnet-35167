@@ -2101,7 +2101,13 @@ const Dashboard = () => {
                 {/* Action Buttons */}
                 <Card className="border-0 rounded-none shadow-none sticky bottom-0 z-50 w-full p-0 m-0">
                   <div className="flex gap-4 border-t border-border bg-background/95 backdrop-blur-sm w-full p-0 m-0">
-                    <Button className="flex-1 h-12 rounded-none bg-white text-sky-400 font-medium border-none hover:bg-gray-100">
+                    <Button
+                      className="flex-1 h-12 rounded-none bg-white text-sky-400 font-medium border-none hover:bg-gray-100"
+                      onClick={() => {
+                        toast.info('No changes were saved.');
+                        // Optionally, add logic to reset form fields to their last saved state here
+                      }}
+                    >
                       Cancel
                     </Button>
                     <Button onClick={handleSave} className="flex-1 h-12 bg-sky-400 hover:bg-sky-500 text-white font-medium rounded-none border-none" disabled={saving}>
@@ -2214,16 +2220,19 @@ const Dashboard = () => {
         </div>
 
         {/* Preview Panel */}
-        <div className={`lg:w-[400px] xl:w-[500px] ${isMobile ? 'bg-background border-t' : 'glass-surface border-l'} border-border/30 p-6 lg:p-8 flex flex-col items-center ${
-          showPreview ? 'flex' : 'hidden lg:flex'
-        }`}>
-          <div className="mb-4 flex items-center justify-between w-full">
+        <div
+          className={`lg:w-[400px] xl:w-[500px] ${isMobile ? 'bg-background border-t' : 'glass-surface border-l'} border-border/30 flex-1 flex flex-col items-center justify-center ${showPreview ? 'flex' : 'hidden lg:flex'}`}
+          style={{ minHeight: 0 }}
+        >
+          <div className="mb-4 flex items-center justify-between w-full max-w-xs mx-auto">
             <h3 className="text-sm font-medium text-muted-foreground">Preview</h3>
             <Button variant="ghost" size="sm" onClick={handleCopyLink}>
               Copy link
             </Button>
           </div>
-          <PhonePreview profile={profile} />
+          <div className="flex-1 flex items-center justify-center w-full">
+            <PhonePreview profile={profile} />
+          </div>
         </div>
       </div>
       
