@@ -111,7 +111,7 @@ const ProfileDebug = () => {
           business_name: 'Test Store',
           description: 'This is a test store for debugging',
           social_links: {},
-          theme_settings: { primaryColor: '#3b82f6' },
+          theme_settings: { primaryColor: '#38bdf8' },
         })
         .select()
         .single();

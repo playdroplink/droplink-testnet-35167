@@ -623,7 +623,7 @@ const readyThemes: ReadyTheme[] = [
     category: 'Crypto',
     description: 'Professional blue theme for DeFi and blockchain projects',
     icon: Bitcoin,
-    primaryColor: '#3b82f6',
+    primaryColor: '#38bdf8',
     backgroundColor: '#f8fafc',
     backgroundType: 'color',
     backgroundGif: '',

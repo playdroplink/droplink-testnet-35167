@@ -71,7 +71,7 @@ export interface UserPreferences {
 // Default preferences
 export const defaultPreferences: UserPreferences = {
   theme_mode: 'system',
-  primary_color: '#3b82f6',
+  primary_color: '#38bdf8',
   background_color: '#000000',
   font_size: 'medium',
   dashboard_layout: {

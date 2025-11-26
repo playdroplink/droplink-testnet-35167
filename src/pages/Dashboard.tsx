@@ -192,7 +192,7 @@ const Dashboard = () => {
     ],
     customLinks: [],
     theme: {
-      primaryColor: "#3b82f6",
+      primaryColor: "#38bdf8",
       backgroundColor: "#000000",
       backgroundType: "color",
       backgroundGif: "",
@@ -571,7 +571,7 @@ const Dashboard = () => {
           ],
           customLinks: (themeSettings?.customLinks as any) || [],
           theme: {
-            primaryColor: themeSettings?.primaryColor || "#3b82f6",
+            primaryColor: themeSettings?.primaryColor || "#38bdf8",
             backgroundColor: themeSettings?.backgroundColor || "#000000",
             backgroundType: (themeSettings?.backgroundType as 'color' | 'gif') || "color",
             backgroundGif: themeSettings?.backgroundGif || "",
@@ -784,7 +784,7 @@ const Dashboard = () => {
           ],
           customLinks: [],
           theme: {
-            primaryColor: "#3b82f6",
+            primaryColor: "#38bdf8",
             backgroundColor: "#000000",
             backgroundType: "color" as const,
             backgroundGif: "",
