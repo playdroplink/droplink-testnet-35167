@@ -105,6 +105,8 @@ interface PaymentLink {
 
 const Dashboard = () => {
   // AI Logo Generation State (fix ReferenceError)
+  // Greeting state
+  const [greeting, setGreeting] = useState("");
   const [aiLogoPrompt, setAiLogoPrompt] = useState("");
   const [aiLogoLoading, setAiLogoLoading] = useState(false);
   const [aiLogoError, setAiLogoError] = useState("");
@@ -113,6 +115,17 @@ const Dashboard = () => {
   // Hooks must be called unconditionally
   const piContext = usePi();
   const { piUser, isAuthenticated, signOut: piSignOut, loading: piLoading, getCurrentWalletAddress } = piContext;
+
+  // Set greeting based on time
+  useEffect(() => {
+    const getGreeting = () => {
+      const hour = new Date().getHours();
+      if (hour < 12) return "Good morning";
+      if (hour < 18) return "Good afternoon";
+      return "Good evening";
+    };
+    setGreeting(getGreeting());
+  }, []);
   
   const subscription = useActiveSubscription();
   const { plan, expiresAt, loading: subscriptionLoading } = subscription;
@@ -953,6 +966,19 @@ const Dashboard = () => {
           filter: "blur(32px)",
         }}
       />
+      {/* Greeting Section */}
+      <div className="px-3 sm:px-4 lg:px-6 pt-4 pb-2">
+        {greeting && displayUsername && (
+          <h2 className="text-xl font-semibold text-sky-700 mb-2 animate-fade-in">
+            {greeting}, {displayUsername}!
+          </h2>
+        )}
+        {greeting && !displayUsername && (
+          <h2 className="text-xl font-semibold text-sky-700 mb-2 animate-fade-in">
+            {greeting}!
+          </h2>
+        )}
+      </div>
       <header className={`px-3 sm:px-4 lg:px-6 py-3 sm:py-4 shadow-sm border-b border-border ${isMobile ? 'bg-background' : 'glass-surface'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-4">
