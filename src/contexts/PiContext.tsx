@@ -274,12 +274,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   // Sign In with Pi Network (Mainnet)
   const signIn = async (scopes: string[] = PI_CONFIG.scopes || ['username', 'payments', 'wallet_address']) => {
     if (!isInitialized || !window.Pi) {
-      // Try to reinitialize Pi SDK
-      toast(`Initializing Pi Network connection (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})...`, {
-        description: 'Please wait while we connect to Pi Network',
-        duration: 3000,
-      });
-      
+      // Try to reinitialize Pi SDK silently (no toast)
       try {
         if (isPiBrowserEnv()) {
           await window.Pi.init(PI_CONFIG.SDK);
@@ -289,11 +284,20 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           throw new Error('Pi Network is not available in this browser');
         }
       } catch (reinitError) {
-        const errorMsg = `Pi Network is not available (sandbox: ${PI_CONFIG.SANDBOX_MODE ? 'enabled' : 'disabled'}). Please use Pi Browser or ensure the Pi SDK is loaded.`;
-        toast.error(errorMsg, {
-          description: 'Please try using Pi Browser or check your connection',
-          duration: 5000,
-        });
+        // Show a toast with a Pi Browser download link if not in Pi Browser
+        const piBrowserUrl = 'https://minepi.com/Wain2020';
+        const errorMsg = `Pi Network features are only available in the official Pi Browser.\n\nTo sign in, please open this app in the Pi Browser or Pi Developer Portal.`;
+        toast(
+          errorMsg,
+          {
+            description: `Download Pi Browser: `,
+            action: {
+              label: 'Get Pi Browser',
+              onClick: () => { window.open(piBrowserUrl, '_blank'); },
+            },
+            duration: 10000,
+          }
+        );
         throw new Error(errorMsg);
       }
     }
@@ -492,7 +496,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         }
       }
       
-      toast(dbResult.message || `Welcome, ${finalUser.username || 'Pi User'}!`, {
+      toast(dbResult?.message || `Welcome, ${finalUser.username || 'Pi User'}!`, {
         description: `Authentication Successful (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})`,
         duration: 3000,
       });
