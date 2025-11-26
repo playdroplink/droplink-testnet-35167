@@ -412,26 +412,17 @@ const PublicBio = () => {
   };
 
   const getSocialIcon = (platform: string) => {
-    switch (platform) {
-      case "twitter":
-        return <Twitter className="w-5 h-5" />;
-      case "instagram":
-        return <Instagram className="w-5 h-5" />;
-      case "youtube":
-        return <Youtube className="w-5 h-5" />;
-      case "tiktok":
-        return <Music className="w-5 h-5" />;
-      case "facebook":
-        return <Facebook className="w-5 h-5" />;
-      case "linkedin":
-        return <Linkedin className="w-5 h-5" />;
-      case "twitch":
-        return <Twitch className="w-5 h-5" />;
-      case "website":
-        return <Globe className="w-5 h-5" />;
-      default:
-        return null;
-    }
+    if (!platform) return <LinkIcon className="w-5 h-5" />;
+    const p = platform.toLowerCase();
+    if (["twitter", "x"].includes(p)) return <Twitter className="w-5 h-5" />;
+    if (["instagram", "insta"].includes(p)) return <Instagram className="w-5 h-5" />;
+    if (["youtube", "yt"].includes(p)) return <Youtube className="w-5 h-5" />;
+    if (["tiktok", "music", "tiktokmusic"].includes(p)) return <Music className="w-5 h-5" />;
+    if (["facebook", "fb"].includes(p)) return <Facebook className="w-5 h-5" />;
+    if (["linkedin", "li"].includes(p)) return <Linkedin className="w-5 h-5" />;
+    if (["twitch"].includes(p)) return <Twitch className="w-5 h-5" />;
+    if (["website", "web", "site", "homepage", "home"].includes(p)) return <Globe className="w-5 h-5" />;
+    return <LinkIcon className="w-5 h-5" />;
   };
 
   const getIconStyle = (style: string) => {
@@ -600,13 +591,13 @@ const PublicBio = () => {
           </h1>
           
           {/* Follower and Visit Counts - Controlled by Preferences */}
-          <div className="flex gap-6 justify-center text-sm text-gray-300">
+          <div className="flex gap-6 justify-center text-sm text-white">
             {userPreferences?.store_settings?.showFollowerCount !== false && (
               <div className="text-center">
                 <div className="font-semibold text-lg" style={{ color: profile.theme.primaryColor }}>
                   {followerCount.toLocaleString()}
                 </div>
-                <div>Followers</div>
+                <div className="text-white">Followers</div>
               </div>
             )}
             {userPreferences?.store_settings?.showVisitCount !== false && (
@@ -614,13 +605,13 @@ const PublicBio = () => {
                 <div className="font-semibold text-lg" style={{ color: profile.theme.primaryColor }}>
                   {visitCount.toLocaleString()}
                 </div>
-                <div>Views</div>
+                <div className="text-white">Views</div>
               </div>
             )}
           </div>
           
           {profile.description && (
-            <p className="text-gray-300 max-w-md mx-auto">
+            <p className="text-white max-w-md mx-auto">
               {profile.description}
             </p>
           )}
@@ -673,7 +664,7 @@ const PublicBio = () => {
           {!currentUserProfileId && (
             <div className="flex justify-center pt-4">
               <div className="text-center p-4 bg-white/5 rounded-lg border border-white/10">
-                <p className="text-sm text-gray-300 mb-3">
+                <p className="text-sm text-white mb-3">
                   Like this store? Follow to stay connected!
                 </p>
                 <Button
@@ -705,7 +696,7 @@ const PublicBio = () => {
         )}
 
         {/* Social Links - Controlled by Preferences */}
-        {socialLinksArray.length > 0 && userPreferences?.store_settings?.showSocialLinks !== false && (
+        {Array.isArray(socialLinksArray) && socialLinksArray.length > 0 && userPreferences?.store_settings?.showSocialLinks !== false && (
           <div className="flex flex-wrap justify-center gap-3">
             {socialLinksArray.map((link) => (
               <a
@@ -726,7 +717,7 @@ const PublicBio = () => {
         )}
 
         {/* Custom Links */}
-        {profile.customLinks.length > 0 && (
+        {Array.isArray(profile.customLinks) && profile.customLinks.length > 0 && (
           <div className="space-y-3">
             {profile.customLinks.map((link) => {
               const buttonStyles = getButtonStyles(profile.theme.primaryColor, profile.theme.buttonStyle);
@@ -748,7 +739,7 @@ const PublicBio = () => {
         )}
 
         {/* Products */}
-        {profile.products.length > 0 && (
+        {Array.isArray(profile.products) && profile.products.length > 0 && (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-white text-center mb-6">
               Digital Products
@@ -768,7 +759,7 @@ const PublicBio = () => {
                       {product.title}
                     </h3>
                     {product.description && (
-                      <p className="text-gray-400 text-sm mb-3">
+                      <p className="text-white text-sm mb-3">
                         {product.description}
                       </p>
                     )}
@@ -798,16 +789,16 @@ const PublicBio = () => {
         )}
 
         {/* Donation Wallets */}
-        {(profile.wallets.crypto.length > 0 || profile.wallets.bank.length > 0) && (
+        {(Array.isArray(profile.wallets?.crypto) && profile.wallets.crypto.length > 0 || Array.isArray(profile.wallets?.bank) && profile.wallets.bank.length > 0) && (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-white text-center mb-6 flex items-center justify-center gap-2">
               <Wallet className="w-5 h-5" />
               Support with Tips & Donations
             </h2>
             
-            {profile.wallets.crypto.length > 0 && (
+            {Array.isArray(profile.wallets?.crypto) && profile.wallets.crypto.length > 0 && (
               <div className="space-y-3">
-                <p className="text-gray-400 text-sm text-center">Crypto Wallets</p>
+                <p className="text-white text-sm text-center">Crypto Wallets</p>
                 {profile.wallets.crypto.map((wallet) => (
                    <button
                      key={wallet.id}
@@ -819,16 +810,16 @@ const PublicBio = () => {
                    >
                     <div className="flex items-center justify-between">
                       <span className="text-white font-medium">{wallet.name}</span>
-                      <span className="text-gray-400 text-sm">Tap for QR</span>
+                      <span className="text-white text-sm">Tap for QR</span>
                     </div>
                   </button>
                 ))}
               </div>
             )}
             
-            {profile.wallets.bank.length > 0 && (
+            {Array.isArray(profile.wallets?.bank) && profile.wallets.bank.length > 0 && (
               <div className="space-y-3 mt-6">
-                <p className="text-gray-400 text-sm text-center">Bank Accounts</p>
+                <p className="text-white text-sm text-center">Bank Accounts</p>
                 {profile.wallets.bank.map((account) => (
                   <button
                     key={account.id}
@@ -840,7 +831,7 @@ const PublicBio = () => {
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-white font-medium">{account.bankName}</span>
-                      <span className="text-gray-400 text-sm">Tap for details</span>
+                      <span className="text-white text-sm">Tap for details</span>
                     </div>
                   </button>
                 ))}
@@ -870,7 +861,7 @@ const PublicBio = () => {
                     <Wallet className="w-5 h-5 text-blue-400" />
                     <span className="text-blue-300 font-medium">Pi Network Wallet</span>
                   </div>
-                  <p className="text-gray-300 text-sm mb-4">
+                  <p className="text-white text-sm mb-4">
                     {profile.piDonationMessage || "Send me DROP tokens on Pi Network!"}
                   </p>
                   <div className="flex flex-col md:flex-row md:items-center md:justify-center gap-4 mb-4">
@@ -927,7 +918,7 @@ const PublicBio = () => {
                   </div>
                 </div>
               ) : (
-                <div className="bg-blue-500/10 rounded-lg border border-blue-400/10 p-6 text-center">
+                <div className="bg-blue-500/10 rounded-lg border border-blue-400/10 p-6 text-center text-white">
                   <Wallet className="w-6 h-6 text-blue-300 mx-auto mb-2" />
                   <div className="text-blue-200 font-semibold mb-1">No Pi Network Wallet Set</div>
                   <div className="text-blue-100 text-sm mb-2">The profile owner has not set a Pi wallet address yet.</div>
@@ -938,7 +929,7 @@ const PublicBio = () => {
           </div>
         )}
         {profile.showPiWalletTips !== false && isPlanExpired && (
-          <div className="bg-blue-900/80 rounded-lg border border-blue-400/30 p-6 text-center my-6">
+          <div className="bg-blue-900/80 rounded-lg border border-blue-400/30 p-6 text-center my-6 text-white">
             <Wallet className="w-6 h-6 text-blue-300 mx-auto mb-2" />
             <div className="text-blue-200 font-semibold mb-1">Pi Tips are locked</div>
             <div className="text-blue-100 text-sm mb-2">This feature is locked because the plan has expired. Renew to unlock Pi Tips.</div>

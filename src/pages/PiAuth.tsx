@@ -5,6 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePi } from "@/contexts/PiContext";
 import { Loader2 } from "lucide-react";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+// import { supabase } from "@/integrations/supabase/client";
 // import EmailAuthForm from "@/components/EmailAuthForm"; // Disabled for Pi-only auth
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +21,88 @@ import droplinkLogo from "@/assets/droplink-logo.png";
 const PiAuth = () => {
   const navigate = useNavigate();
   const { isAuthenticated, loading, signIn, piUser } = usePi();
+
+  // Email auth state
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [emailLoading, setEmailLoading] = useState(false);
+    // Email sign in/sign up handler
+    const handleEmailAuth = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!email || !password) {
+        toast.error("Please fill in all fields");
+        return;
+      }
+      if (!isLogin && password.length < 6) {
+        toast.error("Password must be at least 6 characters");
+        return;
+      }
+      setEmailLoading(true);
+      try {
+        if (isLogin) {
+          const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+          if (error) {
+            if (error.message.includes("Invalid login credentials")) {
+              toast.error("Invalid email or password");
+            } else {
+              toast.error(error.message);
+            }
+            return;
+          }
+          if (data.user) {
+            await ensureProfileExists(data.user);
+          }
+          toast.success("Welcome back!");
+          handlePostAuthRedirect();
+        } else {
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: { data: { auth_method: 'email' } }
+          });
+          if (error) {
+            if (error.message.includes("already registered")) {
+              toast.error("This email is already registered. Please log in instead.");
+              setIsLogin(true);
+            } else {
+              toast.error(error.message);
+            }
+            return;
+          }
+          if (data.user) {
+            await ensureProfileExists(data.user);
+            toast.success("Account created successfully! Welcome!");
+            handlePostAuthRedirect();
+          }
+        }
+      } catch (error) {
+        toast.error("An unexpected error occurred. Please try again.");
+      } finally {
+        setEmailLoading(false);
+      }
+    };
+
+    // Ensure profile exists for email user
+    const ensureProfileExists = async (user) => {
+      try {
+        const { data: existingProfile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (!existingProfile) {
+          const emailUsername = user.email?.split("@")[0] || `user-${user.id.slice(0, 8)}`;
+          const sanitizedUsername = emailUsername.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+          await supabase.from("profiles").insert({
+            user_id: user.id,
+            username: sanitizedUsername,
+            business_name: sanitizedUsername,
+            description: "",
+          });
+        }
+      } catch {}
+    };
   
 
   useEffect(() => {
@@ -125,6 +211,53 @@ const PiAuth = () => {
         <CardContent className="space-y-4">
 
 
+          {/* Inline Email Sign In/Sign Up Form */}
+          <form onSubmit={handleEmailAuth} className="space-y-4">
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                autoFocus
+              />
+            </div>
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+            </div>
+            <Button type="submit" className="w-full" size="lg" disabled={emailLoading}>
+              {emailLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {isLogin ? 'Signing In...' : 'Signing Up...'}
+                </>
+              ) : (
+                isLogin ? 'Sign In with Email' : 'Sign Up with Email'
+              )}
+            </Button>
+            <div className="flex justify-between mt-2">
+              <button
+                type="button"
+                className="text-primary hover:underline text-xs"
+                onClick={() => setIsLogin(!isLogin)}
+                disabled={emailLoading}
+              >
+                {isLogin ? 'Need an account? Sign Up' : 'Already have an account? Sign In'}
+              </button>
+            </div>
+          </form>
+
+
           {/* Go to Landing Page Button */}
           <Button
             asChild
@@ -137,41 +270,45 @@ const PiAuth = () => {
             </a>
           </Button>
 
-          {/* Pi Network Sign In - Always show button */}
-          <Button 
-            onClick={handlePiSignIn} 
-            className="w-full" 
-            size="lg"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Connecting...
-              </>
-            ) : (
-              "Sign in with Pi Network"
-            )}
-          </Button>
 
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <p className="flex items-center gap-2">
-              <span className="text-primary">✓</span>
-              Create your personalized link-in-bio page
-            </p>
-            <p className="flex items-center gap-2">
-              <span className="text-primary">✓</span>
-              Sell digital products and accept Pi payments
-            </p>
-            <p className="flex items-center gap-2">
-              <span className="text-primary">✓</span>
-              Connect all your social media in one place
-            </p>
-            <p className="flex items-center gap-2">
-              <span className="text-primary">✓</span>
-              Your data persists across sessions with Pi authentication
-            </p>
-          </div>
+          {/* Pi Network Sign In and Info - Only show in Pi Browser */}
+          {isPiBrowserEnv() && (
+            <>
+              <Button 
+                onClick={handlePiSignIn} 
+                className="w-full" 
+                size="lg"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Connecting...
+                  </>
+                ) : (
+                  "Sign in with Pi Network"
+                )}
+              </Button>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p className="flex items-center gap-2">
+                  <span className="text-primary">✓</span>
+                  Create your personalized link-in-bio page
+                </p>
+                <p className="flex items-center gap-2">
+                  <span className="text-primary">✓</span>
+                  Sell digital products and accept Pi payments
+                </p>
+                <p className="flex items-center gap-2">
+                  <span className="text-primary">✓</span>
+                  Connect all your social media in one place
+                </p>
+                <p className="flex items-center gap-2">
+                  <span className="text-primary">✓</span>
+                  Your data persists across sessions with Pi authentication
+                </p>
+              </div>
+            </>
+          )}
 
           <div className="pt-4 border-t space-y-2">
             <div className="flex justify-center gap-4 text-xs">

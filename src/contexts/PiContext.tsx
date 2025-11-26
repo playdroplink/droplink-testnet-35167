@@ -155,7 +155,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     // Debug: Log Pi Browser detection on load
     useEffect(() => {
       const isPi = isPiBrowserEnv();
-      console.log(`[PiContext] Pi Browser detected:`, isPi, '| UserAgent:', typeof window !== 'undefined' ? window.navigator.userAgent : 'N/A');
+      // console.log(`[PiContext] Pi Browser detected:`, isPi, '| UserAgent:', typeof window !== 'undefined' ? window.navigator.userAgent : 'N/A');
     }, []);
   // Authentication state
   const [piUser, setPiUser] = useState<PiUser | null>(null);
@@ -186,10 +186,10 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     const initializePi = async () => {
       try {
         // Debug: Log full config and environment
-        console.log('[PI DEBUG] PI_CONFIG:', PI_CONFIG);
-        console.log('[PI DEBUG] window.location:', window.location.href);
-        console.log('[PI DEBUG] UserAgent:', typeof window !== 'undefined' ? window.navigator.userAgent : 'N/A');
-        console.log('[PI DEBUG] isPiBrowserEnv:', isPiBrowserEnv());
+        // console.log('[PI DEBUG] PI_CONFIG:', PI_CONFIG);
+        // console.log('[PI DEBUG] window.location:', window.location.href);
+        // console.log('[PI DEBUG] UserAgent:', typeof window !== 'undefined' ? window.navigator.userAgent : 'N/A');
+        // console.log('[PI DEBUG] isPiBrowserEnv:', isPiBrowserEnv());
         // Validate configuration based on sandbox/mainnet mode
         if (PI_CONFIG.SANDBOX_MODE) {
           if (!validatePiConfig()) {
@@ -205,28 +205,28 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           }
         }
 
-        console.log(`[PI DEBUG] 🥧 Initializing Pi Network (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})...`);
-        console.log('[PI DEBUG] Network:', PI_CONFIG.NETWORK);
-        console.log('[PI DEBUG] API Endpoint:', PI_CONFIG.BASE_URL);
-        console.log('[PI DEBUG] Sandbox Mode:', PI_CONFIG.SANDBOX_MODE);
+        // console.log(`[PI DEBUG] 🥧 Initializing Pi Network (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})...`);
+        // console.log('[PI DEBUG] Network:', PI_CONFIG.NETWORK);
+        // console.log('[PI DEBUG] API Endpoint:', PI_CONFIG.BASE_URL);
+        // console.log('[PI DEBUG] Sandbox Mode:', PI_CONFIG.SANDBOX_MODE);
 
         if (isPiBrowserEnv()) {
           // Debug: Check for window.Pi
           if (typeof window.Pi === 'undefined') {
             console.error('[PI DEBUG] window.Pi is undefined! Pi SDK not loaded.');
           } else {
-            console.log('[PI DEBUG] window.Pi is available.');
+            // console.log('[PI DEBUG] window.Pi is available.');
           }
           // Initialize Pi SDK using configured SDK options
           await window.Pi.init(PI_CONFIG.SDK);
-          console.log(`[PI DEBUG] ✅ Pi SDK initialized successfully (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})`);
+          // console.log(`[PI DEBUG] ✅ Pi SDK initialized successfully (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})`);
           setIsInitialized(true);
           // Check ad network support
           try {
             const features = await window.Pi.nativeFeaturesList();
             const adSupported = features.includes('ad_network');
             setAdNetworkSupported(adSupported);
-            console.log('[PI DEBUG] 🎯 Ad Network Support:', adSupported);
+            // console.log('[PI DEBUG] 🎯 Ad Network Support:', adSupported);
           } catch (err) {
             console.warn('[PI DEBUG] ⚠️ Failed to check native features:', err);
           }
@@ -244,7 +244,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
                 const userData = JSON.parse(storedUser);
                 setAccessToken(storedToken);
                 setPiUser(userData);
-                console.log(`[PI DEBUG] 🔐 Auto-authenticated with stored credentials (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})`);
+                // console.log(`[PI DEBUG] 🔐 Auto-authenticated with stored credentials (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})`);
                 // Update user data if needed
                 if (verifiedUser.uid === userData.uid) {
                   setPiUser({...userData, ...verifiedUser});
@@ -1370,22 +1370,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <PiContext.Provider value={value}>
-      {showDebug && debugInfo && (
-        <div style={{
-          background: '#222', color: '#fff', fontSize: 12, padding: 8, borderRadius: 8, margin: 8, zIndex: 9999,
-          wordBreak: 'break-all', maxWidth: 400, maxHeight: 300, overflow: 'auto', position: 'fixed', top: 8, left: 8,
-        }}>
-          <div style={{fontWeight: 'bold', marginBottom: 4}}>PI DEBUG INFO</div>
-          <div><b>Network:</b> {debugInfo.PI_CONFIG.NETWORK}</div>
-          <div><b>Sandbox:</b> {String(debugInfo.PI_CONFIG.SANDBOX_MODE)}</div>
-          <div><b>SDK.sandbox:</b> {String(debugInfo.PI_CONFIG.SDK.sandbox)}</div>
-          <div><b>location:</b> {debugInfo.location}</div>
-          <div><b>UserAgent:</b> {debugInfo.userAgent}</div>
-          <div><b>isPiBrowserEnv:</b> {String(debugInfo.isPiBrowserEnv)}</div>
-          <div><b>window.Pi:</b> {String(debugInfo.piSDK)}</div>
-          {debugInfo.error && <div style={{color: 'red'}}><b>Error:</b> {debugInfo.error}</div>}
-        </div>
-      )}
+      {/* PI DEBUG INFO panel hidden */}
       {children}
     </PiContext.Provider>
   );

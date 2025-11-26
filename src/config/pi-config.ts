@@ -3,12 +3,12 @@ export const PI_CONFIG = {
   BASE_URL: "https://api.minepi.com",
   NETWORK: "testnet",
   NETWORK_PASSPHRASE: "Pi Testnet",
-  SANDBOX_MODE: true,
+  SANDBOX_MODE: false,
   ALLOW_MULTIPLE_ACCOUNTS: true,
   
   SDK: {
     version: "2.0",
-    sandbox: true,
+    sandbox: false,
   },
   
   scopes: ['username', 'payments', 'wallet_address', 'openid'],

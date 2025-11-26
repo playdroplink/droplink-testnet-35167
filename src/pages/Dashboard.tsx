@@ -943,8 +943,8 @@ const Dashboard = () => {
     );
   }
 
-  // Show Pi Auth button if not authenticated and not loading
-  if (!isAuthenticated && !piLoading) {
+  // Show Pi Auth button if not authenticated, not loading, and no Supabase session
+  if (!isAuthenticated && !piLoading && !hasSupabaseSession) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="max-w-md w-full p-6 bg-white rounded-lg shadow border mx-auto">

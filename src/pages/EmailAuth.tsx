@@ -56,7 +56,7 @@ const EmailAuth = () => {
         }
         
         toast.success("Welcome back!");
-        navigate("/");
+        navigate("/auth");
       } else {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -82,7 +82,7 @@ const EmailAuth = () => {
           // Create profile for new user
           await ensureProfileExists(data.user);
           toast.success("Account created successfully! Welcome!");
-          navigate("/");
+          navigate("/auth");
         }
       }
     } catch (error: any) {
