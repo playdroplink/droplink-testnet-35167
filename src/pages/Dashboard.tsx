@@ -964,7 +964,7 @@ const Dashboard = () => {
       <header className={`px-3 sm:px-4 lg:px-6 py-3 sm:py-4 shadow-sm border-b border-border ${isMobile ? 'bg-background' : 'glass-surface'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-4">
-            <h1 className="text-lg sm:text-xl font-semibold text-sky-500">DropLink</h1>
+            <h1 className="text-lg sm:text-xl font-semibold text-sky-500 animate-pulse">DropLink</h1>
             {displayUsername && (
               <div className="flex items-center gap-2">
                 <span className="text-xs sm:text-sm text-muted-foreground">@{displayUsername}</span>
@@ -1202,7 +1202,7 @@ const Dashboard = () => {
                 >
                   {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </Button>
-                <Button onClick={handleLogout} size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50 inline-flex">
+                <Button onClick={handleLogout} size="sm" className="inline-flex items-center justify-center gap-2 bg-sky-400 h-9 rounded-md px-3 text-white hover:text-red-500 hover:bg-sky-500">
                   <LogOut className="w-4 h-4" />
                 </Button>
                 
