@@ -25,12 +25,12 @@ export const PlanGate = ({
   }
   // Locked: show upgrade prompt
   return (
-    <Card className="mb-6 border-dashed border-2 border-primary/40 bg-muted/30">
+    <Card className="mb-6 border-dashed border-2 border-sky-400 bg-sky-400">
       <CardContent className="py-8 flex flex-col items-center justify-center">
         <div className="text-center mb-4">
-          <span className="text-lg font-semibold text-primary">{featureName || "This feature"} is available on {minPlan.charAt(0).toUpperCase() + minPlan.slice(1)} plan</span>
+          <span className="text-lg font-semibold text-white">{featureName || "This feature"} is available on {minPlan.charAt(0).toUpperCase() + minPlan.slice(1)} plan</span>
         </div>
-        <Button onClick={() => navigate("/subscription")}>Upgrade to {minPlan.charAt(0).toUpperCase() + minPlan.slice(1)}</Button>
+        <Button onClick={() => navigate("/subscription")} className="bg-white text-sky-400 font-semibold hover:bg-gray-100">Upgrade to {minPlan.charAt(0).toUpperCase() + minPlan.slice(1)}</Button>
       </CardContent>
     </Card>
   );

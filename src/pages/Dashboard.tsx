@@ -985,18 +985,17 @@ const Dashboard = () => {
           <div className="flex items-center gap-1 sm:gap-2 lg:gap-4">
             {isMobile && (
               <Button
-                onClick={() => setShowPreview(!showPreview)}
-                variant="outline"
-                size="sm"
-                className="h-9 w-9 mr-1"
-              >
+                  onClick={() => setShowPreview(!showPreview)}
+                  size="sm"
+                  className="h-9 w-9 mr-1 bg-sky-400 text-white hover:bg-sky-500 border-none"
+                >
                 {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </Button>
             )}
             {isMobile ? (
               <Drawer>
                 <DrawerTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-9 w-9 sm:h-10 sm:w-auto sm:px-3">
+                  <Button size="sm" className="h-9 w-9 sm:h-10 sm:w-auto sm:px-3 bg-sky-400 text-white hover:bg-sky-500 border-none">
                     <Menu className="w-4 h-4" />
                     <span className="hidden sm:inline ml-2">Menu</span>
                   </Button>
@@ -1052,11 +1051,11 @@ const Dashboard = () => {
                     <div className="space-y-2">
                       <h3 className="font-medium text-sm text-muted-foreground px-2">Profile & Share</h3>
                       <div className="grid grid-cols-2 gap-2">
-                        <Button onClick={handleShowQRCode} variant="outline" size="sm" className="inline-flex justify-start gap-2 h-12">
+                        <Button onClick={handleShowQRCode} size="sm" className="inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
                           <QrCode className="w-4 h-4" />
                           QR Code
                         </Button>
-                        <Button onClick={handleCopyLink} variant="outline" size="sm" className="inline-flex justify-start gap-2 h-12">
+                        <Button onClick={handleCopyLink} size="sm" className="inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
                           <Share2 className="w-4 h-4" />
                           Share
                         </Button>
@@ -1067,19 +1066,19 @@ const Dashboard = () => {
                     <div className="space-y-2">
                       <h3 className="font-medium text-sm text-muted-foreground px-2">Navigation</h3>
                       <div className="grid grid-cols-2 gap-2">
-                        <Button onClick={() => navigate("/followers")} variant="outline" size="sm" className="inline-flex justify-start gap-2 h-12">
+                        <Button onClick={() => navigate("/followers")} size="sm" className="inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
                           <Users className="w-4 h-4" />
                           Followers
                         </Button>
-                        <Button onClick={() => navigate("/wallet")} variant="outline" size="sm" className="inline-flex justify-start gap-2 h-12">
+                        <Button onClick={() => navigate("/wallet")} size="sm" className="inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
                           <Wallet className="w-4 h-4" />
                           Wallet
                         </Button>
-                        <Button onClick={() => navigate("/profile")} variant="outline" size="sm" className="inline-flex justify-start gap-2 h-12">
+                        <Button onClick={() => navigate("/profile")} size="sm" className="inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
                           <User className="w-4 h-4" />
                           Profile
                         </Button>
-                        <Button onClick={() => navigate("/domain")} variant="outline" size="sm" className="inline-flex justify-start gap-2 h-12">
+                        <Button onClick={() => navigate("/domain")} size="sm" className="inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
                           <Globe className="w-4 h-4" />
                           Domain
                         </Button>
@@ -1093,9 +1092,8 @@ const Dashboard = () => {
                       <div className="space-y-2">
                         <Button
                           onClick={() => setShowPreview(!showPreview)}
-                          variant="outline"
                           size="sm"
-                          className="w-full justify-start gap-2 h-12"
+                          className="w-full justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none"
                         >
                           {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           {showPreview ? 'Hide Preview' : 'Show Preview'}
@@ -1109,9 +1107,8 @@ const Dashboard = () => {
                         <h3 className="font-medium text-sm text-muted-foreground px-2">Pi Network</h3>
                         <Button 
                           onClick={() => navigate("/auth")} 
-                          variant="default" 
                           size="sm"
-                          className="w-full justify-start gap-2 h-12"
+                          className="w-full justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none"
                         >
                           <Wallet className="w-4 h-4" />
                           Connect Pi Network
@@ -1123,15 +1120,14 @@ const Dashboard = () => {
                     <div className="space-y-2">
                       <h3 className="font-medium text-sm text-muted-foreground px-2">Support & Help</h3>
                       <div className="grid grid-cols-2 gap-2">
-                        <Button onClick={() => navigate("/ai-support")} variant="outline" size="sm" className="inline-flex justify-start gap-2 h-12">
+                        <Button onClick={() => navigate("/ai-support")} size="sm" className="inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
                           <Bot className="w-4 h-4" />
                           AI Support
                         </Button>
                         <Button
                           onClick={() => setShowAboutModal(true)}
-                          variant="outline"
                           size="sm"
-                          className="justify-start gap-2 h-12"
+                          className="justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none"
                         >
                           <Info className="w-4 h-4" />
                           About
@@ -1142,7 +1138,7 @@ const Dashboard = () => {
                     {/* Subscription Section */}
                     <div className="space-y-2">
                       <h3 className="font-medium text-sm text-muted-foreground px-2">Subscription</h3>
-                      <Button onClick={() => navigate("/subscription")} variant="default" size="sm" className="w-full inline-flex justify-start gap-2 h-12">
+                      <Button onClick={() => navigate("/subscription")} size="sm" className="w-full inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
                         <Crown className="w-4 h-4" />
                         Upgrade Plan
                       </Button>
@@ -1150,7 +1146,7 @@ const Dashboard = () => {
 
                     {/* Account Section */}
                     <div className="space-y-2 pt-2 border-t border-border">
-                      <Button onClick={handleLogout} variant="destructive" size="sm" className="w-full inline-flex justify-start gap-2 h-12">
+                      <Button onClick={handleLogout} size="sm" className="w-full inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
                         <LogOut className="w-4 h-4" />
                         Sign Out
                       </Button>
@@ -1160,58 +1156,53 @@ const Dashboard = () => {
               </Drawer>
             ) : (
               <>
-                <Button onClick={handleShowQRCode} variant="outline" size="sm" className="hidden sm:inline-flex gap-2">
+                <Button onClick={handleShowQRCode} size="sm" className="hidden sm:inline-flex gap-2 bg-sky-400 text-white hover:bg-sky-500 border-none">
                   <QrCode className="w-4 h-4" />
                   QR Code
                 </Button>
-                <Button onClick={handleCopyLink} variant="outline" size="sm" className="hidden sm:inline-flex gap-2">
+                <Button onClick={handleCopyLink} size="sm" className="hidden sm:inline-flex gap-2 bg-sky-400 text-white hover:bg-sky-500 border-none">
                   <Share2 className="w-4 h-4" />
                   Share
                 </Button>
                 <Button 
                   onClick={() => navigate("/followers")} 
-                  variant="outline" 
                   size="sm" 
-                  className="hidden md:inline-flex gap-2"
+                  className="hidden md:inline-flex gap-2 bg-sky-400 text-white hover:bg-sky-500 border-none"
                 >
                   <Users className="w-4 h-4" />
                   Followers
                 </Button>
                 <Button 
                   onClick={() => navigate("/wallet")} 
-                  variant="outline" 
                   size="sm" 
-                  className="hidden md:inline-flex gap-2"
+                  className="hidden md:inline-flex gap-2 bg-sky-400 text-white hover:bg-sky-500 border-none"
                 >
                   <Wallet className="w-4 h-4" />
                   Wallet
                 </Button>
                 <Button 
                   onClick={() => navigate("/subscription")} 
-                  variant="outline" 
                   size="sm" 
-                  className="hidden md:inline-flex"
+                  className="hidden md:inline-flex bg-sky-400 text-white hover:bg-sky-500 border-none"
                 >
                   Upgrade
                 </Button>
                 <Button
                   onClick={() => setShowAboutModal(true)}
-                  variant="outline"
                   size="sm"
-                  className="hidden lg:inline-flex gap-2"
+                  className="hidden lg:inline-flex gap-2 bg-sky-400 text-white hover:bg-sky-500 border-none"
                 >
                   <Info className="w-4 h-4" />
                   About
                 </Button>
                 <Button
                   onClick={() => setShowPreview(!showPreview)} 
-                  variant="outline" 
                   size="sm"
-                  className="lg:hidden inline-flex"
+                  className="lg:hidden inline-flex bg-sky-400 text-white hover:bg-sky-500 border-none"
                 >
                   {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </Button>
-                <Button onClick={handleLogout} variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50 inline-flex">
+                <Button onClick={handleLogout} size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50 inline-flex">
                   <LogOut className="w-4 h-4" />
                 </Button>
                 
@@ -1219,9 +1210,8 @@ const Dashboard = () => {
                 {hasSupabaseSession && !isAuthenticated && (
                   <Button 
                     onClick={() => navigate("/auth")} 
-                    variant="outline" 
                     size="sm"
-                    className="gap-2 inline-flex"
+                    className="gap-2 inline-flex bg-sky-400 text-white hover:bg-sky-500 border-none"
                   >
                     <Wallet className="w-4 h-4" />
                     Connect Pi
@@ -2112,10 +2102,10 @@ const Dashboard = () => {
                 {/* Action Buttons */}
                 <Card className="border-0 rounded-none shadow-none sticky bottom-0 z-50 w-full p-0 m-0">
                   <div className="flex gap-4 border-t border-border bg-background/95 backdrop-blur-sm w-full p-0 m-0">
-                    <Button variant="outline" className="flex-1 h-12 rounded-none">
+                    <Button className="flex-1 h-12 rounded-none bg-white text-sky-400 font-medium border-none hover:bg-gray-100">
                       Cancel
                     </Button>
-                    <Button onClick={handleSave} className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-none" disabled={saving}>
+                    <Button onClick={handleSave} className="flex-1 h-12 bg-sky-400 hover:bg-sky-500 text-white font-medium rounded-none border-none" disabled={saving}>
                       {saving ? "Saving..." : "Save changes"}
                     </Button>
                   </div>
