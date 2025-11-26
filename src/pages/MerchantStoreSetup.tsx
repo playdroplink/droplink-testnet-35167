@@ -1,68 +1,12 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
+import React from "react";
 
 const MerchantStoreSetup: React.FC = () => {
-  const [store, setStore] = useState({
-    name: "",
-    location: "",
-    theme: "",
-    contact: "",
-  });
-  const navigate = useNavigate();
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setStore({ ...store, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Save store info to backend or state
-    // Redirect to merchant dashboard (product manager)
-    navigate("/merchant-products");
-  };
-
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">Create Your Store</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          name="name"
-          placeholder="Store Name"
-          value={store.name}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-          required
-        />
-        <input
-          type="text"
-          name="location"
-          placeholder="Store Location"
-          value={store.location}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-        />
-        <input
-          type="text"
-          name="theme"
-          placeholder="Store Theme (e.g. Coffee, Bakery)"
-          value={store.theme}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-        />
-        <input
-          type="text"
-          name="contact"
-          placeholder="Contact Info (email, phone, etc.)"
-          value={store.contact}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-        />
-        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
-          Create Store
-        </button>
-      </form>
+    <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded shadow text-center">
+      <h2 className="text-3xl font-bold mb-4">Merchant Section</h2>
+      <p className="text-lg text-gray-700 mb-2">Feature Coming Soon</p>
+      <p className="text-gray-500">We are working hard to bring you powerful merchant tools. Stay tuned!</p>
     </div>
   );
 };

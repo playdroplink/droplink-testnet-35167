@@ -1323,63 +1323,11 @@ const Dashboard = () => {
                 </TabsTrigger>
                               {/* Merchant Tab */}
                               <TabsContent value="merchant" className="pb-8">
-                                <div className="max-w-lg mx-auto mt-8">
-                                  <div className="bg-white rounded-xl shadow p-6 border border-border flex flex-col gap-6">
-                                    <div className="flex items-center gap-4 mb-2">
-                                      <Store className="w-10 h-10 text-sky-400" />
-                                      <div>
-                                        <h2 className="text-2xl font-bold">Create Your Store</h2>
-                                        <p className="text-muted-foreground text-sm">Set up your merchant profile and branding</p>
-                                      </div>
-                                    </div>
-                                    <div className="flex flex-col gap-4">
-                                      <label className="font-medium">Store Name</label>
-                                      <input type="text" className="border rounded px-3 py-2" placeholder="e.g. Sibiya's Bake Shop" />
-                                      <label className="font-medium">Description</label>
-                                      <textarea className="border rounded px-3 py-2 min-h-[60px]" placeholder="Describe your shop, specialties, or story..."></textarea>
-                                      <label className="font-medium">Store Logo</label>
-                                      <input type="file" accept="image/*" className="border rounded px-3 py-2" />
-                                      <label className="font-medium">Brand Color</label>
-                                      <input type="color" className="w-12 h-8 p-0 border-none" />
-                                    </div>
-                                    <button className="mt-4 bg-sky-400 hover:bg-sky-500 text-white font-semibold py-2 px-6 rounded transition">Save Store</button>
-                                  </div>
-                                  {/* Product Listing Management */}
-                                  <div className="bg-white rounded-xl shadow p-6 border border-border flex flex-col gap-6 mt-8">
-                                    <h3 className="text-xl font-bold mb-2">Menu / Products</h3>
-                                    <div className="flex flex-col gap-4">
-                                      {/* Example product list, replace with dynamic state later */}
-                                      <div className="flex flex-col gap-4">
-                                        <div className="flex items-center gap-4 border rounded p-3">
-                                          <img src="https://placehold.co/60x60" alt="Product" className="w-16 h-16 rounded object-cover border" />
-                                          <div className="flex-1">
-                                            <div className="font-semibold">Chocolate Cake</div>
-                                            <div className="text-sm text-muted-foreground">Rich, moist, and delicious</div>
-                                          </div>
-                                          <div className="font-bold text-sky-500">3 π</div>
-                                          <button className="ml-2 text-xs text-red-500 hover:underline">Delete</button>
-                                        </div>
-                                        <div className="flex items-center gap-4 border rounded p-3">
-                                          <img src="https://placehold.co/60x60" alt="Product" className="w-16 h-16 rounded object-cover border" />
-                                          <div className="flex-1">
-                                            <div className="font-semibold">Banana Bread</div>
-                                            <div className="text-sm text-muted-foreground">Classic, soft, and sweet</div>
-                                          </div>
-                                          <div className="font-bold text-sky-500">2 π</div>
-                                          <button className="ml-2 text-xs text-red-500 hover:underline">Delete</button>
-                                        </div>
-                                      </div>
-                                      {/* Add Product Form */}
-                                      <div className="flex flex-col gap-2 border-t pt-4 mt-4">
-                                        <div className="font-medium mb-2">Add New Product</div>
-                                        <input type="file" accept="image/*" className="border rounded px-3 py-2" />
-                                        <input type="text" className="border rounded px-3 py-2" placeholder="Product Name" />
-                                        <textarea className="border rounded px-3 py-2 min-h-[40px]" placeholder="Description"></textarea>
-                                        <input type="number" min="0" step="0.01" className="border rounded px-3 py-2" placeholder="Price (in Pi)" />
-                                        <button className="mt-2 bg-sky-400 hover:bg-sky-500 text-white font-semibold py-2 px-6 rounded transition">Add Product</button>
-                                      </div>
-                                    </div>
-                                  </div>
+                                <div className="max-w-lg mx-auto mt-20 p-8 bg-white rounded-xl shadow text-center">
+                                  <Store className="w-12 h-12 mx-auto text-sky-400 mb-4" />
+                                  <h2 className="text-3xl font-bold mb-2">Merchant Section</h2>
+                                  <p className="text-lg text-gray-700 mb-2">Feature Coming Soon</p>
+                                  <p className="text-gray-500">We are working hard to bring you powerful merchant tools. Stay tuned!</p>
                                 </div>
                               </TabsContent>
                 {/* Pi Data tab removed for production */}
