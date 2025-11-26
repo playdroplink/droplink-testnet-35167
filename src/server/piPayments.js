@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
@@ -5,8 +6,26 @@ const axios = require('axios');
 const app = express();
 app.use(bodyParser.json());
 
-const API_KEY = '6dxche8cvknkiozfe7no9eucsi5ohlqy6oyrlclq9jx03gt9z10icujzbfaiaev7';
-const BASE_URL = 'https://api.minepi.com';
+const API_KEY = process.env.PI_API_KEY;
+const BASE_URL = process.env.PI_API_BASE_URL || 'https://api.minepi.com';
+// Endpoint to verify rewarded ad status
+app.post('/verify-rewarded-ad', async (req, res) => {
+  const { adId } = req.body;
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/v2/ads_network/status/${adId}`,
+      {
+        headers: {
+          Authorization: `Key ${API_KEY}`,
+        },
+      }
+    );
+    res.status(200).json({ success: true, data: response.data });
+  } catch (error) {
+    console.error('Error verifying rewarded ad:', error.response?.data || error.message);
+    res.status(500).json({ success: false, error: error.response?.data || error.message });
+  }
+});
 
 // Endpoint to handle server-side approval
 app.post('/approve-payment', async (req, res) => {
@@ -29,6 +48,7 @@ app.post('/approve-payment', async (req, res) => {
     res.status(500).json({ success: false, error: error.response?.data || error.message });
   }
 });
+
 
 // Endpoint to handle server-side completion
 app.post('/complete-payment', async (req, res) => {

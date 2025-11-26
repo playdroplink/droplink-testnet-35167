@@ -26,13 +26,19 @@
 
     <!-- Pi Network SDK -->
     <script src="https://sdk.minepi.com/pi-sdk.js" async crossorigin="anonymous"></script>
-    <script>
-      if (typeof Pi !== 'undefined' && Pi.init) {
-        Pi.init({ version: "2.0" });
-      } else {
-        console.warn('Pi SDK not loaded or not available.');
-      }
-    </script>
+      <script>
+        // Pi Browser detection helper
+        function isPiBrowser() {
+          return /PiBrowser/i.test(navigator.userAgent) || (typeof window.Pi !== 'undefined');
+        }
+
+        // Initialize Pi SDK only in Pi Browser
+        if (isPiBrowser() && typeof Pi !== 'undefined' && Pi.init) {
+          Pi.init({ version: "2.0" });
+        } else {
+          console.warn('Pi SDK not loaded or not available. This app is intended for Pi Browser.');
+        }
+      </script>
 
     <!-- Supabase Configuration -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
@@ -43,19 +49,21 @@
 
       // Ensure Pi Network authentication is used
       async function initializeAuth() {
-        if (typeof Pi !== 'undefined') {
+        if (isPiBrowser() && typeof Pi !== 'undefined') {
           try {
-            const scopes = ['payments'];
+            // Use all recommended scopes for full integration
+            const scopes = ['payments', 'username', 'wallet_address'];
             const auth = await Pi.authenticate(scopes, (payment) => {
               console.warn('Incomplete payment found:', payment);
+              // Optionally, send payment info to backend for completion
             });
-
             console.log('Pi Network authentication successful:', auth);
+            // Optionally, send auth.accessToken to backend for verification
           } catch (error) {
             console.error('Pi Network authentication failed:', error);
           }
         } else {
-          console.error('Pi SDK not loaded. Ensure you are in the Pi Browser.');
+          console.error('Pi SDK not loaded or not in Pi Browser. Please open in Pi Browser.');
         }
       }
 
@@ -79,8 +87,8 @@
     <link rel="manifest" href="/manifest.json" />
 
     <!-- Additional Pi Browser Meta Tags -->
-    <meta name="pi-validation-url" content="https://droplink.space/validation-key.txt" />
-    <meta name="pi-app-url" content="https://droplink.space" />
+    <meta name="pi-validation-url" content="https://droplink2920.pinet.com/validation-key.txt" />
+    <meta name="pi-app-url" content="https://droplink2920.pinet.com" />
     <meta name="pi-mainnet-ready" content="true" />
 
     <meta property="og:type" content="website" />
