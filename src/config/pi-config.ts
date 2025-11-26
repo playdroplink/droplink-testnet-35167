@@ -1,14 +1,14 @@
 export const PI_CONFIG = {
-  API_KEY: "rfjwwiyaysjsinhjrkhvplkrrmf5rjnwd3blmzuxdmek1t5mhy4avy6s6k96znwc", // Mainnet API key
+  API_KEY: "bctdyi7k2kivzplhxjvar47ilyq0wf11hqi7rr1ae2uckifzfe4pg3bmzly0htw6", // Testnet API key
   BASE_URL: "https://api.minepi.com",
-  NETWORK: "mainnet",
-  NETWORK_PASSPHRASE: "Pi Mainnet",
-  SANDBOX_MODE: false,
+  NETWORK: "testnet",
+  NETWORK_PASSPHRASE: "Pi Testnet",
+  SANDBOX_MODE: true,
   ALLOW_MULTIPLE_ACCOUNTS: true,
   
   SDK: {
     version: "2.0",
-    sandbox: false,
+    sandbox: true,
   },
   
   scopes: ['username', 'payments', 'wallet_address', 'openid'],
@@ -26,7 +26,7 @@ export const PI_CONFIG = {
     }
   },
   
-  VALIDATION_KEY: "7511661aac4538b1832d2c9ba117f6d972b26a54640598d3fbb9824013c7079203f65b02d125be3f418605cfb89ba0e4443e3ec997e3800eb464df0bc5410d2a",
+  VALIDATION_KEY: "26ec4458680b98edc16b18ed68c2fb7841ee2c9d3b9cfdcfa82de36bea71f64074a2ee5d1fbea04762df431edb1458b44a2ff50679b16d93935b0b645e98174a",
   
   PLATFORM_URL: "https://droplink.space",
   MAINNET_URL: "https://droplink.space",
