@@ -1277,10 +1277,22 @@ const Dashboard = () => {
                   <TrendingUp className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Vote</span>
                 </TabsTrigger> */}
+                <TabsTrigger value="merchant" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
+                  <Store className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Merchant</span>
+                </TabsTrigger>
                 <TabsTrigger value="preferences" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
                   <User className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Settings</span>
                 </TabsTrigger>
+                              {/* Merchant Tab */}
+                              <TabsContent value="merchant" className="pb-8">
+                                <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                                  <Store className="w-12 h-12 text-sky-400 mb-4" />
+                                  <h2 className="text-xl font-bold mb-2">Merchant Features</h2>
+                                  <p className="text-muted-foreground mb-4">Manage your merchant store, products, and sales here. (Coming soon)</p>
+                                </div>
+                              </TabsContent>
                 {/* Pi Data tab removed for production */}
               </TabsList>
 
