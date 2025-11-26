@@ -107,7 +107,7 @@ const PiAuth = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-sky-400 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
@@ -185,8 +185,6 @@ const PiAuth = () => {
 
           <div className="pt-4 border-t space-y-2">
             <div className="flex justify-center gap-4 text-xs">
-              <a href="https://www.droplink.space" className="text-primary hover:underline cursor-pointer" target="_blank" rel="noopener noreferrer">Home</a>
-              <span className="text-muted-foreground">•</span>
               <AboutModal>
                 <button className="text-primary hover:underline cursor-pointer">
                   About
