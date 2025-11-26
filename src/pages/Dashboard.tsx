@@ -938,9 +938,8 @@ const Dashboard = () => {
 
   return (
     <div
-      className="min-h-screen"
+      className="min-h-screen bg-sky-100"
       style={{
-        background: "linear-gradient(135deg, #d1c4e9 0%, #b3e5fc 40%, #f8bbd0 80%, #b2dfdb 100%)",
         position: "relative",
         overflow: "hidden",
       }}

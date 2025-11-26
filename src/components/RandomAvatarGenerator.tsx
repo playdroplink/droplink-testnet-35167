@@ -19,7 +19,20 @@ const BG_GRADIENTS = [
   "linear-gradient(135deg, #d1c4e9 0%, #b3e5fc 100%)", // purple to blue
   "linear-gradient(135deg, #f8bbd0 0%, #b2dfdb 100%)", // pink to teal
   "linear-gradient(135deg, #b2dfdb 0%, #f8bbd0 100%)", // teal to pink
-  "linear-gradient(135deg, #e1bee7 0%, #b3e5fc 100%)"  // purple to blue
+  "linear-gradient(135deg, #e1bee7 0%, #b3e5fc 100%)",  // purple to blue
+];
+
+const BG_SCENES = [
+  "inside a cozy coffee shop",
+  "in a modern tech store",
+  "in a stylish boutique",
+  "in a sunlit home office",
+  "in a creative art studio",
+  "in a trendy urban apartment",
+  "in a book-filled library",
+  "in a lively street market",
+  "in a peaceful garden",
+  "in a minimalist living room"
 ];
 
 function getRandom(arr: string[] | number[]) {
@@ -36,9 +49,9 @@ function generatePrompt() {
   const outfit = getRandom(OUTFITS);
   const accessory = getRandom(ACCESSORIES);
   const bg = getRandom(BG_GRADIENTS);
-
+  const scene = getRandom(BG_SCENES);
   return {
-    prompt: `Generate a 3D stylized profile avatar character in a warm, friendly Pixar-inspired style mixed with Google Material You softness. Rounded facial features, expressive eyes, clean soft shadows, and pastel color accents. No real humans — entirely animated style.\n\nInclude random variations such as: Gender: ${gender}, Age: ${age}, Occupation: ${occupation}, Hair Style: ${hairStyle}, Hair Color: ${hairColor}, Skin Tone: ${skinTone}, Outfit: ${outfit}, Accessory: ${accessory}.\n\nBackground: simple pastel gradient (purple, blue, pink, soft teal) with a subtle Material You glow. Lighting: soft Pixar ambient light + gentle rim light. Mood: friendly, warm, welcoming. Camera: clean portrait, centered, head and shoulders. Resolution: crisp 4K.`,
+    prompt: `Generate a 3D stylized profile avatar character in a warm, friendly Pixar-inspired style mixed with Google Material You softness. Rounded facial features, expressive eyes, clean soft shadows, and pastel color accents. No real humans — entirely animated style.\n\nInclude random variations such as: Gender: ${gender}, Age: ${age}, Occupation: ${occupation}, Hair Style: ${hairStyle}, Hair Color: ${hairColor}, Skin Tone: ${skinTone}, Outfit: ${outfit}, Accessory: ${accessory}.\n\nBackground: ${scene}, matching the character's vibe, with soft pastel colors and a subtle Material You glow. Lighting: soft Pixar ambient light + gentle rim light. Mood: friendly, warm, welcoming. Camera: clean portrait, centered, head and shoulders. Resolution: crisp 4K.`,
     bg,
     fallback: `${gender[0].toUpperCase()}${occupation[0].toUpperCase()}`
   };
