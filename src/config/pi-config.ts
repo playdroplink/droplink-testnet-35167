@@ -52,14 +52,15 @@ export const PI_CONFIG = {
     PI_ASSET_DISCOVERY: "https://api.minepi.com/v2/assets"
   },
 
-  // Testnet DROP token configuration
-  DROP_TOKEN: {
-    code: "DROP",
-    issuer: "GDR0PTESTNETISSUERADDRESS1234567890TESTNET", // Replace with actual testnet issuer
-    distributor: "GDR0PTESTNETDISTRIBUTORADDRESS1234567890TESTNET", // Replace with actual testnet distributor
-    name: "DropLink Token (Testnet)",
-    home_domain: "droplink.space"
-  }
+  // Mainnet token configuration should be added here if/when available
+  // Example:
+  // MAINNET_TOKEN: {
+  //   code: "TOKEN",
+  //   issuer: "MAINNET_ISSUER_ADDRESS",
+  //   distributor: "MAINNET_DISTRIBUTOR_ADDRESS",
+  //   name: "Your Token Name",
+  //   home_domain: "yourtoken.com"
+  // }
 };
 
 // Helper to check if Pi Network is available
