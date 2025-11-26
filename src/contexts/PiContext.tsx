@@ -179,8 +179,8 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   const [availableAccounts, setAvailableAccounts] = useState<PiAccount[]>([]);
   const [currentProfile, setCurrentProfile] = useState<any | null>(null);
   
-  // For testing: always allow access to all features
-  const isAuthenticated = true;
+  // Set isAuthenticated based on real authentication state
+  const isAuthenticated = !!(piUser && accessToken);
 
   useEffect(() => {
     const initializePi = async () => {
@@ -1345,6 +1345,16 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     openExternalUrl,
   };
 
+  // Show error UI if Pi SDK is required but not available
+  if (error) {
+    return (
+      <div style={{ padding: 32, textAlign: 'center', color: 'red' }}>
+        <h2>Pi Network Error</h2>
+        <p>{error}</p>
+        <p>Please open this app in the Pi Browser and ensure the Pi Network SDK is available.</p>
+      </div>
+    );
+  }
   return <PiContext.Provider value={value}>{children}</PiContext.Provider>;
 };
 

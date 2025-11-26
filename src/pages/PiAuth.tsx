@@ -137,32 +137,22 @@ const PiAuth = () => {
             </a>
           </Button>
 
-          {/* Pi Network Sign In - Only show if Pi SDK is available */}
-          {isPiBrowserEnv() ? (
-            <Button 
-              onClick={handlePiSignIn} 
-              className="w-full" 
-              size="lg"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Connecting...
-                </>
-              ) : (
-                "Sign in with Pi Network"
-              )}
-            </Button>
-          ) : (
-            <div className="flex flex-col items-center gap-4">
-              <div className="text-red-500 text-sm font-medium text-center">
-                Pi Network is not available.<br />
-                Please open this app in <b>Pi Browser</b> or ensure the Pi SDK is loaded.<br />
-                <a href="https://minepi.com/Wain2020" target="_blank" rel="noopener noreferrer" className="underline text-blue-600">Download Pi Browser</a>
-              </div>
-            </div>
-          )}
+          {/* Pi Network Sign In - Always show button */}
+          <Button 
+            onClick={handlePiSignIn} 
+            className="w-full" 
+            size="lg"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Connecting...
+              </>
+            ) : (
+              "Sign in with Pi Network"
+            )}
+          </Button>
 
           <div className="space-y-2 text-sm text-muted-foreground">
             <p className="flex items-center gap-2">

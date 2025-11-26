@@ -33,6 +33,7 @@ import SubscriptionStatus from "@/components/SubscriptionStatus";
 import VotingSystem from "@/components/VotingSystem";
 import { ProfileData } from "@/types/profile";
 import LinkManager from "@/components/LinkManager";
+import { PiAuthTest } from "@/components/PiAuthTest";
 import {
   Drawer,
   DrawerClose,
@@ -938,6 +939,22 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <p>Loading...</p>
+      </div>
+    );
+  }
+
+  // Show Pi Auth button if not authenticated and not loading
+  if (!isAuthenticated && !piLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="max-w-md w-full p-6 bg-white rounded-lg shadow border mx-auto">
+          <div className="mb-6 text-center">
+            <div className="text-red-500 text-lg font-semibold mb-2">Pi Network is not available.</div>
+            <div className="text-gray-700 mb-4">Please open this app in <b>Pi Browser</b> or ensure the Pi SDK is loaded.</div>
+            <a href="https://minepi.com/Wain2020" target="_blank" rel="noopener noreferrer" className="underline text-blue-600">Download Pi Browser</a>
+          </div>
+          <PiAuthTest />
+        </div>
       </div>
     );
   }

@@ -24,21 +24,9 @@
     <meta name="description" content="Create a beautiful link in bio page with all your social links and sell digital products in one place. Simple, clean, and professional.">
     <meta name="author" content="Droplink" />
 
-    <!-- Pi Network SDK -->
-    <script src="https://sdk.minepi.com/pi-sdk.js" async crossorigin="anonymous"></script>
-      <script>
-        // Pi Browser detection helper
-        function isPiBrowser() {
-          return /PiBrowser/i.test(navigator.userAgent) || (typeof window.Pi !== 'undefined');
-        }
 
-        // Initialize Pi SDK only in Pi Browser
-        if (isPiBrowser() && typeof Pi !== 'undefined' && Pi.init) {
-          Pi.init({ version: "2.0" });
-        } else {
-          console.warn('Pi SDK not loaded or not available. This app is intended for Pi Browser.');
-        }
-      </script>
+    <!-- Pi Network SDK: Only load the script, let React handle initialization -->
+    <script src="https://sdk.minepi.com/pi-sdk.js" async crossorigin="anonymous"></script>
 
     <!-- Supabase Configuration -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
@@ -46,26 +34,6 @@
       const SUPABASE_URL = "https://idkjfuctyukspexmijvb.supabase.co";
       const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlka2pmdWN0eXVrc3BleG1panZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0NjI0NzMsImV4cCI6MjA3OTAzODQ3M30.dIJlRYAnSgj2Ohsl6tqz_cP9Zg03HG6naYTGXoAjkDs"; // Replace with your Supabase anon key
       const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-      // Ensure Pi Network authentication is used
-      async function initializeAuth() {
-        if (isPiBrowser() && typeof Pi !== 'undefined') {
-          try {
-            // Use all recommended scopes for full integration
-            const scopes = ['payments', 'username', 'wallet_address'];
-            const auth = await Pi.authenticate(scopes, (payment) => {
-              console.warn('Incomplete payment found:', payment);
-              // Optionally, send payment info to backend for completion
-            });
-            console.log('Pi Network authentication successful:', auth);
-            // Optionally, send auth.accessToken to backend for verification
-          } catch (error) {
-            console.error('Pi Network authentication failed:', error);
-          }
-        } else {
-          console.error('Pi SDK not loaded or not in Pi Browser. Please open in Pi Browser.');
-        }
-      }
 
       // Example: Check if Supabase is connected
       async function checkSupabaseConnection() {
@@ -78,7 +46,6 @@
       }
 
       document.addEventListener('DOMContentLoaded', () => {
-        initializeAuth();
         checkSupabaseConnection();
       });
     </script>
