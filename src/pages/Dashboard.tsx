@@ -420,16 +420,9 @@ const Dashboard = () => {
         setDisplayUsername(supabaseUser.email?.split("@")[0] || null);
         console.log("Loading profile for email user:", supabaseUser.email);
       } else {
-        // No authentication - in development, allow bypass
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Development mode: creating demo profile');
-          userIdentifier = 'dev_user';
-          isPiUser = false;
-          setDisplayUsername('dev_user');
-        } else {
-          navigate("/auth");
-          return;
-        }
+        // No authentication - always redirect to auth
+        navigate("/auth");
+        return;
       }
 
       // Try to load from localStorage first
