@@ -185,63 +185,66 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const initializePi = async () => {
       try {
+        // Debug: Log full config and environment
+        console.log('[PI DEBUG] PI_CONFIG:', PI_CONFIG);
+        console.log('[PI DEBUG] window.location:', window.location.href);
+        console.log('[PI DEBUG] UserAgent:', typeof window !== 'undefined' ? window.navigator.userAgent : 'N/A');
+        console.log('[PI DEBUG] isPiBrowserEnv:', isPiBrowserEnv());
         // Validate configuration based on sandbox/mainnet mode
         if (PI_CONFIG.SANDBOX_MODE) {
           if (!validatePiConfig()) {
-            console.error('Invalid Pi Network sandbox configuration');
+            console.error('[PI DEBUG] Invalid Pi Network sandbox configuration');
             setError('Invalid Pi Network sandbox configuration');
             return;
           }
         } else {
           if (!validateMainnetConfig()) {
-            console.error('Invalid Pi Network mainnet configuration');
+            console.error('[PI DEBUG] Invalid Pi Network mainnet configuration');
             setError('Invalid Pi Network mainnet configuration');
             return;
           }
         }
 
-        console.log(`🥧 Initializing Pi Network (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})...`);
-        console.log('Network:', PI_CONFIG.NETWORK);
-        console.log('API Endpoint:', PI_CONFIG.BASE_URL);
-        console.log('Sandbox Mode:', PI_CONFIG.SANDBOX_MODE);
-
-        // If Pi SDK isn't present and we're running in sandbox on localhost, install a dev mock
-        // Pi SDK mock removed: use only real Pi Network SDK in production/mainnet.
+        console.log(`[PI DEBUG] 🥧 Initializing Pi Network (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})...`);
+        console.log('[PI DEBUG] Network:', PI_CONFIG.NETWORK);
+        console.log('[PI DEBUG] API Endpoint:', PI_CONFIG.BASE_URL);
+        console.log('[PI DEBUG] Sandbox Mode:', PI_CONFIG.SANDBOX_MODE);
 
         if (isPiBrowserEnv()) {
+          // Debug: Check for window.Pi
+          if (typeof window.Pi === 'undefined') {
+            console.error('[PI DEBUG] window.Pi is undefined! Pi SDK not loaded.');
+          } else {
+            console.log('[PI DEBUG] window.Pi is available.');
+          }
           // Initialize Pi SDK using configured SDK options
           await window.Pi.init(PI_CONFIG.SDK);
-          console.log(`✅ Pi SDK initialized successfully (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})`);
+          console.log(`[PI DEBUG] ✅ Pi SDK initialized successfully (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})`);
           setIsInitialized(true);
-          
           // Check ad network support
           try {
             const features = await window.Pi.nativeFeaturesList();
             const adSupported = features.includes('ad_network');
             setAdNetworkSupported(adSupported);
-            console.log("🎯 Ad Network Support:", adSupported);
+            console.log('[PI DEBUG] 🎯 Ad Network Support:', adSupported);
           } catch (err) {
-            console.warn('⚠️ Failed to check native features:', err);
+            console.warn('[PI DEBUG] ⚠️ Failed to check native features:', err);
           }
-          
           // Check for stored authentication
           const storedToken = localStorage.getItem('pi_access_token');
           const storedUser = localStorage.getItem('pi_user');
-          
           if (storedToken && storedUser) {
             try {
-                // Verify token with Pi API using configured endpoint
+              // Verify token with Pi API using configured endpoint
               const response = await fetch(PI_CONFIG.ENDPOINTS.ME, {
                 headers: PI_CONFIG.getAuthHeaders(storedToken)
               });
-              
               if (response.ok) {
                 const verifiedUser = await response.json();
                 const userData = JSON.parse(storedUser);
                 setAccessToken(storedToken);
                 setPiUser(userData);
-                console.log(`🔐 Auto-authenticated with stored credentials (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})`);
-                
+                console.log(`[PI DEBUG] 🔐 Auto-authenticated with stored credentials (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})`);
                 // Update user data if needed
                 if (verifiedUser.uid === userData.uid) {
                   setPiUser({...userData, ...verifiedUser});
@@ -252,20 +255,19 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
                 localStorage.removeItem('pi_user');
               }
             } catch (err) {
-              console.warn('Failed to verify stored credentials:', err);
+              console.warn('[PI DEBUG] Failed to verify stored credentials:', err);
               localStorage.removeItem('pi_access_token');
               localStorage.removeItem('pi_user');
             }
           }
         } else {
-          console.warn('Pi Network SDK not available - running in compatibility mode');
+          console.warn('[PI DEBUG] Pi Network SDK not available - running in compatibility mode');
         }
       } catch (err) {
-        console.error('Failed to initialize Pi Network:', err);
+        console.error('[PI DEBUG] Failed to initialize Pi Network:', err);
         setError('Failed to initialize Pi Network');
       }
     };
-
     initializePi();
   }, []);
 
@@ -1345,17 +1347,44 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     openExternalUrl,
   };
 
-  // Show error UI if Pi SDK is required but not available
-  if (error) {
-    return (
-      <div style={{ padding: 32, textAlign: 'center', color: 'red' }}>
-        <h2>Pi Network Error</h2>
-        <p>{error}</p>
-        <p>Please open this app in the Pi Browser and ensure the Pi Network SDK is available.</p>
-      </div>
-    );
-  }
-  return <PiContext.Provider value={value}>{children}</PiContext.Provider>;
+  // Show debug info on screen for mobile screenshotting
+  const [showDebug, setShowDebug] = useState(true); // Set to true for now; you can toggle with a flag or env
+  const [debugInfo, setDebugInfo] = useState<any>(null);
+
+  useEffect(() => {
+    if (showDebug) {
+      setDebugInfo({
+        PI_CONFIG,
+        location: typeof window !== 'undefined' ? window.location.href : '',
+        userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : '',
+        isPiBrowserEnv: typeof isPiBrowserEnv === 'function' ? isPiBrowserEnv() : false,
+        piSDK: typeof window !== 'undefined' && typeof window.Pi !== 'undefined',
+        error,
+      });
+    }
+  }, [showDebug, error]);
+
+  return (
+    <PiContext.Provider value={value}>
+      {showDebug && debugInfo && (
+        <div style={{
+          background: '#222', color: '#fff', fontSize: 12, padding: 8, borderRadius: 8, margin: 8, zIndex: 9999,
+          wordBreak: 'break-all', maxWidth: 400, maxHeight: 300, overflow: 'auto', position: 'fixed', top: 8, left: 8,
+        }}>
+          <div style={{fontWeight: 'bold', marginBottom: 4}}>PI DEBUG INFO</div>
+          <div><b>Network:</b> {debugInfo.PI_CONFIG.NETWORK}</div>
+          <div><b>Sandbox:</b> {String(debugInfo.PI_CONFIG.SANDBOX_MODE)}</div>
+          <div><b>SDK.sandbox:</b> {String(debugInfo.PI_CONFIG.SDK.sandbox)}</div>
+          <div><b>location:</b> {debugInfo.location}</div>
+          <div><b>UserAgent:</b> {debugInfo.userAgent}</div>
+          <div><b>isPiBrowserEnv:</b> {String(debugInfo.isPiBrowserEnv)}</div>
+          <div><b>window.Pi:</b> {String(debugInfo.piSDK)}</div>
+          {debugInfo.error && <div style={{color: 'red'}}><b>Error:</b> {debugInfo.error}</div>}
+        </div>
+      )}
+      {children}
+    </PiContext.Provider>
+  );
 };
 
 export const usePi = () => {
