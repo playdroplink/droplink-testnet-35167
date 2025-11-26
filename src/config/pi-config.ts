@@ -1,8 +1,8 @@
 export const PI_CONFIG = {
-  API_KEY: "bctdyi7k2kivzplhxjvar47ilyq0wf11hqi7rr1ae2uckifzfe4pg3bmzly0htw6", // Testnet API key
+  API_KEY: "YOUR_MAINNET_API_KEY_HERE", // Mainnet API key (replace with your real key)
   BASE_URL: "https://api.minepi.com",
-  NETWORK: "testnet",
-  NETWORK_PASSPHRASE: "Pi Testnet",
+  NETWORK: "mainnet",
+  NETWORK_PASSPHRASE: "Pi Network",
   SANDBOX_MODE: false,
   ALLOW_MULTIPLE_ACCOUNTS: true,
   

@@ -15,13 +15,9 @@ import PiAdsBanner from "@/components/PiAdsBanner";
 import type { UserPreferences } from "@/contexts/UserPreferencesContext";
 import {
   Twitter,
-  Instagram,
-  Youtube,
   Music,
-  Facebook,
   Linkedin,
   Twitch,
-  Globe,
   ShoppingBag,
   Mail,
   Phone,
@@ -40,6 +36,9 @@ import {
   UserMinus,
   Gift,
 } from "lucide-react";
+
+// Use react-icons for all major social platforms for reliability
+import { FaInstagram, FaFacebook, FaYoutube, FaGlobe, FaLinkedin, FaTiktok, FaTwitch, FaXTwitter } from "react-icons/fa6";
 
 import type { ProfileData } from "@/types/profile";
 
@@ -414,14 +413,14 @@ const PublicBio = () => {
   const getSocialIcon = (platform: string) => {
     if (!platform) return <LinkIcon className="w-5 h-5" />;
     const p = platform.toLowerCase();
-    if (["twitter", "x"].includes(p)) return <Twitter className="w-5 h-5" />;
-    if (["instagram", "insta"].includes(p)) return <Instagram className="w-5 h-5" />;
-    if (["youtube", "yt"].includes(p)) return <Youtube className="w-5 h-5" />;
-    if (["tiktok", "music", "tiktokmusic"].includes(p)) return <Music className="w-5 h-5" />;
-    if (["facebook", "fb"].includes(p)) return <Facebook className="w-5 h-5" />;
-    if (["linkedin", "li"].includes(p)) return <Linkedin className="w-5 h-5" />;
-    if (["twitch"].includes(p)) return <Twitch className="w-5 h-5" />;
-    if (["website", "web", "site", "homepage", "home"].includes(p)) return <Globe className="w-5 h-5" />;
+    if (["twitter", "x", "x.com"].includes(p)) return <FaXTwitter className="w-5 h-5" />;
+    if (["instagram", "insta", "instagram.com"].includes(p)) return <FaInstagram className="w-5 h-5" />;
+    if (["youtube", "yt", "youtube.com", "youtube.com/@"].includes(p)) return <FaYoutube className="w-5 h-5" />;
+    if (["tiktok", "tiktok.com", "tiktok.com/@"].includes(p)) return <FaTiktok className="w-5 h-5" />;
+    if (["facebook", "fb", "facebook.com"].includes(p)) return <FaFacebook className="w-5 h-5" />;
+    if (["linkedin", "li", "linkedin.com", "linkedin.com/in/"].includes(p)) return <FaLinkedin className="w-5 h-5" />;
+    if (["twitch", "twitch.tv"].includes(p)) return <FaTwitch className="w-5 h-5" />;
+    if (["website", "web", "site", "homepage", "home", "globe"].includes(p)) return <FaGlobe className="w-5 h-5" />;
     return <LinkIcon className="w-5 h-5" />;
   };
 
@@ -440,27 +439,15 @@ const PublicBio = () => {
 
   const getButtonStyles = (primaryColor: string, buttonStyle: string) => {
     if (buttonStyle === 'outlined') {
-      return (
-        <div>
-          {/* ...existing code... */}
-          {profileId && (
-            <div className="flex justify-center mt-4">
-              <button
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                onClick={() => navigate(`/store/${profileId}`)}
-              >
-                View Store
-              </button>
-            </div>
-          )}
-        </div>
-      );
       return {
         backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        border: '2px solid #fff',
+        color: '#fff',
       };
     } else {
       return {
         backgroundColor: primaryColor,
+        color: '#fff',
       };
     }
   };
