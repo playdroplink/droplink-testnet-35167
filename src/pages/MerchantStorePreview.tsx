@@ -1,30 +1,83 @@
-import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import type { ProductItem, CartItem, Order } from "@/types/profile";
-
-
-// Demo data, replace with real data fetching
-const demoStore = {
-  name: "Coffee Shop",
-  location: "123 Main St",
-  theme: "Coffee",
-  contact: "coffee@shop.com",
-  products: [
-    { id: "1", name: "Espresso", price: 2, description: "Strong and bold.", image: "https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=400&q=80", quantity: 10 },
-    { id: "2", name: "Latte", price: 3, description: "Smooth and creamy.", image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80", quantity: 8 },
-    { id: "3", name: "Cappuccino", price: 3, description: "Rich and foamy.", image: "https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80", quantity: 5 },
-  ] as ProductItem[],
-  textColor: "#222",
-  backgroundColor: "#f5f5dc",
-};
 
 const MerchantStorePreview: React.FC = () => {
   const { merchantId } = useParams();
-  // TODO: Fetch store data by merchantId
-  const store = demoStore;
+  const [store, setStore] = useState({
+    name: "",
+    location: "",
+    theme: "",
+    contact: "",
+    textColor: "#222",
+    backgroundColor: "#f5f5dc",
+    products: [] as ProductItem[],
+  });
+  const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [order, setOrder] = useState<Order | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!merchantId) return;
+    setLoading(true);
+    setError(null);
+    // Fetch store info and products for this merchant
+    const fetchStore = async () => {
+      // Fetch profile info (use correct columns)
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, username, theme_settings")
+        .eq("id", merchantId)
+        .maybeSingle();
+      // Fetch products
+      const { data: products, error: prodError } = await supabase
+        .from("drop_products")
+        .select("id, name, price, description, product_link")
+        .eq("seller_id", merchantId)
+        .order("created_at", { ascending: false });
+      if (profileError) setError(profileError.message);
+      if (prodError) setError(prodError.message);
+      // Parse theme_settings if present
+      let textColor = "#222";
+      let backgroundColor = "#f5f5dc";
+      let storeName = "Merchant Store";
+      let contact = "";
+      if (profile && typeof profile === "object" && !('message' in profile)) {
+        if (profile.theme_settings) {
+          try {
+            const theme = typeof profile.theme_settings === "string" ? JSON.parse(profile.theme_settings) : profile.theme_settings;
+            textColor = theme?.textColor || textColor;
+            backgroundColor = theme?.backgroundColor || backgroundColor;
+          } catch {}
+        }
+        storeName = profile.username || storeName;
+        setUsername(profile.username || null);
+      }
+      setStore({
+        name: storeName,
+        location: "",
+        theme: "",
+        contact,
+        textColor,
+        backgroundColor,
+        products: (products || []).map((p) => ({
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          description: p.description,
+          image: p.product_link || undefined,
+        })),
+      });
+      setLoading(false);
+    };
+    fetchStore();
+  }, [merchantId]);
+
 
   const addToCart = (product: ProductItem) => {
     setCart((prev) => {
@@ -61,12 +114,28 @@ const MerchantStorePreview: React.FC = () => {
     setShowCart(false);
   };
 
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading store...</div>;
+  }
+  if (error) {
+    return <div className="min-h-screen flex items-center justify-center text-red-600">{error}</div>;
+  }
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-start p-6"
       style={{ background: store.backgroundColor, color: store.textColor }}
     >
       <div className="w-full max-w-lg bg-white/80 rounded shadow p-6 mb-8">
+        {username && (
+          <div className="flex justify-end mb-4">
+            <button
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              onClick={() => navigate(`/u/${username}`)}
+            >
+              View Bio
+            </button>
+          </div>
+        )}
         <h1 className="text-3xl font-bold mb-2">{store.name}</h1>
         <div className="mb-2 text-sm text-gray-600">{store.location}</div>
         <div className="mb-4 text-base">Theme: {store.theme}</div>
@@ -83,7 +152,6 @@ const MerchantStorePreview: React.FC = () => {
                   <span className="font-bold text-lg">{product.name}</span>
                   <span className="block">Price: {product.price} Pi</span>
                   <span className="block text-sm text-gray-600">{product.description}</span>
-                  <span className="block text-xs text-gray-500">In stock: {product.quantity ?? 0}</span>
                 </div>
                 <button
                   className="mt-2 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
@@ -95,6 +163,7 @@ const MerchantStorePreview: React.FC = () => {
             ))}
           </ul>
         </div>
+        {/* Cart and order UI remain unchanged */}
         <div className="flex flex-col gap-2 mt-6">
           <div className="flex justify-between items-center">
             <span className="text-xs text-gray-500">Preview URL:</span>
@@ -138,7 +207,7 @@ const MerchantStorePreview: React.FC = () => {
                     <input
                       type="number"
                       min={1}
-                      max={item.quantity ?? 99}
+                      max={99}
                       value={item.cartQuantity}
                       onChange={e => updateQuantity(item.id, Number(e.target.value))}
                       className="w-16 border rounded px-2 py-1 text-xs"

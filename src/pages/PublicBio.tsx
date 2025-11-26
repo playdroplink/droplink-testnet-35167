@@ -46,11 +46,11 @@ import type { ProfileData } from "@/types/profile";
 const PublicBio = () => {
   const { username } = useParams();
   const navigate = useNavigate();
+  const [profileId, setProfileId] = useState<string | null>(null);
   // Subscription for viewed profile (must be after username is defined)
   const { plan, expiresAt, loading: subLoading } = usePublicSubscription(username ? String(username) : "");
   const isPlanExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
   const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [profileId, setProfileId] = useState<string | null>(null);
   const [currentUserProfileId, setCurrentUserProfileId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -66,10 +66,22 @@ const PublicBio = () => {
   const [visitCount, setVisitCount] = useState(0);
   const [message, setMessage] = useState("");
 
+
   useEffect(() => {
     loadProfile();
     loadCurrentUserProfile();
     loadVisitorCounts();
+    // Fetch profileId for store link
+    const fetchProfileId = async () => {
+      if (!username) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", username)
+        .maybeSingle();
+      if (profile && profile.id) setProfileId(profile.id);
+    };
+    fetchProfileId();
   }, [username]);
 
   useEffect(() => {
@@ -437,11 +449,21 @@ const PublicBio = () => {
 
   const getButtonStyles = (primaryColor: string, buttonStyle: string) => {
     if (buttonStyle === 'outlined') {
-      return {
-        backgroundColor: 'transparent',
-        border: `2px solid ${primaryColor}`,
-      };
-    } else if (buttonStyle === 'minimal') {
+      return (
+        <div>
+          {/* ...existing code... */}
+          {profileId && (
+            <div className="flex justify-center mt-4">
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                onClick={() => navigate(`/store/${profileId}`)}
+              >
+                View Store
+              </button>
+            </div>
+          )}
+        </div>
+      );
       return {
         backgroundColor: 'rgba(255, 255, 255, 0.1)',
       };
