@@ -16,7 +16,7 @@ import { usePi } from "@/contexts/PiContext";
 const AISupport = () => {
   const navigate = useNavigate();
   // Pi auth disabled: open to all users
-  // const { piUser, isAuthenticated } = usePi();
+  const { piUser, isAuthenticated } = usePi();
   const [profileId, setProfileId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -55,18 +55,19 @@ const AISupport = () => {
 
   const loadAIConfig = async (id: string) => {
     try {
+      // ai_support_config table does not exist, fallback to user_preferences or profiles
       const { data, error } = await supabase
-        .from("ai_support_config")
-        .select("*")
+        .from("user_preferences")
+        .select("custom_data")
         .eq("profile_id", id)
         .maybeSingle();
 
-      if (data) {
+      if (data && data.custom_data && typeof data.custom_data === "object" && !Array.isArray(data.custom_data)) {
         setConfig({
-          enabled: data.enabled || false,
-          business_info: data.business_info || "",
-          faqs: data.faqs || "",
-          custom_instructions: data.custom_instructions || "",
+          enabled: (data.custom_data as any).enabled || false,
+          business_info: (data.custom_data as any).business_info || "",
+          faqs: (data.custom_data as any).faqs || "",
+          custom_instructions: (data.custom_data as any).custom_instructions || "",
         });
       }
     } catch (error) {
@@ -79,15 +80,15 @@ const AISupport = () => {
 
     setSaving(true);
     try {
+      // ai_support_config table does not exist, fallback to user_preferences custom_data
       const { error } = await supabase
-        .from("ai_support_config")
-        .upsert({
-          profile_id: profileId,
-          enabled: config.enabled,
-          business_info: config.business_info,
-          faqs: config.faqs,
-          custom_instructions: config.custom_instructions,
-        });
+        .from("user_preferences")
+        .update({
+          custom_data: {
+            ...config
+          }
+        })
+        .eq("profile_id", profileId);
 
       if (error) throw error;
 

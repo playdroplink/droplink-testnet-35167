@@ -1260,7 +1260,7 @@ const Dashboard = () => {
 
       <div className="flex flex-col lg:flex-row h-[calc(100vh-73px)]">
         {/* Editor Panel */}
-        <div className={`flex-1 overflow-y-auto p-4 lg:p-8 ${isMobile ? 'bg-background' : 'glass-card'} m-2 rounded-xl ${showPreview ? 'hidden lg:block' : 'block'}`}>
+        <div className={`flex-1 overflow-y-auto p-4 lg:p-8 ${isMobile ? 'bg-background' : 'glass-card'} m-2 rounded-xl ${showPreview ? 'hidden lg:block' : 'block'}`} style={{ position: 'relative', minHeight: 0 }}>
           <div className="max-w-2xl mx-auto">
             <Tabs 
               defaultValue={preferences.dashboard_layout.activeTab} 
@@ -2148,8 +2148,8 @@ const Dashboard = () => {
             </PlanGate>
 
                 {/* Action Buttons */}
-                <Card className="border-0 rounded-none shadow-none sticky bottom-0 z-50 w-full p-0 m-0">
-                  <div className="flex gap-4 border-t border-border bg-background/95 backdrop-blur-sm w-full p-0 m-0">
+                <Card className="border-0 rounded-none shadow-none sticky bottom-0 z-[100] w-full p-0 m-0" style={{ boxShadow: '0 4px 24px 0 #0002', background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(8px)' }}>
+                  <div className="flex gap-4 border-t border-border w-full p-0 m-0" style={{ background: 'transparent' }}>
                     <Button
                       className="flex-1 h-12 rounded-none bg-white text-sky-400 font-medium border-none hover:bg-gray-100"
                       onClick={() => {
@@ -2159,7 +2159,15 @@ const Dashboard = () => {
                     >
                       Cancel
                     </Button>
-                    <Button onClick={handleSave} className="flex-1 h-12 bg-sky-400 hover:bg-sky-500 text-white font-medium rounded-none border-none" disabled={saving}>
+                    <Button 
+                      onClick={() => {
+                        autoSave.updateData(profile);
+                        handleSave();
+                      }}
+                      className="flex-1 h-12 bg-sky-400 hover:bg-sky-500 text-white font-medium rounded-none border-none shadow-md"
+                      style={{ transition: 'box-shadow 0.2s', boxShadow: '0 2px 8px #0284c71a' }}
+                      disabled={saving}
+                    >
                       {saving ? "Saving..." : "Save changes"}
                     </Button>
                   </div>
@@ -2176,13 +2184,14 @@ const Dashboard = () => {
                         onThemeChange={(newTheme) => setProfile({ ...profile, theme: newTheme })}
                       />
                       {/* Save Button */}
-                      <div className={`flex gap-4 pt-6 pb-6 mt-8 border-t border-border sticky bottom-0 z-50 w-full bg-background/95 backdrop-blur-sm shadow-lg`}>
+                      <div className={`flex gap-4 pt-6 pb-6 mt-8 border-t border-border sticky bottom-0 z-[100] w-full bg-background/95 backdrop-blur-sm shadow-lg`} style={{ boxShadow: '0 4px 24px 0 #0002', background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(8px)' }}>
                         <Button variant="outline" className="flex-1 h-12">
                           Cancel
                         </Button>
                         <Button 
                           onClick={handleSave} 
-                          className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium" 
+                          className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-md" 
+                          style={{ transition: 'box-shadow 0.2s', boxShadow: '0 2px 8px #0284c71a' }}
                           disabled={saving}
                         >
                           {saving ? "Saving..." : "Save changes"}

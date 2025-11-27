@@ -12,7 +12,7 @@ import { usePi } from "@/contexts/PiContext";
 
 export const Auth = () => {
   const navigate = useNavigate();
-  const { piUser, isAuthenticated, authenticate: piAuthenticate, loading: piLoading } = usePi();
+  const { piUser, isAuthenticated, signIn, loading: piLoading } = usePi();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -96,9 +96,8 @@ export const Auth = () => {
 
   const handlePiAuth = async () => {
     try {
-      await piAuthenticate();
+      await signIn();
       toast.success("Successfully authenticated with Pi Network!");
-      
       // Check for post-auth actions first
       const handledSpecialAction = await handlePostAuthAction();
       if (!handledSpecialAction) {
@@ -134,16 +133,35 @@ export const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Pi Network Authentication Button */}
           <div className="p-6 pt-0 space-y-4">
-            <Button 
-              onClick={handlePiAuth}
-              className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90"
-              disabled={piLoading || loading}
-            >
-              {piLoading ? "Connecting..." : "Sign in with Pi Network"}
-            </Button>
-            
+            {/* Main Auth Buttons: Socials, Pi Browser, Pi Network */}
+            <div className="flex flex-col gap-3">
+              <a
+                href="https://droplink.space/droplinkofficial"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full h-11 flex items-center justify-center rounded-md bg-[#6C47FF] text-white hover:bg-[#4B2FCB] font-medium transition-colors"
+                style={{ textDecoration: 'none' }}
+              >
+                Droplink Socials
+              </a>
+              <a
+                href="https://minepi.com/get"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full h-11 flex items-center justify-center rounded-md bg-[#FF8200] text-white hover:bg-[#cc6900] font-medium transition-colors"
+                style={{ textDecoration: 'none' }}
+              >
+                Download Pi Browser
+              </a>
+              <Button 
+                onClick={handlePiAuth}
+                className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90"
+                disabled={piLoading || loading}
+              >
+                {piLoading ? "Connecting..." : "Sign in with Pi Network"}
+              </Button>
+            </div>
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t"></span>
@@ -152,16 +170,14 @@ export const Auth = () => {
                 <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
-            
-              <Button 
-                variant="outline" 
-                className="w-full" 
-                disabled
-              >
-                <Mail className="w-4 h-4 mr-2" />
-                Email sign-in disabled
-              </Button>
-            
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              disabled
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              Email sign-in disabled
+            </Button>
             {/* Feature highlights */}
             <div className="space-y-2 text-sm text-muted-foreground">
               <p className="flex items-center gap-2">
@@ -177,17 +193,27 @@ export const Auth = () => {
                 <span className="text-primary">✓</span>Your data persists across sessions with Pi authentication
               </p>
             </div>
-            
             {/* Pi Browser notice */}
             <div className="pt-4 border-t space-y-2">
               <p className="text-xs text-center text-muted-foreground">
                 Please open this app in Pi Browser to use Pi authentication.<br/>
                 Your Pi username will be used as your unique identifier.
               </p>
-              <div className="flex justify-center gap-4 text-xs">
-                <a href="/terms" className="text-primary hover:underline">Terms</a>
-                <span className="text-muted-foreground">•</span>
-                <a href="/privacy" className="text-primary hover:underline">Privacy</a>
+              <div className="flex flex-col items-center gap-2">
+                <a
+                  href="https://minepi.com/get"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full block text-center rounded-md bg-[#FF8200] text-white hover:bg-[#cc6900] py-3 font-medium transition-colors"
+                  style={{ marginBottom: 8 }}
+                >
+                  Download Pi Browser
+                </a>
+                <div className="flex justify-center gap-4 text-xs">
+                  <a href="/terms" className="text-primary hover:underline">Terms</a>
+                  <span className="text-muted-foreground">•</span>
+                  <a href="/privacy" className="text-primary hover:underline">Privacy</a>
+                </div>
               </div>
             </div>
           </div>

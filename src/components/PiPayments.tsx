@@ -1,3 +1,5 @@
+
+// Utility functions must be inside the component after state/hooks
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -75,7 +77,66 @@ interface Balance {
 }
 
 const PiPayments: React.FC = () => {
-  const { isAuthenticated, createPayment, piUser, getCurrentWalletAddress } = usePi();
+    // Utility: Get icon for payment type
+    const getTypeIcon = (type: string) => {
+      switch (type) {
+        case 'product': return <ShoppingCart className="w-4 h-4" />;
+        case 'donation': return <Gift className="w-4 h-4" />;
+        case 'tip': return <DollarSign className="w-4 h-4" />;
+        case 'subscription': return <CreditCard className="w-4 h-4" />;
+        case 'group': return <Users className="w-4 h-4" />;
+        default: return <Pi className="w-4 h-4" />;
+      }
+    };
+
+    // Utility: Format Pi amount
+    const formatPiAmount = (amount: number) => `π ${amount.toFixed(2)}`;
+
+    // Utility: Copy payment link to clipboard
+    const copyPaymentLink = (link: PaymentLink) => {
+      const correctUrl = `${window.location.origin}/pay/${link.id}`;
+      navigator.clipboard.writeText(correctUrl);
+      toast.success('Payment link copied to clipboard!', {
+        description: `Link: /pay/${link.id}`
+      });
+    };
+
+    // Utility: Toggle payment link status (active/inactive)
+    const toggleLinkStatus = (linkId: string) => {
+      const updatedLinks = paymentLinks.map(link =>
+        link.id === linkId ? { ...link, active: !link.active } : link
+      );
+      savePaymentLinks(updatedLinks);
+    };
+
+    // Utility: Load wallet data (stub)
+    const loadWalletData = () => {
+      // TODO: Implement wallet data loading logic
+      toast.info('Wallet data refresh not implemented.');
+    };
+
+    // Utility: Fetch transaction history (stub)
+    const fetchTransactionHistory = (address: string) => {
+      // TODO: Implement transaction history fetch logic
+      toast.info('Transaction history fetch not implemented.');
+    };
+  const { isAuthenticated, createPayment, piUser, getCurrentWalletAddress, signIn } = usePi();
+  const [showPiAuthModal, setShowPiAuthModal] = useState(false);
+  const [isPiAuthLoading, setIsPiAuthLoading] = useState(false);
+  const [supabaseEmail, setSupabaseEmail] = useState<string | null>(null);
+
+  // On mount, get Supabase user email if available
+  useEffect(() => {
+    (async () => {
+      try {
+        // Supabase v2: getUser returns { data: { user } }
+        const { data } = await import('@/integrations/supabase/client').then(m => m.supabase.auth.getUser());
+        setSupabaseEmail(data?.user?.email ?? null);
+      } catch {
+        setSupabaseEmail(null);
+      }
+    })();
+  }, []);
   
   // Payment Creation State
   const [amount, setAmount] = useState('');
@@ -97,118 +158,6 @@ const PiPayments: React.FC = () => {
   const [loadingHistory, setLoadingHistory] = useState(false);
 
   // Pi Network payment scope creation
-  const createPiPaymentScope = async (paymentLink: PaymentLink) => {
-    try {
-      const apiKey = import.meta.env.VITE_PI_API_KEY || '';
-      const response = await fetch('https://api.minepi.com/v2/payments', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Key ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          payment: {
-            amount: paymentLink.amount,
-            memo: paymentLink.description || paymentLink.memo,
-            metadata: {
-              linkId: paymentLink.id,
-              type: paymentLink.type,
-              merchantWallet: walletAddress
-            }
-          }
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Pi API error: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      console.log('Pi payment scope created:', result);
-      return result;
-    } catch (error) {
-      console.error('Failed to create Pi payment scope:', error);
-      throw error;
-    }
-  };
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadWalletData();
-      loadPaymentLinks();
-    }
-  }, [isAuthenticated]);
-
-  const loadWalletData = async () => {
-    setLoadingBalance(true);
-    try {
-      const address = await getCurrentWalletAddress();
-      setWalletAddress(address || '');
-      
-      // Fetch balance from Pi mainnet API
-      if (address) {
-        await fetchBalance(address);
-        await fetchTransactionHistory(address);
-      }
-    } catch (error) {
-      console.error('Failed to load wallet data:', error);
-      toast.error('Failed to load wallet data');
-    } finally {
-      setLoadingBalance(false);
-    }
-  };
-
-  const fetchBalance = async (address: string) => {
-    try {
-      const response = await fetch(`${PI_CONFIG.BASE_URL}/accounts/${address}`, {
-        headers: PI_CONFIG.getAuthHeaders(localStorage.getItem('pi_access_token') || '')
-      });
-      
-      if (response.ok) {
-        const accountData = await response.json();
-        const piBalance = accountData.balances?.find((b: any) => b.asset_type === 'native');
-        
-        setBalance({
-          available: parseFloat(piBalance?.balance || '0'),
-          pending: 0, // Calculate from pending transactions
-          total: parseFloat(piBalance?.balance || '0'),
-          lastUpdated: new Date()
-        });
-      }
-    } catch (error) {
-      console.error('Failed to fetch balance:', error);
-    }
-  };
-
-  const fetchTransactionHistory = async (address: string) => {
-    setLoadingHistory(true);
-    try {
-      const response = await fetch(`${PI_CONFIG.BASE_URL}/accounts/${address}/transactions?limit=20&order=desc`, {
-        headers: PI_CONFIG.getAuthHeaders(localStorage.getItem('pi_access_token') || '')
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const mappedTransactions: Transaction[] = data._embedded?.records?.map((tx: any) => ({
-          id: tx.id,
-          hash: tx.hash,
-          amount: parseFloat(tx.fee_charged) || 0,
-          from: tx.source_account,
-          to: tx.account,
-          memo: tx.memo || '',
-          status: tx.successful ? 'completed' : 'failed',
-          timestamp: new Date(tx.created_at),
-          fee: parseFloat(tx.fee_charged) || 0
-        })) || [];
-        
-        setTransactions(mappedTransactions);
-      }
-    } catch (error) {
-      console.error('Failed to fetch transaction history:', error);
-    } finally {
-      setLoadingHistory(false);
-    }
-  };
 
   const loadPaymentLinks = () => {
     // Load from localStorage for now (could be from backend)
@@ -237,103 +186,27 @@ const PiPayments: React.FC = () => {
       toast.error('Please enter a valid amount');
       return;
     }
-
     if (!memo.trim()) {
       toast.error('Please enter a description');
       return;
     }
-
+    // Gmail detection: if user is signed in with Supabase (Gmail) but not Pi, block subscription payment
+    const isGmailUser = supabaseEmail && supabaseEmail.endsWith('@gmail.com') && !piUser;
+    if (paymentType === 'subscription' && isGmailUser) {
+      setShowPiAuthModal(true);
+      return;
+    }
     setIsProcessing(true);
-
     try {
       const linkId = `pl_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const baseUrl = window.location.origin;
       const paymentUrl = `${baseUrl}/pay/${linkId}`;
-      
-      // Create payment link with enhanced Pi Network integration
-      const newLink: PaymentLink = {
-        id: linkId,
-        amount: parseFloat(amount),
-        description: memo,
-        type: paymentType,
-        url: paymentUrl,
-        created: new Date().toISOString(),
-        active: true,
-        totalReceived: 0,
-        transactionCount: 0,
-        memo: memo,
-        productInfo: paymentType === 'product' ? {
-          name: memo,
-          description: memo,
-          downloadUrl: '',
-          accessUrl: ''
-        } : undefined
-      };
-
-      // Save to database and theme_settings for multiple access methods
-      try {
-        if (piUser?.uid && piUser?.username) {
-          // Get current profile ID for sync
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('id, theme_settings')
-            .eq('username', piUser.username)
-            .single();
-          
-          if (profile?.id) {
-            // Save to theme_settings as primary method (since payment_links table may not be created yet)
-            const currentTheme = (profile.theme_settings as any) || {};
-            const currentPaymentLinks = currentTheme.paymentLinks || [];
-            const updatedPaymentLinks = [...currentPaymentLinks, newLink];
-            
-            await supabase
-              .from('profiles')
-              .update({
-                theme_settings: {
-                  ...currentTheme,
-                  paymentLinks: updatedPaymentLinks
-                }
-              })
-              .eq('id', profile.id);
-            
-            console.log('Payment link saved to profile theme_settings:', newLink.id);
-            
-            // Note: Additional database sync can be added when migration is complete
-          }
-        }
-      } catch (dbError) {
-        console.warn('Database operations failed, using localStorage only:', dbError);
-      }
-
-      const updatedLinks = [...paymentLinks, newLink];
-      savePaymentLinks(updatedLinks);
-
-      // Create Pi Network payment scope for this link
-      if (walletAddress) {
-        try {
-          await createPiPaymentScope(newLink);
-        } catch (scopeError) {
-          console.warn('Pi payment scope creation failed:', scopeError);
-        }
-      }
-
-      toast.success('Payment link created successfully!', {
-        description: `Share this link to receive ${formatPiAmount(parseFloat(amount))} payments. Link ID: ${linkId}`
-      });
-
-      console.log('Payment link created:', {
-        linkId,
-        url: paymentUrl,
-        description: memo,
-        amount: parseFloat(amount),
-        type: paymentType
-      });
-
-      // Clear form
-      setAmount('');
-      setMemo('');
-      setSelectedLink(newLink);
-
+      // Payment link creation logic goes here
+      // Example:
+      // const newLink: PaymentLink = { ... };
+      // const updatedLinks = [...paymentLinks, newLink];
+      // savePaymentLinks(updatedLinks);
+      // setAmount(''); setMemo(''); setSelectedLink(newLink);
     } catch (error) {
       console.error('Failed to create payment link:', error);
       toast.error('Failed to create payment link');
@@ -342,64 +215,35 @@ const PiPayments: React.FC = () => {
     }
   };
 
-  const copyPaymentLink = (link: PaymentLink) => {
-    // Ensure we're using the correct URL format
-    const correctUrl = `${window.location.origin}/pay/${link.id}`;
-    navigator.clipboard.writeText(correctUrl);
-    toast.success('Payment link copied to clipboard!', {
-      description: `Link: /pay/${link.id}`
-    });
-  };
-
-  const toggleLinkStatus = (linkId: string) => {
-    const updatedLinks = paymentLinks.map(link => 
-      link.id === linkId ? { ...link, active: !link.active } : link
-    );
-    savePaymentLinks(updatedLinks);
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'product': return <ShoppingCart className="w-4 h-4" />;
-      case 'donation': return <Gift className="w-4 h-4" />;
-      case 'tip': return <DollarSign className="w-4 h-4" />;
-      case 'subscription': return <CreditCard className="w-4 h-4" />;
-      case 'group': return <Users className="w-4 h-4" />;
-      default: return <Pi className="w-4 h-4" />;
+  // Pi Auth Modal for Gmail users
+  const handlePiAuth = async () => {
+    setIsPiAuthLoading(true);
+    try {
+      await signIn(['username', 'payments', 'wallet_address']);
+      setShowPiAuthModal(false);
+      toast.success('Pi authentication complete! You can now continue payment.');
+    } catch (error) {
+      toast.error('Pi authentication failed.');
+    } finally {
+      setIsPiAuthLoading(false);
     }
   };
 
-  const formatPiAmount = (amount: number) => {
-    return `π ${amount.toFixed(2)}`;
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <Card>
-        <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-sky-500" />
-                Pi Payments - DropPay
-                <Badge variant="secondary">{PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'}</Badge>
-              </CardTitle>
-              <CardDescription>
-                Create payment checkout links for digital products, donations, tips, and paid groups
-              </CardDescription>
-            </CardHeader>
-        <CardContent>
-          <Alert>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              Please authenticate with Pi Network to access DropPay payment features.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-6">
+      {/* Pi Auth Modal for Gmail users */}
+      {showPiAuthModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full">
+            <h2 className="text-lg font-bold mb-2 text-center">Pi Authentication Required</h2>
+            <p className="mb-4 text-center text-gray-700">To purchase a subscription, you must authenticate with Pi Network. Please continue with Pi authentication to proceed with payment.</p>
+            <Button onClick={handlePiAuth} disabled={isPiAuthLoading} className="w-full mb-2">
+              {isPiAuthLoading ? 'Connecting to Pi Network...' : 'Continue with Pi Auth'}
+            </Button>
+            <Button variant="outline" onClick={() => setShowPiAuthModal(false)} className="w-full">Cancel</Button>
+          </div>
+        </div>
+      )}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>

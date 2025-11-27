@@ -318,6 +318,23 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         });
 
         if (!response.ok) {
+          let errorBody = '';
+          try {
+            errorBody = await response.text();
+          } catch (e) {
+            errorBody = '[Could not read response body]';
+          }
+          console.error(`❌ Pi ${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'} authentication verification failed (status ${response.status}):`, errorBody);
+          // Clear invalid credentials
+          localStorage.removeItem('pi_access_token');
+          localStorage.removeItem('pi_user');
+          setAccessToken(null);
+          setPiUser(null);
+          setError('Pi Network authentication failed. Please try signing in again.');
+          toast.error('Pi Network authentication failed. Please try signing in again.', {
+            description: errorBody,
+            duration: 8000,
+          });
           throw new Error(`${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'} authentication verification failed (status ${response.status})`);
         }
 
