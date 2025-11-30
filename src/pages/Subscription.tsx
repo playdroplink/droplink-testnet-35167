@@ -155,6 +155,24 @@ const Subscription = () => {
 		}
 	};
 
+  // Mock payment handler for testing
+	const handleMockPayment = async (planName: string, price: number) => {
+		setLoading(true);
+		try {
+			// Simulate payment delay
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+			toast.success(`(MOCK) Subscribed to ${planName} plan! 🎉`);
+			setCurrentPlan(planName);
+			setSubscription({ plan_type: planName.toLowerCase() });
+			// Store mock plan in localStorage for dashboard unlock
+			localStorage.setItem('mock_subscription_plan', planName.toLowerCase());
+		} catch (error: any) {
+			toast.error(error.message || "Failed to process mock payment. Please try again.");
+		} finally {
+			setLoading(false);
+		}
+	};
+
 	return (
 		<div className="container mx-auto py-12">
 			<div className="max-w-4xl mx-auto">
@@ -212,14 +230,25 @@ const Subscription = () => {
 											</li>
 										))}
 									</ul>
-									<Button
-										className="w-full mb-2"
-										variant={plan.popular ? "default" : "outline"}
-										disabled={isCurrent || loading}
-										onClick={() => handleSubscribe(plan.name, price)}
-									>
-										{isCurrent ? "Current Plan" : price === 0 ? "Current Plan" : "Subscribe with Pi"}
-									</Button>
+																		<Button
+																				className="w-full mb-2"
+																				variant={plan.popular ? "default" : "outline"}
+																				disabled={isCurrent || loading}
+																				onClick={() => handleSubscribe(plan.name, price)}
+																		>
+																				{isCurrent ? "Current Plan" : price === 0 ? "Current Plan" : "Subscribe with Pi"}
+																		</Button>
+																		{/* Mock Payment Button for testing */}
+																		{plan.name !== "Free" && !isCurrent && (
+																			<Button
+																				className="w-full mb-2"
+																				variant="secondary"
+																				disabled={loading}
+																				onClick={() => handleMockPayment(plan.name, price)}
+																			>
+																				Test Mock Payment
+																			</Button>
+																		)}
 									{plan.name !== "Free" && (
 										<div className="flex flex-col gap-2">
 											<div className="flex items-center mb-1">

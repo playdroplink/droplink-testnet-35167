@@ -1,14 +1,14 @@
 export const PI_CONFIG = {
-  API_KEY: "rfjwwiyaysjsinhjrkhvplkrrmf5rjnwd3blmzuxdmek1t5mhy4avy6s6k96znwc", // Mainnet API key
-  BASE_URL: "https://api.minepi.com",
-  NETWORK: "mainnet",
-  NETWORK_PASSPHRASE: "Pi Network",
-  SANDBOX_MODE: false,
+  API_KEY: "96tnxytg82pevnvvxfowap4bwctcxo6wkp2dexoraevtj8svh0mvqxttpbtwvjm5", // SANDBOX API key
+  BASE_URL: "https://sandbox.minepi.com",
+  NETWORK: "testnet",
+  NETWORK_PASSPHRASE: "Pi Testnet",
+  SANDBOX_MODE: true, // ENABLED for sandbox testing
   ALLOW_MULTIPLE_ACCOUNTS: true,
-  
+
   SDK: {
     version: "2.0",
-    sandbox: false,
+    sandbox: true, // ENABLED for sandbox testing
   },
   
   scopes: ['username', 'payments', 'wallet_address', 'openid'],
@@ -37,19 +37,19 @@ export const PI_CONFIG = {
   }),
   
   ENDPOINTS: {
-    ME: "https://api.minepi.com/v2/me",
-    WALLETS: "https://api.minepi.com/v2/wallets",
-    TRANSACTIONS: "https://api.minepi.com/v2/transactions",
-    PAYMENTS: "https://api.minepi.com/v2/payments",
-    OPERATIONS: "https://api.minepi.com/v2/operations",
-    LEDGERS: "https://api.minepi.com/v2/ledgers",
-    EFFECTS: "https://api.minepi.com/v2/effects",
-    FEE_STATS: "https://api.minepi.com/v2/fee_stats",
-    PI_BLOCKCHAIN: "https://api.minepi.com/v2/blockchain",
-    PI_ASSETS: "https://api.minepi.com/v2/assets",
-    PI_ACCOUNT_BALANCES: "https://api.minepi.com/v2/accounts",
-    HORIZON: "https://horizon.stellar.org",
-    PI_ASSET_DISCOVERY: "https://api.minepi.com/v2/assets"
+    ME: "https://sandbox.minepi.com/v2/me",
+    WALLETS: "https://sandbox.minepi.com/v2/wallets",
+    TRANSACTIONS: "https://sandbox.minepi.com/v2/transactions",
+    PAYMENTS: "https://sandbox.minepi.com/v2/payments",
+    OPERATIONS: "https://sandbox.minepi.com/v2/operations",
+    LEDGERS: "https://sandbox.minepi.com/v2/ledgers",
+    EFFECTS: "https://sandbox.minepi.com/v2/effects",
+    FEE_STATS: "https://sandbox.minepi.com/v2/fee_stats",
+    PI_BLOCKCHAIN: "https://sandbox.minepi.com/v2/blockchain",
+    PI_ASSETS: "https://sandbox.minepi.com/v2/assets",
+    PI_ACCOUNT_BALANCES: "https://sandbox.minepi.com/v2/accounts",
+    HORIZON: "https://horizon-testnet.stellar.org",
+    PI_ASSET_DISCOVERY: "https://sandbox.minepi.com/v2/assets"
   },
 
   // Mainnet token configuration should be added here if/when available

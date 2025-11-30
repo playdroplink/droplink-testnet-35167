@@ -28,27 +28,6 @@
     <!-- Pi Network SDK: Only load the script, let React handle initialization -->
     <script src="https://sdk.minepi.com/pi-sdk.js" async crossorigin="anonymous"></script>
 
-    <!-- Supabase Configuration -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-    <script>
-      const SUPABASE_URL = "https://idkjfuctyukspexmijvb.supabase.co";
-      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlka2pmdWN0eXVrc3BleG1panZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0NjI0NzMsImV4cCI6MjA3OTAzODQ3M30.dIJlRYAnSgj2Ohsl6tqz_cP9Zg03HG6naYTGXoAjkDs"; // Replace with your Supabase anon key
-      const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-      // Example: Check if Supabase is connected
-      async function checkSupabaseConnection() {
-        const { data, error } = await supabase.from('test').select('*');
-        if (error) {
-          console.error('Supabase connection error:', error);
-        } else {
-          console.log('Supabase connected successfully:', data);
-        }
-      }
-
-      document.addEventListener('DOMContentLoaded', () => {
-        checkSupabaseConnection();
-      });
-    </script>
 
     <!-- Web App Manifest -->
     <link rel="manifest" href="/manifest.json" />
