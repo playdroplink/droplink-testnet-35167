@@ -14,7 +14,7 @@ import { PiAdBanner } from "@/components/PiAdBanner";
 import { AdGatedFeature } from "@/components/AdGatedFeature";
 import { PlanGate } from "@/components/PlanGate";
 import { useActiveSubscription } from "@/hooks/useActiveSubscription";
-import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+// Removed duplicate Dialog imports to fix duplicate identifier errors
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { supabase } from "@/integrations/supabase/client";
 import { usePi } from "@/contexts/PiContext";
@@ -30,6 +30,7 @@ import { DropTokenManager } from "@/components/DropTokenManager";
 import PiAdNetwork from "../components/PiAdNetwork";
 import PiPayments from "@/components/PiPayments";
 import SubscriptionStatus from "@/components/SubscriptionStatus";
+import { Dialog, DialogContent, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import VotingSystem from "@/components/VotingSystem";
 import { ProfileData } from "@/types/profile";
 import LinkManager from "@/components/LinkManager";
@@ -88,6 +89,13 @@ import {
 } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import { toast } from "sonner";
+
+// Utility: Check if running in Pi Browser
+function isPiBrowserMobile() {
+  if (typeof window === 'undefined' || !window.navigator) return false;
+  const ua = window.navigator.userAgent || '';
+  return /PiBrowser/i.test(ua) && /Mobile/i.test(ua);
+}
 import { QRCodeDialog } from "@/components/QRCodeDialog";
 import PiDataManager from "@/components/PiDataManager";
 import { useState as useQRState } from "react";
@@ -105,6 +113,7 @@ interface PaymentLink {
 }
 
 const Dashboard = () => {
+  const [showPlanModal, setShowPlanModal] = useState(false);
   // AI Logo Generation State (fix ReferenceError)
   // Greeting state
   const [greeting, setGreeting] = useState("");
@@ -222,7 +231,7 @@ const Dashboard = () => {
     piDonationMessage: "Send me a coffee ☕",
   });
 
-  // Auto-save functionality with enhanced database sync
+  // Auto-save functionality with enhanced database sync and robust Pi Browser/mobile error handling
   const autoSave = useAutoSave<ProfileData>({
     tableName: 'profiles',
     recordId: profileId || '',
@@ -230,7 +239,19 @@ const Dashboard = () => {
     onSave: async (data: ProfileData) => {
       // Enhanced save logic for all profile features
       if (!profileId) return;
-      
+
+      // Pi Browser/mobile-specific checks
+      if (isPiBrowserMobile()) {
+        if (typeof window.Pi === 'undefined') {
+          toast.error('Pi SDK not loaded. Please refresh in Pi Browser.');
+          throw new Error('Pi SDK not loaded');
+        }
+        if (!piUser || !isAuthenticated) {
+          toast.error('You must be authenticated with Pi Network to save changes. Please sign in again.');
+          throw new Error('Not authenticated in Pi Browser');
+        }
+      }
+
       try {
         // 1. Update main profile data with all features
         const { error: profileError } = await supabase
@@ -265,9 +286,9 @@ const Dashboard = () => {
             updated_at: new Date().toISOString()
           })
           .eq('id', profileId);
-        
+
         if (profileError) throw profileError;
-        
+
         // 2. Sync products to database
         if (data.products && data.products.length > 0) {
           // Delete existing products for clean sync
@@ -275,7 +296,7 @@ const Dashboard = () => {
             .from('products')
             .delete()
             .eq('profile_id', profileId);
-          
+
           // Insert updated products
           const productsToInsert = data.products.map(product => ({
             profile_id: profileId,
@@ -284,25 +305,29 @@ const Dashboard = () => {
             price: typeof product.price === 'string' ? product.price : product.price?.toString?.() ?? "",
             file_url: product.fileUrl
           }));
-          
+
           if (productsToInsert.length > 0) {
             const { error: productsError } = await supabase
               .from('products')
               .insert(productsToInsert);
-            
+
             if (productsError) {
               console.error('Products sync error:', productsError);
             }
           }
         }
-        
+
         // 3. Enhanced localStorage backup with all features
         // (defaultProfile definition moved outside this block for clarity)
         // ...rest of the code remains unchanged...
-        
+
         console.log('✅ All user data synced to Supabase successfully');
-        
+
       } catch (error) {
+        // Show a more specific error for Pi Browser/mobile
+        if (isPiBrowserMobile()) {
+          toast.error('Save failed in Pi Browser. Please check your Pi authentication and network connection.');
+        }
         console.error('❌ Database sync error:', error);
         throw error; // Re-throw to trigger error handling
       }
@@ -874,13 +899,68 @@ const Dashboard = () => {
 
   const handleSave = async () => {
     setSaving(true);
+    toast.info('Saving changes...');
     try {
-      // ...existing code...
-      // (all save logic remains unchanged)
-    } catch (error: any) {
-      // ...existing code...
-    } finally {
-      setSaving(false);
+      if (!profileId) throw new Error('No profile ID found.');
+      // Update main profile data in Supabase
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          business_name: profile.businessName,
+          store_url: profile.storeUrl,
+          description: profile.description,
+          email: profile.email,
+          youtube_video_url: profile.youtubeVideoUrl,
+          social_links: profile.socialLinks as any,
+          theme_settings: {
+            ...profile.theme,
+            customLinks: profile.customLinks || [],
+            paymentLinks: (profile.paymentLinks || []).map(link => ({
+              id: link.id,
+              amount: link.amount,
+              description: link.description,
+              type: link.type,
+              url: link.url,
+              created: link.created instanceof Date ? link.created.toISOString() : link.created,
+              active: link.active,
+              totalReceived: link.totalReceived,
+              transactionCount: link.transactionCount
+            }))
+          } as any,
+          logo_url: profile.logo,
+          show_share_button: profile.showShareButton,
+          pi_wallet_address: profile.piWalletAddress,
+          pi_donation_message: profile.piDonationMessage,
+          has_premium: profile.hasPremium || false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', profileId);
+      if (profileError) throw profileError;
+
+      // Sync products to database
+      if (profile.products && profile.products.length > 0) {
+        await supabase
+          .from('products')
+          .delete()
+          .eq('profile_id', profileId);
+        const productsToInsert = profile.products.map(product => ({
+          profile_id: profileId,
+          title: product.title,
+          description: product.description,
+          price: typeof product.price === 'string' ? product.price : product.price?.toString?.() ?? "",
+          file_url: product.fileUrl
+        }));
+        if (productsToInsert.length > 0) {
+          const { error: productsError } = await supabase
+            .from('products')
+            .insert(productsToInsert);
+          if (productsError) {
+            console.error('Products sync error:', productsError);
+          }
+        }
+      }
+
+      toast.success('Changes saved successfully!');
       // Force reload of profile from database after save
       if (profileId) {
         try {
@@ -900,6 +980,10 @@ const Dashboard = () => {
           // Ignore reload errors
         }
       }
+    } catch (error: any) {
+      toast.error('Failed to save changes. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -1020,13 +1104,23 @@ const Dashboard = () => {
           <div className="flex items-center gap-1 sm:gap-2 lg:gap-4">
             {isMobile && (
               <Button
-                  onClick={() => setShowPreview(!showPreview)}
-                  size="sm"
-                  className="h-9 w-9 mr-1 bg-sky-400 text-white hover:bg-sky-500 border-none"
-                >
+                onClick={() => setShowPreview(!showPreview)}
+                size="sm"
+                className="h-9 w-9 mr-1 bg-sky-400 text-white hover:bg-sky-500 border-none"
+              >
                 {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </Button>
             )}
+            {/* Add Plan button to header for both mobile and desktop */}
+            <Button
+              variant="outline"
+              size={isMobile ? "icon" : "sm"}
+              className="ml-1 border-sky-400 text-sky-600 hover:bg-sky-50"
+              onClick={() => setShowPlanModal(true)}
+            >
+              <Crown className="w-5 h-5" />
+              <span className="hidden sm:inline ml-2">My Plan</span>
+            </Button>
             {isMobile ? (
               <Drawer>
                 <DrawerTrigger asChild>
@@ -1041,6 +1135,17 @@ const Dashboard = () => {
                     <DrawerDescription>Quick actions and settings</DrawerDescription>
                   </DrawerHeader>
                   <div className="p-4 space-y-3 max-h-[70vh] overflow-y-auto">
+                                        {/* Plan Button in Drawer */}
+                                        <div className="space-y-2">
+                                          <Button
+                                            onClick={() => { setShowPlanModal(true); }}
+                                            size="sm"
+                                            className="w-full justify-start gap-2 h-12 bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-300 border"
+                                          >
+                                            <Crown className="w-4 h-4" />
+                                            My Plan / Renew
+                                          </Button>
+                                        </div>
                     {/* User Info Section */}
                     <div className="space-y-2">
                       <div className="bg-sky-50 border border-sky-200 rounded-lg p-3">
@@ -2160,9 +2265,14 @@ const Dashboard = () => {
                       Cancel
                     </Button>
                     <Button 
-                      onClick={() => {
-                        autoSave.updateData(profile);
-                        handleSave();
+                      onClick={async () => {
+                        toast.info('Attempting to save changes...');
+                        try {
+                          await autoSave.updateData(profile);
+                          await handleSave();
+                        } catch (e) {
+                          toast.error('Save failed. Please check your connection or Pi authentication.');
+                        }
                       }}
                       className="flex-1 h-12 bg-sky-400 hover:bg-sky-500 text-white font-medium rounded-none border-none shadow-md"
                       style={{ transition: 'box-shadow 0.2s', boxShadow: '0 2px 8px #0284c71a' }}
@@ -2257,10 +2367,30 @@ const Dashboard = () => {
                 <PiPayments />
               </TabsContent>
 
+
               {/* Subscription Tab */}
               <TabsContent value="subscription" className="pb-8">
+                <Button variant="outline" onClick={() => setShowPlanModal(true)}>
+                  View My Plan / Renew
+                </Button>
                 <SubscriptionStatus />
               </TabsContent>
+
+              {/* Plan Modal */}
+              <Dialog open={showPlanModal} onOpenChange={setShowPlanModal}>
+                <DialogContent className="max-w-lg">
+                  <DialogTitle>User Plan Details</DialogTitle>
+                  <DialogDescription>
+                    View your current plan, expiry, and renew or upgrade below.
+                  </DialogDescription>
+                  <div className="my-4">
+                    <SubscriptionStatus />
+                  </div>
+                  <DialogFooter>
+                    <Button onClick={() => setShowPlanModal(false)} variant="secondary">Close</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
 
 
               {/* <TabsContent value="voting" className="pb-8">
