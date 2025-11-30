@@ -1,3 +1,45 @@
+/* THEME TEMPLATES: Set background to primary for each theme */
+.theme-pastel-purple {
+  --primary: 270 100% 85%; /* pastel purple */
+  --background: var(--primary);
+}
+.theme-neon-gold {
+  --primary: 48 100% 60%; /* neon gold */
+  --background: var(--primary);
+}
+.theme-sunset-teal {
+  --primary: 180 80% 60%; /* sunset teal */
+  --background: var(--primary);
+}
+.theme-galaxy-purple {
+  --primary: 265 80% 40%; /* galaxy purple */
+  --background: var(--primary);
+}
+.theme-strawberry-pink {
+  --primary: 340 80% 80%; /* strawberry pink */
+  --background: var(--primary);
+}
+.theme-frosted-blue {
+  --primary: 210 100% 90%; /* frosted blue */
+  --background: var(--primary);
+}
+.theme-coral-peach {
+  --primary: 18 90% 80%; /* coral peach */
+  --background: var(--primary);
+}
+.theme-mint-green {
+  --primary: 150 80% 80%; /* mint green */
+  --background: var(--primary);
+}
+.theme-purple-gold {
+  --primary: 270 80% 60%; /* pi purple */
+  --background: var(--primary);
+}
+.theme-minimal-white {
+  /* Minimal White Cloud: airy white/cream gradient background, soft white primary */
+  --primary: 0 0% 96%; /* #f5f5f5 */
+  --background: linear-gradient(135deg, #f5f5f5 0%, #fffde4 100%);
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

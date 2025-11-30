@@ -60,13 +60,18 @@ if (theme === 'dark') {
 
 // Run Pi environment validation before rendering to avoid silent white screens in Pi Browser
 (async () => {
+  let validationError = null;
   try {
     await validatePiEnvironment();
   } catch (err) {
-    // If validation fails, throw an error to be caught by ErrorBoundary UI
+    validationError = err;
+    // Log error to console and show fallback UI if possible
     console.error('Pi environment validation failed:', err);
-    // Render ErrorBoundary with thrown error by throwing here and letting React mount show it
-    // We still render so ErrorBoundary can show a friendly message
+    // Optionally, you can show a fallback error message here if React hasn't mounted yet
+    const root = document.getElementById("root");
+    if (root) {
+      root.innerHTML = `<div style='padding:32px;text-align:center;color:red;'><h2>Pi environment validation failed</h2><pre style='white-space:pre-wrap;'>${err instanceof Error ? err.message : err}</pre><p>Please check your Pi Developer Portal settings, HTTPS, manifest, and validation key.</p></div>`;
+    }
   }
 
   createRoot(document.getElementById("root")!).render(

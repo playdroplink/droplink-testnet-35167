@@ -59,7 +59,8 @@ const Profile = () => {
       if (!isAuthenticated || !piUser) {
         // Store current page for redirect after authentication
         sessionStorage.setItem('redirectAfterAuth', window.location.pathname);
-        navigate("/auth");
+        // Show a message and a sign-in button instead of redirecting immediately
+        setLoading(false);
         return;
       }
 
@@ -154,6 +155,15 @@ const Profile = () => {
   };
 
   if (loading) {
+    // If not authenticated, show a sign-in prompt
+    if (!isAuthenticated || !piUser) {
+      return (
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+          <p className="text-lg font-semibold">You must sign in with Pi Network to access your profile.</p>
+          <Button onClick={() => window.location.href = '/auth'}>Sign in with Pi Network</Button>
+        </div>
+      );
+    }
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <p>Loading...</p>
