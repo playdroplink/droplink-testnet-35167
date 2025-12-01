@@ -19,34 +19,7 @@ function isPiBrowser() {
 }
 
 
-// For development/testing: force window.Pi to true if not present
-if (typeof window !== 'undefined') {
-  console.log('[Droplink Debug] UserAgent:', window.navigator.userAgent);
-  if (isPiBrowser()) {
-    console.log('[Droplink Debug] Detected Pi Browser environment.');
-  } else {
-    console.log('[Droplink Debug] Not running in Pi Browser.');
-    if (typeof window.Pi === 'undefined') {
-      window.Pi = {
-        init: async () => {},
-        authenticate: async () => ({
-          accessToken: 'mock-access-token',
-          user: { username: 'mockuser', uid: 'mockuid' }
-        }),
-        createPayment: async () => ({}),
-        nativeFeaturesList: async () => ([]),
-        Ads: {
-          isAdReady: async () => ({ type: 'rewarded', ready: true }),
-          showAd: async () => ({ type: 'rewarded', result: 'AD_REWARDED' }),
-        },
-        openShareDialog: () => {},
-        openUrlInSystemBrowser: async () => {},
-      };
-      console.log('[Droplink Debug] window.Pi mock object set for dev/test');
-    }
-  }
-  console.log('[Droplink Debug] Location:', window.location.href);
-}
+// Production: No mock Pi object. Only real Pi SDK should be used.
 
 
 // Set theme from localStorage or default to light
