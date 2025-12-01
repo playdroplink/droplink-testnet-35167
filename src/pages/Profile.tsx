@@ -1,16 +1,14 @@
 import { useState, useEffect } from "react";
+import { PhonePreview } from "@/components/PhonePreview";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePi } from "@/contexts/PiContext";
 import { supabase as supabaseClient } from "@/integrations/supabase/client";
+import type { ProfileData, ThemeData, CustomLink, SocialLinks, Product, PaymentLink, ShortenedLink } from "@/types/profile";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -43,11 +41,38 @@ const Profile = () => {
     };
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [profileData, setProfileData] = useState({
+  const [profileData, setProfileData] = useState<ProfileData>({
+    id: "",
     businessName: "",
     username: "",
     description: "",
     logo: "",
+    email: "",
+    youtubeVideoUrl: "",
+    customLinks: [],
+    products: [],
+    theme: {
+      primaryColor: "#38bdf8",
+      backgroundColor: "#000000",
+      backgroundType: "color",
+      backgroundGif: "",
+      backgroundVideo: "",
+      iconStyle: "rounded",
+      buttonStyle: "filled",
+      textColor: "#ffffff",
+    },
+    wallets: undefined,
+    hasPremium: false,
+    piWalletAddress: "",
+    piDonationMessage: "",
+    showShareButton: true,
+    storeUrl: "",
+    showPiWalletTips: false,
+    socialLinks: [],
+    paymentLinks: [],
+    shortenedLinks: [],
+    linkLayoutType: "stack",
+    piWalletQrUrl: "",
   });
 
   useEffect(() => {
@@ -77,12 +102,72 @@ const Profile = () => {
       }
 
       if (profile) {
-        setProfileData({
-          businessName: profile.business_name || "",
-          username: profile.username || "",
-          description: profile.description || "",
-          logo: profile.logo || "",
-        });
+        // Defensive helpers for possible Json values
+        let safeTheme: ThemeData = {
+          primaryColor: "#38bdf8",
+          backgroundColor: "#000000",
+          backgroundType: "color",
+          backgroundGif: "",
+          backgroundVideo: "",
+          iconStyle: "rounded",
+          buttonStyle: "filled",
+          textColor: "#ffffff",
+        };
+        if (typeof profile.theme_settings === 'object' && profile.theme_settings !== null && !Array.isArray(profile.theme_settings)) {
+          const t = profile.theme_settings as Record<string, unknown>;
+          safeTheme = {
+            primaryColor: typeof t.primaryColor === 'string' ? t.primaryColor : safeTheme.primaryColor,
+            backgroundColor: typeof t.backgroundColor === 'string' ? t.backgroundColor : safeTheme.backgroundColor,
+            backgroundType: t.backgroundType === 'color' || t.backgroundType === 'gif' || t.backgroundType === 'video' ? t.backgroundType : safeTheme.backgroundType,
+            backgroundGif: typeof t.backgroundGif === 'string' ? t.backgroundGif : safeTheme.backgroundGif,
+            backgroundVideo: typeof t.backgroundVideo === 'string' ? t.backgroundVideo : safeTheme.backgroundVideo,
+            iconStyle: typeof t.iconStyle === 'string' ? t.iconStyle : safeTheme.iconStyle,
+            buttonStyle: typeof t.buttonStyle === 'string' ? t.buttonStyle : safeTheme.buttonStyle,
+            textColor: typeof t.textColor === 'string' ? t.textColor : safeTheme.textColor,
+          };
+        }
+        let safeCustomLinks: CustomLink[] = [];
+        if (
+          typeof profile.theme_settings === 'object' &&
+          profile.theme_settings !== null &&
+          !Array.isArray(profile.theme_settings) &&
+          'customLinks' in profile.theme_settings &&
+          Array.isArray((profile.theme_settings as any).customLinks)
+        ) {
+          safeCustomLinks = (profile.theme_settings as any).customLinks as CustomLink[];
+        }
+        setProfileData(prev => ({
+          ...prev,
+          id: typeof profile.id === 'string' ? profile.id : "",
+          businessName: typeof profile.business_name === 'string' ? profile.business_name : "",
+          username: typeof profile.username === 'string' ? profile.username : "",
+          description: typeof profile.description === 'string' ? profile.description : "",
+          logo: typeof profile.logo === 'string' ? profile.logo : "",
+          email: typeof profile.email === 'string' ? profile.email : "",
+          youtubeVideoUrl: typeof profile.youtube_video_url === 'string' ? profile.youtube_video_url : "",
+          customLinks: safeCustomLinks,
+          products: Array.isArray((profile as any).products) ? (profile as any).products as Product[] : [],
+          theme: safeTheme,
+          wallets: (profile as any).wallets ? (profile as any).wallets : undefined,
+          hasPremium: !!profile.has_premium,
+          piWalletAddress: typeof profile.pi_wallet_address === 'string' ? profile.pi_wallet_address : "",
+          piDonationMessage: typeof profile.pi_donation_message === 'string' ? profile.pi_donation_message : "",
+          showShareButton: typeof profile.show_share_button === 'boolean' ? profile.show_share_button : true,
+          storeUrl: typeof (profile as any).store_url === 'string' ? (profile as any).store_url : "",
+          showPiWalletTips: !!(profile as any).show_pi_wallet_tips,
+          socialLinks: Array.isArray((profile as any).social_links) ? (profile as any).social_links as SocialLinks : [],
+          paymentLinks: Array.isArray((profile as any).payment_links) ? (profile as any).payment_links as PaymentLink[] : [],
+          shortenedLinks: Array.isArray((profile as any).shortened_links) ? (profile as any).shortened_links as ShortenedLink[] : [],
+          linkLayoutType:
+            typeof profile.theme_settings === 'object' &&
+            profile.theme_settings !== null &&
+            !Array.isArray(profile.theme_settings) &&
+            'linkLayoutType' in profile.theme_settings &&
+            typeof (profile.theme_settings as any).linkLayoutType === 'string'
+              ? (profile.theme_settings as any).linkLayoutType as string
+              : "stack",
+          piWalletQrUrl: typeof (profile as any).pi_wallet_qr_url === 'string' ? (profile as any).pi_wallet_qr_url : "",
+        }));
       }
     } catch (error) {
       console.error("Error:", error);
@@ -172,122 +257,9 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border px-4 lg:px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          <h1 className="text-xl font-semibold">Profile Settings</h1>
-        </div>
-      </header>
-
-      <div className="max-w-4xl mx-auto p-4 lg:p-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Edit Profile</CardTitle>
-            <CardDescription>
-              Update your public profile information
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Profile Picture */}
-            <div className="space-y-2">
-              <Label>Profile Picture</Label>
-              <div className="flex items-center gap-4">
-                <Avatar className="w-20 h-20">
-                  <AvatarImage src={profileData.logo} alt={profileData.businessName} />
-                  <AvatarFallback>
-                    <User className="w-8 h-8" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex gap-2">
-                  <label htmlFor="logo-upload">
-                    <Button variant="secondary" size="sm" asChild>
-                      <span className="gap-2">
-                        <Upload className="w-4 h-4" />
-                        {profileData.logo ? "Change" : "Upload"}
-                      </span>
-                    </Button>
-                    <input
-                      id="logo-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleLogoUpload}
-                    />
-                  </label>
-                  {profileData.logo && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setProfileData({ ...profileData, logo: "" })}
-                    >
-                      Remove
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Business Name */}
-            <div className="space-y-2">
-              <Label htmlFor="businessName">Business Name *</Label>
-              <Input
-                id="businessName"
-                placeholder="Your Business Name"
-                value={profileData.businessName}
-                onChange={(e) => setProfileData({ ...profileData, businessName: e.target.value })}
-              />
-            </div>
-
-            {/* Username */}
-            <div className="space-y-2">
-              <Label htmlFor="username">Username *</Label>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">{window.location.origin}/</span>
-                <Input
-                  id="username"
-                  placeholder="your-username"
-                  value={profileData.username}
-                  onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                This is your unique profile URL
-              </p>
-            </div>
-
-            {/* Bio/Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description">Bio</Label>
-              <Textarea
-                id="description"
-                placeholder="Tell people about yourself..."
-                value={profileData.description}
-                onChange={(e) => setProfileData({ ...profileData, description: e.target.value })}
-                rows={4}
-              />
-              <p className="text-xs text-muted-foreground">
-                This will be displayed on your public profile
-              </p>
-            </div>
-
-            {/* Save Button and Link Pi Network */}
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => navigate("/")}> 
-                Cancel
-              </Button>
-              <Button onClick={handleSave} disabled={saving}>
-                {saving ? "Saving..." : "Save Changes"}
-              </Button>
-              <Button onClick={handleLinkPiNetwork} disabled={linkingPi} variant="secondary">
-                {linkingPi ? "Linking Pi..." : "Link Pi Network"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+      <div className="py-8">
+        <PhonePreview profile={profileData} />
       </div>
     </div>
   );

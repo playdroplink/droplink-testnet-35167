@@ -174,7 +174,12 @@ const Subscription = () => {
 	};
 
 	return (
-		<div className="container mx-auto py-12">
+			 <div className="container mx-auto py-12">
+				 <div className="mb-6">
+					 <Button variant="outline" onClick={() => navigate('/')}> 
+						 ← Back to Dashboard
+					 </Button>
+				 </div>
 			<div className="max-w-4xl mx-auto">
 				<div className="mb-8 text-center">
 					<h1 className="text-4xl font-bold mb-2">Choose Your Plan</h1>
@@ -238,7 +243,17 @@ const Subscription = () => {
 																		   >
 																				   {isCurrent ? "Current Plan" : price === 0 ? "Current Plan" : "Subscribe with Pi"}
 																		   </Button>
-																		   {/* Mock Payment Button removed for production */}
+																		   {/* Mock Payment Button for testing */}
+																		   {plan.name !== "Free" && !isCurrent && (
+																			   <Button
+																				   className="w-full mb-2"
+																				   variant="default"
+																				   disabled={loading}
+																				   onClick={() => handleMockPayment(plan.name, price)}
+																			   >
+																				   Test Mock Payment
+																			   </Button>
+																		   )}
 									{plan.name !== "Free" && (
 										<div className="flex flex-col gap-2">
 											<div className="flex items-center mb-1">

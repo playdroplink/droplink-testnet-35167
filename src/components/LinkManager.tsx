@@ -743,23 +743,12 @@ const LinkManager: React.FC<LinkManagerProps> = ({
                 <div className="space-y-3">
                   {shortenedLinks.map((link) => (
                     <div key={link.id} className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                      {/* Link Preview */}
+                      {/* Link Preview - no thumbnail for ShortenedLink */}
                       <div className="flex-shrink-0">
-                        {link.thumbnail ? (
-                          <div className="w-16 h-12 rounded-lg overflow-hidden border">
-                            <img 
-                              src={link.thumbnail} 
-                              alt={link.title}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-12 h-12 rounded-lg border flex items-center justify-center bg-gray-100">
-                            <LinkIcon className="w-6 h-6 text-gray-400" />
-                          </div>
-                        )}
+                        <div className="w-12 h-12 rounded-lg border flex items-center justify-center bg-gray-100">
+                          <LinkIcon className="w-6 h-6 text-gray-400" />
+                        </div>
                       </div>
-                      
                       {/* Link Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
@@ -770,13 +759,11 @@ const LinkManager: React.FC<LinkManagerProps> = ({
                         </div>
                         <p className="text-sm text-blue-600 truncate mb-1">{link.shortUrl}</p>
                         <p className="text-xs text-gray-500 truncate">{link.originalUrl}</p>
-                        
                         {/* Additional Info */}
                         <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
-                          <span>Created {new Date(link.createdAt || Date.now()).toLocaleDateString()}</span>
+                          <span>Created {new Date(link.created ? link.created : Date.now()).toLocaleDateString()}</span>
                         </div>
                       </div>
-                      
                       {/* Action Buttons */}
                       <div className="flex items-center gap-1">
                         <Button
@@ -821,7 +808,7 @@ const LinkManager: React.FC<LinkManagerProps> = ({
           </DialogHeader>
           {showQR && (
             <div className="flex flex-col items-center space-y-4">
-              <QRCodeDisplay url={showQR} />
+              <QRCodeDisplay value={showQR} />
               <Button onClick={() => copyToClipboard(showQR)} variant="outline">
                 <Copy className="w-4 h-4 mr-2" />
                 Copy URL

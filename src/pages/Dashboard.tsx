@@ -2061,6 +2061,20 @@ const Dashboard = () => {
             {/* Custom Links - Premium/Pro only */}
             <PlanGate minPlan="premium" featureName="Custom Links">
               <div className="border-t pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-lg font-semibold">Custom Links</h2>
+                  <div className="flex items-center gap-2">
+                    {autoSave.isSaving && (
+                      <span className="text-xs text-muted-foreground">Saving...</span>
+                    )}
+                    {autoSave.lastSaved && !autoSave.isSaving && (
+                      <span className="text-xs text-green-600">Saved</span>
+                    )}
+                    <Button size="sm" variant="outline" onClick={autoSave.save} disabled={autoSave.isSaving}>
+                      {autoSave.isSaving ? 'Saving...' : 'Save'}
+                    </Button>
+                  </div>
+                </div>
                 <LinkManager
                   customLinks={profile.customLinks || []}
                   shortenedLinks={profile.shortenedLinks || []}
