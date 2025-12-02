@@ -378,7 +378,10 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
       setError(errorMessage);
-      console.error('Pi authentication failed:', err);
+      console.error('❌ Pi authentication failed:', err);
+      if (window && window.alert) {
+        window.alert('❌ Pi authentication failed: ' + errorMessage);
+      }
       toast(errorMessage, {
         description: "Authentication Failed",
         duration: 5000,
