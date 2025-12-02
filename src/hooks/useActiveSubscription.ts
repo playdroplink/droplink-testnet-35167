@@ -24,18 +24,11 @@ export const useActiveSubscription = (): ActiveSubscription => {
   useEffect(() => {
     const load = async () => {
       try {
-        // If no Pi user, check for mock plan in localStorage
+        // If no Pi user, always set to free (mainnet only, no mock)
         if (!piUser?.username) {
-          const mockPlan = localStorage.getItem('mock_subscription_plan') as PlanType | null;
-          if (mockPlan && ["basic","premium","pro"].includes(mockPlan)) {
-            setPlan(mockPlan);
-            setExpiresAt(null);
-            setStatus("active");
-          } else {
-            setPlan("free");
-            setExpiresAt(null);
-            setStatus(null);
-          }
+          setPlan("free");
+          setExpiresAt(null);
+          setStatus(null);
           setLoading(false);
           return;
         }

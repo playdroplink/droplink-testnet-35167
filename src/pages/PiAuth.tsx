@@ -271,44 +271,42 @@ const PiAuth = () => {
           </Button>
 
 
-          {/* Pi Network Sign In and Info - Only show in Pi Browser */}
-          {isPiBrowserEnv() && (
-            <>
-              <Button 
-                onClick={handlePiSignIn} 
-                className="w-full" 
-                size="lg"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Connecting...
-                  </>
-                ) : (
-                  "Sign in with Pi Network"
-                )}
-              </Button>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p className="flex items-center gap-2">
-                  <span className="text-primary">✓</span>
-                  Create your personalized link-in-bio page
-                </p>
-                <p className="flex items-center gap-2">
-                  <span className="text-primary">✓</span>
-                  Sell digital products and accept Pi payments
-                </p>
-                <p className="flex items-center gap-2">
-                  <span className="text-primary">✓</span>
-                  Connect all your social media in one place
-                </p>
-                <p className="flex items-center gap-2">
-                  <span className="text-primary">✓</span>
-                  Your data persists across sessions with Pi authentication
-                </p>
-              </div>
-            </>
-          )}
+          {/* Pi Network Sign In and Info - Always show for all browsers */}
+          <>
+            <Button 
+              onClick={handlePiSignIn} 
+              className="w-full" 
+              size="lg"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                "Sign in with Pi Network"
+              )}
+            </Button>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p className="flex items-center gap-2">
+                <span className="text-primary">✓</span>
+                Create your personalized link-in-bio page
+              </p>
+              <p className="flex items-center gap-2">
+                <span className="text-primary">✓</span>
+                Sell digital products and accept Pi payments
+              </p>
+              <p className="flex items-center gap-2">
+                <span className="text-primary">✓</span>
+                Connect all your social media in one place
+              </p>
+              <p className="flex items-center gap-2">
+                <span className="text-primary">✓</span>
+                Your data persists across sessions with Pi authentication
+              </p>
+            </div>
+          </>
 
           <div className="pt-4 border-t space-y-2">
             <div className="flex justify-center gap-4 text-xs">

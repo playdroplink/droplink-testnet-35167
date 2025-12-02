@@ -32,7 +32,17 @@ export const AccountDeletion: React.FC<AccountDeletionProps> = ({
     if (!isConfirmed) {
       toast({
         title: "Confirmation Required",
-        description: `Please type "${confirmationPhrase}" to confirm account deletion`,
+        description: `Please type \"${confirmationPhrase}\" to confirm account deletion`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const userIdToDelete = currentUser?.id || piUser?.uid;
+    if (!userIdToDelete) {
+      toast({
+        title: "User ID Missing",
+        description: "Could not determine the user ID to delete. Please refresh and try again.",
         variant: "destructive"
       });
       return;
@@ -45,7 +55,7 @@ export const AccountDeletion: React.FC<AccountDeletionProps> = ({
       setDeleteStep(1);
       const { data: deleteResult, error: deleteError } = await supabase
         .rpc('delete_user_account_completely' as any, {
-          user_id_to_delete: currentUser?.id || piUser?.uid
+          user_id_to_delete: userIdToDelete
         });
 
       if (deleteError) {
