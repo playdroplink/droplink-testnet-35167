@@ -330,9 +330,50 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       console.log(`🔐 Starting Pi Network authentication (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})...`);
+
+      // Authenticate with Pi Network
       const authResult = await window.Pi.authenticate(scopes, PI_CONFIG.onIncompletePaymentFound);
 
-      // ...existing code for verification and user registration...
+      // Validate access token with Pi API (Mainnet)
+      const accessToken = authResult.accessToken;
+      if (!accessToken) {
+        setError('No access token received from Pi Network.');
+        throw new Error('No access token received from Pi Network.');
+      }
+
+      // Call Pi API to verify user
+      const piApiUrl = 'https://api.mainnet.minepi.com/v2/me';
+      const piApiResp = await fetch(piApiUrl, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'x-api-key': 'b00j4felp0ctc1fexe8igldsjg9u7wbqitavc15si53fr9wwra7r6oluzk4j24qz',
+        },
+      });
+      if (!piApiResp.ok) {
+        setError('Failed to validate Pi user with mainnet API.');
+        throw new Error('Failed to validate Pi user with mainnet API.');
+      }
+      const piUser = await piApiResp.json();
+
+      // Save user profile to Supabase
+      const { data, error } = await supabase.rpc('authenticate_pi_user', {
+        p_pi_user_id: piUser.uid,
+        p_pi_username: piUser.username,
+        p_wallet_address: piUser.wallet_address,
+        p_access_token: accessToken,
+        validation_key: '7511661aac4538b1832d2c9ba117f6d972b26a54640598d3fbb9824013c7079203f65b02d125be3f418605cfb89ba0e4443e3ec997e3800eb464df0bc5410d2a',
+      });
+      if (error) {
+        setError('Failed to save Pi user profile to Supabase.');
+        throw new Error('Failed to save Pi user profile to Supabase.');
+      }
+
+      // Store access token and user info
+      localStorage.setItem('pi_access_token', accessToken);
+      localStorage.setItem('pi_user', JSON.stringify(piUser));
+      setAccessToken(accessToken);
+      setPiUser(piUser);
+      setCurrentProfile(data);
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
