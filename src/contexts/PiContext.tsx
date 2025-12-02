@@ -280,17 +280,17 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (scopes: string[] = PI_CONFIG.scopes || ['username', 'payments', 'wallet_address']) => {
     // Only allow sign-in in Pi Browser
     if (!isPiBrowserEnv()) {
-      const piBrowserUrl = 'https://minepi.com/Wain2020';
-      const errorMsg = `Pi Network features are only available in the official Pi Browser.\n\nTo sign in, please open this app in the Pi Browser or Pi Developer Portal.`;
+      const piBrowserUrl = 'https://minepi.com/download';
+      const errorMsg = `Pi Network features are only available in the official Pi Browser.\n\nTo sign in, please download and open this app in the Pi Browser.`;
       toast(
         errorMsg,
         {
-          description: `Download Pi Browser: `,
+          description: `You must use the Pi Browser to sign in.`,
           action: {
-            label: 'Get Pi Browser',
+            label: 'Download Pi Browser',
             onClick: () => { window.open(piBrowserUrl, '_blank'); },
           },
-          duration: 10000,
+          duration: 15000,
         }
       );
       setError(errorMsg);
