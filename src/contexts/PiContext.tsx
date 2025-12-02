@@ -2,9 +2,14 @@
 export function isPiBrowserEnv(): boolean {
   if (typeof window === 'undefined' || !window.navigator) return false;
   const ua = window.navigator.userAgent || '';
-  const isPiUA = /PiBrowser/i.test(ua);
+  // Robust: check for PiBrowser, Pi, and Browser separately
+  const isPiUA = /PiBrowser|Pi Browser|Pi\s?Browser|Pi/i.test(ua);
+  // Some Pi Browser versions use 'Pi' or 'Pi Browser' in UA
+  // Also check for window.Pi after DOMContentLoaded
   const hasPiObj = typeof window.Pi !== 'undefined';
-  return isPiUA || hasPiObj;
+  // Fallback: check for mobile Pi Browser quirks
+  const isMobilePi = /Android|iPhone|iPad/i.test(ua) && (isPiUA || hasPiObj);
+  return isPiUA || hasPiObj || isMobilePi;
 }
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";

@@ -12,6 +12,28 @@ const BASE_URL = process.env.PI_API_BASE_URL || 'https://api.minepi.com';
 app.post('/verify-rewarded-ad', async (req, res) => {
   const { adId } = req.body;
   try {
+// Endpoint to verify Pi user token
+app.post('/verify-pi-token', async (req, res) => {
+  const { accessToken } = req.body;
+  if (!accessToken) {
+    return res.status(400).json({ success: false, error: 'Missing accessToken' });
+  }
+  try {
+    // Verify token with Pi Network mainnet API
+    const response = await axios.get(
+      `${BASE_URL}/v2/me`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    res.status(200).json({ success: true, user: response.data });
+  } catch (error) {
+    console.error('Error verifying Pi token:', error.response?.data || error.message);
+    res.status(401).json({ success: false, error: error.response?.data || error.message });
+  }
+});
     const response = await axios.get(
       `${BASE_URL}/v2/ads_network/status/${adId}`,
       {

@@ -11,7 +11,7 @@ export const PI_CONFIG = {
     sandbox: false, // DISABLED for mainnet
   },
   
-  scopes: ['username', 'payments', 'wallet_address', 'openid'],
+  scopes: ['username', 'payments'],
   
   onIncompletePaymentFound: (payment: any) => {
     console.log('Incomplete payment found:', payment);

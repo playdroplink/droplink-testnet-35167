@@ -25,8 +25,13 @@
     <meta name="author" content="Droplink" />
 
 
-    <!-- Pi Network SDK: Only load the script, let React handle initialization -->
-    <script src="https://sdk.minepi.com/pi-sdk.js" async crossorigin="anonymous"></script>
+    <!-- Pi Network SDK: Load and initialize as per official docs -->
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <script>
+      if (window.Pi) {
+        window.Pi.init({ version: "2.0" });
+      }
+    </script>
 
 
     <!-- Web App Manifest -->
