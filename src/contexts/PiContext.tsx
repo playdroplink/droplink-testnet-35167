@@ -299,12 +299,12 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
 
     // Check for sandbox authorization (only in sandbox mode)
     if (PI_CONFIG.SANDBOX_MODE) {
-      // DEV-ONLY BYPASS: Allow sandbox auth to be bypassed on localhost for development convenience
       const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
       if (typeof window.Pi !== 'undefined' && !(window.Pi as any).sandboxAuthorized) {
         if (!isLocalhost) {
-          const errorMsg = `Sandbox authorization required.\n\nPlease follow these steps:\n1. Open this app in your desktop browser.\n2. Copy the code shown.\n3. In the Pi Mining App, go to Pi Utilities > Authorize Sandbox, and enter the code.\n4. Return to Pi Browser and refresh.`;
-          toast.error(errorMsg, { duration: 12000 });
+          console.debug('[PI DEBUG] Sandbox authorization required. User must authorize sandbox in Pi Mining App.');
+          const errorMsg = `Pi Sandbox authorization required!\n\nHow to fix:\n1. Open this app in your desktop browser.\n2. Copy the sandbox code shown on the page.\n3. Open the Pi Mining App, go to Pi Utilities > Authorize Sandbox, and enter the code.\n4. Return to Pi Browser and refresh this app.\n\nIf you do not see a sandbox code, make sure you are running the app in the Pi Browser.`;
+          toast.error(errorMsg, { duration: 15000 });
           setError(errorMsg);
           throw new Error(errorMsg);
         } else {
