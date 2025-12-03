@@ -209,6 +209,13 @@ export const Auth = () => {
                 >
                   Download Pi Browser
                 </a>
+                <Button
+                  className="w-full block text-center rounded-md bg-[#6C47FF] text-white hover:bg-[#4B2FCB] py-3 font-medium transition-colors"
+                  style={{ marginBottom: 8 }}
+                  onClick={() => navigate('/droplinkofficial')}
+                >
+                  Go to Droplink Official
+                </Button>
                 <div className="flex justify-center gap-4 text-xs">
                   <a href="/terms" className="text-primary hover:underline">Terms</a>
                   <span className="text-muted-foreground">•</span>

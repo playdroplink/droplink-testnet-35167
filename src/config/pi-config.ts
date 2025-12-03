@@ -28,8 +28,8 @@ export const PI_CONFIG = {
   
   VALIDATION_KEY: "7511661aac4538b1832d2c9ba117f6d972b26a54640598d3fbb9824013c7079203f65b02d125be3f418605cfb89ba0e4443e3ec997e3800eb464df0bc5410d2a",
   
-  PLATFORM_URL: "https://droplink2920.pinet.com",
-  MAINNET_URL: "https://droplink2920.pinet.com",
+  PLATFORM_URL: "https://droplink.space",
+  MAINNET_URL: "https://droplink.space",
   
   getAuthHeaders: (accessToken: string) => ({
     'Authorization': `Bearer ${accessToken}`,

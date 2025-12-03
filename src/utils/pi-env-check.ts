@@ -43,31 +43,19 @@ export const validatePiEnvironment = async (): Promise<void> => {
   }
 
   try {
-    // Check Pi SDK reachable, but skip strict failure on non-production hosts
+    // Pi SDK availability is guaranteed in Pi Browser. Cross-origin HEAD often fails due to CORS.
+    // Perform a best-effort HEAD and never make this fatal (even on production).
     const sdkUrl = import.meta.env.VITE_PI_SDK_URL || 'https://sdk.minepi.com/pi-sdk.js';
-    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-    const isProdDomain = hostname === 'droplink.space' || hostname === 'www.droplink.space';
-
-    if (isProdDomain) {
+    try {
       const sdkResp = await fetch(sdkUrl, { method: 'HEAD', cache: 'no-store' });
       if (!sdkResp.ok) {
-        errors.push(`Pi SDK not reachable at ${sdkUrl}`);
+        console.warn(`Pi SDK HEAD returned ${sdkResp.status} on ${sdkUrl} — continuing`);
       }
-    } else {
-      // During local development (http://localhost) many CDNs block HEAD/CORS.
-      // Do a best-effort HEAD and only warn if it fails — don't make it fatal.
-      try {
-        const sdkResp = await fetch(sdkUrl, { method: 'HEAD', cache: 'no-store' });
-        if (!sdkResp.ok) {
-          console.warn(`Pi SDK HEAD returned ${sdkResp.status} on ${sdkUrl} — continuing in dev mode`);
-        }
-      } catch (e) {
-        console.warn('Pi SDK HEAD failed (likely CORS/network) — skipping strict check in non-production host', e);
-      }
+    } catch (e) {
+      console.warn('Pi SDK HEAD failed (likely CORS/network) — skipping strict check', e);
     }
   } catch (err) {
-    // If something unexpected happens, treat as non-fatal on dev hosts
-    console.warn('Unexpected error during Pi SDK check — continuing in non-production host', err);
+    console.warn('Unexpected error during Pi SDK check — continuing', err);
   }
 
   if (errors.length > 0) {

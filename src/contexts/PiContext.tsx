@@ -195,25 +195,16 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         // console.log('[PI DEBUG] window.location:', window.location.href);
         // console.log('[PI DEBUG] UserAgent:', typeof window !== 'undefined' ? window.navigator.userAgent : 'N/A');
         // console.log('[PI DEBUG] isPiBrowserEnv:', isPiBrowserEnv());
-        // Validate configuration based on sandbox/mainnet mode
-        if (PI_CONFIG.SANDBOX_MODE) {
-          if (!validatePiConfig()) {
-            console.error('[PI DEBUG] Invalid Pi Network sandbox configuration');
-            setError('Invalid Pi Network sandbox configuration');
-            return;
-          }
-        } else {
-          if (!validateMainnetConfig()) {
-            console.error('[PI DEBUG] Invalid Pi Network mainnet configuration');
-            setError('Invalid Pi Network mainnet configuration');
-            return;
-          }
+        // Validate mainnet configuration only
+        if (!validateMainnetConfig()) {
+          console.error('[PI DEBUG] Invalid Pi Network mainnet configuration');
+          setError('Invalid Pi Network mainnet configuration');
+          return;
         }
 
-        // console.log(`[PI DEBUG] 🥧 Initializing Pi Network (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})...`);
+        // console.log('[PI DEBUG] 🥧 Initializing Pi Network Mainnet...');
         // console.log('[PI DEBUG] Network:', PI_CONFIG.NETWORK);
         // console.log('[PI DEBUG] API Endpoint:', PI_CONFIG.BASE_URL);
-        // console.log('[PI DEBUG] Sandbox Mode:', PI_CONFIG.SANDBOX_MODE);
 
         if (isPiBrowserEnv()) {
           // Debug: Check for window.Pi
@@ -224,7 +215,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           }
           // Initialize Pi SDK using configured SDK options
           await window.Pi.init(PI_CONFIG.SDK);
-          // console.log(`[PI DEBUG] ✅ Pi SDK initialized successfully (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})`);
+          // console.log('[PI DEBUG] ✅ Pi SDK initialized successfully (Mainnet)');
           setIsInitialized(true);
           // Check ad network support
           try {
@@ -249,7 +240,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
                 const userData = JSON.parse(storedUser);
                 setAccessToken(storedToken);
                 setPiUser(userData);
-                // console.log(`[PI DEBUG] 🔐 Auto-authenticated with stored credentials (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})`);
+                // console.log('[PI DEBUG] 🔐 Auto-authenticated with stored credentials (Mainnet)');
                 // Update user data if needed
                 if (verifiedUser.uid === userData.uid) {
                   setPiUser({...userData, ...verifiedUser});
@@ -297,28 +288,13 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       throw new Error(errorMsg);
     }
 
-    // Check for sandbox authorization (only in sandbox mode)
-    if (PI_CONFIG.SANDBOX_MODE) {
-      const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-      if (typeof window.Pi !== 'undefined' && !(window.Pi as any).sandboxAuthorized) {
-        if (!isLocalhost) {
-          console.debug('[PI DEBUG] Sandbox authorization required. User must authorize sandbox in Pi Mining App.');
-          const errorMsg = `Pi Sandbox authorization required!\n\nHow to fix:\n1. Open this app in your desktop browser.\n2. Copy the sandbox code shown on the page.\n3. Open the Pi Mining App, go to Pi Utilities > Authorize Sandbox, and enter the code.\n4. Return to Pi Browser and refresh this app.\n\nIf you do not see a sandbox code, make sure you are running the app in the Pi Browser.`;
-          toast.error(errorMsg, { duration: 15000 });
-          setError(errorMsg);
-          throw new Error(errorMsg);
-        } else {
-          // Bypass sandbox authorization for localhost/dev only
-          console.warn('[PI DEBUG] ⚠️ Sandbox authorization bypassed for localhost (dev only)');
-        }
-      }
-    }
+    // Mainnet mode - no sandbox authorization required
 
     if (!isInitialized || !window.Pi) {
       try {
         await window.Pi.init(PI_CONFIG.SDK);
         setIsInitialized(true);
-        console.log(`✅ Pi SDK reinitialized successfully (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})`);
+        console.log('✅ Pi SDK reinitialized successfully (Mainnet)');
       } catch (reinitError) {
         setError('Failed to initialize Pi SDK.');
         throw new Error('Failed to initialize Pi SDK.');
@@ -329,7 +305,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
 
     try {
-      console.log(`🔐 Starting Pi Network authentication (${PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'})...`);
+      console.log('🔐 Starting Pi Network authentication (Mainnet)...');
 
       // Authenticate with Pi Network
       const authResult = await window.Pi.authenticate(scopes, PI_CONFIG.onIncompletePaymentFound);
@@ -341,13 +317,9 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         throw new Error('No access token received from Pi Network.');
       }
 
-      // Call Pi API to verify user
-      const piApiUrl = 'https://api.mainnet.minepi.com/v2/me';
-      const piApiResp = await fetch(piApiUrl, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'x-api-key': 'b00j4felp0ctc1fexe8igldsjg9u7wbqitavc15si53fr9wwra7r6oluzk4j24qz',
-        },
+      // Call Pi API to verify user (use configured endpoint and headers)
+      const piApiResp = await fetch(PI_CONFIG.ENDPOINTS.ME, {
+        headers: PI_CONFIG.getAuthHeaders(accessToken),
       });
       if (!piApiResp.ok) {
         setError('Failed to validate Pi user with mainnet API.');
@@ -361,7 +333,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         p_pi_username: piUser.username,
         p_wallet_address: piUser.wallet_address,
         p_access_token: accessToken,
-        validation_key: '7511661aac4538b1832d2c9ba117f6d972b26a54640598d3fbb9824013c7079203f65b02d125be3f418605cfb89ba0e4443e3ec997e3800eb464df0bc5410d2a',
+        validation_key: PI_CONFIG.VALIDATION_KEY,
       });
       if (error) {
         setError('Failed to save Pi user profile to Supabase.');
@@ -900,8 +872,71 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const createPayment = async (amount: number, memo: string, metadata?: any): Promise<string | null> => {
-    // Implementation pending
-    return null;
+    if (!isAuthenticated || !window.Pi) {
+      throw new Error('User not authenticated');
+    }
+
+    const paymentData: PaymentData = {
+      amount,
+      memo,
+      metadata: metadata || {}
+    };
+
+    return new Promise<string | null>((resolve) => {
+      const callbacks: PaymentCallbacks = {
+        onReadyForServerApproval: async (paymentId: string) => {
+          try {
+            const { error } = await supabase.functions.invoke('pi-payment-approve', {
+              body: { paymentId },
+              headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            if (error) {
+              console.error('Payment approval error:', error);
+              toast('Payment submitted but approval failed on server.', { description: 'Payment Error', duration: 5000 });
+            }
+          } catch (err) {
+            console.error('Payment approval error:', err);
+          }
+        },
+        onReadyForServerCompletion: async (paymentId: string, txid: string) => {
+          try {
+            const { error } = await supabase.functions.invoke('pi-payment-complete', {
+              body: { paymentId, txid },
+              headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            if (error) {
+              console.error('Payment completion error:', error);
+              toast('Payment was submitted but completion failed.', { description: 'Payment Error', duration: 5000 });
+              resolve(null);
+            } else {
+              toast('Your payment has been completed successfully.', { description: 'Payment Successful', duration: 3000 });
+              resolve(txid);
+            }
+          } catch (err) {
+            console.error('Payment completion error:', err);
+            resolve(null);
+          }
+        },
+        onCancel: (paymentId: string) => {
+          console.log('Payment cancelled:', paymentId);
+          toast('The payment was cancelled.', { description: 'Payment Cancelled', duration: 3000 });
+          resolve(null);
+        },
+        onError: (error: Error, payment?: any) => {
+          console.error('Payment error:', error, payment);
+          toast(error.message || 'An error occurred during payment.', { description: 'Payment Error', duration: 5000 });
+          resolve(null);
+        }
+      };
+
+      try {
+        window.Pi.createPayment(paymentData, callbacks);
+      } catch (err) {
+        console.error('Failed to initiate payment:', err);
+        toast('Failed to initiate payment.', { description: 'Payment Error', duration: 5000 });
+        resolve(null);
+      }
+    });
   };
 
   const showRewardedAd = async (): Promise<boolean> => {
@@ -1170,23 +1205,72 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const showInterstitialAd = async (): Promise<boolean> => {
-    // Implementation pending
-    return false;
+    if ((!window.Pi && !(window as any).Pi) || !adNetworkSupported) {
+      toast('Ad Network not supported on this Pi Browser version.', { description: 'Ads Not Supported', duration: 5000 });
+      return false;
+    }
+    try {
+      let response: any = null;
+      if ((window as any).Pi && (window as any).Pi.Ads && (window as any).Pi.Ads.showAd) {
+        response = await (window as any).Pi.Ads.showAd('interstitial');
+      } else if ((window as any).Pi && (window as any).Pi.showInterstitialAd) {
+        response = await (window as any).Pi.showInterstitialAd();
+      } else {
+        throw new Error('Ad API not available');
+      }
+      return response?.result === 'AD_CLOSED';
+    } catch (err) {
+      console.error('Error showing interstitial ad:', err);
+      toast('Failed to show interstitial ad.', { description: 'Ad Error', duration: 5000 });
+      return false;
+    }
   };
 
   const isAdReady = async (): Promise<boolean> => {
-    // Implementation pending
-    return false;
+    if ((!window.Pi && !(window as any).Pi) || !adNetworkSupported) return false;
+    try {
+      if ((window as any).Pi && (window as any).Pi.Ads && (window as any).Pi.Ads.isAdReady) {
+        const res = await (window as any).Pi.Ads.isAdReady('rewarded');
+        return !!res?.ready;
+      }
+      return false;
+    } catch (err) {
+      console.warn('Error checking ad readiness:', err);
+      return false;
+    }
   };
 
   const shareContent = async (title: string, text: string): Promise<boolean> => {
-    // Implementation pending
-    return false;
+    try {
+      if ((window as any).Pi && (window as any).Pi.openShareDialog) {
+        (window as any).Pi.openShareDialog(title, text);
+        return true;
+      }
+      toast('Share feature not available.', { description: 'Feature Not Available', duration: 3000 });
+      return false;
+    } catch (err) {
+      console.warn('Share failed:', err);
+      return false;
+    }
   };
 
   const openExternalUrl = async (url: string): Promise<boolean> => {
-    // Implementation pending
-    return false;
+    try {
+      if ((window as any).Pi && (window as any).Pi.openUrlInSystemBrowser) {
+        await (window as any).Pi.openUrlInSystemBrowser(url);
+        return true;
+      }
+      window.open(url, '_blank');
+      return true;
+    } catch (err) {
+      console.warn('Open external URL failed:', err);
+      try {
+        window.open(url, '_blank');
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
   };
 
   const value: PiContextType = {
