@@ -12,7 +12,7 @@ import { usePi } from "@/contexts/PiContext";
 
 export const Auth = () => {
   const navigate = useNavigate();
-  const { piUser, isAuthenticated, signIn, loading: piLoading } = usePi();
+  const { piUser, isAuthenticated, signIn, loading: piLoading, createPayment, showRewardedAd, showInterstitialAd, isAdReady } = usePi();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -106,6 +106,64 @@ export const Auth = () => {
     } catch (error: any) {
       toast.error(error.message || "Pi Network authentication failed");
     }
+  };
+
+  // Debug helpers (only show when ?debug=1)
+  const isDebug = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debug') === '1';
+  const handlePiAuthUsernameOnly = async () => {
+    try {
+      await signIn(['username']);
+      toast.success("Signed in with username scope only");
+      const handledSpecialAction = await handlePostAuthAction();
+      if (!handledSpecialAction) navigate("/dashboard", { replace: true });
+    } catch (e: any) {
+      toast.error(e?.message || 'Username-only sign-in failed');
+    }
+  };
+  const handlePiAuthFull = async () => {
+    try {
+      await signIn(['username','payments']);
+      toast.success("Signed in with username+payments scopes");
+      const handledSpecialAction = await handlePostAuthAction();
+      if (!handledSpecialAction) navigate("/dashboard", { replace: true });
+    } catch (e: any) {
+      toast.error(e?.message || 'Full-scope sign-in failed');
+    }
+  };
+  const runEnvChecks = async () => {
+    try {
+      const man = await fetch('/manifest.json', { cache: 'no-store' }).then(r=>r.json());
+      const val = await fetch('/validation-key.txt', { cache: 'no-store' }).then(r=>r.text());
+      toast(`Env OK`, { description: `api_key=${man?.pi_app?.api_key?.slice(0,6)}***, domain=${man?.pi_app?.domain}, valLen=${(val||'').trim().length}`});
+    } catch (e:any) {
+      toast.error('Env checks failed');
+    }
+  };
+
+  // Debug: Payments and Ads helpers
+  const handleTestPayment = async () => {
+    try {
+      const tx = await createPayment(1, 'Debug test payment', { source: 'auth_debug' });
+      if (tx) {
+        toast.success(`Payment completed. tx: ${tx}`);
+      } else {
+        toast.error('Payment did not complete');
+      }
+    } catch (e: any) {
+      toast.error(e?.message || 'Payment failed');
+    }
+  };
+  const handleShowRewarded = async () => {
+    const ok = await showRewardedAd();
+    toast(ok ? 'Rewarded ad ok' : 'Rewarded ad not granted');
+  };
+  const handleShowInterstitial = async () => {
+    const ok = await showInterstitialAd();
+    toast(ok ? 'Interstitial closed' : 'Interstitial failed');
+  };
+  const handleCheckAdReady = async () => {
+    const ready = await isAdReady();
+    toast(`Ad ready: ${ready ? 'yes' : 'no'}`);
   };
 
   const handleGoogleAuth = async () => {
@@ -295,6 +353,25 @@ export const Auth = () => {
               </Button>
             </div>
           </form>
+
+          {isDebug && (
+            <div className="mt-6 p-3 border rounded-md bg-muted/20 space-y-2">
+              <div className="text-xs font-medium">Pi Debug Tools</div>
+              <div className="flex flex-col gap-2">
+                <Button variant="outline" onClick={runEnvChecks}>Check manifest & validation key</Button>
+                <Button variant="secondary" onClick={handlePiAuthUsernameOnly} disabled={piLoading || loading}>Sign in (username only)</Button>
+                <Button variant="secondary" onClick={handlePiAuthFull} disabled={piLoading || loading}>Sign in (username + payments)</Button>
+                <Separator />
+                <Button variant="outline" onClick={handleCheckAdReady}>Is rewarded ad ready?</Button>
+                <div className="flex gap-2">
+                  <Button className="flex-1" variant="secondary" onClick={handleShowRewarded} disabled={piLoading || loading}>Show rewarded ad</Button>
+                  <Button className="flex-1" variant="secondary" onClick={handleShowInterstitial} disabled={piLoading || loading}>Show interstitial</Button>
+                </div>
+                <Separator />
+                <Button onClick={handleTestPayment} disabled={piLoading || loading}>Test payment (1 Pi)</Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
