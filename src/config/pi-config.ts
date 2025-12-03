@@ -11,7 +11,9 @@ export const PI_CONFIG = {
     sandbox: false, // DISABLED for mainnet
   },
   
-  scopes: ['username', 'payments'],
+  // Request minimal scope by default to maximize sign-in success.
+  // Payments can be requested later (or escalated) once the app is approved for that permission.
+  scopes: ['username'],
   
   onIncompletePaymentFound: (payment: any) => {
     console.log('Incomplete payment found:', payment);

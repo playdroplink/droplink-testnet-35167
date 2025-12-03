@@ -307,8 +307,30 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     try {
       console.log('🔐 Starting Pi Network authentication (Mainnet)...');
 
-      // Authenticate with Pi Network
-      const authResult = await window.Pi.authenticate(scopes, PI_CONFIG.onIncompletePaymentFound);
+      // Authenticate with Pi Network (with graceful fallback if payments scope not yet approved)
+      let authResult: AuthResult | null = null;
+      const tryScopes = async (reqScopes: string[]) => {
+        console.log('Requesting Pi scopes:', reqScopes.join(', '));
+        return window.Pi.authenticate(reqScopes, PI_CONFIG.onIncompletePaymentFound);
+      };
+
+      try {
+        authResult = await tryScopes(scopes);
+      } catch (authErr: any) {
+        const msg = typeof authErr === 'string' ? authErr : (authErr?.message || 'Authentication failed');
+        const lowerMsg = String(msg).toLowerCase();
+        const looksLikeScopeIssue = lowerMsg.includes('scope') || lowerMsg.includes('permission') || lowerMsg.includes('payments');
+        if (looksLikeScopeIssue) {
+          toast('Payments permission not available yet; signing in with username only.', { duration: 5000 });
+          try {
+            authResult = await tryScopes(['username']);
+          } catch (fallbackErr) {
+            throw fallbackErr;
+          }
+        } else {
+          throw authErr;
+        }
+      }
 
       // Validate access token with Pi API (Mainnet)
       const accessToken = authResult.accessToken;
@@ -348,7 +370,12 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       setCurrentProfile(data);
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
+      let errorMessage = 'Authentication failed';
+      if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err && typeof err === 'object' && 'message' in (err as any)) {
+        errorMessage = String((err as any).message) || errorMessage;
+      }
       setError(errorMessage);
       console.error('❌ Pi authentication failed:', err);
       if (window && window.alert) {
