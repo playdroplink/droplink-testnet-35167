@@ -12,11 +12,14 @@ import { usePi } from "@/contexts/PiContext";
 
 export const Auth = () => {
   const navigate = useNavigate();
-  const { piUser, isAuthenticated, signIn, loading: piLoading, createPayment, showRewardedAd, showInterstitialAd, isAdReady } = usePi();
+  const { piUser, isAuthenticated, signIn, loading: piLoading, createPayment, showRewardedAd, showInterstitialAd, isAdReady, adNetworkSupported } = usePi() as any;
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [adGateOpen, setAdGateOpen] = useState(false);
+  const [adGateBusy, setAdGateBusy] = useState(false);
+  const [adCanSkip, setAdCanSkip] = useState(false);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -94,6 +97,50 @@ export const Auth = () => {
     return false; // No special action needed
   };
 
+  const openAdGateOrNavigate = async () => {
+    // If there was a special action, navigation already happened in caller
+    // Default path: gate access to dashboard behind a rewarded ad
+    if (!adNetworkSupported) {
+      toast("Ad Network not supported in this Pi Browser version. Proceeding.");
+      navigate("/dashboard", { replace: true });
+      return;
+    }
+    try {
+      const ready = await isAdReady();
+      setAdCanSkip(!ready);
+    } catch {
+      setAdCanSkip(true);
+    }
+    setAdGateOpen(true);
+  };
+
+  const handleWatchAdAndContinue = async () => {
+    setAdGateBusy(true);
+    try {
+      const ok = await showRewardedAd();
+      if (ok) {
+        toast.success("Thanks! Ad watched successfully.");
+        setAdGateOpen(false);
+        navigate("/dashboard", { replace: true });
+      } else {
+        toast.error("Ad not rewarded. Please try again.");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to show ad");
+    } finally {
+      setAdGateBusy(false);
+    }
+  };
+
+  const handleSkipAdGate = () => {
+    if (!adCanSkip) {
+      toast("Please watch the ad to continue");
+      return;
+    }
+    setAdGateOpen(false);
+    navigate("/dashboard", { replace: true });
+  };
+
   const handlePiAuth = async () => {
     try {
       await signIn();
@@ -101,7 +148,7 @@ export const Auth = () => {
       // Check for post-auth actions first
       const handledSpecialAction = await handlePostAuthAction();
       if (!handledSpecialAction) {
-        navigate("/dashboard", { replace: true });
+        await openAdGateOrNavigate();
       }
     } catch (error: any) {
       toast.error(error.message || "Pi Network authentication failed");
@@ -115,7 +162,7 @@ export const Auth = () => {
       await signIn(['username']);
       toast.success("Signed in with username scope only");
       const handledSpecialAction = await handlePostAuthAction();
-      if (!handledSpecialAction) navigate("/dashboard", { replace: true });
+      if (!handledSpecialAction) await openAdGateOrNavigate();
     } catch (e: any) {
       toast.error(e?.message || 'Username-only sign-in failed');
     }
@@ -125,7 +172,7 @@ export const Auth = () => {
       await signIn(['username','payments']);
       toast.success("Signed in with username+payments scopes");
       const handledSpecialAction = await handlePostAuthAction();
-      if (!handledSpecialAction) navigate("/dashboard", { replace: true });
+      if (!handledSpecialAction) await openAdGateOrNavigate();
     } catch (e: any) {
       toast.error(e?.message || 'Full-scope sign-in failed');
     }
@@ -369,6 +416,20 @@ export const Auth = () => {
                 </div>
                 <Separator />
                 <Button onClick={handleTestPayment} disabled={piLoading || loading}>Test payment (1 Pi)</Button>
+              </div>
+            </div>
+          )}
+          {adGateOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/60" onClick={(e)=>e.stopPropagation()} />
+              <div className="relative z-10 w-[92%] max-w-md rounded-lg bg-background p-6 shadow-lg border">
+                <h3 className="text-lg font-semibold mb-2">Watch an ad to continue</h3>
+                <p className="text-sm text-muted-foreground mb-4">Please watch one rewarded ad to unlock the dashboard. This helps keep Droplink free.</p>
+                <div className="flex gap-2">
+                  <Button onClick={handleWatchAdAndContinue} disabled={adGateBusy} className="flex-1">{adGateBusy ? 'Showing ad…' : 'Watch Ad Now'}</Button>
+                  <Button variant="outline" onClick={handleSkipAdGate} disabled={!adCanSkip || adGateBusy} className="flex-1">{adCanSkip ? 'Skip for now' : 'Required'}</Button>
+                </div>
+                <div className="mt-3 text-xs text-muted-foreground">Tip: If ads aren’t available, the Skip button will enable automatically.</div>
               </div>
             </div>
           )}
