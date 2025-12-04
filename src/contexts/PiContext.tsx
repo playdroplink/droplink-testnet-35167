@@ -1,15 +1,36 @@
 // Utility: Robust Pi Browser detection
 export function isPiBrowserEnv(): boolean {
   if (typeof window === 'undefined' || !window.navigator) return false;
+  
+  // Method 1: Check for window.Pi object (most reliable)
+  if (typeof window.Pi !== 'undefined' && window.Pi !== null) {
+    console.log('[PI DEBUG] ✅ Pi Browser detected via window.Pi object');
+    return true;
+  }
+  
+  // Method 2: Check userAgent
   const ua = window.navigator.userAgent || '';
-  // Robust: check for PiBrowser, Pi, and Browser separately
-  const isPiUA = /PiBrowser|Pi Browser|Pi\s?Browser|Pi/i.test(ua);
-  // Some Pi Browser versions use 'Pi' or 'Pi Browser' in UA
-  // Also check for window.Pi after DOMContentLoaded
-  const hasPiObj = typeof window.Pi !== 'undefined';
-  // Fallback: check for mobile Pi Browser quirks
-  const isMobilePi = /Android|iPhone|iPad/i.test(ua) && (isPiUA || hasPiObj);
-  return isPiUA || hasPiObj || isMobilePi;
+  const isPiUA = /PiBrowser|Pi\s?Browser|Pi\s?App|minepi|Pi Network/i.test(ua);
+  if (isPiUA) {
+    console.log('[PI DEBUG] ✅ Pi Browser detected via userAgent:', ua.substring(0, 100));
+    return true;
+  }
+  
+  // Method 3: Check for Pi-specific browser properties
+  if ((window.navigator as any).pi !== undefined || (window as any).piApp !== undefined) {
+    console.log('[PI DEBUG] ✅ Pi Browser detected via window properties');
+    return true;
+  }
+  
+  // Method 4: Check for Pi Browser on mobile with specific indicators
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(ua);
+  if (isMobile) {
+    // On mobile, if we reach here, we're not in Pi Browser
+    console.log('[PI DEBUG] ⚠️ Mobile browser detected but NOT Pi Browser:', ua.substring(0, 100));
+  }
+  
+  console.log('[PI DEBUG] ❌ Pi Browser NOT detected. UserAgent:', ua.substring(0, 100));
+  return false;
 }
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -190,149 +211,227 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const initializePi = async () => {
       try {
-        // Debug: Log full config and environment
-        // console.log('[PI DEBUG] PI_CONFIG:', PI_CONFIG);
-        // console.log('[PI DEBUG] window.location:', window.location.href);
-        // console.log('[PI DEBUG] UserAgent:', typeof window !== 'undefined' ? window.navigator.userAgent : 'N/A');
-        // console.log('[PI DEBUG] isPiBrowserEnv:', isPiBrowserEnv());
+        console.log('[PI DEBUG] 🥧 Starting Pi Network initialization...');
+        
         // Validate mainnet configuration only
         if (!validateMainnetConfig()) {
-          console.error('[PI DEBUG] Invalid Pi Network mainnet configuration');
+          console.error('[PI DEBUG] ❌ Invalid Pi Network mainnet configuration');
           setError('Invalid Pi Network mainnet configuration');
           return;
         }
 
-        // console.log('[PI DEBUG] 🥧 Initializing Pi Network Mainnet...');
-        // console.log('[PI DEBUG] Network:', PI_CONFIG.NETWORK);
-        // console.log('[PI DEBUG] API Endpoint:', PI_CONFIG.BASE_URL);
+        console.log('[PI DEBUG] ✅ Mainnet configuration validated');
+        console.log('[PI DEBUG] 📍 Network:', PI_CONFIG.NETWORK);
+        console.log('[PI DEBUG] 🔗 API Endpoint:', PI_CONFIG.BASE_URL);
 
-        if (isPiBrowserEnv()) {
-          // Debug: Check for window.Pi
-          if (typeof window.Pi === 'undefined') {
-            console.error('[PI DEBUG] window.Pi is undefined! Pi SDK not loaded.');
-          } else {
-            // console.log('[PI DEBUG] window.Pi is available.');
+        const isPi = isPiBrowserEnv();
+        console.log('[PI DEBUG] 🔍 isPiBrowserEnv result:', isPi);
+
+        if (isPi) {
+          console.log('[PI DEBUG] ✅ We are in Pi Browser environment');
+          
+          // CRITICAL: Wait for window.Pi to be available
+          // The SDK script might need time to load
+          let attempts = 0;
+          const maxAttempts = 10;
+          
+          while (typeof window.Pi === 'undefined' && attempts < maxAttempts) {
+            console.log(`[PI DEBUG] ⏳ Waiting for window.Pi to load... (attempt ${attempts + 1}/${maxAttempts})`);
+            await new Promise(resolve => setTimeout(resolve, 200));
+            attempts++;
           }
+          
+          if (typeof window.Pi === 'undefined') {
+            console.error('[PI DEBUG] ❌ window.Pi is still undefined after waiting! Pi SDK failed to load.');
+            setError('Pi SDK failed to load. Please ensure you are using Pi Browser.');
+            return;
+          }
+          
+          console.log('[PI DEBUG] ✅ window.Pi is available, initializing SDK...');
+          
           // Initialize Pi SDK using configured SDK options
-          await window.Pi.init(PI_CONFIG.SDK);
-          // console.log('[PI DEBUG] ✅ Pi SDK initialized successfully (Mainnet)');
-          setIsInitialized(true);
+          try {
+            await window.Pi.init(PI_CONFIG.SDK);
+            console.log('[PI DEBUG] ✅ Pi SDK initialized successfully (Mainnet)');
+            setIsInitialized(true);
+          } catch (initErr) {
+            console.error('[PI DEBUG] ❌ Failed to initialize Pi SDK:', initErr);
+            setError('Failed to initialize Pi SDK');
+            return;
+          }
+          
           // Check ad network support
           try {
             const features = await window.Pi.nativeFeaturesList();
             const adSupported = features.includes('ad_network');
             setAdNetworkSupported(adSupported);
-            // console.log('[PI DEBUG] 🎯 Ad Network Support:', adSupported);
+            console.log('[PI DEBUG] 🎯 Ad Network Support:', adSupported);
           } catch (err) {
             console.warn('[PI DEBUG] ⚠️ Failed to check native features:', err);
           }
+          
           // Check for stored authentication
           const storedToken = localStorage.getItem('pi_access_token');
           const storedUser = localStorage.getItem('pi_user');
+          
           if (storedToken && storedUser) {
+            console.log('[PI DEBUG] 🔍 Found stored Pi authentication, verifying...');
             try {
               // Verify token with Pi API using configured endpoint
               const response = await fetch(PI_CONFIG.ENDPOINTS.ME, {
                 headers: PI_CONFIG.getAuthHeaders(storedToken)
               });
+              
               if (response.ok) {
                 const verifiedUser = await response.json();
                 const userData = JSON.parse(storedUser);
                 setAccessToken(storedToken);
                 setPiUser(userData);
-                // console.log('[PI DEBUG] 🔐 Auto-authenticated with stored credentials (Mainnet)');
+                console.log('[PI DEBUG] ✅ Auto-authenticated with stored credentials (Mainnet)');
+                
                 // Update user data if needed
                 if (verifiedUser.uid === userData.uid) {
                   setPiUser({...userData, ...verifiedUser});
                 }
               } else {
-                // Clear invalid credentials
+                console.warn('[PI DEBUG] ⚠️ Stored token verification failed, clearing...');
                 localStorage.removeItem('pi_access_token');
                 localStorage.removeItem('pi_user');
               }
             } catch (err) {
-              console.warn('[PI DEBUG] Failed to verify stored credentials:', err);
+              console.warn('[PI DEBUG] ⚠️ Failed to verify stored credentials:', err);
               localStorage.removeItem('pi_access_token');
               localStorage.removeItem('pi_user');
             }
           }
         } else {
-          console.warn('[PI DEBUG] Pi Network SDK not available - running in compatibility mode');
+          console.log('[PI DEBUG] ℹ️ Not in Pi Browser - Pi Network features unavailable');
+          // Don't set error for non-Pi Browser - user might use email auth
         }
       } catch (err) {
-        console.error('[PI DEBUG] Failed to initialize Pi Network:', err);
+        console.error('[PI DEBUG] ❌ Unexpected error in Pi Network initialization:', err);
         setError('Failed to initialize Pi Network');
       }
     };
+    
     initializePi();
   }, []);
 
   // Sign In with Pi Network (Mainnet)
-  const signIn = async (scopes: string[] = PI_CONFIG.scopes || ['username', 'payments', 'wallet_address']) => {
-    // Only allow sign-in in Pi Browser
-    if (!isPiBrowserEnv()) {
-      const piBrowserUrl = 'https://minepi.com/download';
-      const errorMsg = `Pi Network features are only available in the official Pi Browser.\n\nTo sign in, please download and open this app in the Pi Browser.`;
-      toast(
-        errorMsg,
-        {
-          description: `You must use the Pi Browser to sign in.`,
-          action: {
-            label: 'Download Pi Browser',
-            onClick: () => { window.open(piBrowserUrl, '_blank'); },
-          },
-          duration: 15000,
-        }
-      );
-      setError(errorMsg);
-      throw new Error(errorMsg);
-    }
-
-    // Mainnet mode - no sandbox authorization required
-
-    if (!isInitialized || !window.Pi) {
-      try {
-        await window.Pi.init(PI_CONFIG.SDK);
-        setIsInitialized(true);
-        console.log('✅ Pi SDK reinitialized successfully (Mainnet)');
-      } catch (reinitError) {
-        setError('Failed to initialize Pi SDK.');
-        throw new Error('Failed to initialize Pi SDK.');
-      }
-    }
-
+  const signIn = async (scopes?: string[]) => {
+    // Use scopes from config if not provided
+    const requestedScopes = scopes || PI_CONFIG.scopes || ['username'];
+    console.log('[PI DEBUG] 🔐 signIn() called with scopes:', requestedScopes);
+    
     setLoading(true);
     setError(null);
-
+    
     try {
-      console.log('🔐 Starting Pi Network authentication (Mainnet)...');
-      console.log('📍 Browser detected:', isPiBrowserEnv());
-      console.log('🔑 Requesting scopes:', scopes.join(', '));
+      // Only allow sign-in in Pi Browser
+      if (!isPiBrowserEnv()) {
+        const piBrowserUrl = 'https://minepi.com/download';
+        const errorMsg = `Pi Network features are only available in the official Pi Browser.\n\nTo sign in, please download and open this app in the Pi Browser.`;
+        console.error('[PI DEBUG] ❌ Not in Pi Browser, cannot authenticate');
+        toast(
+          errorMsg,
+          {
+            description: `You must use the Pi Browser to sign in.`,
+            action: {
+              label: 'Download Pi Browser',
+              onClick: () => { window.open(piBrowserUrl, '_blank'); },
+            },
+            duration: 15000,
+          }
+        );
+        setError(errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      console.log('[PI DEBUG] ✅ Confirmed we are in Pi Browser');
+
+      // Ensure Pi SDK is initialized
+      if (!isInitialized || typeof window.Pi === 'undefined') {
+        console.log('[PI DEBUG] ⏳ Pi SDK not initialized, attempting initialization...');
+        try {
+          // Wait for window.Pi to be available
+          let attempts = 0;
+          while (typeof window.Pi === 'undefined' && attempts < 10) {
+            console.log(`[PI DEBUG] ⏳ Waiting for window.Pi... (${attempts + 1}/10)`);
+            await new Promise(resolve => setTimeout(resolve, 200));
+            attempts++;
+          }
+          
+          if (typeof window.Pi === 'undefined') {
+            throw new Error('window.Pi is not available even after waiting');
+          }
+          
+          console.log('[PI DEBUG] ✅ window.Pi is available, initializing...');
+          await window.Pi.init(PI_CONFIG.SDK);
+          setIsInitialized(true);
+          console.log('[PI DEBUG] ✅ Pi SDK reinitialized successfully (Mainnet)');
+        } catch (reinitError: any) {
+          const msg = reinitError?.message || String(reinitError);
+          console.error('[PI DEBUG] ❌ Failed to initialize Pi SDK:', msg);
+          setError('Failed to initialize Pi SDK.');
+          setLoading(false);
+          throw new Error('Failed to initialize Pi SDK: ' + msg);
+        }
+      }
+
+      console.log('[PI DEBUG] 🔐 Starting Pi Network authentication (Mainnet)...');
+      console.log('[PI DEBUG] 📍 Browser detected:', isPiBrowserEnv());
+      console.log('[PI DEBUG] 🔑 Requesting scopes:', requestedScopes.join(', '));
 
       // Authenticate with Pi Network (with graceful fallback if payments scope not yet approved)
       let authResult: AuthResult | null = null;
       const tryScopes = async (reqScopes: string[]) => {
-        console.log('Requesting Pi scopes:', reqScopes.join(', '));
-        return window.Pi.authenticate(reqScopes, PI_CONFIG.onIncompletePaymentFound);
+        console.log('[PI DEBUG] 📝 Requesting Pi scopes:', reqScopes.join(', '));
+        if (typeof window.Pi === 'undefined') {
+          throw new Error('window.Pi is undefined - SDK not loaded');
+        }
+        console.log('[PI DEBUG] ⏳ Calling window.Pi.authenticate() with reqScopes:', reqScopes);
+        const result = await window.Pi.authenticate(reqScopes, PI_CONFIG.onIncompletePaymentFound);
+        console.log('[PI DEBUG] ✅ Pi.authenticate() returned:', result);
+        
+        // Validate response structure
+        if (!result) {
+          throw new Error('Pi.authenticate() returned null or undefined');
+        }
+        if (!result.accessToken) {
+          throw new Error('Authentication succeeded but no accessToken in response');
+        }
+        if (!result.user) {
+          throw new Error('Authentication succeeded but no user in response');
+        }
+        
+        return result;
       };
 
       try {
-        console.log('⏳ Calling Pi.authenticate()...');
-        authResult = await tryScopes(scopes);
-        console.log('✅ Pi.authenticate() returned successfully');
+        console.log('[PI DEBUG] ⏳ Calling Pi.authenticate()...');
+        authResult = await tryScopes(requestedScopes);
+        console.log('[PI DEBUG] ✅ Pi.authenticate() returned successfully');
+        console.log('[PI DEBUG] ✅ authResult received:', {
+          hasAccessToken: !!authResult?.accessToken,
+          hasUser: !!authResult?.user,
+          userId: authResult?.user?.uid
+        });
       } catch (authErr: any) {
         const msg = typeof authErr === 'string' ? authErr : (authErr?.message || 'Authentication failed');
         const lowerMsg = String(msg).toLowerCase();
-        console.warn('⚠️ Pi.authenticate() failed:', msg);
-        const looksLikeScopeIssue = lowerMsg.includes('scope') || lowerMsg.includes('permission') || lowerMsg.includes('payments');
+        console.warn('[PI DEBUG] ⚠️ Pi.authenticate() failed with error:', msg);
+        console.warn('[PI DEBUG] ⚠️ Full error object:', authErr);
+        
+        // Only retry with username if we're requesting more than just username
+        const looksLikeScopeIssue = (lowerMsg.includes('scope') || lowerMsg.includes('permission') || lowerMsg.includes('payments')) && requestedScopes.length > 1;
         if (looksLikeScopeIssue) {
-          console.log('🔄 Retrying with username scope only...');
-          toast('Payments permission not available yet; signing in with username only.', { duration: 5000 });
+          console.log('[PI DEBUG] 🔄 Scope issue detected, retrying with username scope only...');
+          toast('Permissions not available; signing in with username only.', { duration: 5000 });
           try {
             authResult = await tryScopes(['username']);
-            console.log('✅ Fallback authentication successful');
-          } catch (fallbackErr) {
-            console.error('❌ Fallback authentication failed:', fallbackErr);
+            console.log('[PI DEBUG] ✅ Fallback authentication successful');
+          } catch (fallbackErr: any) {
+            console.error('[PI DEBUG] ❌ Fallback authentication also failed:', fallbackErr);
             throw fallbackErr;
           }
         } else {
@@ -341,31 +440,41 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // Validate access token with Pi API (Mainnet)
+      if (!authResult) {
+        console.error('[PI DEBUG] ❌ authResult is null/undefined');
+        const err = 'No authentication result received from Pi Network.';
+        setError(err);
+        throw new Error(err);
+      }
+      
       const accessToken = authResult.accessToken;
       if (!accessToken) {
-        console.error('❌ No access token in authResult');
-        setError('No access token received from Pi Network.');
-        throw new Error('No access token received from Pi Network.');
+        console.error('[PI DEBUG] ❌ No access token in authResult');
+        console.error('[PI DEBUG] ❌ authResult structure:', JSON.stringify(authResult));
+        const err = 'No access token received from Pi Network.';
+        setError(err);
+        throw new Error(err);
       }
-      console.log('✅ Access token received:', accessToken.substring(0, 20) + '...');
+      console.log('[PI DEBUG] ✅ Access token received:', accessToken.substring(0, 20) + '...');
 
       // Call Pi API to verify user (use configured endpoint and headers)
-      console.log('🔍 Verifying with Pi API endpoint:', PI_CONFIG.ENDPOINTS.ME);
+      console.log('[PI DEBUG] 🔍 Verifying with Pi API endpoint:', PI_CONFIG.ENDPOINTS.ME);
       const piApiResp = await fetch(PI_CONFIG.ENDPOINTS.ME, {
         headers: PI_CONFIG.getAuthHeaders(accessToken),
       });
       if (!piApiResp.ok) {
-        console.error('❌ Pi API verification failed:', piApiResp.status, piApiResp.statusText);
+        console.error('[PI DEBUG] ❌ Pi API verification failed:', piApiResp.status, piApiResp.statusText);
         const errorBody = await piApiResp.text();
-        console.error('❌ Pi API error body:', errorBody);
-        setError('Failed to validate Pi user with mainnet API.');
-        throw new Error(`Failed to validate Pi user with mainnet API: ${piApiResp.status}`);
+        console.error('[PI DEBUG] ❌ Pi API error body:', errorBody);
+        const err = `Failed to validate Pi user with mainnet API: ${piApiResp.status}`;
+        setError(err);
+        throw new Error(err);
       }
       const piUser = await piApiResp.json();
-      console.log('✅ Pi user verified:', piUser.uid, piUser.username);
+      console.log('[PI DEBUG] ✅ Pi user verified:', piUser.uid, piUser.username);
 
       // Save user profile to Supabase
-      console.log('💾 Saving profile to Supabase with RPC call...');
+      console.log('[PI DEBUG] 💾 Saving profile to Supabase with RPC call...');
       const { data, error } = await supabase.rpc('authenticate_pi_user', {
         p_pi_user_id: piUser.uid,
         p_pi_username: piUser.username,
@@ -373,14 +482,15 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         p_wallet_address: piUser.wallet_address,
       });
       if (error) {
-        console.error('❌ RPC error:', error);
-        console.error('❌ Error code:', error.code);
-        console.error('❌ Error message:', error.message);
-        console.error('❌ Full error:', JSON.stringify(error));
-        setError('Failed to save Pi user profile to Supabase: ' + (error.message || 'Unknown error'));
-        throw new Error('Failed to save Pi user profile to Supabase: ' + (error.message || 'Unknown error'));
+        console.error('[PI DEBUG] ❌ RPC error:', error);
+        console.error('[PI DEBUG] ❌ Error code:', error.code);
+        console.error('[PI DEBUG] ❌ Error message:', error.message);
+        console.error('[PI DEBUG] ❌ Full error:', JSON.stringify(error));
+        const err = 'Failed to save Pi user profile to Supabase: ' + (error.message || 'Unknown error');
+        setError(err);
+        throw new Error(err);
       }
-      console.log('✅ Profile saved successfully');
+      console.log('[PI DEBUG] ✅ Profile saved successfully');
 
       // Store access token and user info
       localStorage.setItem('pi_access_token', accessToken);
@@ -388,27 +498,20 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       setAccessToken(accessToken);
       setPiUser(piUser);
       setCurrentProfile(data);
-      console.log('✅ Authentication complete! User:', piUser.username);
+      console.log('[PI DEBUG] ✅ Authentication complete! User:', piUser.username);
+      setLoading(false);
 
-    } catch (err) {
+    } catch (err: any) {
       let errorMessage = 'Authentication failed';
       if (typeof err === 'string') {
         errorMessage = err;
-      } else if (err && typeof err === 'object' && 'message' in (err as any)) {
-        errorMessage = String((err as any).message) || errorMessage;
+      } else if (err && typeof err === 'object' && 'message' in err) {
+        errorMessage = String(err.message) || errorMessage;
       }
+      console.error('[PI DEBUG] ❌ Authentication error:', errorMessage, err);
       setError(errorMessage);
-      console.error('❌ Pi authentication failed:', err);
-      if (window && window.alert) {
-        window.alert('❌ Pi authentication failed: ' + errorMessage);
-      }
-      toast(errorMessage, {
-        description: "Authentication Failed",
-        duration: 5000,
-      });
-      throw err;
-    } finally {
       setLoading(false);
+      throw new Error(errorMessage);
     }
   };
 
