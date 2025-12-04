@@ -2,18 +2,18 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-
-
-
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-console.log('[Supabase Debug] SUPABASE_URL:', SUPABASE_URL);
-console.log('[Supabase Debug] SUPABASE_ANON_KEY:', SUPABASE_ANON_KEY);
+
+// Only log if in development and values are missing
+if (import.meta.env.DEV && (!SUPABASE_URL || !SUPABASE_ANON_KEY)) {
+  console.warn('[Supabase] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY in environment variables');
+}
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+export const supabase = createClient<Database>(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
   auth: {
     storage: localStorage,
     persistSession: true,

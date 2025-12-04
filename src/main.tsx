@@ -1,4 +1,7 @@
 
+// Console filtering must be imported first to suppress errors early
+import './lib/console-filter';
+
 // Polyfill global for browser compatibility (stellar-sdk fix)
 if (typeof global === "undefined") {
   // @ts-ignore
@@ -12,8 +15,6 @@ import { PiProvider } from "./contexts/PiContext";
 import { UserPreferencesProvider } from "./contexts/UserPreferencesContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { validatePiEnvironment } from "./utils/pi-env-check";
-
-// Debug: Detect if running in Pi Browser and log environment info
 
 // Improved Pi Browser detection: checks for PiBrowser in userAgent and window.Pi object
 function isPiBrowser() {

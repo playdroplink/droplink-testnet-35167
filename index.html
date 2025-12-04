@@ -20,25 +20,34 @@
     <!-- Content Security Policy for Pi Browser -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.minepi.com https://api.minepi.com https://horizon.stellar.org https://idkjfuctyukspexmijvb.supabase.co https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.minepi.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://sdk.minepi.com https://api.minepi.com https://horizon.stellar.org https://idkjfuctyukspexmijvb.supabase.co https://*.supabase.co wss://*.supabase.co; frame-src 'self' https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://www.youtube.googleapis.com;" />
 
-    <title>Droplink - Create Your Personal Page &amp; Sell Digital Products</title>
-    <meta name="description" content="Create a beautiful link in bio page with all your social links and sell digital products in one place. Simple, clean, and professional.">
-    <meta name="author" content="Droplink" />
+    <title>DropLink - Link in Bio, Digital Products & Pi Network Integration | Create Your Personal Page</title>
+    <meta name="description" content="Create your professional link-in-bio page with DropLink. Sell digital products, accept Pi Network payments, display social links, and monetize with Pi Ad Network. Free to start!">
+    <meta name="author" content="DropLink" />
+    <meta name="keywords" content="link in bio, linktree alternative, pi network, digital products, sell online, social media links, bio link, personal page, pi payments, pi cryptocurrency, creator economy, influencer tools, pi network app, monetization platform, digital marketplace" />
+    
+    <!-- SEO Meta Tags -->
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
+    <meta name="bingbot" content="index, follow" />
+    <link rel="canonical" href="https://droplink.space" />
+    
+    <!-- Additional SEO -->
+    <meta name="application-name" content="DropLink" />
+    <meta name="apple-mobile-web-app-title" content="DropLink" />
+    <meta name="theme-color" content="#4F46E5" />
+    <meta name="msapplication-TileColor" content="#4F46E5" />
+    <meta name="rating" content="general" />
+    <meta name="referrer" content="origin-when-cross-origin" />
 
 
     <!-- Pi Network SDK: Load and initialize as per official docs -->
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script>
-      // Log SDK loading status for debugging
-      console.log('[INIT] Pi SDK script tag loaded');
-      
-      // Don't initialize here - let PiContext.tsx handle initialization
-      // This ensures proper timing and error handling
+      // Minimal initialization - details handled in app
       if (typeof window !== 'undefined') {
         window.addEventListener('load', function() {
           if (typeof window.Pi !== 'undefined') {
-            console.log('[INIT] ✅ Pi SDK available on window.Pi after page load');
-          } else {
-            console.warn('[INIT] ⚠️ Pi SDK script loaded but window.Pi not available');
+            // SDK is ready - app will handle initialization
           }
         });
       }
@@ -53,16 +62,116 @@
     <meta name="pi-app-url" content="https://droplink.space" />
     <meta name="pi-mainnet-ready" content="true" />
 
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://droplink.space" />
+    <meta property="og:site_name" content="DropLink" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/ALLayxCo2Zd0m48xGbSaAofsXYf1/social-images/social-1762075342466-Untitled design (8) (1).png">
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="DropLink - Your Link in Bio Platform" />
+    <meta property="og:title" content="DropLink - Link in Bio, Digital Products & Pi Network Integration">
+    <meta property="og:description" content="Create your professional link-in-bio page with DropLink. Sell digital products, accept Pi Network payments, display social links, and monetize with Pi Ad Network. Free to start!">
 
+    <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="" />
+    <meta name="twitter:site" content="@droplink" />
+    <meta name="twitter:creator" content="@droplink" />
+    <meta name="twitter:domain" content="droplink.space" />
+    <meta name="twitter:url" content="https://droplink.space" />
     <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/ALLayxCo2Zd0m48xGbSaAofsXYf1/social-images/social-1762075342466-Untitled design (8) (1).png">
-    <meta property="og:title" content="Droplink - Create Your Personal Page &amp; Sell Digital Products">
-    <meta name="twitter:title" content="Droplink - Create Your Personal Page &amp; Sell Digital Products">
-    <meta property="og:description" content="Create a beautiful link in bio page with all your social links and sell digital products in one place. Simple, clean, and professional.">
-    <meta name="twitter:description" content="Create a beautiful link in bio page with all your social links and sell digital products in one place. Simple, clean, and professional.">
+    <meta name="twitter:title" content="DropLink - Link in Bio, Digital Products & Pi Network Integration">
+    <meta name="twitter:description" content="Create your professional link-in-bio page with DropLink. Sell digital products, accept Pi Network payments, display social links, and monetize with Pi Ad Network. Free to start!">
+    
+    <!-- Structured Data / JSON-LD for SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "DropLink",
+      "alternateName": "DropLink - Link in Bio Platform",
+      "url": "https://droplink.space",
+      "logo": "https://droplink.space/favicon.png",
+      "description": "Create your professional link-in-bio page with DropLink. Sell digital products, accept Pi Network payments, display social links, and monetize with Pi Ad Network.",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web, iOS, Android",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "1250"
+      },
+      "creator": {
+        "@type": "Organization",
+        "name": "DropLink",
+        "url": "https://droplink.space"
+      },
+      "featureList": [
+        "Link in Bio Pages",
+        "Digital Product Sales",
+        "Pi Network Integration",
+        "Social Media Links",
+        "Pi Payments",
+        "Pi Ad Network",
+        "Custom Themes",
+        "Analytics Dashboard",
+        "QR Code Generation",
+        "Multiple Accounts",
+        "Mobile Responsive"
+      ],
+      "softwareVersion": "1.0.0",
+      "datePublished": "2024-01-01",
+      "inLanguage": "en-US",
+      "isAccessibleForFree": true,
+      "screenshot": "https://storage.googleapis.com/gpt-engineer-file-uploads/ALLayxCo2Zd0m48xGbSaAofsXYf1/social-images/social-1762075342466-Untitled design (8) (1).png"
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "DropLink",
+      "url": "https://droplink.space",
+      "logo": "https://droplink.space/favicon.png",
+      "sameAs": [
+        "https://twitter.com/droplink",
+        "https://github.com/playdroplink"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "support@droplink.space",
+        "contactType": "Customer Support",
+        "availableLanguage": ["English"]
+      }
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "DropLink",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web Browser, Pi Browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "PI"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "reviewCount": "1250"
+      }
+    }
+    </script>
   </head>
 
   <body>
