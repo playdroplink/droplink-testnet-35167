@@ -122,8 +122,16 @@ serve(async (req) => {
       throw new Error('Payment does not belong to authenticated user');
     }
     
-    // Use profileId from auth or metadata
-    const finalProfileId = profileId || metadata?.profileId;
+    // Use profileId from auth or metadata, or fallback to idempotency record
+    let finalProfileId = profileId || metadata?.profileId;
+    if (!finalProfileId) {
+      const { data: idem } = await supabase
+        .from('payment_idempotency')
+        .select('profile_id')
+        .eq('payment_id', paymentId)
+        .maybeSingle();
+      if (idem?.profile_id) finalProfileId = idem.profile_id;
+    }
 
     // Validate payment status
     if (paymentDetails.status !== 'ready_for_completion') {

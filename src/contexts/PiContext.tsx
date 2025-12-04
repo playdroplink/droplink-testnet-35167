@@ -306,6 +306,8 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       console.log('🔐 Starting Pi Network authentication (Mainnet)...');
+      console.log('📍 Browser detected:', isPiBrowserEnv());
+      console.log('🔑 Requesting scopes:', scopes.join(', '));
 
       // Authenticate with Pi Network (with graceful fallback if payments scope not yet approved)
       let authResult: AuthResult | null = null;
@@ -315,16 +317,22 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       };
 
       try {
+        console.log('⏳ Calling Pi.authenticate()...');
         authResult = await tryScopes(scopes);
+        console.log('✅ Pi.authenticate() returned successfully');
       } catch (authErr: any) {
         const msg = typeof authErr === 'string' ? authErr : (authErr?.message || 'Authentication failed');
         const lowerMsg = String(msg).toLowerCase();
+        console.warn('⚠️ Pi.authenticate() failed:', msg);
         const looksLikeScopeIssue = lowerMsg.includes('scope') || lowerMsg.includes('permission') || lowerMsg.includes('payments');
         if (looksLikeScopeIssue) {
+          console.log('🔄 Retrying with username scope only...');
           toast('Payments permission not available yet; signing in with username only.', { duration: 5000 });
           try {
             authResult = await tryScopes(['username']);
+            console.log('✅ Fallback authentication successful');
           } catch (fallbackErr) {
+            console.error('❌ Fallback authentication failed:', fallbackErr);
             throw fallbackErr;
           }
         } else {
@@ -335,32 +343,44 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       // Validate access token with Pi API (Mainnet)
       const accessToken = authResult.accessToken;
       if (!accessToken) {
+        console.error('❌ No access token in authResult');
         setError('No access token received from Pi Network.');
         throw new Error('No access token received from Pi Network.');
       }
+      console.log('✅ Access token received:', accessToken.substring(0, 20) + '...');
 
       // Call Pi API to verify user (use configured endpoint and headers)
+      console.log('🔍 Verifying with Pi API endpoint:', PI_CONFIG.ENDPOINTS.ME);
       const piApiResp = await fetch(PI_CONFIG.ENDPOINTS.ME, {
         headers: PI_CONFIG.getAuthHeaders(accessToken),
       });
       if (!piApiResp.ok) {
+        console.error('❌ Pi API verification failed:', piApiResp.status, piApiResp.statusText);
+        const errorBody = await piApiResp.text();
+        console.error('❌ Pi API error body:', errorBody);
         setError('Failed to validate Pi user with mainnet API.');
-        throw new Error('Failed to validate Pi user with mainnet API.');
+        throw new Error(`Failed to validate Pi user with mainnet API: ${piApiResp.status}`);
       }
       const piUser = await piApiResp.json();
+      console.log('✅ Pi user verified:', piUser.uid, piUser.username);
 
       // Save user profile to Supabase
+      console.log('💾 Saving profile to Supabase with RPC call...');
       const { data, error } = await supabase.rpc('authenticate_pi_user', {
         p_pi_user_id: piUser.uid,
         p_pi_username: piUser.username,
-        p_wallet_address: piUser.wallet_address,
         p_access_token: accessToken,
-        validation_key: PI_CONFIG.VALIDATION_KEY,
+        p_wallet_address: piUser.wallet_address,
       });
       if (error) {
-        setError('Failed to save Pi user profile to Supabase.');
-        throw new Error('Failed to save Pi user profile to Supabase.');
+        console.error('❌ RPC error:', error);
+        console.error('❌ Error code:', error.code);
+        console.error('❌ Error message:', error.message);
+        console.error('❌ Full error:', JSON.stringify(error));
+        setError('Failed to save Pi user profile to Supabase: ' + (error.message || 'Unknown error'));
+        throw new Error('Failed to save Pi user profile to Supabase: ' + (error.message || 'Unknown error'));
       }
+      console.log('✅ Profile saved successfully');
 
       // Store access token and user info
       localStorage.setItem('pi_access_token', accessToken);
@@ -368,6 +388,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       setAccessToken(accessToken);
       setPiUser(piUser);
       setCurrentProfile(data);
+      console.log('✅ Authentication complete! User:', piUser.username);
 
     } catch (err) {
       let errorMessage = 'Authentication failed';
