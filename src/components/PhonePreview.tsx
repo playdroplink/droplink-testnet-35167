@@ -31,6 +31,7 @@ import {
 } from "react-icons/fa";
 import { Badge } from "@/components/ui/badge";
 import { QRCodeDisplay } from "./QRCodeDisplay";
+import { BackgroundMusicPlayer } from "./BackgroundMusicPlayer";
 import { toast } from "sonner";
 import { ProfileData } from "@/types/profile";
 
@@ -211,6 +212,17 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
             <p className="text-sm text-white/80 px-4 leading-relaxed">
               {profile.description}
             </p>
+          )}
+
+          {/* Background Music Player */}
+          {profile.backgroundMusicUrl && (
+            <div className="px-4 w-full">
+              <BackgroundMusicPlayer 
+                musicUrl={profile.backgroundMusicUrl}
+                autoPlay={true}
+                loop={true}
+              />
+            </div>
           )}
 
           {/* YouTube Video */}

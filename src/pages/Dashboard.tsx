@@ -203,6 +203,7 @@ const Dashboard = () => {
     description: "",
     email: "",
     youtubeVideoUrl: "",
+    backgroundMusicUrl: "",
     socialLinks: [
       { type: "twitter", url: "" },
       { type: "instagram", url: "" },
@@ -344,6 +345,13 @@ const Dashboard = () => {
       autoSave.updateData(profile);
     }
   }, [profile, profileId, loading]);
+
+  // Update Pi Wallet QR data when wallet address changes
+  useEffect(() => {
+    if (profile.piWalletAddress) {
+      setPiWalletQrData(profile.piWalletAddress);
+    }
+  }, [profile.piWalletAddress]);
 
   // Load payment links for the current user
   const loadPaymentLinks = (): PaymentLink[] => {
@@ -591,6 +599,7 @@ const Dashboard = () => {
           description: profileData.description || "",
           email: (profileData as any).email || supabaseUser?.email || "",
           youtubeVideoUrl: (profileData as any).youtube_video_url || "",
+          backgroundMusicUrl: (profileData as any).background_music_url || "",
           socialLinks: Array.isArray(socialLinks) ? socialLinks : [
             { type: "twitter", url: "" },
             { type: "instagram", url: "" },
@@ -804,6 +813,7 @@ const Dashboard = () => {
           description: "",
           email: supabaseUser?.email || "",
           youtubeVideoUrl: "",
+          backgroundMusicUrl: "",
           socialLinks: [
             { type: "twitter", url: "" },
             { type: "instagram", url: "" },
@@ -876,8 +886,28 @@ const Dashboard = () => {
     return profile.socialLinks.filter(link => link.url && link.url.trim() !== "").length;
   };
 
-  // Handle social link change - UNLOCKED: No restrictions
+  // Helper to check if plan limit exceeded
+  const canAddSocialLink = (currentActiveCount: number) => {
+    const maxLinks = plan === "free" ? 1 : plan === "basic" ? 3 : 99;
+    return currentActiveCount < maxLinks;
+  };
+
+  // Handle social link change - allows editing, respects plan limits
   const handleSocialLinkChange = (platform: string, value: string) => {
+    const trimmedValue = value.trim();
+    const currentLink = profile.socialLinks.find(l => l.type === platform);
+    const isCurrentlyActive = currentLink?.url && currentLink.url.trim() !== "";
+    
+    // If trying to add a new link (field is currently empty and trying to fill it with a value)
+    if (!isCurrentlyActive && trimmedValue !== "") {
+      const currentActive = profile.socialLinks.filter(l => l.url && l.url.trim() !== "").length;
+      if (!canAddSocialLink(currentActive)) {
+        toast.error(`You have reached your plan's social link limit (${plan === "free" ? "1" : "3"} links). Upgrade to add more.`);
+        return;
+      }
+    }
+    
+    // Update the link (either editing existing or adding new)
     setProfile({
       ...profile,
       socialLinks: profile.socialLinks.map(link =>
@@ -911,6 +941,7 @@ const Dashboard = () => {
           description: profile.description,
           email: profile.email,
           youtube_video_url: profile.youtubeVideoUrl,
+          background_music_url: profile.backgroundMusicUrl,
           social_links: profile.socialLinks as any,
           theme_settings: {
             ...profile.theme,
@@ -1645,6 +1676,24 @@ const Dashboard = () => {
                   </p>
                 </div>
               </PlanGate>
+
+              {/* Background Music URL */}
+              <div className="mb-6">
+                <Label htmlFor="background-music" className="mb-3 block flex items-center gap-2">
+                  <Music className="w-4 h-4" />
+                  Background Music
+                </Label>
+                <Input
+                  id="background-music"
+                  value={profile.backgroundMusicUrl || ""}
+                  onChange={(e) => setProfile({ ...profile, backgroundMusicUrl: e.target.value })}
+                  placeholder="https://example.com/music.mp3"
+                  className="bg-input-bg"
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Add a background music URL (MP3, OGG, WAV) that will play on your public bio page. The audio will loop continuously and visitors can control the volume.
+                </p>
+              </div>
             </div>
 
             {/* Social Links */}
@@ -1738,17 +1787,7 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "twitter")?.url || "" : ""}
-                    onChange={(e) => {
-                      // Enforce plan-based social link limits
-                      const maxLinks = plan === "free" ? 1 : plan === "basic" ? 3 : 99;
-                      const activeLinks = countActiveSocialLinks();
-                      const isAdding = !profile.socialLinks.find(l => l.type === "twitter")?.url && e.target.value.trim() !== "";
-                      if (isAdding && activeLinks >= maxLinks) {
-                        toast.error(`You have reached your plan's social link limit. Upgrade to add more.`);
-                        return;
-                      }
-                      handleSocialLinkChange("twitter", e.target.value);
-                    }}
+                    onChange={(e) => handleSocialLinkChange("twitter", e.target.value)}
                     placeholder="https://x.com/"
                     className="bg-input-bg flex-1"
                   />
@@ -1760,16 +1799,7 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "instagram")?.url || "" : ""}
-                    onChange={(e) => {
-                      const maxLinks = plan === "free" ? 1 : plan === "basic" ? 3 : 99;
-                      const activeLinks = countActiveSocialLinks();
-                      const isAdding = !profile.socialLinks.find(l => l.type === "instagram")?.url && e.target.value.trim() !== "";
-                      if (isAdding && activeLinks >= maxLinks) {
-                        toast.error(`You have reached your plan's social link limit. Upgrade to add more.`);
-                        return;
-                      }
-                      handleSocialLinkChange("instagram", e.target.value);
-                    }}
+                    onChange={(e) => handleSocialLinkChange("instagram", e.target.value)}
                     placeholder="https://instagram.com/"
                     className="bg-input-bg flex-1"
                   />
@@ -1781,16 +1811,7 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "youtube")?.url || "" : ""}
-                    onChange={(e) => {
-                      const maxLinks = plan === "free" ? 1 : plan === "basic" ? 3 : 99;
-                      const activeLinks = countActiveSocialLinks();
-                      const isAdding = !profile.socialLinks.find(l => l.type === "youtube")?.url && e.target.value.trim() !== "";
-                      if (isAdding && activeLinks >= maxLinks) {
-                        toast.error(`You have reached your plan's social link limit. Upgrade to add more.`);
-                        return;
-                      }
-                      handleSocialLinkChange("youtube", e.target.value);
-                    }}
+                    onChange={(e) => handleSocialLinkChange("youtube", e.target.value)}
                     placeholder="https://youtube.com/@"
                     className="bg-input-bg flex-1"
                   />
@@ -1802,16 +1823,7 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "tiktok")?.url || "" : ""}
-                    onChange={(e) => {
-                      const maxLinks = plan === "free" ? 1 : plan === "basic" ? 3 : 99;
-                      const activeLinks = countActiveSocialLinks();
-                      const isAdding = !profile.socialLinks.find(l => l.type === "tiktok")?.url && e.target.value.trim() !== "";
-                      if (isAdding && activeLinks >= maxLinks) {
-                        toast.error(`You have reached your plan's social link limit. Upgrade to add more.`);
-                        return;
-                      }
-                      handleSocialLinkChange("tiktok", e.target.value);
-                    }}
+                    onChange={(e) => handleSocialLinkChange("tiktok", e.target.value)}
                     placeholder="https://tiktok.com/@"
                     className="bg-input-bg flex-1"
                   />
@@ -1823,16 +1835,7 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "facebook")?.url || "" : ""}
-                    onChange={(e) => {
-                      const maxLinks = plan === "free" ? 1 : plan === "basic" ? 3 : 99;
-                      const activeLinks = countActiveSocialLinks();
-                      const isAdding = !profile.socialLinks.find(l => l.type === "facebook")?.url && e.target.value.trim() !== "";
-                      if (isAdding && activeLinks >= maxLinks) {
-                        toast.error(`You have reached your plan's social link limit. Upgrade to add more.`);
-                        return;
-                      }
-                      handleSocialLinkChange("facebook", e.target.value);
-                    }}
+                    onChange={(e) => handleSocialLinkChange("facebook", e.target.value)}
                     placeholder="https://facebook.com/"
                     className="bg-input-bg flex-1"
                   />
@@ -1844,16 +1847,7 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "linkedin")?.url || "" : ""}
-                    onChange={(e) => {
-                      const maxLinks = plan === "free" ? 1 : plan === "basic" ? 3 : 99;
-                      const activeLinks = countActiveSocialLinks();
-                      const isAdding = !profile.socialLinks.find(l => l.type === "linkedin")?.url && e.target.value.trim() !== "";
-                      if (isAdding && activeLinks >= maxLinks) {
-                        toast.error(`You have reached your plan's social link limit. Upgrade to add more.`);
-                        return;
-                      }
-                      handleSocialLinkChange("linkedin", e.target.value);
-                    }}
+                    onChange={(e) => handleSocialLinkChange("linkedin", e.target.value)}
                     placeholder="https://linkedin.com/in/"
                     className="bg-input-bg flex-1"
                   />
@@ -1865,16 +1859,7 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "twitch")?.url || "" : ""}
-                    onChange={(e) => {
-                      const maxLinks = plan === "free" ? 1 : plan === "basic" ? 3 : 99;
-                      const activeLinks = countActiveSocialLinks();
-                      const isAdding = !profile.socialLinks.find(l => l.type === "twitch")?.url && e.target.value.trim() !== "";
-                      if (isAdding && activeLinks >= maxLinks) {
-                        toast.error(`You have reached your plan's social link limit. Upgrade to add more.`);
-                        return;
-                      }
-                      handleSocialLinkChange("twitch", e.target.value);
-                    }}
+                    onChange={(e) => handleSocialLinkChange("twitch", e.target.value)}
                     placeholder="https://twitch.tv/"
                     className="bg-input-bg flex-1"
                   />
@@ -1886,16 +1871,7 @@ const Dashboard = () => {
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "website")?.url || "" : ""}
-                    onChange={(e) => {
-                      const maxLinks = plan === "free" ? 1 : plan === "basic" ? 3 : 99;
-                      const activeLinks = countActiveSocialLinks();
-                      const isAdding = !profile.socialLinks.find(l => l.type === "website")?.url && e.target.value.trim() !== "";
-                      if (isAdding && activeLinks >= maxLinks) {
-                        toast.error(`You have reached your plan's social link limit. Upgrade to add more.`);
-                        return;
-                      }
-                      handleSocialLinkChange("website", e.target.value);
-                    }}
+                    onChange={(e) => handleSocialLinkChange("website", e.target.value)}
                     placeholder="Enter website URL"
                     className="bg-input-bg flex-1"
                   />

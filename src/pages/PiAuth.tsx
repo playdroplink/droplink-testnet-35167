@@ -270,6 +270,17 @@ const PiAuth = () => {
             </a>
           </Button>
 
+          {/* Droplink Social Button */}
+          <Button
+            asChild
+            className="w-full mb-2"
+            size="lg"
+            variant="secondary"
+          >
+            <a href="/droplinkofficial">
+              Droplink Social
+            </a>
+          </Button>
 
           {/* Pi Network Sign In and Info - Always show for all browsers */}
           <>

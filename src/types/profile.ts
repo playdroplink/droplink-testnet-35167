@@ -121,6 +121,7 @@ export interface ProfileData {
   businessName?: string;
   description?: string;
   youtubeVideoUrl?: string;
+  backgroundMusicUrl?: string;
   customLinks?: CustomLink[];
   products?: Product[];
   theme?: ThemeData;

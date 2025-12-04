@@ -10,6 +10,7 @@ import { Info } from "lucide-react";
 import { FollowersSection } from "@/components/FollowersSection";
 import { GiftDialog } from "@/components/GiftDialog";
 import { AIChatWidget } from "@/components/AIChatWidget";
+import { BackgroundMusicPlayer } from "@/components/BackgroundMusicPlayer";
 import { PiAdBanner } from "@/components/PiAdBanner";
 import PiAdsBanner from "@/components/PiAdsBanner";
 import type { UserPreferences } from "@/contexts/UserPreferencesContext";
@@ -440,14 +441,16 @@ const PublicBio = () => {
   const getButtonStyles = (primaryColor: string, buttonStyle: string) => {
     if (buttonStyle === 'outlined') {
       return {
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        border: '2px solid #fff',
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
+        border: `2px solid ${primaryColor}`,
         color: '#fff',
+        textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)',
       };
     } else {
       return {
         backgroundColor: primaryColor,
         color: '#fff',
+        textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
       };
     }
   };
@@ -603,17 +606,32 @@ const PublicBio = () => {
             </p>
           )}
 
+          {/* Background Music Player */}
+          {profile.backgroundMusicUrl && (
+            <div className="max-w-md mx-auto w-full">
+              <BackgroundMusicPlayer 
+                musicUrl={profile.backgroundMusicUrl}
+                autoPlay={true}
+                loop={true}
+              />
+            </div>
+          )}
+
           {/* Follow and Gift Buttons */}
           {currentUserProfileId && currentUserProfileId !== profileId && (
             <div className="flex gap-3 justify-center pt-4">
               <Button
                 onClick={handleFollow}
-                className={`${getIconStyle(profile.theme.iconStyle)} gap-2 px-6 py-3`}
+                className={`${getIconStyle(profile.theme.iconStyle)} gap-2 px-6 py-3 text-white`}
                 style={isFollowing ? { 
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  border: `2px solid ${profile.theme.primaryColor}`
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  border: `2px solid ${profile.theme.primaryColor}`,
+                  color: '#fff',
+                  textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)',
                 } : { 
-                  backgroundColor: profile.theme.primaryColor 
+                  backgroundColor: profile.theme.primaryColor,
+                  color: '#fff',
+                  textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
                 }}
                 variant={isFollowing ? "outline" : "default"}
               >
@@ -633,10 +651,12 @@ const PublicBio = () => {
               {userPreferences?.store_settings?.allowGifts !== false && (
                 <Button
                   onClick={() => setShowGiftDialog(true)}
-                  className={`${getIconStyle(profile.theme.iconStyle)} gap-2 px-6 py-3`}
+                  className={`${getIconStyle(profile.theme.iconStyle)} gap-2 px-6 py-3 text-white`}
                   style={{ 
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    border: `2px solid ${profile.theme.primaryColor}`
+                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                    border: `2px solid ${profile.theme.primaryColor}`,
+                    color: '#fff',
+                    textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)',
                   }}
                   variant="outline"
                 >
