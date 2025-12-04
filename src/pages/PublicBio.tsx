@@ -514,7 +514,7 @@ const PublicBio = () => {
 
   return (
     <div 
-      className="min-h-screen p-6 flex flex-col items-center relative"
+      className="min-h-screen p-6 flex flex-col items-center relative overflow-x-hidden w-full max-w-full"
       style={
         profile.theme.backgroundType === 'gif' && profile.theme.backgroundGif
           ? {}

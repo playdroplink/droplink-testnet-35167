@@ -124,8 +124,15 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
+    max-width: 100vw;
     /* Ensure light mode is always applied */
     --background: 0 0% 100%;
     --foreground: 0 0% 9%;
@@ -171,6 +178,18 @@ All colors MUST be HSL.
 
   .glass-surface {
     @apply bg-background/70 backdrop-blur-lg border border-border/50;
+  }
+
+  /* Prevent horizontal scroll */
+  .no-scrollbar-x {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
+  /* Constrain container width */
+  .container-safe {
+    max-width: 100vw;
+    overflow-x: hidden;
   }
 
 /* Dark mode theme */
