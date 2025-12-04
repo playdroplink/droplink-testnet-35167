@@ -474,6 +474,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       console.log('[PI DEBUG] ✅ Pi user verified:', piUser.uid, piUser.username);
 
       // Save user profile to Supabase
+
       console.log('[PI DEBUG] 💾 Saving profile to Supabase with RPC call...');
       const { data, error } = await supabase.rpc('authenticate_pi_user', {
         p_pi_user_id: piUser.uid,
@@ -481,14 +482,11 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         p_access_token: accessToken,
         p_wallet_address: piUser.wallet_address,
       });
-      if (error) {
-        console.error('[PI DEBUG] ❌ RPC error:', error);
-        console.error('[PI DEBUG] ❌ Error code:', error.code);
-        console.error('[PI DEBUG] ❌ Error message:', error.message);
-        console.error('[PI DEBUG] ❌ Full error:', JSON.stringify(error));
-        const err = 'Failed to save Pi user profile to Supabase: ' + (error.message || 'Unknown error');
-        setError(err);
-        throw new Error(err);
+      if (error || !data || data.success === false) {
+        const errMsg = error?.message || data?.error || 'Unknown error';
+        console.error('[PI DEBUG] ❌ RPC error:', errMsg);
+        setError('Failed to save Pi user profile to Supabase: ' + errMsg);
+        throw new Error('Failed to save Pi user profile to Supabase: ' + errMsg);
       }
       console.log('[PI DEBUG] ✅ Profile saved successfully');
 
@@ -497,7 +495,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('pi_user', JSON.stringify(piUser));
       setAccessToken(accessToken);
       setPiUser(piUser);
-      setCurrentProfile(data);
+      setCurrentProfile(data.user_data || data);
       console.log('[PI DEBUG] ✅ Authentication complete! User:', piUser.username);
       setLoading(false);
 
