@@ -761,21 +761,12 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
             <CardContent className="space-y-4">
               {hasDropTrustline && parseFloat(balance) > 0 ? (
                 <>
-                  {!hasImportedPrivateKey() && (
-                    <Alert>
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        To send tokens, you need to import your {PI_CONFIG.SANDBOX_MODE ? 'Pi Sandbox' : 'Pi Mainnet'} private key.
-                        <Button 
-                          variant="link" 
-                          className="p-0 h-auto font-normal underline ml-1"
-                          onClick={() => setShowPrivateKeyDialog(true)}
-                        >
-                          Import Now
-                        </Button>
-                      </AlertDescription>
-                    </Alert>
-                  )}
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Private key and seed phrase import is temporarily disabled for security. Sending tokens will be available in a future update.
+                    </AlertDescription>
+                  </Alert>
                   
                   <div className="space-y-2">
                     <Label htmlFor="recipient">Recipient Address</Label>
@@ -785,6 +776,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
                       value={recipientAddress}
                       onChange={(e) => setRecipientAddress(e.target.value)}
                       className="font-mono text-xs"
+                      disabled
                     />
                   </div>
                   
@@ -797,6 +789,7 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
                       value={sendAmount}
                       onChange={(e) => setSendAmount(e.target.value)}
                       max={balance}
+                      disabled
                     />
                     <p className="text-xs text-muted-foreground">
                       Available: {parseFloat(balance).toLocaleString()} DROP
@@ -805,11 +798,11 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
 
                   <Button 
                     onClick={sendDropTokens}
-                    disabled={isSending || !recipientAddress || !sendAmount || !hasImportedPrivateKey()}
+                    disabled={true}
                     className="w-full"
-                    style={{ backgroundColor: DROP_TOKEN.colors.primary }}
+                    style={{ backgroundColor: DROP_TOKEN.colors.primary, opacity: 0.5 }}
                   >
-                    {isSending ? 'Sending...' : 'Send DROP'}
+                    Send DROP (Disabled)
                   </Button>
                 </>
               ) : (
@@ -942,25 +935,17 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
               <div className="space-y-2">
                 <Label>Private Key Status</Label>
                 <div className="flex items-center gap-2">
-                  {hasImportedPrivateKey() ? (
-                    <Badge variant="outline" className="text-green-600">
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Imported
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-yellow-600">
-                      <AlertCircle className="h-3 w-3 mr-1" />
-                      Not Imported
-                    </Badge>
-                  )}
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setShowPrivateKeyDialog(true)}
-                  >
-                    {hasImportedPrivateKey() ? 'Update' : 'Import'}
-                  </Button>
+                  <Badge variant="outline" className="text-gray-600">
+                    <Ban className="h-3 w-3 mr-1" />
+                    Import Disabled
+                  </Badge>
                 </div>
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="text-xs">
+                    Private key and seed phrase import is temporarily disabled for security. This feature will be available in a future update.
+                  </AlertDescription>
+                </Alert>
               </div>
               
               <Separator />
@@ -1032,7 +1017,8 @@ export function DropTokenManager({ piUser, piWallet }: DropTokenManagerProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Private Key Import Dialog */}
+      {/* Private Key Import Dialog - TEMPORARILY DISABLED FOR SECURITY */}
+      {/* 
       <Dialog open={showPrivateKeyDialog} onOpenChange={setShowPrivateKeyDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
