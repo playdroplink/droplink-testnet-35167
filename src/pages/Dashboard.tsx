@@ -124,7 +124,27 @@ const Dashboard = () => {
   
   // Hooks must be called unconditionally
   const piContext = usePi();
-  const { piUser, isAuthenticated, signOut: piSignOut, loading: piLoading, getCurrentWalletAddress } = piContext;
+  const { piUser, isAuthenticated, signIn, signOut: piSignOut, loading: piLoading, getCurrentWalletAddress } = piContext;
+  const [showPiAuthModal, setShowPiAuthModal] = useState(false);
+
+  // Enforce Pi Auth on dashboard load
+  useEffect(() => {
+    if (!isAuthenticated || !piUser) {
+      setShowPiAuthModal(true);
+    } else {
+      setShowPiAuthModal(false);
+    }
+  }, [isAuthenticated, piUser]);
+
+  const handlePiAuth = async () => {
+    try {
+      await signIn(["username", "payments", "wallet_address"]);
+      setShowPiAuthModal(false);
+      toast.success("Pi authentication complete! Dashboard unlocked.");
+    } catch (error) {
+      toast.error("Pi authentication failed. Please try again in Pi Browser.");
+    }
+  };
 
   // Set greeting based on time
   useEffect(() => {
@@ -1069,6 +1089,20 @@ const Dashboard = () => {
             <a href="https://minepi.com/Wain2020" target="_blank" rel="noopener noreferrer" className="underline text-blue-600">Download Pi Browser</a>
           </div>
           <PiAuthTest />
+        </div>
+      </div>
+    );
+  }
+
+  if (showPiAuthModal) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-sky-100">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full text-center">
+          <h2 className="text-lg font-bold mb-2">Pi Authentication Required</h2>
+          <p className="mb-4 text-gray-700">You must sign in with Pi Network to access your dashboard and payments.</p>
+          <Button onClick={handlePiAuth} disabled={piLoading} className="w-full mb-2">
+            {piLoading ? 'Connecting to Pi Network...' : 'Sign in with Pi Network'}
+          </Button>
         </div>
       </div>
     );
