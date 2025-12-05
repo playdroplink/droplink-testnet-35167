@@ -299,7 +299,7 @@ const Dashboard = () => {
                 transactionCount: link.transactionCount
               }))
             } as any,
-            logo_url: data.logo,
+            logo: data.logo,
             show_share_button: data.showShareButton,
             pi_wallet_address: data.piWalletAddress,
             pi_donation_message: data.piDonationMessage,
@@ -978,7 +978,7 @@ const Dashboard = () => {
               transactionCount: link.transactionCount
             }))
           } as any,
-          logo_url: profile.logo,
+          logo: profile.logo,
           show_share_button: profile.showShareButton,
           pi_wallet_address: profile.piWalletAddress,
           pi_donation_message: profile.piDonationMessage,

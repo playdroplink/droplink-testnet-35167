@@ -67,7 +67,6 @@ BEGIN
             id,
             username,
             business_name,
-            user_id,
             pi_user_id,
             pi_username,
             pi_wallet_address,
@@ -88,7 +87,6 @@ BEGIN
             profile_id,
             p_pi_username,
             p_pi_username, -- Default business name to username
-            p_pi_user_id,
             p_pi_user_id,
             p_pi_username,
             p_wallet_address,
@@ -147,7 +145,6 @@ BEGIN
             END,
             pi_user_id = p_pi_user_id,
             pi_username = p_pi_username,
-            user_id = p_pi_user_id,
             updated_at = NOW()
         WHERE id = profile_id;
     END IF;
