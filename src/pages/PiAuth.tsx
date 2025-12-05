@@ -218,6 +218,23 @@ const PiAuth = () => {
           {/* Debug panel removed per request */}
 
 
+          {/* Pi Network Sign In - Center Button */}
+          <Button 
+            onClick={handlePiSignIn} 
+            className="w-full" 
+            size="lg"
+            disabled={loading || !piDebug.isPiBrowser}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Connecting...
+              </>
+            ) : (
+              piDebug.isPiBrowser ? "Sign in with Pi Network" : "Pi Browser Required"
+            )}
+          </Button>
+
           {/* Go to Landing Page Button */}
           <Button
             asChild
@@ -240,23 +257,6 @@ const PiAuth = () => {
             <a href="/droplinkofficial">
               Droplink Social
             </a>
-          </Button>
-
-          {/* Pi Network Sign In and Info - Only show Pi sign-in */}
-          <Button 
-            onClick={handlePiSignIn} 
-            className="w-full" 
-            size="lg"
-            disabled={loading || !piDebug.isPiBrowser}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Connecting...
-              </>
-            ) : (
-              piDebug.isPiBrowser ? "Sign in with Pi Network" : "Pi Browser Required"
-            )}
           </Button>
           <div className="space-y-2 text-sm text-muted-foreground">
             <p className="flex items-center gap-2">
