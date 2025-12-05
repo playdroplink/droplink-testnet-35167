@@ -103,21 +103,45 @@ const PiAuth = () => {
 
   const handlePiSignIn = async () => {
     try {
+      console.log('[PI AUTH DEBUG] 🟢 START: handlePiSignIn() called');
+      
       // Use robust Pi Browser detection
       const userAgent = typeof window !== 'undefined' ? window.navigator.userAgent : '';
+      console.log('[PI AUTH DEBUG] 📋 User Agent:', userAgent);
+      
       const isPi = isPiBrowserEnv() || userAgent.includes('PiBrowser');
+      console.log('[PI AUTH DEBUG] 🔍 isPiBrowserEnv():', isPiBrowserEnv());
+      console.log('[PI AUTH DEBUG] 🔍 userAgent.includes(PiBrowser):', userAgent.includes('PiBrowser'));
+      console.log('[PI AUTH DEBUG] 🔍 Combined isPi result:', isPi);
+      
       if (!isPi) {
+        console.log('[PI AUTH DEBUG] ❌ NOT in Pi Browser - aborting');
         toast.error("Please use Pi Browser to sign in with Pi Network.");
         setShowPiBrowserNotice(true);
         return;
       }
+      
+      console.log('[PI AUTH DEBUG] ✅ Pi Browser confirmed - proceeding with signIn()');
+      console.log('[PI AUTH DEBUG] 📞 Calling signIn() from PiContext...');
+      
       await signIn();
+      
+      console.log('[PI AUTH DEBUG] ✅ signIn() completed successfully');
+      console.log('[PI AUTH DEBUG] 🔍 piUser after signIn:', piUser);
+      
       // After sign in, get Supabase session and Pi user
+      console.log('[PI AUTH DEBUG] 📍 Checking Supabase session...');
       const { data: { session } } = await supabase.auth.getSession();
+      console.log('[PI AUTH DEBUG] 🔍 Supabase session:', session ? 'EXISTS' : 'NO SESSION');
+      
       const token = session?.access_token;
+      console.log('[PI AUTH DEBUG] 🔍 Access token present:', !!token);
+      console.log('[PI AUTH DEBUG] 🔍 piUser present:', !!piUser);
+      
       if (token && piUser) {
+        console.log('[PI AUTH DEBUG] 📤 Sending user data to /api/save-pi-user...');
         // Send JWT and Pi user data to backend to save all user data
-        await fetch("/api/save-pi-user", {
+        const saveResponse = await fetch("/api/save-pi-user", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -125,11 +149,29 @@ const PiAuth = () => {
           },
           body: JSON.stringify({ piUser })
         });
+        
+        console.log('[PI AUTH DEBUG] 📥 Response status:', saveResponse.status);
+        const saveData = await saveResponse.json();
+        console.log('[PI AUTH DEBUG] 📥 Response data:', saveData);
+        
+        if (!saveResponse.ok) {
+          console.log('[PI AUTH DEBUG] ⚠️ save-pi-user returned non-200 status');
+        }
+        
         // Redirect to dashboard after successful sign in
+        console.log('[PI AUTH DEBUG] 🔄 Redirecting to /dashboard');
         navigate("/dashboard", { replace: true });
+      } else {
+        console.log('[PI AUTH DEBUG] ❌ Missing token or piUser - cannot save');
+        console.log('[PI AUTH DEBUG] ❌ token:', token ? 'PRESENT' : 'MISSING');
+        console.log('[PI AUTH DEBUG] ❌ piUser:', piUser ? JSON.stringify(piUser) : 'MISSING');
       }
+      
+      console.log('[PI AUTH DEBUG] 🟢 END: handlePiSignIn() completed successfully');
     } catch (error: any) {
-      console.error("Sign in error:", error);
+      console.error('[PI AUTH DEBUG] ❌ ERROR in handlePiSignIn:', error);
+      console.error('[PI AUTH DEBUG] ❌ Error message:', error.message);
+      console.error('[PI AUTH DEBUG] ❌ Error stack:', error.stack);
       toast.error(error.message || "Failed to sign in");
     }
   };
@@ -173,27 +215,7 @@ const PiAuth = () => {
         </CardHeader>
         <CardContent className="space-y-4">
 
-          {/* Pi Auth Debug Info */}
-          <div className="p-3 mb-4 rounded-lg bg-white/80 border text-xs text-left">
-            <div className="font-bold text-blue-700 mb-2">Pi Auth Debug Info</div>
-            <div><b>Pi Browser Detected:</b> {piDebug.isPiBrowser ? '✅ Yes' : '❌ No'}</div>
-            <div><b>Pi SDK Loaded:</b> {piDebug.piSDKLoaded ? '✅ Yes' : '❌ No'}</div>
-            <div><b>User Agent:</b> <span className="break-all">{piDebug.userAgent}</span></div>
-            {piDebug.error && (<div className="text-red-600"><b>Error:</b> {String(piDebug.error)}</div>)}
-            {(!piDebug.piSDKLoaded) ? (
-              <div className="mt-2 p-2 rounded bg-red-100 border border-red-400 text-red-700">
-                <b>Warning:</b> Pi SDK is not loaded.<br />
-                <b>Checklist:</b>
-                <ul className="list-disc ml-4">
-                  <li>Make sure you are using <b>Pi Browser</b></li>
-                  <li>Check <b>manifest.json</b> for correct Pi app fields</li>
-                  <li>Ensure <b>validation-key.txt</b> matches your Pi Developer Portal</li>
-                  <li>Confirm Pi SDK script is present in <b>index.html</b></li>
-                  <li>Reload the page in Pi Browser</li>
-                </ul>
-              </div>
-            ) : null}
-          </div>
+          {/* Debug panel removed per request */}
 
 
           {/* Go to Landing Page Button */}

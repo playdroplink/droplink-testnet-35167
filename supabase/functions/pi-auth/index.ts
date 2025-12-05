@@ -15,10 +15,13 @@ serve(async (req) => {
 
   try {
     // Validate request body
+
     let requestBody;
     try {
       requestBody = await req.json();
+      console.log("Incoming request body:", JSON.stringify(requestBody));
     } catch (parseError) {
+      console.error("Request body parse error:", parseError);
       throw new Error("Invalid request body - must be valid JSON");
     }
 
@@ -26,6 +29,7 @@ serve(async (req) => {
 
     // Validate required fields
     if (!accessToken || typeof accessToken !== 'string') {
+      console.error("Access token missing or invalid:", accessToken);
       throw new Error("Missing or invalid accessToken");
     }
 
@@ -38,13 +42,20 @@ serve(async (req) => {
         },
       });
 
+      const piResponseText = await piResponse.text();
+      console.log("Pi API raw response:", piResponse.status, piResponseText);
+
       if (!piResponse.ok) {
-        const errorText = await piResponse.text();
-        console.error("Pi API error:", piResponse.status, errorText);
-        throw new Error(`Invalid Pi access token: ${piResponse.status}`);
+        console.error("Pi API error:", piResponse.status, piResponseText);
+        throw new Error(`Invalid Pi access token: ${piResponse.status} - ${piResponseText}`);
       }
 
-      piUserData = await piResponse.json();
+      try {
+        piUserData = JSON.parse(piResponseText);
+      } catch (jsonError) {
+        console.error("Failed to parse Pi API response JSON:", jsonError);
+        throw new Error("Pi API response is not valid JSON");
+      }
       console.log("Pi user verified:", JSON.stringify(piUserData));
     } catch (piError) {
       const errorMsg = piError instanceof Error ? piError.message : String(piError);
@@ -111,7 +122,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: errorMessage
+        error: errorMessage,
+        errorDetails
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -41,13 +41,62 @@
 
 
     <!-- Pi Network SDK: Load and initialize as per official docs -->
-    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <script src="https://sdk.minepi.com/pi-sdk.js" defer></script>
     <script>
-      // Minimal initialization - details handled in app
+      // Enhanced Pi SDK loading with better error handling
+      console.log('[PI LOADER] 🟢 Starting Pi SDK loader...');
+      
       if (typeof window !== 'undefined') {
-        window.addEventListener('load', function() {
+        // Track SDK loading status
+        window.piSDKLoaded = false;
+        window.piSDKError = null;
+        
+        // Method 1: Monitor for SDK availability
+        const checkPiAvailability = setInterval(() => {
+          if (typeof window.Pi !== 'undefined' && window.Pi !== null) {
+            console.log('[PI LOADER] ✅ Pi SDK detected and available');
+            window.piSDKLoaded = true;
+            clearInterval(checkPiAvailability);
+          }
+        }, 100);
+        
+        // Clear the check after 5 seconds
+        setTimeout(() => {
+          clearInterval(checkPiAvailability);
+          if (!window.piSDKLoaded) {
+            console.warn('[PI LOADER] ⚠️ Pi SDK not detected after 5 seconds - may not be in Pi Browser or SDK failed to load');
+          }
+        }, 5000);
+        
+        // Method 2: Wait for document ready
+        document.addEventListener('DOMContentLoaded', function() {
+          console.log('[PI LOADER] 📍 DOMContentLoaded fired');
           if (typeof window.Pi !== 'undefined') {
-            // SDK is ready - app will handle initialization
+            console.log('[PI LOADER] ✅ Pi SDK available at DOMContentLoaded');
+            window.piSDKLoaded = true;
+          } else {
+            console.log('[PI LOADER] ⚠️ Pi SDK not available at DOMContentLoaded');
+          }
+        });
+        
+        // Method 3: Monitor window load event
+        window.addEventListener('load', function() {
+          console.log('[PI LOADER] 📍 Window load event fired');
+          if (typeof window.Pi !== 'undefined') {
+            console.log('[PI LOADER] ✅ Pi SDK available at window.load');
+            window.piSDKLoaded = true;
+          } else {
+            console.log('[PI LOADER] ⚠️ Pi SDK not available at window.load');
+            // Try one more time after a short delay
+            setTimeout(() => {
+              if (typeof window.Pi !== 'undefined') {
+                console.log('[PI LOADER] ✅ Pi SDK became available after window.load');
+                window.piSDKLoaded = true;
+              } else {
+                console.error('[PI LOADER] ❌ Pi SDK failed to load - you may not be in Pi Browser');
+                window.piSDKError = 'Pi SDK not loaded. You may not be in the official Pi Browser.';
+              }
+            }, 500);
           }
         });
       }
@@ -176,6 +225,57 @@
 
   <body>
     <div id="root"></div>
+    
+    <!-- Global error and warning handler for Pi SDK -->
+    <script>
+      // Catch and log any errors related to Pi SDK
+      const originalError = console.error;
+      const originalWarn = console.warn;
+      
+      console.error = function(...args) {
+        // Log to original console
+        originalError.apply(console, args);
+        
+        // Check if it's a Pi SDK related error
+        const errorStr = String(args[0] || '').toLowerCase();
+        if (errorStr.includes('pi') || errorStr.includes('sdk') || errorStr.includes('authenticate')) {
+          console.log('[PI ERROR HANDLER] 🚨 Pi SDK error caught:', args);
+        }
+      };
+      
+      console.warn = function(...args) {
+        originalWarn.apply(console, args);
+        const warnStr = String(args[0] || '').toLowerCase();
+        if (warnStr.includes('pi') || warnStr.includes('sdk')) {
+          console.log('[PI ERROR HANDLER] ⚠️ Pi SDK warning caught:', args);
+        }
+      };
+      
+      // Monitor for uncaught errors
+      window.addEventListener('error', function(event) {
+        const errorMsg = String(event.message || event.error || '').toLowerCase();
+        if (errorMsg.includes('pi') || errorMsg.includes('sdk') || errorMsg.includes('authenticate')) {
+          console.error('[PI ERROR HANDLER] 🔴 Uncaught error related to Pi:', {
+            message: event.message,
+            error: event.error,
+            filename: event.filename,
+            lineno: event.lineno,
+            colno: event.colno
+          });
+        }
+      });
+      
+      // Monitor for unhandled promise rejections
+      window.addEventListener('unhandledrejection', function(event) {
+        const rejectStr = String(event.reason || '').toLowerCase();
+        if (rejectStr.includes('pi') || rejectStr.includes('sdk') || rejectStr.includes('authenticate')) {
+          console.error('[PI ERROR HANDLER] 🔴 Unhandled promise rejection related to Pi:', event.reason);
+        }
+      });
+      
+      console.log('[PI ERROR HANDLER] ✅ Global error handlers installed');
+    </script>
+    
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -355,23 +355,34 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         try {
           // Wait for window.Pi to be available
           let attempts = 0;
-          while (typeof window.Pi === 'undefined' && attempts < 10) {
-            console.log(`[PI DEBUG] ⏳ Waiting for window.Pi... (${attempts + 1}/10)`);
-            await new Promise(resolve => setTimeout(resolve, 200));
-            attempts++;
+          let piAvailable = false;
+          
+          while (!piAvailable && attempts < 15) {
+            if (typeof window.Pi !== 'undefined' && window.Pi !== null) {
+              piAvailable = true;
+              console.log('[PI DEBUG] ✅ window.Pi found on attempt', attempts + 1);
+            } else {
+              console.log(`[PI DEBUG] ⏳ Waiting for window.Pi... (${attempts + 1}/15)`);
+              await new Promise(resolve => setTimeout(resolve, 200));
+              attempts++;
+            }
           }
           
-          if (typeof window.Pi === 'undefined') {
-            throw new Error('window.Pi is not available even after waiting');
+          if (!piAvailable) {
+            throw new Error('window.Pi is not available even after waiting 3 seconds');
           }
           
           console.log('[PI DEBUG] ✅ window.Pi is available, initializing...');
+          console.log('[PI DEBUG] 🔧 Initializing with config:', JSON.stringify(PI_CONFIG.SDK));
+          
           await window.Pi.init(PI_CONFIG.SDK);
           setIsInitialized(true);
           console.log('[PI DEBUG] ✅ Pi SDK reinitialized successfully (Mainnet)');
         } catch (reinitError: any) {
           const msg = reinitError?.message || String(reinitError);
           console.error('[PI DEBUG] ❌ Failed to initialize Pi SDK:', msg);
+          console.error('[PI DEBUG] ❌ window.Pi type:', typeof window.Pi);
+          console.error('[PI DEBUG] ❌ window.Pi value:', window.Pi);
           setError('Failed to initialize Pi SDK.');
           setLoading(false);
           throw new Error('Failed to initialize Pi SDK: ' + msg);
@@ -390,6 +401,8 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           throw new Error('window.Pi is undefined - SDK not loaded');
         }
         console.log('[PI DEBUG] ⏳ Calling window.Pi.authenticate() with reqScopes:', reqScopes);
+        console.log('[PI DEBUG] 📌 window.Pi methods:', Object.keys(window.Pi || {}).join(', '));
+        
         const result = await window.Pi.authenticate(reqScopes, PI_CONFIG.onIncompletePaymentFound);
         console.log('[PI DEBUG] ✅ Pi.authenticate() returned:', result);
         
@@ -482,8 +495,11 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         p_access_token: accessToken,
         p_wallet_address: piUser.wallet_address,
       });
-      if (error || !data || data.success === false) {
-        const errMsg = error?.message || data?.error || 'Unknown error';
+      
+      // Type-safe response handling
+      const responseData = data as any;
+      if (error || !data || responseData?.success === false) {
+        const errMsg = error?.message || responseData?.error || 'Unknown error';
         console.error('[PI DEBUG] ❌ RPC error:', errMsg);
         setError('Failed to save Pi user profile to Supabase: ' + errMsg);
         throw new Error('Failed to save Pi user profile to Supabase: ' + errMsg);
@@ -495,7 +511,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('pi_user', JSON.stringify(piUser));
       setAccessToken(accessToken);
       setPiUser(piUser);
-      setCurrentProfile(data.user_data || data);
+      setCurrentProfile(responseData?.user_data || responseData || data);
       console.log('[PI DEBUG] ✅ Authentication complete! User:', piUser.username);
       setLoading(false);
 
