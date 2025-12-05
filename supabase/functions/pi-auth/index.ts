@@ -76,7 +76,8 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Save Pi user data to Supabase
+
+    // Save Pi user data to Supabase, upsert on pi_user_id to avoid UNIQUE_VIOLATION
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .upsert({
@@ -87,7 +88,7 @@ serve(async (req) => {
         first_name: piUserData.first_name || "",
         last_name: piUserData.last_name || "",
         profile_photo: piUserData.profile_photo || ""
-      })
+      }, { onConflict: "pi_user_id" })
       .select()
       .single();
 
