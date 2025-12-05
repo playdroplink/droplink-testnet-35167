@@ -150,6 +150,22 @@ const Subscription = () => {
       toast.error('Please sign in with Pi Network first');
       return;
     }
+    
+    // Show confirmation for paid plans
+    if (planName !== 'Free' && price > 0) {
+      const confirmed = window.confirm(
+        `⚠️ REAL Pi PAYMENT\n\n` +
+        `You are about to pay ${price} Pi for the ${planName} plan (${isYearly ? 'Yearly' : 'Monthly'}).\n\n` +
+        `This is a REAL Pi Network mainnet transaction. Actual Pi coins will be deducted from your wallet.\n\n` +
+        `Do you want to proceed?`
+      );
+      
+      if (!confirmed) {
+        toast.info('Subscription cancelled');
+        return;
+      }
+    }
+    
     setLoading(true);
     try {
       if (planName === 'Free') {
@@ -161,6 +177,8 @@ const Subscription = () => {
       
       // MAINNET PAYMENT - Real Pi coins will be charged!
       console.log('[SUBSCRIPTION] ⚠️ REAL MAINNET PAYMENT:', price, 'Pi for', planName);
+      console.log('[SUBSCRIPTION] Network: MAINNET (Production)');
+      console.log('[SUBSCRIPTION] User:', piUser.username);
       
       await createPayment(
         price,
@@ -176,6 +194,7 @@ const Subscription = () => {
       setCurrentPlan(planName);
       setSubscription({ plan_type: planName.toLowerCase() });
     } catch (error: any) {
+      console.error('[SUBSCRIPTION] Payment error:', error);
       toast.error(error?.message || 'Failed to process subscription. Please try again.');
     } finally {
       setLoading(false);
@@ -191,7 +210,10 @@ const Subscription = () => {
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold mb-2">Choose Your Plan</h1>
           <p className="text-lg text-muted-foreground mb-2">Unlock more features and remove ads with a paid plan.</p>
-          <p className="text-sm text-muted-foreground">All prices are in Pi (π) - Pi Network's native cryptocurrency</p>
+          <div className="mt-4 p-4 bg-sky-400 border-2 border-sky-600 rounded-lg max-w-2xl mx-auto">
+            <p className="text-sm font-semibold text-white mb-1">⚠️ REAL Pi Network Payments</p>
+            <p className="text-xs text-white">All prices are in Pi (π) - Real Pi Network cryptocurrency. These are MAINNET transactions, not test payments. You will be charged actual Pi coins from your Pi wallet.</p>
+          </div>
         </div>
 
         <div className="flex items-center justify-center gap-4 mb-12">
@@ -232,8 +254,8 @@ const Subscription = () => {
 
                   {plan.name !== 'Free' && (
                     <div className="flex flex-col gap-2">
-                      <div className="flex items-center mb-1"><span className="text-sm font-medium">Pay with Drop</span></div>
-                      <Button className="w-full" variant="default" disabled>{isDropAvailable ? 'Pay with Drop (Coming Soon)' : 'Drop Coming Soon (Mainnet Only)'}</Button>
+                      <div className="flex items-center mb-1"><span className="text-sm font-medium text-gray-500">Pay with Drop</span></div>
+                      <Button className="w-full bg-gray-400 text-gray-700 border-gray-400 hover:bg-gray-400 hover:text-gray-700" variant="default" disabled>{isDropAvailable ? 'Pay with Drop (Coming Soon)' : 'Drop Coming Soon (Mainnet Only)'}</Button>
                     </div>
                   )}
 
