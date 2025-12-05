@@ -55,8 +55,7 @@ BEGIN
     SELECT * INTO user_profile 
     FROM profiles 
     WHERE pi_user_id = p_pi_user_id 
-       OR pi_username = p_pi_username 
-       OR user_id = p_pi_user_id
+       OR pi_username = p_pi_username
     LIMIT 1;
     
     IF user_profile IS NULL THEN

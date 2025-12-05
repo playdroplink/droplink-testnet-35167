@@ -18,7 +18,7 @@
     <meta name="pi-app-version" content="1.0.0" />
 
     <!-- Content Security Policy for Pi Browser -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.minepi.com https://api.minepi.com https://horizon.stellar.org https://idkjfuctyukspexmijvb.supabase.co https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.minepi.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://sdk.minepi.com https://api.minepi.com https://horizon.stellar.org https://idkjfuctyukspexmijvb.supabase.co https://*.supabase.co wss://*.supabase.co; frame-src 'self' https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://www.youtube.googleapis.com;" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.minepi.com https://api.minepi.com https://socialchain.app https://horizon.stellar.org https://idkjfuctyukspexmijvb.supabase.co https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.minepi.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://sdk.minepi.com https://api.minepi.com https://socialchain.app https://horizon.stellar.org https://idkjfuctyukspexmijvb.supabase.co https://*.supabase.co wss://*.supabase.co; frame-src 'self' https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://www.youtube.googleapis.com;" />
 
     <title>DropLink - Link in Bio, Digital Products & Pi Network Integration | Create Your Personal Page</title>
     <meta name="description" content="Create your professional link-in-bio page with DropLink. Sell digital products, accept Pi Network payments, display social links, and monetize with Pi Ad Network. Free to start!">
@@ -41,7 +41,13 @@
 
 
     <!-- Pi Network SDK: Load and initialize as per official docs -->
-    <script src="https://sdk.minepi.com/pi-sdk.js" defer></script>
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <script>
+      // Initialize Pi SDK immediately after loading - Version 2.0 (Sandbox)
+      // Sandbox mode is set to true for development/testing
+      Pi.init({ version: "2.0", sandbox: true });
+      console.log('[PI SDK] ✅ Pi SDK initialized (Version 2.0, Sandbox Mode)');
+    </script>
     <script>
       // Enhanced Pi SDK loading with better error handling
       console.log('[PI LOADER] 🟢 Starting Pi SDK loader...');
