@@ -158,6 +158,10 @@ const Subscription = () => {
         setSubscription({ plan_type: 'free' });
         return;
       }
+      
+      // MAINNET PAYMENT - Real Pi coins will be charged!
+      console.log('[SUBSCRIPTION] ⚠️ REAL MAINNET PAYMENT:', price, 'Pi for', planName);
+      
       await createPayment(
         price,
         `Droplink ${planName} ${isYearly ? 'Yearly' : 'Monthly'} Subscription`,

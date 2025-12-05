@@ -1,14 +1,14 @@
 export const PI_CONFIG = {
   API_KEY: "b00j4felp0ctc1fexe8igldsjg9u7wbqitavc15si53fr9wwra7r6oluzk4j24qz", // MATCHES manifest.json
   BASE_URL: "https://api.minepi.com",
-  NETWORK: "Pi Testnet",
-  NETWORK_PASSPHRASE: "Pi Testnet",
-  SANDBOX_MODE: true, // ENABLED for sandbox/testing
+  NETWORK: "mainnet",
+  NETWORK_PASSPHRASE: "Pi Network",
+  SANDBOX_MODE: false, // DISABLED - FULL MAINNET MODE
   ALLOW_MULTIPLE_ACCOUNTS: true,
 
   SDK: {
     version: "2.0",
-    sandbox: true, // ENABLED for sandbox/testing
+    sandbox: false, // DISABLED - FULL MAINNET MODE
   },
   
   // Request minimal scope by default to maximize sign-in success.
@@ -76,7 +76,8 @@ export const isPiNetworkAvailable = (): boolean => {
 export const validatePiConfig = (): boolean => {
   return PI_CONFIG.API_KEY.length > 0 &&
          PI_CONFIG.VALIDATION_KEY.length > 0 &&
-         PI_CONFIG.NETWORK === "mainnet";
+         PI_CONFIG.NETWORK === "mainnet" &&
+         !PI_CONFIG.SANDBOX_MODE;
 };
 
 // Helper to validate mainnet configuration

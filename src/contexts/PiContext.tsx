@@ -266,8 +266,20 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
             const adSupported = features.includes('ad_network');
             setAdNetworkSupported(adSupported);
             console.log('[PI DEBUG] 🎯 Ad Network Support:', adSupported);
+            console.log('[PI DEBUG] 📋 Available features:', features);
+            
+            // Fallback: If nativeFeaturesList doesn't show ad_network, check if Pi.Ads exists
+            if (!adSupported && (window as any).Pi?.Ads) {
+              console.log('[PI DEBUG] ⚠️ Ad Network API exists despite nativeFeaturesList');
+              setAdNetworkSupported(true);
+            }
           } catch (err) {
             console.warn('[PI DEBUG] ⚠️ Failed to check native features:', err);
+            // Fallback: Check if Pi.Ads API exists
+            if ((window as any).Pi?.Ads || (window as any).Pi?.showRewardedAd) {
+              console.log('[PI DEBUG] ✅ Ad Network API detected via fallback');
+              setAdNetworkSupported(true);
+            }
           }
           
           // Check for stored authentication
@@ -1040,6 +1052,17 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     if (!isAuthenticated || !window.Pi) {
       throw new Error('User not authenticated');
     }
+
+    // MAINNET VERIFICATION
+    if (PI_CONFIG.SANDBOX_MODE) {
+      throw new Error('CRITICAL ERROR: Sandbox mode is enabled! Payments must be mainnet only.');
+    }
+    
+    console.log('[PAYMENT] ⚠️ REAL Pi Network MAINNET Payment');
+    console.log('[PAYMENT] Amount:', amount, 'Pi');
+    console.log('[PAYMENT] Memo:', memo);
+    console.log('[PAYMENT] Network:', PI_CONFIG.NETWORK);
+    console.log('[PAYMENT] Sandbox Mode:', PI_CONFIG.SANDBOX_MODE);
 
     const paymentData: PaymentData = {
       amount,

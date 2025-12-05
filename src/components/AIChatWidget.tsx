@@ -37,15 +37,23 @@ export const AIChatWidget = ({ profileId }: AIChatWidgetProps) => {
 
   const checkAIEnabled = async () => {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("ai_support_config")
         .select("enabled")
         .eq("profile_id", profileId)
         .maybeSingle();
 
+      if (error) {
+        // Table doesn't exist or other error - disable AI by default
+        console.warn("AI support config not available:", error.message);
+        setIsEnabled(false);
+        return;
+      }
+
       setIsEnabled(data?.enabled || false);
     } catch (error) {
       console.error("Error checking AI status:", error);
+      setIsEnabled(false);
     }
   };
 

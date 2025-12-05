@@ -611,7 +611,7 @@ const PublicBio = () => {
             <div className="max-w-md mx-auto w-full">
               <BackgroundMusicPlayer 
                 musicUrl={profile.backgroundMusicUrl}
-                autoPlay={true}
+                autoPlay={false}
                 loop={true}
               />
             </div>

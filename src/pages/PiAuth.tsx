@@ -197,7 +197,7 @@ const PiAuth = () => {
         {showPiBrowserNotice && (
           <div className="p-3 mb-4 rounded-lg bg-red-100 border border-red-400 text-red-700 text-sm">
             <b>Pi Browser Required:</b> To sign in with Pi Network, please use the official Pi Browser.<br />
-            <a href="https://pi.app/download" target="_blank" rel="noopener noreferrer" className="underline text-blue-700">Download Pi Browser</a>
+            <a href="https://minepi.com/Wain2020" target="_blank" rel="noopener noreferrer" className="underline text-blue-700 font-semibold">Download Pi Browser</a>
           </div>
         )}
         <CardHeader className="text-center">
@@ -258,6 +258,19 @@ const PiAuth = () => {
               Droplink Social
             </a>
           </Button>
+
+          {/* Download Pi Browser Button */}
+          <Button
+            asChild
+            className="w-full mb-2"
+            size="lg"
+            variant="outline"
+          >
+            <a href="https://minepi.com/Wain2020" target="_blank" rel="noopener noreferrer">
+              Download Pi Browser
+            </a>
+          </Button>
+
           <div className="space-y-2 text-sm text-muted-foreground">
             <p className="flex items-center gap-2">
               <span className="text-primary">✓</span>

@@ -43,10 +43,11 @@
     <!-- Pi Network SDK: Load and initialize as per official docs -->
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script>
-      // Initialize Pi SDK immediately after loading - Version 2.0 (Sandbox)
-      // Sandbox mode is set to true for development/testing
-      Pi.init({ version: "2.0", sandbox: true });
-      console.log('[PI SDK] ✅ Pi SDK initialized (Version 2.0, Sandbox Mode)');
+      // Initialize Pi SDK immediately after loading - Version 2.0 (MAINNET)
+      // Sandbox mode is set to FALSE for production mainnet
+      Pi.init({ version: "2.0", sandbox: false });
+      console.log('[PI SDK] ✅ Pi SDK initialized (Version 2.0, MAINNET Mode)');
+      console.log('Prod:', !window.location.hostname.includes('localhost'), '| Sandbox:', false);
     </script>
     <script>
       // Enhanced Pi SDK loading with better error handling
