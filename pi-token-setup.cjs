@@ -1,8 +1,8 @@
 const StellarSDK = require("@stellar/stellar-sdk");
 
-// Pi Testnet Configuration
-const server = new StellarSDK.Horizon.Server("https://api.testnet.minepi.com");
-const NETWORK_PASSPHRASE = "Pi Testnet";
+// Pi Mainnet Configuration
+const server = new StellarSDK.Horizon.Server("https://api.minepi.com");
+const NETWORK_PASSPHRASE = "Pi Mainnet";
 
 // Your wallet information
 const ISSUER_SECRET = "SB4I6DX4Y6PS7SAJW2SFUQZP3DAW5HE7RBAKISOMTVACARMFCMRBH46I"; // Add your issuer private key here
@@ -15,7 +15,7 @@ const HOME_DOMAIN = "droplink.space";
 
 async function setupDropToken() {
   try {
-    console.log("🚀 Starting DROP Token Setup on Pi Testnet");
+    console.log("🚀 Starting DROP Token Setup on Pi Mainnet");
     console.log("=====================================");
 
     // Validate that secrets are provided
@@ -193,7 +193,7 @@ async function setupDropToken() {
 async function checkTokenStatus() {
   try {
     const issuerKeypair = StellarSDK.Keypair.fromSecret(ISSUER_SECRET);
-    const tokenUrl = `https://api.testnet.minepi.com/assets?asset_code=${TOKEN_CODE}&asset_issuer=${issuerKeypair.publicKey()}`;
+    const tokenUrl = `https://api.minepi.com/assets?asset_code=${TOKEN_CODE}&asset_issuer=${issuerKeypair.publicKey()}`;
     
     console.log(`🔍 Checking token status: ${tokenUrl}`);
     

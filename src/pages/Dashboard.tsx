@@ -1121,7 +1121,7 @@ const Dashboard = () => {
         }}
       />
       {/* Greeting Section */}
-      <div className="px-3 sm:px-4 lg:px-6 pt-4 pb-2">
+      <div className="px-2 sm:px-4 lg:px-6 pt-2 sm:pt-3 lg:pt-4 pb-1 sm:pb-2">
         {greeting && displayUsername && (
           <h2 className="text-xl font-semibold text-sky-700 mb-2 animate-fade-in">
             {greeting}, {displayUsername}!
@@ -1133,15 +1133,15 @@ const Dashboard = () => {
           </h2>
         )}
       </div>
-      <header className={`px-3 sm:px-4 lg:px-6 py-3 sm:py-4 shadow-sm border-b border-border ${isMobile ? 'bg-background' : 'glass-surface'}`}>
+      <header className={`px-2 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 shadow-sm border-b border-border ${isMobile ? 'bg-background' : 'glass-surface'}`}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
             <h1 className="text-lg sm:text-xl font-semibold text-sky-500 animate-pulse">DropLink</h1>
             {displayUsername && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs sm:text-sm text-muted-foreground">@{displayUsername}</span>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-xs sm:text-sm text-muted-foreground truncate max-w-[80px] sm:max-w-none">@{displayUsername}</span>
                 {isAuthenticated && (
-                  <span className="px-2 py-1 bg-sky-100 text-sky-700 text-xs rounded-full font-medium">
+                  <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-sky-100 text-sky-700 text-xs rounded-full font-medium whitespace-nowrap">
                     π Auth
                   </span>
                 )}
@@ -1151,15 +1151,15 @@ const Dashboard = () => {
               <span className="text-xs text-orange-600 animate-pulse">Connecting Pi...</span>
             )}
             {!isAuthenticated && !piLoading && (
-              <span className="text-xs text-gray-500">Pi Network Ready</span>
+              <span className="text-xs text-gray-500 hidden sm:inline">Pi Network Ready</span>
             )}
           </div>
-          <div className="flex items-center gap-1 sm:gap-2 lg:gap-4">
+          <div className="flex items-center gap-1 sm:gap-2 lg:gap-3">
             {isMobile && (
               <Button
                 onClick={() => setShowPreview(!showPreview)}
                 size="sm"
-                className="h-9 w-9 mr-1 bg-sky-400 text-white hover:bg-sky-500 border-none"
+                className="h-9 w-9 mr-0.5 sm:mr-1 bg-sky-400 text-white hover:bg-sky-500 border-none p-0"
               >
                 {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </Button>
@@ -1168,18 +1168,18 @@ const Dashboard = () => {
             <Button
               variant="outline"
               size={isMobile ? "icon" : "sm"}
-              className="ml-1 border-sky-400 text-sky-600 hover:bg-sky-50"
+              className="ml-0.5 sm:ml-1 border-sky-400 text-sky-600 hover:bg-sky-50 h-9 sm:h-10 w-9 sm:w-auto px-0 sm:px-3"
               onClick={() => setShowPlanModal(true)}
             >
-              <Crown className="w-5 h-5" />
-              <span className="hidden sm:inline ml-2">My Plan</span>
+              <Crown className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline ml-1.5 text-xs sm:text-sm">My Plan</span>
             </Button>
             {isMobile ? (
               <Drawer>
                 <DrawerTrigger asChild>
-                  <Button size="sm" className="h-9 w-9 sm:h-10 sm:w-auto sm:px-3 bg-sky-400 text-white hover:bg-sky-500 border-none">
+                  <Button size="sm" className="h-9 w-9 sm:h-10 sm:w-auto sm:px-3 bg-sky-400 text-white hover:bg-sky-500 border-none ml-0.5 sm:ml-1 p-0 sm:p-auto">
                     <Menu className="w-4 h-4" />
-                    <span className="hidden sm:inline ml-2">Menu</span>
+                    <span className="hidden sm:inline ml-1.5 text-xs sm:text-sm">Menu</span>
                   </Button>
                 </DrawerTrigger>
                 <DrawerContent className="bg-background border-t border-border">
@@ -1189,14 +1189,14 @@ const Dashboard = () => {
                   </DrawerHeader>
                   <div className="p-4 space-y-3 max-h-[70vh] overflow-y-auto">
                                         {/* Plan Button in Drawer */}
-                                        <div className="space-y-2">
+                  <div className="space-y-2">
                                           <Button
                                             onClick={() => { setShowPlanModal(true); }}
                                             size="sm"
-                                            className="w-full justify-start gap-2 h-12 bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-300 border"
+                                            className="w-full justify-center gap-2 h-10 sm:h-12 bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-300 border text-xs sm:text-sm"
                                           >
                                             <Crown className="w-4 h-4" />
-                                            My Plan / Renew
+                                            <span>My Plan / Renew</span>
                                           </Button>
                                         </div>
                     {/* User Info Section */}
@@ -1244,13 +1244,13 @@ const Dashboard = () => {
                     <div className="space-y-2">
                       <h3 className="font-medium text-sm text-muted-foreground px-2">Profile & Share</h3>
                       <div className="grid grid-cols-2 gap-2">
-                        <Button onClick={handleShowQRCode} size="sm" className="inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
+                        <Button onClick={handleShowQRCode} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
                           <QrCode className="w-4 h-4" />
-                          QR Code
+                          <span>QR Code</span>
                         </Button>
-                        <Button onClick={handleCopyLink} size="sm" className="inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
+                        <Button onClick={handleCopyLink} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
                           <Share2 className="w-4 h-4" />
-                          Share
+                          <span>Share</span>
                         </Button>
                       </div>
                     </div>
@@ -1259,21 +1259,21 @@ const Dashboard = () => {
                     <div className="space-y-2">
                       <h3 className="font-medium text-sm text-muted-foreground px-2">Navigation</h3>
                       <div className="grid grid-cols-2 gap-2">
-                        <Button onClick={() => navigate("/followers")} size="sm" className="inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
+                        <Button onClick={() => navigate("/followers")} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
                           <Users className="w-4 h-4" />
-                          Followers
+                          <span className="hidden sm:inline">Followers</span>
                         </Button>
-                        <Button onClick={() => navigate("/wallet")} size="sm" className="inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
+                        <Button onClick={() => navigate("/wallet")} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
                           <Wallet className="w-4 h-4" />
-                          Wallet
+                          <span className="hidden sm:inline">Wallet</span>
                         </Button>
-                        <Button onClick={() => navigate("/profile")} size="sm" className="inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
+                        <Button onClick={() => navigate("/profile")} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
                           <User className="w-4 h-4" />
-                          Profile
+                          <span className="hidden sm:inline">Profile</span>
                         </Button>
-                        <Button onClick={() => navigate("/domain")} size="sm" className="inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
+                        <Button onClick={() => navigate("/domain")} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
                           <Globe className="w-4 h-4" />
-                          Domain
+                          <span className="hidden sm:inline">Domain</span>
                         </Button>
                         {/* Store button removed as requested */}
                       </div>
@@ -1286,7 +1286,7 @@ const Dashboard = () => {
                         <Button
                           onClick={() => setShowPreview(!showPreview)}
                           size="sm"
-                          className="w-full justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none"
+                          className="w-full justify-center gap-2 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm"
                         >
                           {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           {showPreview ? 'Hide Preview' : 'Show Preview'}
@@ -1418,7 +1418,7 @@ const Dashboard = () => {
 
       <div className="flex flex-col lg:flex-row h-[calc(100vh-73px)]">
         {/* Editor Panel */}
-        <div className={`flex-1 overflow-y-auto p-4 lg:p-8 ${isMobile ? 'bg-background' : 'glass-card'} m-2 rounded-xl ${showPreview ? 'hidden lg:block' : 'block'}`} style={{ position: 'relative', minHeight: 0 }}>
+        <div className={`flex-1 overflow-y-auto p-2 sm:p-4 lg:p-8 ${isMobile ? 'bg-background' : 'glass-card'} m-1 sm:m-2 rounded-lg sm:rounded-xl ${showPreview ? 'hidden lg:block' : 'block'}`} style={{ position: 'relative', minHeight: 0 }}>
           <div className="max-w-2xl mx-auto">
             <Tabs 
               defaultValue={preferences.dashboard_layout.activeTab} 
@@ -1434,80 +1434,80 @@ const Dashboard = () => {
                 }
               }}
             >
-              <TabsList className="flex flex-wrap gap-1 sm:gap-2 w-full bg-muted p-2 rounded-lg mb-6 min-h-fit">
-                <TabsTrigger value="profile" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
-                  <Settings className="w-4 h-4 mr-1 sm:mr-2" />
+              <TabsList className="flex flex-wrap gap-1 sm:gap-2 w-full bg-muted p-1.5 sm:p-2 rounded-lg mb-4 sm:mb-6 min-h-fit overflow-x-auto">
+                <TabsTrigger value="profile" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
+                  <Settings className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                   <span className="hidden sm:inline">Profile</span>
                 </TabsTrigger>
-                <TabsTrigger value="design" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
-                  <Palette className="w-4 h-4 mr-1 sm:mr-2" />
+                <TabsTrigger value="design" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
+                  <Palette className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                   <span className="hidden sm:inline">Design</span>
                 </TabsTrigger>
-                <TabsTrigger value="analytics" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
-                  <BarChart3 className="w-4 h-4 mr-1 sm:mr-2" />
+                <TabsTrigger value="analytics" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
+                  <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                   <span className="hidden sm:inline">Analytics</span>
                 </TabsTrigger>
-                {/* <TabsTrigger value="features" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
-                  <Sparkles className="w-4 h-4 mr-1 sm:mr-2" />
+                {/* <TabsTrigger value="features" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
+                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                   <span className="hidden sm:inline">Features</span>
                 </TabsTrigger> */}
-                <TabsTrigger value="drop-tokens" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
-                  <Droplets className="w-4 h-4 mr-1 sm:mr-2" />
+                <TabsTrigger value="drop-tokens" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
+                  <Droplets className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                   <span className="hidden sm:inline">DROP</span>
                 </TabsTrigger>
-                <TabsTrigger value="ad-network" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
-                  <PlayCircle className="w-4 h-4 mr-1 sm:mr-2" />
+                <TabsTrigger value="ad-network" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
+                  <PlayCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                   <span className="hidden sm:inline">Ads</span>
                 </TabsTrigger>
-                {/* <TabsTrigger value="payments" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
-                  <CreditCard className="w-4 h-4 mr-1 sm:mr-2" />
+                {/* <TabsTrigger value="payments" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
+                  <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                   <span className="hidden sm:inline">Pay</span>
                 </TabsTrigger> */}
-                <TabsTrigger value="subscription" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
-                  <Crown className="w-4 h-4 mr-1 sm:mr-2" />
+                <TabsTrigger value="subscription" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
+                  <Crown className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                   <span className="hidden sm:inline">Sub</span>
                 </TabsTrigger>
-                {/* <TabsTrigger value="voting" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
-                  <TrendingUp className="w-4 h-4 mr-1 sm:mr-2" />
+                {/* <TabsTrigger value="voting" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
+                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                   <span className="hidden sm:inline">Vote</span>
                 </TabsTrigger> */}
-                <TabsTrigger value="merchant" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
-                  <Store className="w-4 h-4 mr-1 sm:mr-2" />
+                <TabsTrigger value="merchant" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
+                  <Store className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                   <span className="hidden sm:inline">Merchant</span>
                 </TabsTrigger>
-                <TabsTrigger value="preferences" className="flex-1 min-w-fit text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5">
-                  <User className="w-4 h-4 mr-1 sm:mr-2" />
+                <TabsTrigger value="preferences" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
+                  <User className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                   <span className="hidden sm:inline">Settings</span>
                 </TabsTrigger>
                               {/* Merchant Tab */}
-                              <TabsContent value="merchant" className="pb-8">
-                                <div className="max-w-lg mx-auto mt-20 p-8 bg-white rounded-xl shadow text-center">
-                                  <Store className="w-12 h-12 mx-auto text-sky-400 mb-4" />
-                                  <h2 className="text-3xl font-bold mb-2">Merchant Section</h2>
-                                  <p className="text-lg text-gray-700 mb-2">Feature Coming Soon</p>
-                                  <p className="text-gray-500">We are working hard to bring you powerful merchant tools. Stay tuned!</p>
+                              <TabsContent value="merchant" className="pb-6 sm:pb-8">
+                                <div className="max-w-lg mx-auto mt-12 sm:mt-20 p-4 sm:p-8 bg-white rounded-lg sm:rounded-xl shadow border text-center">
+                                  <Store className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-sky-400 mb-4" />
+                                  <h2 className="text-2xl sm:text-3xl font-bold mb-2">Merchant Section</h2>
+                                  <p className="text-base sm:text-lg text-gray-700 mb-2">Feature Coming Soon</p>
+                                  <p className="text-sm sm:text-base text-gray-500">We are working hard to bring you powerful merchant tools. Stay tuned!</p>
                                 </div>
                               </TabsContent>
                 {/* Pi Data tab removed for production */}
               </TabsList>
 
               {/* Profile Tab */}
-              <TabsContent value="profile" className="space-y-8">
+              <TabsContent value="profile" className="space-y-6 sm:space-y-8">
                 {/* Pi Ad Banner for free users */}
                 <PiAdBanner />
                 
                 <div>
-                  <h2 className="text-lg font-semibold mb-6">Business details</h2>
+                  <h2 className="text-lg font-semibold mb-4 sm:mb-6">Business details</h2>
               
 
               {/* Logo Upload, AI Logo, and Random Avatar Generator */}
               <div className="mb-6 flex flex-col gap-4">
                 <div>
-                  <Label className="mb-3 block">Business logo</Label>
-                  <div className="flex items-center gap-4">
+                  <Label className="mb-3 block text-sm">Business logo</Label>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                     <div
                       className={
-                        `w-20 h-20 bg-card border border-border flex items-center justify-center overflow-hidden ` +
+                        `w-20 h-20 flex-shrink-0 bg-card border border-border flex items-center justify-center overflow-hidden ` +
                         (profile.theme?.iconStyle === 'circle'
                           ? 'rounded-full'
                           : profile.theme?.iconStyle === 'square'
@@ -1518,13 +1518,13 @@ const Dashboard = () => {
                       {profile.logo ? (
                         <img src={profile.logo} alt="Logo" className="w-full h-full object-cover" />
                       ) : (
-                        <Upload className="w-6 h-6 text-muted-foreground" />
+                        <Upload className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
                       )}
                     </div>
-                    <div className="flex flex-col gap-2">
-                      <div className="flex gap-2">
+                    <div className="flex flex-col gap-2 w-full sm:w-auto">
+                      <div className="flex gap-2 flex-col sm:flex-row">
                         <label htmlFor="logo-upload">
-                          <Button variant="secondary" size="sm" asChild>
+                          <Button variant="secondary" size="sm" asChild className="w-full sm:w-auto">
                             <span>{profile.logo ? "Change" : "Upload"}</span>
                           </Button>
                           <input
@@ -1540,57 +1540,59 @@ const Dashboard = () => {
                             variant="outline" 
                             size="sm"
                             onClick={() => setProfile({ ...profile, logo: "" })}
+                            className="w-full sm:w-auto"
                           >
                             Remove
                           </Button>
                         )}
                       </div>
                       {/* AI Logo Generation */}
-                      <div className="flex gap-2 mt-2">
-                        <input
-                          type="text"
-                          placeholder="Describe your logo (e.g. blue tech rocket)"
-                          className="border rounded px-2 py-1 text-sm flex-1"
-                          value={aiLogoPrompt || ""}
-                          onChange={e => setAiLogoPrompt(e.target.value)}
-                          disabled={aiLogoLoading}
-                          style={{ minWidth: 0 }}
-                        />
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={async () => {
-                            if (!aiLogoPrompt) return;
-                            setAiLogoLoading(true);
-                            setAiLogoError("");
-                            try {
-                              const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(aiLogoPrompt)}`;
-                              // Preload image to check for errors
-                              const img = new window.Image();
-                              img.crossOrigin = "anonymous";
-                              img.onload = () => {
-                                setProfile(prev => ({ ...prev, logo: url }));
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2 flex-col sm:flex-row">
+                          <input
+                            type="text"
+                            placeholder="Describe your logo..."
+                            className="border rounded px-2 py-1.5 text-xs sm:text-sm flex-1 w-full"
+                            value={aiLogoPrompt || ""}
+                            onChange={e => setAiLogoPrompt(e.target.value)}
+                            disabled={aiLogoLoading}
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={async () => {
+                              if (!aiLogoPrompt) return;
+                              setAiLogoLoading(true);
+                              setAiLogoError("");
+                              try {
+                                const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(aiLogoPrompt)}`;
+                                const img = new window.Image();
+                                img.crossOrigin = "anonymous";
+                                img.onload = () => {
+                                  setProfile(prev => ({ ...prev, logo: url }));
+                                  setAiLogoLoading(false);
+                                };
+                                img.onerror = () => {
+                                  setAiLogoError("Failed to generate image. Try a different prompt.");
+                                  setAiLogoLoading(false);
+                                };
+                                img.src = url;
+                              } catch (e) {
+                                setAiLogoError("Error generating image");
                                 setAiLogoLoading(false);
-                              };
-                              img.onerror = () => {
-                                setAiLogoError("Failed to generate image. Try a different prompt.");
-                                setAiLogoLoading(false);
-                              };
-                              img.src = url;
-                            } catch (e) {
-                              setAiLogoError("Error generating image");
-                              setAiLogoLoading(false);
-                            }
-                          }}
-                          disabled={aiLogoLoading || !aiLogoPrompt}
-                        >
-                          {aiLogoLoading ? "Generating..." : "Generate with AI"}
-                        </Button>
+                              }
+                            }}
+                            disabled={aiLogoLoading || !aiLogoPrompt}
+                            className="w-full sm:w-auto"
+                          >
+                            {aiLogoLoading ? "Generating..." : "AI"}
+                          </Button>
+                        </div>
+                        <div className="text-xs text-muted-foreground">Generate a logo using AI</div>
                       </div>
-                      <div className="text-xs text-muted-foreground mt-1">Generate a logo using AI by prompt</div>
                       {/* Logo Style Selector */}
-                      <div className="flex gap-2 mt-2 items-center">
-                        <Label htmlFor="logo-style" className="text-xs">Logo style:</Label>
+                      <div className="flex gap-2 items-center flex-wrap">
+                        <Label htmlFor="logo-style" className="text-xs whitespace-nowrap">Logo style:</Label>
                         <select
                           id="logo-style"
                           value={profile.theme?.iconStyle || 'rounded'}
@@ -1601,8 +1603,7 @@ const Dashboard = () => {
                               iconStyle: e.target.value as 'rounded' | 'square' | 'circle',
                             },
                           })}
-                          className="border rounded px-2 py-1 text-xs"
-                          style={{ minWidth: 90 }}
+                          className="border rounded px-2 py-1 text-xs flex-1 sm:flex-initial"
                         >
                           <option value="rounded">Rounded</option>
                           <option value="square">Square</option>
@@ -1614,7 +1615,7 @@ const Dashboard = () => {
                 </div>
                 {/* Random Avatar Generator */}
                 <div>
-                  <Label className="mb-2 block">Or generate a random avatar</Label>
+                  <Label className="mb-2 block text-sm">Or generate a random avatar</Label>
                   <RandomAvatarGenerator onAvatarGenerated={(url) => setProfile(prev => ({ ...prev, logo: url }))} />
                 </div>
               </div>
@@ -1622,62 +1623,65 @@ const Dashboard = () => {
 
               {/* Business Name */}
               <div className="mb-6">
-                <Label htmlFor="business-name" className="mb-3 block">Business name</Label>
+                <Label htmlFor="business-name" className="mb-2 sm:mb-3 block text-sm">Business name</Label>
                 <Input
                   id="business-name"
                   value={profile.businessName}
                   onChange={(e) => setProfile({ ...profile, businessName: e.target.value })}
                   placeholder="Enter business name"
-                  className="bg-input-bg"
+                  className="bg-input-bg text-sm"
                 />
               </div>
 
               {/* Email */}
               <div className="mb-6">
-                <Label htmlFor="email" className="mb-3 block">Email</Label>
+                <Label htmlFor="email" className="mb-2 sm:mb-3 block text-sm">Email</Label>
                 <Input
                   id="email"
                   type="email"
                   value={profile.email || ""}
                   onChange={(e) => setProfile({ ...profile, email: e.target.value })}
                   placeholder="your@email.com"
-                  className="bg-input-bg"
+                  className="bg-input-bg text-sm"
                 />
-                <p className="text-xs text-muted-foreground mt-2">
+                <p className="text-xs text-muted-foreground mt-1.5">
                   Your email will be used to save preferences and for important notifications
                 </p>
               </div>
 
               {/* Store URL */}
               <div className="mb-6">
-                <Label htmlFor="store-url" className="mb-3 block">Store URL (Username)</Label>
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground text-sm">{window.location.origin}/</span>
-                  <Input
-                    id="store-url"
-                    value={profile.storeUrl}
-                    onChange={(e) => setProfile({ ...profile, storeUrl: e.target.value })}
-                    placeholder="your-store-name"
-                    className="bg-input-bg flex-1"
-                  />
+                <Label htmlFor="store-url" className="mb-2 sm:mb-3 block text-sm">Store URL (Username)</Label>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-0">
+                  <span className="text-muted-foreground text-xs sm:text-sm hidden sm:inline whitespace-nowrap">{window.location.origin}/</span>
+                  <div className="flex items-center gap-2 w-full sm:flex-1">
+                    <span className="text-muted-foreground text-xs sm:hidden">{window.location.origin}/</span>
+                    <Input
+                      id="store-url"
+                      value={profile.storeUrl}
+                      onChange={(e) => setProfile({ ...profile, storeUrl: e.target.value })}
+                      placeholder="your-store-name"
+                      className="bg-input-bg flex-1 text-sm"
+                    />
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">
+                <p className="text-xs text-muted-foreground mt-1.5">
                   This will be your public store URL that you can share
                 </p>
               </div>
 
               {/* Description */}
               <div className="mb-6">
-                <Label htmlFor="description" className="mb-3 block">Business description</Label>
+                <Label htmlFor="description" className="mb-2 sm:mb-3 block text-sm">Business description</Label>
                 <Textarea
                   id="description"
                   value={profile.description}
                   onChange={(e) => setProfile({ ...profile, description: e.target.value })}
                   placeholder="Tell people about your business..."
-                  className="bg-input-bg min-h-[120px] resize-none"
+                  className="bg-input-bg min-h-[100px] sm:min-h-[120px] resize-none text-sm"
                   maxLength={400}
                 />
-                <div className="text-xs text-muted-foreground text-right mt-2">
+                <div className="text-xs text-muted-foreground text-right mt-1.5">
                   {profile.description.length} / 400
                 </div>
               </div>
@@ -1685,15 +1689,15 @@ const Dashboard = () => {
               {/* YouTube Video URL - Premium/Pro only */}
               <PlanGate minPlan="premium" featureName="YouTube Video">
                 <div className="mb-6">
-                  <Label htmlFor="youtube-video" className="mb-3 block">YouTube Video</Label>
+                  <Label htmlFor="youtube-video" className="mb-2 sm:mb-3 block text-sm">YouTube Video</Label>
                   <Input
                     id="youtube-video"
                     value={profile.youtubeVideoUrl}
                     onChange={(e) => setProfile({ ...profile, youtubeVideoUrl: e.target.value })}
                     placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
-                    className="bg-input-bg"
+                    className="bg-input-bg text-sm"
                   />
-                  <p className="text-xs text-muted-foreground mt-2">
+                  <p className="text-xs text-muted-foreground mt-1.5">
                     Add a YouTube video to showcase your business or products
                   </p>
                 </div>
@@ -1701,7 +1705,7 @@ const Dashboard = () => {
 
               {/* Background Music URL */}
               <div className="mb-6">
-                <Label htmlFor="background-music" className="mb-3 block flex items-center gap-2">
+                <Label htmlFor="background-music" className="mb-2 sm:mb-3 block flex items-center gap-2 text-sm">
                   <Music className="w-4 h-4" />
                   Background Music
                 </Label>
@@ -1710,9 +1714,9 @@ const Dashboard = () => {
                   value={profile.backgroundMusicUrl || ""}
                   onChange={(e) => setProfile({ ...profile, backgroundMusicUrl: e.target.value })}
                   placeholder="https://example.com/music.mp3"
-                  className="bg-input-bg"
+                  className="bg-input-bg text-sm"
                 />
-                <p className="text-xs text-muted-foreground mt-2">
+                <p className="text-xs text-muted-foreground mt-1.5">
                   Add a background music URL (MP3, OGG, WAV) that will play on your public bio page. The audio will loop continuously and visitors can control the volume.
                 </p>
               </div>
@@ -1720,7 +1724,7 @@ const Dashboard = () => {
 
             {/* Social Links */}
             <div>
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-2">
                 <h2 className="text-lg font-semibold">Social links</h2>
                 {/* Social link plan gating */}
                 {(() => {
@@ -1728,7 +1732,7 @@ const Dashboard = () => {
                   if (plan === "basic") maxLinks = 3;
                   if (plan === "premium" || plan === "pro") maxLinks = 99;
                   return (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded whitespace-nowrap">
                       {plan === "free" && "Limit: 1 social link"}
                       {plan === "basic" && "Limit: 3 social links"}
                       {(plan === "premium" || plan === "pro") && "Unlimited social links"}
@@ -1736,12 +1740,12 @@ const Dashboard = () => {
                   );
                 })()}
               </div>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {/* For Premium/Pro: Add/Remove custom social links with icon picker */}
                 {(plan === "premium" || plan === "pro") && (
                   <>
                     {profile.socialLinks.map((link, idx) => (
-                      <div key={idx} className="flex items-center gap-3">
+                      <div key={idx} className="flex items-center gap-2 sm:gap-3">
                         {/* Icon Picker */}
                         <select
                           value={link.icon || link.type}
@@ -1750,7 +1754,7 @@ const Dashboard = () => {
                             newLinks[idx].icon = e.target.value;
                             setProfile({ ...profile, socialLinks: newLinks });
                           }}
-                          className="w-12 h-10 rounded-lg border border-border bg-card text-center"
+                          className="w-10 h-10 sm:w-12 sm:h-10 rounded-lg border border-border bg-card text-center flex-shrink-0 text-sm"
                         >
                           <option value="twitter">🐦</option>
                           <option value="instagram">📸</option>
@@ -1760,7 +1764,7 @@ const Dashboard = () => {
                           <option value="linkedin">💼</option>
                           <option value="twitch">🎮</option>
                           <option value="website">🌐</option>
-                          <option value="custom">⭐ Custom</option>
+                          <option value="custom">⭐</option>
                         </select>
                         <Input
                           value={link.url}
@@ -1769,8 +1773,8 @@ const Dashboard = () => {
                             newLinks[idx].url = e.target.value;
                             setProfile({ ...profile, socialLinks: newLinks });
                           }}
-                          placeholder="Enter social link URL"
-                          className="bg-input-bg flex-1"
+                          placeholder="Enter URL"
+                          className="bg-input-bg flex-1 text-sm"
                         />
                         <Button
                           variant="ghost"
@@ -1780,6 +1784,7 @@ const Dashboard = () => {
                             setProfile({ ...profile, socialLinks: newLinks });
                           }}
                           title="Remove"
+                          className="h-10 w-10 flex-shrink-0"
                         >
                           ✖️
                         </Button>
@@ -1797,105 +1802,105 @@ const Dashboard = () => {
                           ],
                         });
                       }}
-                      className="mt-2"
+                      className="w-full mt-2"
                     >
                       + Add Social Link
                     </Button>
                   </>
                 )}
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center">
-                    <FaXTwitter className="w-5 h-5" />
+                  <div className="w-10 h-10 flex-shrink-0 rounded-lg bg-card border border-border flex items-center justify-center">
+                    <FaXTwitter className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "twitter")?.url || "" : ""}
                     onChange={(e) => handleSocialLinkChange("twitter", e.target.value)}
                     placeholder="https://x.com/"
-                    className="bg-input-bg flex-1"
+                    className="bg-input-bg flex-1 text-sm"
                   />
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center">
-                    <Instagram className="w-5 h-5" />
+                  <div className="w-10 h-10 flex-shrink-0 rounded-lg bg-card border border-border flex items-center justify-center">
+                    <Instagram className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "instagram")?.url || "" : ""}
                     onChange={(e) => handleSocialLinkChange("instagram", e.target.value)}
                     placeholder="https://instagram.com/"
-                    className="bg-input-bg flex-1"
+                    className="bg-input-bg flex-1 text-sm"
                   />
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center">
-                    <Youtube className="w-5 h-5" />
+                  <div className="w-10 h-10 flex-shrink-0 rounded-lg bg-card border border-border flex items-center justify-center">
+                    <Youtube className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "youtube")?.url || "" : ""}
                     onChange={(e) => handleSocialLinkChange("youtube", e.target.value)}
                     placeholder="https://youtube.com/@"
-                    className="bg-input-bg flex-1"
+                    className="bg-input-bg flex-1 text-sm"
                   />
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center">
-                    <FaTiktok className="w-5 h-5" />
+                  <div className="w-10 h-10 flex-shrink-0 rounded-lg bg-card border border-border flex items-center justify-center">
+                    <FaTiktok className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "tiktok")?.url || "" : ""}
                     onChange={(e) => handleSocialLinkChange("tiktok", e.target.value)}
                     placeholder="https://tiktok.com/@"
-                    className="bg-input-bg flex-1"
+                    className="bg-input-bg flex-1 text-sm"
                   />
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center">
-                    <Facebook className="w-5 h-5" />
+                  <div className="w-10 h-10 flex-shrink-0 rounded-lg bg-card border border-border flex items-center justify-center">
+                    <Facebook className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "facebook")?.url || "" : ""}
                     onChange={(e) => handleSocialLinkChange("facebook", e.target.value)}
                     placeholder="https://facebook.com/"
-                    className="bg-input-bg flex-1"
+                    className="bg-input-bg flex-1 text-sm"
                   />
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center">
-                    <Linkedin className="w-5 h-5" />
+                  <div className="w-10 h-10 flex-shrink-0 rounded-lg bg-card border border-border flex items-center justify-center">
+                    <Linkedin className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "linkedin")?.url || "" : ""}
                     onChange={(e) => handleSocialLinkChange("linkedin", e.target.value)}
                     placeholder="https://linkedin.com/in/"
-                    className="bg-input-bg flex-1"
+                    className="bg-input-bg flex-1 text-sm"
                   />
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center">
-                    <Twitch className="w-5 h-5" />
+                  <div className="w-10 h-10 flex-shrink-0 rounded-lg bg-card border border-border flex items-center justify-center">
+                    <Twitch className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "twitch")?.url || "" : ""}
                     onChange={(e) => handleSocialLinkChange("twitch", e.target.value)}
                     placeholder="https://twitch.tv/"
-                    className="bg-input-bg flex-1"
+                    className="bg-input-bg flex-1 text-sm"
                   />
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center">
-                    <Globe className="w-5 h-5" />
+                  <div className="w-10 h-10 flex-shrink-0 rounded-lg bg-card border border-border flex items-center justify-center">
+                    <Globe className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   <Input
                     value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "website")?.url || "" : ""}
                     onChange={(e) => handleSocialLinkChange("website", e.target.value)}
                     placeholder="Enter website URL"
-                    className="bg-input-bg flex-1"
+                    className="bg-input-bg flex-1 text-sm"
                   />
                 </div>
               </div>
@@ -1931,31 +1936,31 @@ const Dashboard = () => {
                     </span>
                   </div>
                   <div className="space-y-4">
-                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <div className="flex flex-col md:flex-row gap-6 items-start">
+                    <div className="p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex flex-col gap-6">
                         <div className="flex-1">
-                          <h3 className="font-medium text-blue-900 mb-1">Receive DROP or Pi Tips</h3>
-                          <div className="flex items-center gap-2 mb-3">
+                          <h3 className="font-medium text-blue-900 mb-1 text-sm sm:text-base">Receive DROP or Pi Tips</h3>
+                          <div className="flex flex-col gap-2 mb-3">
                             <Input
                               value={profile.piDonationMessage || ''}
                               onChange={(e) => setProfile({ ...profile, piDonationMessage: e.target.value })}
                               placeholder="Send me a coffee ☕"
-                              className="bg-background border-primary text-xs font-mono flex-1"
+                              className="bg-background border-primary text-xs font-mono w-full"
                               maxLength={64}
                             />
                             <span className="text-xs text-muted-foreground">Custom message</span>
                           </div>
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-2">
+                          <div className="space-y-2 sm:space-y-3">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-2">
                               <Input
                                 value={profile.piWalletAddress || ''}
                                 onChange={(e) => setProfile({ ...profile, piWalletAddress: e.target.value })}
                                 placeholder="G... (Pi Network wallet address)"
-                                className="bg-background border-primary text-xs font-mono"
+                                className="bg-background border-primary text-xs font-mono flex-1 w-full"
                                 maxLength={56}
                               />
                               {profile.piWalletAddress && (
-                                <>
+                                <div className="flex gap-1 w-full sm:w-auto">
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -1963,22 +1968,22 @@ const Dashboard = () => {
                                       navigator.clipboard.writeText(profile.piWalletAddress!);
                                       toast.success('Wallet address copied!');
                                     }}
-                                    className="text-xs border-blue-300"
+                                    className="text-xs border-blue-300 flex-1 sm:flex-initial"
                                   >
-                                    Copy Address
+                                    Copy
                                   </Button>
                                   <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => setShowPiWalletQR(true)}
-                                    className="text-xs border-blue-300"
+                                    className="text-xs border-blue-300 flex-1 sm:flex-initial"
                                   >
-                                    View QR Code
+                                    QR
                                   </Button>
-                                </>
+                                </div>
                               )}
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex gap-1 w-full">
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -1995,41 +2000,42 @@ const Dashboard = () => {
                                     toast.error('Please go to the Wallet section to set up your Pi Network wallet first.');
                                   }
                                 }}
-                                className="text-xs border-blue-300"
+                                className="text-xs border-blue-300 flex-1"
                               >
                                 <Wallet className="w-3 h-3 mr-1" />
-                                Import from Wallet
+                                <span className="hidden sm:inline">Import from Wallet</span>
+                                <span className="sm:hidden">Import</span>
                               </Button>
                             </div>
                           </div>
                         </div>
-                        <div className="flex flex-col items-center gap-2 min-w-[160px]">
-                          <div className="font-semibold text-blue-900 mb-1">Tip / Send Me a Coffee</div>
+                        <div className="flex flex-col items-center gap-2 w-full sm:w-auto">
+                          <div className="font-semibold text-blue-900 mb-1 text-sm">Tip / Send a Coffee</div>
                           {profile.piWalletAddress ? (
                             <>
-                              <div className="relative w-[160px] h-[160px] mx-auto">
-                                <svg width="160" height="160" className="rounded border border-blue-300 bg-white">
-                                  <foreignObject width="160" height="160">
-                                    <div style={{ width: '160px', height: '160px', position: 'relative' }}>
+                              <div className="relative mx-auto">
+                                <svg width="140" height="140" className="rounded border border-blue-300 bg-white sm:w-40 sm:h-40">
+                                  <foreignObject width="140" height="140">
+                                    <div style={{ width: '140px', height: '140px', position: 'relative' }}>
                                       <img
-                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(profile.piWalletAddress)}`}
+                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(profile.piWalletAddress)}`}
                                         alt="Wallet QR Code"
-                                        style={{ width: 160, height: 160, borderRadius: 8, background: '#fff' }}
+                                        style={{ width: 140, height: 140, borderRadius: 8, background: '#fff' }}
                                       />
                                       <img
                                         src="/droplink-logo.png"
                                         alt="Droplink Logo"
-                                        style={{ position: 'absolute', left: '50%', top: '50%', width: 48, height: 48, transform: 'translate(-50%, -50%)', borderRadius: 12, border: '2px solid #fff', background: '#fff', boxShadow: '0 2px 8px #0001' }}
+                                        style={{ position: 'absolute', left: '50%', top: '50%', width: 40, height: 40, transform: 'translate(-50%, -50%)', borderRadius: 10, border: '2px solid #fff', background: '#fff', boxShadow: '0 2px 8px #0001' }}
                                       />
                                     </div>
                                   </foreignObject>
                                 </svg>
                               </div>
                               <div className="text-xs text-blue-700 break-all text-center mt-1">
-                                <span>Scan to tip Pi or DROP</span>
+                                <span>Scan to tip Pi</span>
                               </div>
-                              <div className="text-xs text-blue-700 break-all text-center mt-1">
-                                <span>{profile.piWalletAddress}</span>
+                              <div className="text-xs text-blue-700 break-all text-center mt-1 font-mono">
+                                <span>{profile.piWalletAddress.substring(0, 6)}...{profile.piWalletAddress.substring(-4)}</span>
                               </div>
                             </>
                           ) : (
@@ -2039,13 +2045,13 @@ const Dashboard = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="mt-2"
+                              className="mt-2 text-xs"
                               onClick={() => {
                                 navigator.clipboard.writeText(profile.piWalletQrUrl!);
                                 toast.success('QR code image URL copied!');
                               }}
                             >
-                              Copy QR Code URL
+                              Copy QR URL
                             </Button>
                           )}
                         </div>
@@ -2058,17 +2064,17 @@ const Dashboard = () => {
 
             {/* Custom Links - Premium/Pro only */}
             <PlanGate minPlan="premium" featureName="Custom Links">
-              <div className="border-t pt-6">
-                <div className="flex items-center justify-between mb-2">
+              <div className="border-t pt-4 sm:pt-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-2 sm:gap-4">
                   <h2 className="text-lg font-semibold">Custom Links</h2>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     {autoSave.isSaving && (
-                      <span className="text-xs text-muted-foreground">Saving...</span>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">Saving...</span>
                     )}
                     {autoSave.lastSaved && !autoSave.isSaving && (
-                      <span className="text-xs text-green-600">Saved</span>
+                      <span className="text-xs text-green-600 whitespace-nowrap">Saved</span>
                     )}
-                    <Button size="sm" variant="outline" onClick={autoSave.save} disabled={autoSave.isSaving}>
+                    <Button size="sm" variant="outline" onClick={autoSave.save} disabled={autoSave.isSaving} className="text-xs">
                       {autoSave.isSaving ? 'Saving...' : 'Save'}
                     </Button>
                   </div>
@@ -2089,14 +2095,14 @@ const Dashboard = () => {
             {/* Pi Network Wallet section removed */}
 
             {/* Share Button Settings */}
-            <div className="border-t pt-6">
-              <h2 className="text-lg font-semibold mb-6">Public Profile Settings</h2>
-              <div className="flex items-center justify-between p-4 bg-card border border-border rounded-lg">
-                <div className="space-y-0.5">
-                  <Label htmlFor="share-button" className="text-base">
+            <div className="border-t pt-4 sm:pt-6">
+              <h2 className="text-lg font-semibold mb-3 sm:mb-6">Public Profile Settings</h2>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 bg-card border border-border rounded-lg gap-3">
+                <div className="space-y-0.5 flex-1">
+                  <Label htmlFor="share-button" className="text-sm sm:text-base font-medium">
                     Show Share Button
                   </Label>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Allow visitors to share your profile with a button
                   </p>
                 </div>
@@ -2111,10 +2117,10 @@ const Dashboard = () => {
             {/* Theme Customization - Premium/Pro only */}
             <PlanGate minPlan="premium" featureName="Theme Customization">
               <div className="border-t pt-6">
-                <h2 className="text-lg font-semibold mb-6">Theme Customization</h2>
-              <div className="space-y-4">
+                <h2 className="text-lg font-semibold mb-4 sm:mb-6">Theme Customization</h2>
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <Label htmlFor="primary-color" className="mb-3 block">Primary Color</Label>
+                  <Label htmlFor="primary-color" className="mb-2 sm:mb-3 block text-sm">Primary Color</Label>
                   <Input
                     id="primary-color"
                     type="color"
@@ -2123,11 +2129,11 @@ const Dashboard = () => {
                       ...profile,
                       theme: { ...profile.theme, primaryColor: e.target.value }
                     })}
-                    className="h-12 w-full"
+                    className="h-11 sm:h-12 w-full rounded-lg"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="background-color" className="mb-3 block">Background Color</Label>
+                  <Label htmlFor="background-color" className="mb-2 sm:mb-3 block text-sm">Background Color</Label>
                   <Input
                     id="background-color"
                     type="color"
@@ -2136,11 +2142,11 @@ const Dashboard = () => {
                       ...profile,
                       theme: { ...profile.theme, backgroundColor: e.target.value }
                     })}
-                    className="h-12 w-full"
+                    className="h-11 sm:h-12 w-full rounded-lg"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="text-color" className="mb-3 block">Text Color</Label>
+                  <Label htmlFor="text-color" className="mb-2 sm:mb-3 block text-sm">Text Color</Label>
                   <Input
                     id="text-color"
                     type="color"
@@ -2149,11 +2155,11 @@ const Dashboard = () => {
                       ...profile,
                       theme: { ...profile.theme, textColor: e.target.value }
                     })}
-                    className="h-12 w-full"
+                    className="h-11 sm:h-12 w-full rounded-lg"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="icon-style" className="mb-3 block">Icon Style</Label>
+                  <Label htmlFor="icon-style" className="mb-2 sm:mb-3 block text-sm">Icon Style</Label>
                   <select
                     id="icon-style"
                     value={profile.theme.iconStyle}
@@ -2161,7 +2167,7 @@ const Dashboard = () => {
                       ...profile,
                       theme: { ...profile.theme, iconStyle: e.target.value }
                     })}
-                    className="w-full h-10 px-3 rounded-md bg-input-bg border border-border"
+                    className="w-full h-10 sm:h-11 px-3 rounded-lg bg-input-bg border border-border text-sm"
                   >
                     <option value="rounded">Rounded</option>
                     <option value="square">Square</option>
@@ -2170,13 +2176,13 @@ const Dashboard = () => {
                 </div>
 
                 {/* Live preview for text visibility */}
-                <div className="mt-6 p-4 rounded border" style={{
+                <div className="mt-4 sm:mt-6 p-3 sm:p-4 rounded-lg border" style={{
                   background: profile.theme.backgroundColor,
                   color: profile.theme.textColor || '#ffffff',
                   borderColor: profile.theme.primaryColor
                 }}>
-                  <span style={{ fontWeight: 'bold', fontSize: 18 }}>Text Preview: Always Visible</span>
-                  <p style={{ marginTop: 8 }}>This is a preview of your text color on your selected background. Make sure it is always readable!</p>
+                  <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>Text Preview: Always Visible</span>
+                  <p style={{ marginTop: 8, fontSize: '0.875rem' }}>This is a preview of your text color on your selected background. Make sure it is always readable!</p>
                 </div>
               </div>
               </div>
@@ -2185,12 +2191,12 @@ const Dashboard = () => {
             {/* Digital Products - Premium/Pro only */}
             <PlanGate minPlan="premium" featureName="Digital Products">
               <div>
-                <h2 className="text-lg font-semibold mb-6">Digital Products</h2>
-              <div className="space-y-4">
+                <h2 className="text-lg font-semibold mb-4 sm:mb-6">Digital Products</h2>
+              <div className="space-y-3 sm:space-y-4">
                 {profile.products.map((product, index) => (
-                  <div key={product.id} className="p-4 bg-card border border-border rounded-lg space-y-3">
+                  <div key={product.id} className="p-3 sm:p-4 bg-card border border-border rounded-lg space-y-2 sm:space-y-3">
                     <div className="flex justify-between items-center">
-                      <h3 className="font-medium">Product {index + 1}</h3>
+                      <h3 className="font-medium text-sm sm:text-base">Product {index + 1}</h3>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -2198,6 +2204,7 @@ const Dashboard = () => {
                           const newProducts = profile.products.filter(p => p.id !== product.id);
                           setProfile({ ...profile, products: newProducts });
                         }}
+                        className="text-xs"
                       >
                         Remove
                       </Button>
@@ -2210,18 +2217,24 @@ const Dashboard = () => {
                         newProducts[index].title = e.target.value;
                         setProfile({ ...profile, products: newProducts });
                       }}
-                      className="bg-input-bg"
+                      className="bg-input-bg text-sm"
                     />
-                    <Input
-                      placeholder="Price (e.g., $9.99)"
-                      value={product.price?.toString() ?? ""}
-                      onChange={(e) => {
-                        const newProducts = [...profile.products];
-                        newProducts[index].price = e.target.value;
-                        setProfile({ ...profile, products: newProducts });
-                      }}
-                      className="bg-input-bg"
-                    />
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                      <Input
+                        placeholder="Price (e.g., $9.99)"
+                        value={product.price?.toString() ?? ""}
+                        onChange={(e) => {
+                          const newProducts = [...profile.products];
+                          newProducts[index].price = e.target.value;
+                          setProfile({ ...profile, products: newProducts });
+                        }}
+                        className="bg-input-bg text-sm"
+                      />
+                      <Input
+                        placeholder="Category"
+                        className="bg-input-bg text-sm"
+                      />
+                    </div>
                     <Textarea
                       placeholder="Product Description"
                       value={product.description}
@@ -2230,7 +2243,7 @@ const Dashboard = () => {
                         newProducts[index].description = e.target.value;
                         setProfile({ ...profile, products: newProducts });
                       }}
-                      className="bg-input-bg min-h-[80px] resize-none"
+                      className="bg-input-bg min-h-[70px] sm:min-h-[80px] resize-none text-sm"
                     />
                     <Input
                       placeholder="File/Download URL"
@@ -2240,13 +2253,14 @@ const Dashboard = () => {
                         newProducts[index].fileUrl = e.target.value;
                         setProfile({ ...profile, products: newProducts });
                       }}
-                      className="bg-input-bg"
+                      className="bg-input-bg text-sm"
                     />
                   </div>
                 ))}
                 <Button
                   variant="outline"
                   className="w-full"
+                  size="sm"
                   onClick={() => {
                     const newProduct = {
                       id: Date.now().toString(),
@@ -2258,7 +2272,7 @@ const Dashboard = () => {
                     setProfile({ ...profile, products: [...profile.products, newProduct] });
                   }}
                 >
-                  Add Product
+                  + Add Product
                 </Button>
               </div>
               </div>
@@ -2266,12 +2280,11 @@ const Dashboard = () => {
 
                 {/* Action Buttons */}
                 <Card className="border-0 rounded-none shadow-none sticky bottom-0 z-[100] w-full p-0 m-0" style={{ boxShadow: '0 4px 24px 0 #0002', background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(8px)' }}>
-                  <div className="flex gap-4 border-t border-border w-full p-0 m-0" style={{ background: 'transparent' }}>
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 border-t border-border w-full p-2 sm:p-3 m-0" style={{ background: 'transparent' }}>
                     <Button
-                      className="flex-1 h-12 rounded-none bg-white text-sky-400 font-medium border-none hover:bg-gray-100"
+                      className="flex-1 h-11 sm:h-12 rounded-lg bg-white text-sky-400 font-medium border border-sky-200 hover:bg-sky-50"
                       onClick={() => {
                         toast.info('No changes were saved.');
-                        // Optionally, add logic to reset form fields to their last saved state here
                       }}
                     >
                       Cancel
@@ -2286,7 +2299,7 @@ const Dashboard = () => {
                           toast.error('Save failed. Please check your connection or Pi authentication.');
                         }
                       }}
-                      className="flex-1 h-12 bg-sky-400 hover:bg-sky-500 text-white font-medium rounded-none border-none shadow-md"
+                      className="flex-1 h-11 sm:h-12 bg-sky-400 hover:bg-sky-500 text-white font-medium rounded-lg border-none shadow-md"
                       style={{ transition: 'box-shadow 0.2s', boxShadow: '0 2px 8px #0284c71a' }}
                       disabled={saving}
                     >
@@ -2297,7 +2310,7 @@ const Dashboard = () => {
               </TabsContent>
 
               {/* Design Tab - Premium/Pro only */}
-              <TabsContent value="design" className="space-y-6">
+              <TabsContent value="design" className="space-y-4 sm:space-y-6 pb-6 sm:pb-8">
                 <PlanGate minPlan="premium" featureName="GIF Background (Premium)">
                   {!isPlanExpired && (
                     <>
@@ -2306,13 +2319,13 @@ const Dashboard = () => {
                         onThemeChange={(newTheme) => setProfile({ ...profile, theme: newTheme })}
                       />
                       {/* Save Button */}
-                      <div className={`flex gap-4 pt-6 pb-6 mt-8 border-t border-border sticky bottom-0 z-[100] w-full bg-background/95 backdrop-blur-sm shadow-lg`} style={{ boxShadow: '0 4px 24px 0 #0002', background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(8px)' }}>
-                        <Button variant="outline" className="flex-1 h-12">
+                      <div className={`flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 pb-6 sm:pb-8 border-t border-border sticky bottom-0 z-[100] w-full bg-background/95 backdrop-blur-sm shadow-lg rounded-lg`} style={{ boxShadow: '0 4px 24px 0 #0002', background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(8px)' }}>
+                        <Button variant="outline" className="flex-1 h-11 sm:h-12 rounded-lg">
                           Cancel
                         </Button>
                         <Button 
                           onClick={handleSave} 
-                          className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-md" 
+                          className="flex-1 h-11 sm:h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-md rounded-lg" 
                           style={{ transition: 'box-shadow 0.2s', boxShadow: '0 2px 8px #0284c71a' }}
                           disabled={saving}
                         >
@@ -2421,16 +2434,16 @@ const Dashboard = () => {
 
         {/* Preview Panel */}
         <div
-          className={`lg:w-[400px] xl:w-[500px] ${isMobile ? 'bg-background border-t' : 'glass-surface border-l'} border-border/30 flex-1 flex flex-col items-center justify-center ${showPreview ? 'flex' : 'hidden lg:flex'}`}
+          className={`lg:w-[400px] xl:w-[500px] ${isMobile ? 'bg-background border-t' : 'glass-surface border-l'} border-border/30 flex-1 flex flex-col items-center justify-center overflow-hidden ${showPreview ? 'flex' : 'hidden lg:flex'}`}
           style={{ minHeight: 0 }}
         >
-          <div className="mb-4 flex items-center justify-between w-full max-w-xs mx-auto">
-            <h3 className="text-sm font-medium text-muted-foreground">Preview</h3>
-            <Button variant="ghost" size="sm" onClick={handleCopyLink}>
+          <div className="mb-2 sm:mb-4 flex items-center justify-between w-full max-w-xs mx-auto px-2 sm:px-4">
+            <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">Preview</h3>
+            <Button variant="ghost" size="sm" onClick={handleCopyLink} className="text-xs h-8">
               Copy link
             </Button>
           </div>
-          <div className="flex-1 flex items-center justify-center w-full">
+          <div className="flex-1 flex items-center justify-center w-full overflow-hidden">
             <PhonePreview profile={profile} />
           </div>
         </div>

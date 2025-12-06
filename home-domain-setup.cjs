@@ -2,9 +2,9 @@
 
 const StellarSDK = require("@stellar/stellar-sdk");
 
-// Pi Testnet Configuration
-const server = new StellarSDK.Horizon.Server("https://api.testnet.minepi.com");
-const NETWORK_PASSPHRASE = "Pi Testnet";
+// Pi Mainnet Configuration
+const server = new StellarSDK.Horizon.Server("https://api.minepi.com");
+const NETWORK_PASSPHRASE = "Pi Mainnet";
 
 // Configuration
 const HOME_DOMAIN = "droplink.space";
@@ -66,8 +66,8 @@ async function setHomeDomain(issuerSecret) {
     console.log(`📋 Updated Home Domain: ${updatedAccount.home_domain}`);
     
     console.log("\n🔗 Verification Links:");
-    console.log(`   Account Info: https://api.testnet.minepi.com/accounts/${issuerKeypair.publicKey()}`);
-    console.log(`   Token Info: https://api.testnet.minepi.com/assets?asset_code=DROP&asset_issuer=${issuerKeypair.publicKey()}`);
+    console.log(`   Account Info: https://api.minepi.com/accounts/${issuerKeypair.publicKey()}`);
+    console.log(`   Token Info: https://api.minepi.com/assets?asset_code=DROP&asset_issuer=${issuerKeypair.publicKey()}`);
 
   } catch (error) {
     console.error("❌ Error setting home domain:", error.message);
