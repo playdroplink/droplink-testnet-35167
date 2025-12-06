@@ -36,6 +36,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PI_CONFIG, isPiNetworkAvailable, validatePiConfig, validateMainnetConfig, getWalletTokens, getTokenBalance, createTokenTrustline } from "@/config/pi-config";
+import { authenticatePiUser, verifyStoredPiToken } from "@/services/piMainnetAuthService";
 
 // Pi Network Types
 interface PiUser {
@@ -287,24 +288,16 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           const storedUser = localStorage.getItem('pi_user');
           
           if (storedToken && storedUser) {
-            console.log('[PI DEBUG] 🔍 Found stored Pi authentication, verifying...');
+            console.log('[PI DEBUG] 🔍 Found stored Pi authentication, verifying with Mainnet API...');
             try {
-              // Verify token with Pi API using configured endpoint
-              const response = await fetch(PI_CONFIG.ENDPOINTS.ME, {
-                headers: PI_CONFIG.getAuthHeaders(storedToken)
-              });
+              // Verify token is still valid using the authentication service
+              const isValid = await verifyStoredPiToken(storedToken);
               
-              if (response.ok) {
-                const verifiedUser = await response.json();
+              if (isValid) {
                 const userData = JSON.parse(storedUser);
                 setAccessToken(storedToken);
                 setPiUser(userData);
                 console.log('[PI DEBUG] ✅ Auto-authenticated with stored credentials (Mainnet)');
-                
-                // Update user data if needed
-                if (verifiedUser.uid === userData.uid) {
-                  setPiUser({...userData, ...verifiedUser});
-                }
               } else {
                 console.warn('[PI DEBUG] ⚠️ Stored token verification failed, clearing...');
                 localStorage.removeItem('pi_access_token');
@@ -482,48 +475,24 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       }
       console.log('[PI DEBUG] ✅ Access token received:', accessToken.substring(0, 20) + '...');
 
-      // Call Pi API to verify user (use configured endpoint and headers)
-      console.log('[PI DEBUG] 🔍 Verifying with Pi API endpoint:', PI_CONFIG.ENDPOINTS.ME);
-      const piApiResp = await fetch(PI_CONFIG.ENDPOINTS.ME, {
-        headers: PI_CONFIG.getAuthHeaders(accessToken),
+      // Use the Pi Mainnet authentication service for proper validation and linking
+      console.log('[PI DEBUG] 🔐 Authenticating with Pi Mainnet service...');
+      const authResult_fromService = await authenticatePiUser(accessToken, {
+        createIfNotExists: true,
       });
-      if (!piApiResp.ok) {
-        console.error('[PI DEBUG] ❌ Pi API verification failed:', piApiResp.status, piApiResp.statusText);
-        const errorBody = await piApiResp.text();
-        console.error('[PI DEBUG] ❌ Pi API error body:', errorBody);
-        const err = `Failed to validate Pi user with mainnet API: ${piApiResp.status}`;
-        setError(err);
-        throw new Error(err);
-      }
-      const piUser = await piApiResp.json();
-      console.log('[PI DEBUG] ✅ Pi user verified:', piUser.uid, piUser.username);
 
-      // Save user profile to Supabase
+      console.log('[PI DEBUG] ✅ Pi Mainnet authentication successful');
+      const piUser = authResult_fromService.piUser;
+      const supabaseProfile = authResult_fromService.supabaseProfile;
 
-      console.log('[PI DEBUG] 💾 Saving profile to Supabase with RPC call...');
-      const { data, error } = await supabase.rpc('authenticate_pi_user', {
-        p_pi_user_id: piUser.uid,
-        p_pi_username: piUser.username,
-        p_access_token: accessToken,
-        p_wallet_address: piUser.wallet_address,
-      });
-      
-      // Type-safe response handling
-      const responseData = data as any;
-      if (error || !data || responseData?.success === false) {
-        const errMsg = error?.message || responseData?.error || 'Unknown error';
-        console.error('[PI DEBUG] ❌ RPC error:', errMsg);
-        setError('Failed to save Pi user profile to Supabase: ' + errMsg);
-        throw new Error('Failed to save Pi user profile to Supabase: ' + errMsg);
-      }
-      console.log('[PI DEBUG] ✅ Profile saved successfully');
-
-      // Store access token and user info
+      // Store access token and user info in localStorage
       localStorage.setItem('pi_access_token', accessToken);
       localStorage.setItem('pi_user', JSON.stringify(piUser));
+      
+      // Update state with authenticated user
       setAccessToken(accessToken);
       setPiUser(piUser);
-      setCurrentProfile(responseData?.user_data || responseData || data);
+      setCurrentProfile(supabaseProfile);
       console.log('[PI DEBUG] ✅ Authentication complete! User:', piUser.username);
       setLoading(false);
 

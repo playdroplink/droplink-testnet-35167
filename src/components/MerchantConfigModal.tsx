@@ -32,9 +32,9 @@ export const MerchantConfigModal = ({ children }: Props) => {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-full px-4 sm:px-6">
+        <DialogHeader className="pr-8">
+          <DialogTitle className="flex items-center gap-2 text-xl flex-wrap">
             <Store className="w-6 h-6 text-sky-500" />
             DropLink: The Future Digital Marketplace
             <Badge variant="secondary" className="bg-sky-500 text-white">
@@ -43,7 +43,7 @@ export const MerchantConfigModal = ({ children }: Props) => {
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 overflow-hidden">
           {/* Vision Statement */}
           <Card className="bg-sky-50 border-sky-200">
             <CardHeader>
@@ -72,40 +72,40 @@ export const MerchantConfigModal = ({ children }: Props) => {
               <Card className="border-l-4 border-l-sky-500">
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Store className="w-4 h-4 text-sky-500" />
-                    <span className="font-medium">Businesses</span>
+                    <Store className="w-4 h-4 text-sky-500 flex-shrink-0" />
+                    <span className="font-medium break-words">Businesses</span>
                   </div>
-                  <p className="text-sm text-gray-600">Retail stores, service providers, and startups can create professional storefronts</p>
+                  <p className="text-sm text-gray-600 break-words">Retail stores, service providers, and startups can create professional storefronts</p>
                 </CardContent>
               </Card>
               
               <Card className="border-l-4 border-l-sky-500">
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Palette className="w-4 h-4 text-sky-500" />
-                    <span className="font-medium">Artists & Creators</span>
+                    <Palette className="w-4 h-4 text-sky-500 flex-shrink-0" />
+                    <span className="font-medium break-words">Artists & Creators</span>
                   </div>
-                  <p className="text-sm text-gray-600">Sell digital art, NFTs, music, and creative content directly to fans</p>
+                  <p className="text-sm text-gray-600 break-words">Sell digital art, NFTs, music, and creative content directly to fans</p>
                 </CardContent>
               </Card>
               
               <Card className="border-l-4 border-l-sky-500">
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Code className="w-4 h-4 text-sky-500" />
-                    <span className="font-medium">Developers</span>
+                    <Code className="w-4 h-4 text-sky-500 flex-shrink-0" />
+                    <span className="font-medium break-words">Developers</span>
                   </div>
-                  <p className="text-sm text-gray-600">Offer software, apps, courses, and technical services through integrated payments</p>
+                  <p className="text-sm text-gray-600 break-words">Offer software, apps, courses, and technical services through integrated payments</p>
                 </CardContent>
               </Card>
               
               <Card className="border-l-4 border-l-sky-500">
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp className="w-4 h-4 text-sky-500" />
-                    <span className="font-medium">Entrepreneurs</span>
+                    <TrendingUp className="w-4 h-4 text-sky-500 flex-shrink-0" />
+                    <span className="font-medium break-words">Entrepreneurs</span>
                   </div>
-                  <p className="text-sm text-gray-600">Launch new products and services with built-in payment and marketing tools</p>
+                  <p className="text-sm text-gray-600 break-words">Launch new products and services with built-in payment and marketing tools</p>
                 </CardContent>
               </Card>
             </div>
@@ -118,29 +118,29 @@ export const MerchantConfigModal = ({ children }: Props) => {
               Marketplace Features Coming Soon
             </h3>
             <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-2 h-2 bg-sky-500 rounded-full"></div>
-                <span className="text-sm"><strong>Advanced Storefronts:</strong> Multi-product catalogs with inventory management</span>
+              <div className="flex gap-3 p-3 bg-gray-50 rounded-lg overflow-hidden">
+                <div className="w-2 h-2 bg-sky-500 rounded-full flex-shrink-0 mt-0.5"></div>
+                <span className="text-sm break-words"><strong>Advanced Storefronts:</strong> Multi-product catalogs with inventory management</span>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-2 h-2 bg-sky-500 rounded-full"></div>
-                <span className="text-sm"><strong>Marketplace Discovery:</strong> Browse and search all DropLink stores</span>
+              <div className="flex gap-3 p-3 bg-gray-50 rounded-lg overflow-hidden">
+                <div className="w-2 h-2 bg-sky-500 rounded-full flex-shrink-0 mt-0.5"></div>
+                <span className="text-sm break-words"><strong>Marketplace Discovery:</strong> Browse and search all DropLink stores</span>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-2 h-2 bg-sky-500 rounded-full"></div>
-                <span className="text-sm"><strong>Pi Network Integration:</strong> Native Pi payments and DROP token rewards</span>
+              <div className="flex gap-3 p-3 bg-gray-50 rounded-lg overflow-hidden">
+                <div className="w-2 h-2 bg-sky-500 rounded-full flex-shrink-0 mt-0.5"></div>
+                <span className="text-sm break-words"><strong>Pi Network Integration:</strong> Native Pi payments and DROP token rewards</span>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-2 h-2 bg-sky-500 rounded-full"></div>
-                <span className="text-sm"><strong>Smart Contracts:</strong> Automated escrow and trustless transactions</span>
+              <div className="flex gap-3 p-3 bg-gray-50 rounded-lg overflow-hidden">
+                <div className="w-2 h-2 bg-sky-500 rounded-full flex-shrink-0 mt-0.5"></div>
+                <span className="text-sm break-words"><strong>Smart Contracts:</strong> Automated escrow and trustless transactions</span>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-2 h-2 bg-sky-500 rounded-full"></div>
-                <span className="text-sm"><strong>Social Commerce:</strong> Reviews, ratings, and social sharing</span>
+              <div className="flex gap-3 p-3 bg-gray-50 rounded-lg overflow-hidden">
+                <div className="w-2 h-2 bg-sky-500 rounded-full flex-shrink-0 mt-0.5"></div>
+                <span className="text-sm break-words"><strong>Social Commerce:</strong> Reviews, ratings, and social sharing</span>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-2 h-2 bg-sky-500 rounded-full"></div>
-                <span className="text-sm"><strong>Analytics & Insights:</strong> Advanced sales and customer analytics</span>
+              <div className="flex gap-3 p-3 bg-gray-50 rounded-lg overflow-hidden">
+                <div className="w-2 h-2 bg-sky-500 rounded-full flex-shrink-0 mt-0.5"></div>
+                <span className="text-sm break-words"><strong>Analytics & Insights:</strong> Advanced sales and customer analytics</span>
               </div>
             </div>
           </div>

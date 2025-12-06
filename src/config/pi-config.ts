@@ -2,13 +2,13 @@ export const PI_CONFIG = {
   API_KEY: "b00j4felp0ctc1fexe8igldsjg9u7wbqitavc15si53fr9wwra7r6oluzk4j24qz", // MATCHES manifest.json
   BASE_URL: "https://api.minepi.com",
   NETWORK: "mainnet",
-  NETWORK_PASSPHRASE: "Pi Network",
-  SANDBOX_MODE: false, // DISABLED - FULL MAINNET MODE
+  NETWORK_PASSPHRASE: "Pi Mainnet",
+  SANDBOX_MODE: false, // MAINNET - SANDBOX MODE DISABLED
   ALLOW_MULTIPLE_ACCOUNTS: true,
 
   SDK: {
     version: "2.0",
-    sandbox: false, // DISABLED - FULL MAINNET MODE
+    sandbox: false, // MAINNET - SANDBOX MODE DISABLED
   },
   
   // Request minimal scope by default to maximize sign-in success.
@@ -39,19 +39,19 @@ export const PI_CONFIG = {
   }),
   
   ENDPOINTS: {
-    ME: "https://socialchain.app/v2/me",
-    WALLETS: "https://socialchain.app/v2/wallets",
-    TRANSACTIONS: "https://socialchain.app/v2/transactions",
-    PAYMENTS: "https://socialchain.app/v2/payments",
-    OPERATIONS: "https://socialchain.app/v2/operations",
-    LEDGERS: "https://socialchain.app/v2/ledgers",
-    EFFECTS: "https://socialchain.app/v2/effects",
-    FEE_STATS: "https://socialchain.app/v2/fee_stats",
-    PI_BLOCKCHAIN: "https://socialchain.app/v2/blockchain",
-    PI_ASSETS: "https://socialchain.app/v2/assets",
-    PI_ACCOUNT_BALANCES: "https://socialchain.app/v2/accounts",
+    ME: "https://api.minepi.com/v2/me",
+    WALLETS: "https://api.minepi.com/v2/wallets",
+    TRANSACTIONS: "https://api.minepi.com/v2/transactions",
+    PAYMENTS: "https://api.minepi.com/v2/payments",
+    OPERATIONS: "https://api.minepi.com/v2/operations",
+    LEDGERS: "https://api.minepi.com/v2/ledgers",
+    EFFECTS: "https://api.minepi.com/v2/effects",
+    FEE_STATS: "https://api.minepi.com/v2/fee_stats",
+    PI_BLOCKCHAIN: "https://api.minepi.com/v2/blockchain",
+    PI_ASSETS: "https://api.minepi.com/v2/assets",
+    PI_ACCOUNT_BALANCES: "https://api.minepi.com/v2/accounts",
     HORIZON: "https://horizon.stellar.org",
-    PI_ASSET_DISCOVERY: "https://socialchain.app/v2/assets"
+    PI_ASSET_DISCOVERY: "https://api.minepi.com/v2/assets"
   },
 
   // Mainnet token configuration should be added here if/when available
@@ -77,13 +77,14 @@ export const validatePiConfig = (): boolean => {
   return PI_CONFIG.API_KEY.length > 0 &&
          PI_CONFIG.VALIDATION_KEY.length > 0 &&
          PI_CONFIG.NETWORK === "mainnet" &&
-         !PI_CONFIG.SANDBOX_MODE;
+         PI_CONFIG.SANDBOX_MODE === false;
 };
 
 // Helper to validate mainnet configuration
 export const validateMainnetConfig = (): boolean => {
   return PI_CONFIG.NETWORK === "mainnet" &&
-         !PI_CONFIG.SANDBOX_MODE &&
+         PI_CONFIG.SANDBOX_MODE === false &&
+         PI_CONFIG.SDK.sandbox === false &&
          PI_CONFIG.BASE_URL.includes("minepi.com") &&
          validatePiConfig();
 };

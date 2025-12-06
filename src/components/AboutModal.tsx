@@ -297,14 +297,24 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" className="gap-2 hover:bg-sky-50 hover:border-sky-300">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-2 hover:bg-sky-50 hover:border-sky-300"
+                  onClick={() => window.open('https://minepi.com/Wain2020', '_blank')}
+                >
                   <Network className="w-4 h-4" />
                   Pi Network
                   <ExternalLink className="w-3 h-3" />
                 </Button>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-2"
+                  onClick={() => window.open('https://www.droplink.space/pi-domain-details', '_blank')}
+                >
                   <Globe className="w-4 h-4" />
-                  Get .pi Domain
+                  Learn About .pi Domains
                   <ExternalLink className="w-3 h-3" />
                 </Button>
                 <Button variant="outline" size="sm" className="gap-2">

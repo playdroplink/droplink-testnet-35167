@@ -274,12 +274,12 @@ const Dashboard = () => {
       }
 
       try {
-        // 1. Update main profile data with all features
+        // 1. Upsert main profile data with all features (prevents UNIQUE_VIOLATION)
         const { error: profileError } = await supabase
           .from('profiles')
-          .update({
+          .upsert({
+            id: profileId,
             business_name: data.businessName,
-            store_url: data.storeUrl,
             description: data.description,
             email: data.email,
             youtube_video_url: data.youtubeVideoUrl,
@@ -304,9 +304,9 @@ const Dashboard = () => {
             pi_wallet_address: data.piWalletAddress,
             pi_donation_message: data.piDonationMessage,
             has_premium: data.hasPremium || false,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', profileId);
+            updated_at: new Date().toISOString(),
+            username: data.username
+          }, { onConflict: 'id' });
 
         if (profileError) throw profileError;
 
@@ -706,16 +706,16 @@ const Dashboard = () => {
         let newProfileId = null;
         try {
           if (isPiUser && piUser) {
-            // Create Pi user profile
+            // Upsert Pi user profile to avoid UNIQUE_VIOLATION
             const { data: newProfile, error: createError } = await supabase
               .from("profiles")
-              .insert({
+              .upsert({
                 username: piUser.username,
                 business_name: piUser.username,
                 description: "",
                 email: "", // Pi users don't have email in the basic interface
                 pi_user_id: piUser.uid,
-              })
+              }, { onConflict: 'username' })
               .select()
               .single();
             
@@ -1094,19 +1094,7 @@ const Dashboard = () => {
     );
   }
 
-  if (showPiAuthModal) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-sky-100">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full text-center">
-          <h2 className="text-lg font-bold mb-2">Pi Authentication Required</h2>
-          <p className="mb-4 text-gray-700">You must sign in with Pi Network to access your dashboard and payments.</p>
-          <Button onClick={handlePiAuth} disabled={piLoading} className="w-full mb-2">
-            {piLoading ? 'Connecting to Pi Network...' : 'Sign in with Pi Network'}
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  // Removed Pi Authentication Required modal to allow dashboard access without blocking
 
   return (
     <div
