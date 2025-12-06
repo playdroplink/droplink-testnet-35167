@@ -16,6 +16,7 @@ import { AboutModal } from "@/components/AboutModal";
 import { PI_CONFIG } from '@/config/pi-config';
 import { LicenseModal } from "@/components/LicenseModal";
 import { MerchantConfigModal } from "@/components/MerchantConfigModal";
+import { PiDomainModal } from "@/components/PiDomainModal";
 import droplinkLogo from "@/assets/droplink-logo.png";
 
 const PiAuth = () => {
@@ -290,8 +291,8 @@ const PiAuth = () => {
             </p>
           </div>
 
-          <div className="pt-4 border-t space-y-2">
-            <div className="flex justify-center gap-4 text-xs">
+          <div className="pt-4 border-t space-y-3">
+            <div className="flex flex-wrap justify-center gap-2 text-xs">
               <AboutModal>
                 <button className="text-primary hover:underline cursor-pointer">
                   About
@@ -306,6 +307,11 @@ const PiAuth = () => {
                 <button className="text-primary hover:underline cursor-pointer">Merchant</button>
               </MerchantConfigModal>
               <span className="text-muted-foreground">•</span>
+              <PiDomainModal>
+                <button className="text-primary hover:underline cursor-pointer">.pi Domains</button>
+              </PiDomainModal>
+            </div>
+            <div className="flex flex-wrap justify-center gap-2 text-xs">
               <a href="/terms" className="text-primary hover:underline">Terms</a>
               <span className="text-muted-foreground">•</span>
               <a href="/privacy" className="text-primary hover:underline">Privacy</a>
