@@ -34,6 +34,7 @@ import {
 import { usePi } from '@/contexts/PiContext';
 import { toast } from 'sonner';
 import { PI_CONFIG } from '@/config/pi-config';
+import { SUBSCRIPTION_PLANS, getPlanPrice } from '@/config/subscription-plans';
 import { supabase } from '@/integrations/supabase/client';
 import { syncPaymentLinksToDatabase, loadPaymentLinksFromDatabase } from '@/lib/database-sync';
 import { MerchantConfigModal } from '@/components/MerchantConfigModal';
@@ -142,6 +143,8 @@ const PiPayments: React.FC = () => {
   const [amount, setAmount] = useState('');
   const [memo, setMemo] = useState('');
   const [paymentType, setPaymentType] = useState<'product' | 'donation' | 'tip' | 'subscription' | 'group'>('product');
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
+  const [selectedPlan, setSelectedPlan] = useState<'basic' | 'premium' | 'pro'>('premium');
   const [isProcessing, setIsProcessing] = useState(false);
   
   // Payment Links State
@@ -182,34 +185,108 @@ const PiPayments: React.FC = () => {
   };
 
   const createPaymentLink = async () => {
-    if (!amount || parseFloat(amount) <= 0) {
-      toast.error('Please enter a valid amount');
-      return;
+    // For subscription, use plan pricing
+    let finalAmount: number;
+    let finalMemo: string;
+    
+    if (paymentType === 'subscription') {
+      finalAmount = getPlanPrice(selectedPlan, billingPeriod);
+      finalMemo = `${SUBSCRIPTION_PLANS[selectedPlan].name} Plan - ${billingPeriod === 'yearly' ? 'Annual' : 'Monthly'}`;
+    } else {
+      if (!amount || parseFloat(amount) <= 0) {
+        toast.error('Please enter a valid amount');
+        return;
+      }
+      if (!memo.trim()) {
+        toast.error('Please enter a description');
+        return;
+      }
+      finalAmount = parseFloat(amount);
+      finalMemo = memo;
     }
-    if (!memo.trim()) {
-      toast.error('Please enter a description');
-      return;
-    }
+    
     // Gmail detection: if user is signed in with Supabase (Gmail) but not Pi, block subscription payment
     const isGmailUser = supabaseEmail && supabaseEmail.endsWith('@gmail.com') && !piUser;
     if (paymentType === 'subscription' && isGmailUser) {
       setShowPiAuthModal(true);
       return;
     }
+    
+    // For subscription payments, require Pi authentication
+    if (paymentType === 'subscription' && !isAuthenticated) {
+      toast.error('Pi authentication required for subscription payments');
+      return;
+    }
+    
     setIsProcessing(true);
     try {
       const linkId = `pl_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const baseUrl = window.location.origin;
       const paymentUrl = `${baseUrl}/pay/${linkId}`;
-      // Payment link creation logic goes here
-      // Example:
-      // const newLink: PaymentLink = { ... };
-      // const updatedLinks = [...paymentLinks, newLink];
-      // savePaymentLinks(updatedLinks);
-      // setAmount(''); setMemo(''); setSelectedLink(newLink);
-    } catch (error) {
+      
+      // Prepare metadata for subscription payments
+      const metadata: Record<string, unknown> = {
+        linkId,
+        type: paymentType,
+        timestamp: new Date().toISOString(),
+      };
+      
+      // Add subscription-specific metadata
+      if (paymentType === 'subscription' && piUser?.uid) {
+        metadata.subscriptionPlan = selectedPlan;
+        metadata.billingPeriod = billingPeriod;
+        metadata.profileId = piUser.uid;
+      }
+      
+      // Create payment via Pi SDK (this will trigger Pi auth flow if needed)
+      const paymentId = await createPayment(finalAmount, finalMemo, metadata);
+      
+      if (!paymentId) {
+        toast.error('Payment creation cancelled or failed');
+        setIsProcessing(false);
+        return;
+      }
+      
+      // Create the payment link record
+      const newLink: PaymentLink = {
+        id: linkId,
+        amount: finalAmount,
+        description: finalMemo,
+        type: paymentType,
+        url: paymentUrl,
+        created: new Date(),
+        active: true,
+        totalReceived: 0,
+        transactionCount: 0,
+        memo: finalMemo,
+      };
+      
+      // Save the payment link
+      const updatedLinks = [...paymentLinks, newLink];
+      savePaymentLinks(updatedLinks);
+      
+      // For subscription payments, redirect to checkout page
+      if (paymentType === 'subscription') {
+        window.location.href = `/pay/${linkId}?mode=checkout&paymentId=${paymentId}`;
+      } else {
+        // Reset form for other payment types
+        setAmount('');
+        setMemo('');
+        setSelectedLink(newLink);
+        toast.success('Payment link created successfully!', {
+          description: `Link: /pay/${linkId}`
+        });
+      }
+    } catch (error: unknown) {
       console.error('Failed to create payment link:', error);
-      toast.error('Failed to create payment link');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage?.includes('not authenticated')) {
+        toast.error('Please authenticate with Pi Network first');
+      } else if (errorMessage?.includes('Sandbox mode')) {
+        toast.error('Sandbox mode is not allowed for real payments');
+      } else {
+        toast.error(errorMessage || 'Failed to create payment link');
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -297,7 +374,7 @@ const PiPayments: React.FC = () => {
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="paymentType">Payment Type</Label>
-                    <Select value={paymentType} onValueChange={(value: any) => setPaymentType(value)}>
+                    <Select value={paymentType} onValueChange={(value: string) => setPaymentType(value as 'product' | 'donation' | 'tip' | 'subscription' | 'group')}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -311,33 +388,66 @@ const PiPayments: React.FC = () => {
                     </Select>
                   </div>
 
-                  <div>
-                    <Label htmlFor="amount">Amount (π)</Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      placeholder="0.00"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
+                  {paymentType === 'subscription' ? (
+                    <>
+                      <div>
+                        <Label htmlFor="subscriptionPlan">Subscription Plan</Label>
+                        <Select value={selectedPlan} onValueChange={(value: string) => setSelectedPlan(value as 'basic' | 'premium' | 'pro')}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="basic">Basic - {formatPiAmount(SUBSCRIPTION_PLANS.basic.price)}/month</SelectItem>
+                            <SelectItem value="premium">Premium - {formatPiAmount(SUBSCRIPTION_PLANS.premium.price)}/month</SelectItem>
+                            <SelectItem value="pro">Pro - {formatPiAmount(SUBSCRIPTION_PLANS.pro.price)}/month</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                  <div>
-                    <Label htmlFor="memo">Description *</Label>
-                    <Textarea
-                      id="memo"
-                      placeholder="Enter payment description (e.g., Premium Course Access, Monthly Subscription, etc.)"
-                      value={memo}
-                      onChange={(e) => setMemo(e.target.value)}
-                      rows={3}
-                      maxLength={200}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      This will be shown to customers during checkout
-                    </p>
-                  </div>
+                      <div>
+                        <Label htmlFor="billingPeriod">Billing Period</Label>
+                        <Select value={billingPeriod} onValueChange={(value: string) => setBillingPeriod(value as 'monthly' | 'yearly')}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                            <SelectItem value="yearly">Yearly (Save 20%)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <Label htmlFor="amount">Amount (π)</Label>
+                        <Input
+                          id="amount"
+                          type="number"
+                          placeholder="0.00"
+                          value={amount}
+                          onChange={(e) => setAmount(e.target.value)}
+                          min="0"
+                          step="0.01"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="memo">Description *</Label>
+                        <Textarea
+                          id="memo"
+                          placeholder="Enter payment description (e.g., Premium Course Access, Monthly Subscription, etc.)"
+                          value={memo}
+                          onChange={(e) => setMemo(e.target.value)}
+                          rows={3}
+                          maxLength={200}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          This will be shown to customers during checkout
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="space-y-4">
@@ -353,18 +463,28 @@ const PiPayments: React.FC = () => {
                       </div>
                       <div className="flex justify-between">
                         <span>Amount:</span>
-                        <span className="font-medium">{formatPiAmount(parseFloat(amount) || 0)}</span>
+                        <span className="font-medium">
+                          {paymentType === 'subscription' 
+                            ? formatPiAmount(getPlanPrice(selectedPlan, billingPeriod))
+                            : formatPiAmount(parseFloat(amount) || 0)
+                          }
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Description:</span>
-                        <span className="text-right">{memo || 'No description'}</span>
+                        <span className="text-right max-w-xs">
+                          {paymentType === 'subscription'
+                            ? `${SUBSCRIPTION_PLANS[selectedPlan].name} Plan - ${billingPeriod === 'yearly' ? 'Annual' : 'Monthly'}`
+                            : memo || 'No description'
+                          }
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   <Button
                     onClick={createPaymentLink}
-                    disabled={isProcessing || !amount || !memo}
+                    disabled={isProcessing || (paymentType !== 'subscription' && (!amount || !memo))}
                     className="w-full bg-sky-500 hover:bg-sky-600"
                     size="lg"
                   >

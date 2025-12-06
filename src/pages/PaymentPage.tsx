@@ -44,6 +44,7 @@ interface PaymentLink {
 const PaymentPage: React.FC = () => {
   const { linkId } = useParams();
   const navigate = useNavigate();
+  const searchParams = new URLSearchParams(window.location.search);
   
   const [paymentLink, setPaymentLink] = useState<PaymentLink | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +58,25 @@ const PaymentPage: React.FC = () => {
       loadPaymentLink(linkId);
     }
   }, [linkId]);
+
+  // Handle payment completion redirect from Pi Network
+  useEffect(() => {
+    const txid = searchParams.get('txid');
+    const paymentId = searchParams.get('paymentId');
+    
+    if (txid) {
+      // Payment completed successfully
+      setPaymentStatus('completed');
+      setTransactionHash(txid);
+      
+      // Redirect to dashboard after 3 seconds to show results of subscription unlock
+      const timer = setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, navigate]);
 
   const loadPaymentLink = async (id: string) => {
     setLoading(true);
@@ -251,29 +271,125 @@ const PaymentPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-2xl">
-        <CardHeader className="text-center space-y-4">
+      <Card className="w-full max-w-2xl shadow-2xl">
+        <CardHeader className="text-center space-y-4 border-b">
           <div className="mx-auto w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
             {getTypeIcon(paymentLink.type)}
           </div>
           
-          <CardTitle className="text-xl font-bold">
+          <CardTitle className="text-2xl font-bold">
             {paymentLink.type === 'product' ? 'Purchase Product' : 
              paymentLink.type === 'tip' ? 'Send Tip' :
              paymentLink.type === 'donation' ? 'Make Donation' :
-             paymentLink.type === 'subscription' ? 'Subscribe' :
+             paymentLink.type === 'subscription' ? 'Subscribe Now' :
              'Make Payment'}
           </CardTitle>
           
-          <CardDescription className="text-gray-600">
+          <CardDescription className="text-gray-600 text-base">
             {paymentLink.description}
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          <div className="p-6 text-center text-gray-500">
-            <h2 className="text-xl font-semibold mb-2">The pay feature is currently disabled.</h2>
-            <p>This section is unavailable for now. Please check back later.</p>
+        <CardContent className="p-8 space-y-6">
+          {/* Merchant Info */}
+          {paymentLink.merchantProfile && (
+            <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+              {paymentLink.merchantProfile.logoUrl && (
+                <img 
+                  src={paymentLink.merchantProfile.logoUrl} 
+                  alt={paymentLink.merchantProfile.businessName}
+                  className="w-12 h-12 rounded-full"
+                />
+              )}
+              <div>
+                <p className="font-semibold">{paymentLink.merchantProfile.businessName || paymentLink.merchantProfile.username}</p>
+                <p className="text-sm text-gray-600">@{paymentLink.merchantProfile.username}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Payment Details */}
+          <div className="space-y-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-700">Amount:</span>
+              <span className="text-2xl font-bold text-blue-900">{formatPiAmount(paymentLink.amount)}</span>
+            </div>
+            
+            {paymentLink.type === 'subscription' && (
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-600">Billing:</span>
+                <Badge variant="secondary">Monthly</Badge>
+              </div>
+            )}
+
+            <Separator className="bg-blue-200" />
+            
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-600">Network:</span>
+              <span className="font-medium">Pi Mainnet</span>
+            </div>
+          </div>
+
+          {/* Payment Status Messages */}
+          {paymentStatus === 'completed' && (
+            <Alert className="border-green-300 bg-green-50">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                Payment completed successfully! Transaction: {transactionHash}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {paymentStatus === 'failed' && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                {error || 'Payment failed. Please try again.'}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {processing && (
+            <Alert className="border-blue-300 bg-blue-50">
+              <Clock className="h-4 w-4 text-blue-600 animate-spin" />
+              <AlertDescription className="text-blue-800">
+                Processing payment on Pi Network...
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex flex-col gap-3 mt-6">
+            <Button 
+              size="lg"
+              className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-semibold"
+              disabled={processing || paymentStatus === 'completed' || paymentStatus === 'failed'}
+            >
+              <Pi className="w-5 h-5 mr-2" />
+              {processing ? 'Processing Payment...' : 'Continue with Pi Wallet'}
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => navigate('/dashboard')}
+              className="w-full"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Return to Dashboard
+            </Button>
+          </div>
+
+          {/* Info Box */}
+          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm">
+            <h4 className="font-semibold mb-2 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-green-600" />
+              Secure Payment
+            </h4>
+            <ul className="space-y-1 text-gray-600 text-xs">
+              <li>✓ Powered by Pi Network on Mainnet</li>
+              <li>✓ All transactions are secured and verified</li>
+              <li>✓ Your funds go directly to the merchant</li>
+            </ul>
           </div>
         </CardContent>
       </Card>
