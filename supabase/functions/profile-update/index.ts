@@ -201,23 +201,46 @@ serve(async (req) => {
 
       profile = profileDataResult;
     } else {
+
       const tokenFromHeader = req.headers.get('x-pi-access-token') || piAccessToken;
       if (!tokenFromHeader) {
         throw new Error('Missing or invalid authorization header');
       }
-      profile = await getProfileFromPiToken(tokenFromHeader, username);
+      // Try to get profile, but do not throw if not found
+      let foundProfile = null;
+      try {
+        foundProfile = await getProfileFromPiToken(tokenFromHeader, username);
+      } catch (e) {
+        // Profile not found, will insert
+      }
+      profile = foundProfile;
     }
 
-    // Update profile using service role (bypasses RLS)
-    const { data, error } = await serviceSupabase
-      .from("profiles")
-      .update({
-        ...processedProfileData,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", profile.id)
-      .select()
-      .single();
+    let data, error;
+    if (profile && profile.id) {
+      // Update existing profile
+      ({ data, error } = await serviceSupabase
+        .from("profiles")
+        .update({
+          ...processedProfileData,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", profile.id)
+        .select()
+        .single());
+    } else {
+      // Insert new profile (for new Pi user)
+      ({ data, error } = await serviceSupabase
+        .from("profiles")
+        .insert({
+          ...processedProfileData,
+          username,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single());
+    }
 
     if (error) throw error;
 
