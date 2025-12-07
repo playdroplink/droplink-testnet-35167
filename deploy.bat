@@ -14,6 +14,19 @@ if %errorlevel% neq 0 (
 
 echo ✅ Build successful!
 
+REM Important: Show Pi Auth verification reminder
+echo.
+echo ⚠️  IMPORTANT: Pi Authentication Setup Required
+echo.
+echo Before deploying, ensure you've run these steps:
+echo   1. Go to Supabase Dashboard ^> SQL Editor
+echo   2. Run the content from: verify-pi-auth-schema.sql
+echo   3. Run: NOTIFY pgrst, 'reload schema';
+echo   4. Wait 30 seconds for cache refresh
+echo.
+echo For automated setup, use: deploy-with-pi-auth-check.bat
+echo.
+
 REM Deploy to Vercel
 echo 🌐 Deploying to Vercel...
 npx vercel --prod
