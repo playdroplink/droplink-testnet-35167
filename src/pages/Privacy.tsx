@@ -122,6 +122,14 @@ const Privacy = () => {
               </p>
             </section>
           </CardContent>
+          <div className="border-t p-6 flex justify-center">
+            <Button 
+              className="bg-sky-500 hover:bg-sky-600 text-white"
+              onClick={() => window.open('https://www.droplink.space/community-guidelines', '_blank')}
+            >
+              Community Guidelines
+            </Button>
+          </div>
         </Card>
       </div>
     </div>
