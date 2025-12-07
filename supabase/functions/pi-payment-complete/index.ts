@@ -96,6 +96,10 @@ serve(async (req) => {
       );
     }
 
+    // Get metadata from idempotency record (stored during approval)
+    const storedMetadata = existingPayment?.metadata || {};
+    const clientMetadata = storedMetadata?.clientMetadata || {};
+    
     // Validate payment with Pi API
     const PI_API_KEY = Deno.env.get('PI_API_KEY');
     if (!PI_API_KEY) {
@@ -187,9 +191,9 @@ serve(async (req) => {
       .eq('payment_id', paymentId);
 
     // Update subscription in database if this was a subscription payment
-    if (metadata?.subscriptionPlan && finalProfileId) {
-      const planType = metadata.subscriptionPlan.toLowerCase();
-      const billingPeriod = metadata.billingPeriod || 'monthly';
+    if ((clientMetadata?.subscriptionPlan || metadata?.subscriptionPlan) && finalProfileId) {
+      const planType = (clientMetadata?.subscriptionPlan || metadata?.subscriptionPlan || '').toLowerCase();
+      const billingPeriod = clientMetadata?.billingPeriod || metadata?.billingPeriod || 'monthly';
       const endDate = new Date();
       
       if (billingPeriod === 'yearly') {
@@ -197,6 +201,14 @@ serve(async (req) => {
       } else {
         endDate.setMonth(endDate.getMonth() + 1);
       }
+
+      console.log('[SUBSCRIPTION CREATE]', {
+        profileId: finalProfileId,
+        planType,
+        billingPeriod,
+        endDate: endDate.toISOString(),
+        amount: paymentData.amount || paymentDetails.amount,
+      });
 
       const { error: subError } = await supabase
         .from("subscriptions")
@@ -210,13 +222,22 @@ serve(async (req) => {
           status: "active",
           auto_renew: true,
         }, {
-          onConflict: 'profile_id,plan_type'
+          onConflict: 'profile_id'
         });
 
       if (subError) {
         // Log error but don't fail payment - subscription can be fixed later
         console.error("Subscription creation error (non-critical):", JSON.stringify(subError));
+      } else {
+        console.log('[SUBSCRIPTION CREATED]', finalProfileId, planType);
       }
+    } else {
+      console.log('[NO SUBSCRIPTION DATA]', { 
+        hasClientMetadata: !!clientMetadata?.subscriptionPlan,
+        hasMetadata: !!metadata?.subscriptionPlan,
+        finalProfileId,
+        clientMetadata 
+      });
     }
 
     return new Response(

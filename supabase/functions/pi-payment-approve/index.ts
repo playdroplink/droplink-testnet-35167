@@ -116,34 +116,38 @@ serve(async (req) => {
 
     const paymentDetails = await getPaymentResponse.json();
     
-    // Validate payment status and amount
-    if (paymentDetails.status !== 'ready_for_approval') {
-      throw new Error(`Payment is not ready for approval. Current status: ${paymentDetails.status}`);
-    }
+    // Extract metadata from payment details (client-side provided metadata)
+    const clientMetadata = paymentDetails?.metadata || {};
 
-    // Record payment attempt for idempotency
-    const metadata = paymentDetails?.metadata || {};
-
-    if (!profileId && metadata?.profileId) {
-      profileId = metadata.profileId as string;
+    // Try to get profileId from various sources
+    if (!profileId && clientMetadata?.profileId) {
+      profileId = clientMetadata.profileId as string;
     }
 
     // If still no profileId, attempt to resolve by username if provided
-    if (!profileId && metadata?.username) {
+    if (!profileId && clientMetadata?.username) {
       const { data: profileByUsername } = await supabase
         .from('profiles')
         .select('id')
-        .eq('username', metadata.username as string)
+        .eq('username', clientMetadata.username as string)
         .maybeSingle();
       if (profileByUsername) {
         profileId = profileByUsername.id;
       }
     }
 
+    // Log warning if no profileId found
     if (!profileId) {
-      throw new Error('Unable to determine profile for payment');
+      console.warn('Unable to determine profile for payment:', { paymentId, clientMetadata });
+      // Don't throw - allow approval to continue, will be resolved in completion
     }
 
+    // Validate payment status
+    if (paymentDetails.status !== 'ready_for_approval') {
+      throw new Error(`Payment is not ready for approval. Current status: ${paymentDetails.status}`);
+    }
+
+    // Record payment attempt for idempotency with full metadata
     await supabase
       .from('payment_idempotency')
       .upsert({
@@ -151,7 +155,11 @@ serve(async (req) => {
         profile_id: profileId,
         amount: paymentDetails.amount || 0,
         status: 'pending',
-        metadata: paymentDetails,
+        metadata: {
+          ...paymentDetails,
+          clientMetadata: clientMetadata,
+          approvedAt: new Date().toISOString()
+        },
       }, {
         onConflict: 'payment_id'
       });
@@ -181,6 +189,20 @@ serve(async (req) => {
     }
 
     const paymentData = await response.json();
+
+    // Update idempotency record with approval details
+    await supabase
+      .from('payment_idempotency')
+      .update({ status: 'approved' })
+      .eq('payment_id', paymentId);
+
+    console.log('[APPROVAL SUCCESS]', {
+      paymentId,
+      profileId,
+      amount: paymentData.amount,
+      status: paymentData.status,
+      subscriptionPlan: clientMetadata?.subscriptionPlan
+    });
 
     return new Response(
       JSON.stringify({ success: true, payment: paymentData }),

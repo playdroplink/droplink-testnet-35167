@@ -151,6 +151,12 @@ const Subscription = () => {
       return;
     }
     
+    // Ensure profileId is loaded before proceeding
+    if (!profileId) {
+      toast.error('User profile not found. Please try again.');
+      return;
+    }
+    
     // Show confirmation for paid plans
     if (planName !== 'Free' && price > 0) {
       const confirmed = window.confirm(
@@ -179,20 +185,26 @@ const Subscription = () => {
       console.log('[SUBSCRIPTION] ⚠️ REAL MAINNET PAYMENT:', price, 'Pi for', planName);
       console.log('[SUBSCRIPTION] Network: MAINNET (Production)');
       console.log('[SUBSCRIPTION] User:', piUser.username);
+      console.log('[SUBSCRIPTION] Profile ID:', profileId);
       
-      await createPayment(
+      const result = await createPayment(
         price,
         `Droplink ${planName} ${isYearly ? 'Yearly' : 'Monthly'} Subscription`,
         {
           subscriptionPlan: planName.toLowerCase(),
           billingPeriod: isYearly ? 'yearly' : 'monthly',
           username: piUser.username,
-          profileId: profileId || undefined,
+          profileId: profileId,
         }
       );
-      toast.success(`Successfully subscribed to ${planName} plan! 🎉`);
-      setCurrentPlan(planName);
-      setSubscription({ plan_type: planName.toLowerCase() });
+      
+      if (result) {
+        toast.success(`Successfully subscribed to ${planName} plan! 🎉`);
+        setCurrentPlan(planName);
+        setSubscription({ plan_type: planName.toLowerCase() });
+      } else {
+        toast.error('Payment was not completed. Please try again.');
+      }
     } catch (error: any) {
       console.error('[SUBSCRIPTION] Payment error:', error);
       toast.error(error?.message || 'Failed to process subscription. Please try again.');

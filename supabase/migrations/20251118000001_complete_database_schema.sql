@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE, -- For email/Gmail users
     username TEXT UNIQUE NOT NULL,
     pi_user_id TEXT, -- For Pi Network users
+    display_name TEXT DEFAULT NULL,
     
     -- Profile information
     business_name TEXT NOT NULL DEFAULT '',
