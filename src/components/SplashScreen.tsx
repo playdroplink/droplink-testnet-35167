@@ -10,6 +10,10 @@ export interface SplashScreenProps {
 const SplashScreen = ({ onComplete }: SplashScreenProps) => {
   const [progress, setProgress] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
+  const [enableChristmasTheme, setEnableChristmasTheme] = useState(() => {
+    const saved = localStorage.getItem('droplink-christmas-theme');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
 
   useEffect(() => {
     // Total loading time in milliseconds - slightly longer for smoother animation
@@ -64,7 +68,7 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
     <AnimatePresence mode="wait" onExitComplete={() => {}}>
       {!isExiting && (
         <motion.div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-sky-400"
+          className={`fixed inset-0 z-50 flex flex-col items-center justify-center ${enableChristmasTheme ? 'bg-gradient-to-b from-red-600 via-sky-400 to-green-600' : 'bg-sky-400'}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -93,8 +97,8 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
               }}
             >
               <img 
-                src="/droplink-logo.png" 
-                alt="Droplink Logo" 
+                src={enableChristmasTheme ? "https://i.ibb.co/W4yN9rQ4/Gemini-Generated-Image-uo458huo458huo45-removebg-preview.png" : "/droplink-logo.png"} 
+                alt={enableChristmasTheme ? "Christmas Droplink Logo" : "Droplink Logo"} 
                 className="h-full w-full object-contain" 
                 onError={(e) => {
                   console.warn('Failed to load splash screen logo');
@@ -106,12 +110,12 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
             
             {/* App Name */}
             <motion.h1 
-              className="mb-2 font-poppins text-4xl font-bold text-white"
+              className={`mb-2 font-poppins text-4xl font-bold ${enableChristmasTheme ? 'text-red-100' : 'text-white'}`}
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" }}
             >
-              Droplink
+              {enableChristmasTheme ? '🎄 Droplink 🎄' : 'Droplink'}
             </motion.h1>
             
             {/* Company Name */}
