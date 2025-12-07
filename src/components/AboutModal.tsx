@@ -317,12 +317,12 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
                   Learn About .pi Domains
                   <ExternalLink className="w-3 h-3" />
                 </Button>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Twitter className="w-4 h-4" />
-                  Twitter
-                  <ExternalLink className="w-3 h-3" />
-                </Button>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-2"
+                  onClick={() => window.open('https://www.droplink.space/contact', '_blank')}
+                >
                   <Mail className="w-4 h-4" />
                   Support
                   <ExternalLink className="w-3 h-3" />
@@ -335,11 +335,32 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
           <div className="text-center text-sm text-muted-foreground space-y-2">
             <p>© 2025 DropLink by Mrwain Organization. Built for the Pi Network ecosystem.</p>
             <p>
-              <Button variant="link" size="sm" className="p-0 h-auto">Privacy Policy</Button>
+              <Button 
+                variant="link" 
+                size="sm" 
+                className="p-0 h-auto"
+                onClick={() => window.location.href = '/privacy'}
+              >
+                Privacy Policy
+              </Button>
               {" • "}
-              <Button variant="link" size="sm" className="p-0 h-auto">Terms of Service</Button>
+              <Button 
+                variant="link" 
+                size="sm" 
+                className="p-0 h-auto"
+                onClick={() => window.location.href = '/terms'}
+              >
+                Terms of Service
+              </Button>
               {" • "}
-              <Button variant="link" size="sm" className="p-0 h-auto">Pi Network Integration</Button>
+              <Button 
+                variant="link" 
+                size="sm" 
+                className="p-0 h-auto"
+                onClick={() => window.open('https://pi-apps.github.io/community-developer-guide/', '_blank')}
+              >
+                Pi Network Integration
+              </Button>
             </p>
           </div>
         </div>

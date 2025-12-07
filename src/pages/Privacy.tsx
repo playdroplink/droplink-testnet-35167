@@ -122,13 +122,6 @@ const Privacy = () => {
               </p>
             </section>
           </CardContent>
-          <div className="border-t p-6 flex justify-center">
-            <a href="https://www.droplink.space/gdpr" target="_blank" rel="noopener noreferrer">
-              <Button className="bg-sky-500 hover:bg-sky-600 text-white">
-                View GDPR Policy
-              </Button>
-            </a>
-          </div>
         </Card>
       </div>
     </div>
