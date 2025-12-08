@@ -1,5 +1,5 @@
 export const PI_CONFIG = {
-  API_KEY: "b00j4felp0ctc1fexe8igldsjg9u7wbqitavc15si53fr9wwra7r6oluzk4j24qz", // MATCHES manifest.json
+  API_KEY: "96tnxytg82pevnvvxfowap4bwctcxo6wkp2dexoraevtj8svh0mvqxttpbtwvjm5", // MAINNET API KEY
   BASE_URL: "https://api.minepi.com",
   NETWORK: "mainnet",
   NETWORK_PASSPHRASE: "Pi Mainnet",
@@ -11,12 +11,16 @@ export const PI_CONFIG = {
     sandbox: false, // MAINNET - SANDBOX MODE DISABLED
   },
   
-  // Request minimal scope by default to maximize sign-in success.
-  // Payments can be requested later (or escalated) once the app is approved for that permission.
-  scopes: ['username'],
+  // Scopes for Droplink Mainnet - includes payments, wallet_address, and username
+  // These scopes allow users to:
+  // - Sign in with username
+  // - Make payments for subscriptions
+  // - Access wallet address for tips and donations
+  scopes: ['username', 'payments', 'wallet_address'],
   
   onIncompletePaymentFound: (payment: any) => {
-    console.log('Incomplete payment found:', payment);
+    console.log('[PI CONFIG] Incomplete payment found:', payment);
+    // Handle incomplete payments from previous sessions
   },
   
   CUSTOM_TOKENS: {

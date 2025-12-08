@@ -120,6 +120,11 @@ const Dashboard = () => {
   const [aiLogoPrompt, setAiLogoPrompt] = useState("");
   const [aiLogoLoading, setAiLogoLoading] = useState(false);
   const [aiLogoError, setAiLogoError] = useState("");
+  // Christmas Theme Toggle State
+  const [enableChristmasTheme, setEnableChristmasTheme] = useState(() => {
+    const saved = localStorage.getItem('droplink-christmas-theme');
+    return saved !== null ? JSON.parse(saved) : false; // Default to false for dashboard
+  });
   const navigate = useNavigate();
   
   // Hooks must be called unconditionally
@@ -156,6 +161,11 @@ const Dashboard = () => {
     };
     setGreeting(getGreeting());
   }, []);
+
+  // Save Christmas theme preference to localStorage
+  useEffect(() => {
+    localStorage.setItem('droplink-christmas-theme', JSON.stringify(enableChristmasTheme));
+  }, [enableChristmasTheme]);
   
   const subscription = useActiveSubscription();
   const { plan, expiresAt, loading: subscriptionLoading } = subscription;
@@ -1098,12 +1108,23 @@ const Dashboard = () => {
 
   return (
     <div
-      className="min-h-screen bg-sky-100"
+      className={`min-h-screen ${enableChristmasTheme ? 'bg-gradient-to-b from-red-600 via-sky-400 to-green-600' : 'bg-sky-100'}`}
       style={{
         position: "relative",
         overflow: "hidden",
       }}
     >
+      {/* Festive snowflakes background - only show if Christmas theme enabled */}
+      {enableChristmasTheme && (
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <div className="absolute top-10 left-10 text-4xl animate-pulse">❄️</div>
+          <div className="absolute top-20 right-20 text-5xl animate-bounce">🎄</div>
+          <div className="absolute bottom-20 left-20 text-4xl animate-pulse">❄️</div>
+          <div className="absolute bottom-10 right-10 text-5xl animate-bounce">🎄</div>
+          <div className="absolute top-1/3 left-1/4 text-3xl opacity-60">⛄</div>
+          <div className="absolute top-2/3 right-1/4 text-3xl opacity-60">⛄</div>
+        </div>
+      )}
       {/* Material You Glow Effect */}
       <div
         aria-hidden="true"
@@ -1121,7 +1142,7 @@ const Dashboard = () => {
         }}
       />
       {/* Greeting Section */}
-      <div className="px-2 sm:px-4 lg:px-6 pt-2 sm:pt-3 lg:pt-4 pb-1 sm:pb-2">
+      <div className="px-2 sm:px-4 lg:px-6 pt-2 sm:pt-3 lg:pt-4 pb-1 sm:pb-2 relative z-10">
         {greeting && displayUsername && (
           <h2 className="text-xl font-semibold text-sky-700 mb-2 animate-fade-in">
             {greeting}, {displayUsername}!
@@ -1133,7 +1154,7 @@ const Dashboard = () => {
           </h2>
         )}
       </div>
-      <header className={`px-2 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 shadow-sm border-b border-border ${isMobile ? 'bg-background' : 'glass-surface'}`}>
+      <header className={`px-2 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 shadow-sm border-b border-border relative z-10 ${isMobile ? 'bg-background' : 'glass-surface'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
             <h1 className="text-lg sm:text-xl font-semibold text-sky-500 animate-pulse">DropLink</h1>
@@ -1164,6 +1185,19 @@ const Dashboard = () => {
                 {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </Button>
             )}
+            {/* Christmas Theme Toggle Button */}
+            <Button
+              onClick={() => setEnableChristmasTheme(!enableChristmasTheme)}
+              size="sm"
+              variant="outline"
+              title={enableChristmasTheme ? "Switch to Standard Mode" : "Switch to Christmas Mode"}
+              className={`h-9 w-9 sm:w-auto px-0 sm:px-3 border-none ${enableChristmasTheme ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-sky-100 text-sky-600 hover:bg-sky-200'}`}
+            >
+              <span className="text-lg">{enableChristmasTheme ? '🎄' : '❄️'}</span>
+              <span className="hidden sm:inline ml-1.5 text-xs sm:text-sm font-medium">
+                {enableChristmasTheme ? 'Christmas' : 'Standard'}
+              </span>
+            </Button>
             {/* Add Plan button to header for both mobile and desktop */}
             <Button
               variant="outline"

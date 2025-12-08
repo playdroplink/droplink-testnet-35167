@@ -98,7 +98,7 @@ export async function linkPiUserToSupabase(
         .update({
           pi_user_id: piData.uid,
           pi_username: piData.username,
-          wallet_address: piData.wallet_address || existingProfile.wallet_address,
+          pi_wallet_address: piData.wallet_address || existingProfile.pi_wallet_address,
           updated_at: new Date().toISOString(),
         })
         .eq('id', existingProfile.id)
@@ -126,7 +126,7 @@ export async function linkPiUserToSupabase(
             display_name: displayName || piData.username,
             pi_user_id: piData.uid,
             pi_username: piData.username,
-            wallet_address: piData.wallet_address || null,
+            pi_wallet_address: piData.wallet_address || null,
             theme_settings: {
               primaryColor: '#3b82f6',
               backgroundColor: '#000000',

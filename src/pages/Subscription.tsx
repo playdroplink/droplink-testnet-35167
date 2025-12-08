@@ -175,11 +175,39 @@ const Subscription = () => {
     setLoading(true);
     try {
       if (planName === 'Free') {
+        // Update subscription to free plan
+        const { error } = await supabase
+          .from('subscriptions')
+          .upsert({
+            profile_id: profileId,
+            plan_type: 'free',
+            status: 'active',
+            start_date: new Date().toISOString(),
+            end_date: null,
+            pi_amount: 0,
+            pi_transaction_id: null,
+            billing_period: 'monthly',
+            metadata: {}
+          }, {
+            onConflict: 'profile_id'
+          });
+        
+        if (error) {
+          console.error('Error updating subscription:', error);
+          toast.error('Failed to activate free plan');
+          return;
+        }
+        
         toast.success('Free plan activated! 🎉');
         setCurrentPlan('Free');
         setSubscription({ plan_type: 'free' });
         return;
       }
+      
+      // Show "payment pending" notification
+      const toastId = toast.loading('🔄 Waiting for Pi payment approval...', {
+        description: `Processing ${price} Pi for ${planName} ${isYearly ? 'Yearly' : 'Monthly'} plan`,
+      });
       
       // MAINNET PAYMENT - Real Pi coins will be charged!
       console.log('[SUBSCRIPTION] ⚠️ REAL MAINNET PAYMENT:', price, 'Pi for', planName);
@@ -195,15 +223,68 @@ const Subscription = () => {
           billingPeriod: isYearly ? 'yearly' : 'monthly',
           username: piUser.username,
           profileId: profileId,
+          type: 'subscription'
         }
       );
       
       if (result) {
-        toast.success(`Successfully subscribed to ${planName} plan! 🎉`);
+        // Payment successful - create subscription record
+        toast.dismiss(toastId);
+        
+        const startDate = new Date();
+        const endDate = new Date();
+        if (isYearly) {
+          endDate.setFullYear(endDate.getFullYear() + 1);
+        } else {
+          endDate.setMonth(endDate.getMonth() + 1);
+        }
+        
+        const { error: subError } = await supabase
+          .from('subscriptions')
+          .upsert({
+            profile_id: profileId,
+            plan_type: planName.toLowerCase(),
+            status: 'active',
+            start_date: startDate.toISOString(),
+            end_date: endDate.toISOString(),
+            pi_amount: price,
+            pi_transaction_id: result,
+            billing_period: isYearly ? 'yearly' : 'monthly',
+            metadata: {
+              paymentApprovedAt: new Date().toISOString(),
+              paymentHash: result,
+              username: piUser.username
+            }
+          }, {
+            onConflict: 'profile_id'
+          });
+        
+        if (subError) {
+          console.error('Error creating subscription record:', subError);
+          toast.error('Payment successful but subscription record failed. Please contact support.');
+          return;
+        }
+        
+        toast.success(`✅ Subscribed to ${planName} plan!`, {
+          description: `Transaction: ${result.substring(0, 12)}...`,
+          duration: 5000
+        });
+        
         setCurrentPlan(planName);
-        setSubscription({ plan_type: planName.toLowerCase() });
+        setSubscription({ 
+          plan_type: planName.toLowerCase(),
+          status: 'active',
+          end_date: endDate.toISOString()
+        });
+        
+        // Redirect to dashboard after 2 seconds
+        setTimeout(() => navigate('/'), 2000);
       } else {
-        toast.error('Payment was not completed. Please try again.');
+        toast.dismiss(toastId);
+        toast.error('❌ Payment was not completed', {
+          description: 'Your Pi wallet may have been cancelled the transaction. Please try again.',
+          duration: 5000
+        });
       }
     } catch (error: any) {
       console.error('[SUBSCRIPTION] Payment error:', error);

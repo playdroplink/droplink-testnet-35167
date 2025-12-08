@@ -44,13 +44,6 @@ BEGIN
         RAISE NOTICE '✅ Added pi_last_auth column';
     END IF;
     
-    -- Ensure wallet_address column exists
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                   WHERE table_name = 'profiles' AND column_name = 'wallet_address') THEN
-        ALTER TABLE public.profiles ADD COLUMN wallet_address TEXT DEFAULT '';
-        RAISE NOTICE '✅ Added wallet_address column';
-    END IF;
-    
     -- Ensure pi_wallet_address column exists
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
                    WHERE table_name = 'profiles' AND column_name = 'pi_wallet_address') THEN
@@ -62,8 +55,12 @@ BEGIN
 END $$;
 
 -- Step 2: Verify all required columns are present
-RAISE NOTICE '';
-RAISE NOTICE '📋 Current Pi auth columns in profiles table:';
+DO $$
+BEGIN
+    RAISE NOTICE '';
+    RAISE NOTICE '📋 Current Pi auth columns in profiles table:';
+END $$;
+
 SELECT column_name, data_type, is_nullable, column_default
 FROM information_schema.columns
 WHERE table_name = 'profiles'
@@ -73,7 +70,6 @@ AND column_name IN (
     'pi_access_token', 
     'pi_wallet_verified',
     'pi_last_auth',
-    'wallet_address',
     'pi_wallet_address'
 )
 ORDER BY column_name;
@@ -122,7 +118,6 @@ BEGIN
             pi_user_id,
             pi_username,
             pi_wallet_address,
-            wallet_address,
             pi_access_token,
             pi_last_auth,
             pi_wallet_verified,
@@ -140,7 +135,6 @@ BEGIN
             p_pi_user_id,
             p_pi_username,
             COALESCE(p_wallet_address, ''),
-            COALESCE(p_wallet_address, ''),
             p_access_token,
             NOW(),
             p_wallet_address IS NOT NULL,
@@ -157,7 +151,6 @@ BEGIN
                 'customLinks', '[]'::jsonb
             )
         );
-        
         result := json_build_object(
             'success', true,
             'profile_id', profile_id,
@@ -187,10 +180,6 @@ BEGIN
                 WHEN p_wallet_address IS NOT NULL THEN p_wallet_address 
                 ELSE COALESCE(pi_wallet_address, '')
             END,
-            wallet_address = CASE 
-                WHEN p_wallet_address IS NOT NULL THEN p_wallet_address 
-                ELSE COALESCE(wallet_address, '')
-            END,
             pi_user_id = COALESCE(p_pi_user_id, pi_user_id),
             pi_username = COALESCE(p_pi_username, pi_username),
             updated_at = NOW()
@@ -214,14 +203,16 @@ END $$;
 -- Step 5: Grant permissions to the function
 GRANT EXECUTE ON FUNCTION public.authenticate_pi_user_safe(text, text, text, text) TO anon, authenticated;
 
-RAISE NOTICE '';
-RAISE NOTICE '✅ authenticate_pi_user_safe function created successfully!';
-RAISE NOTICE '';
+-- Step 6: Refresh the schema cache and show completion message
+DO $$
+BEGIN
+    RAISE NOTICE '';
+    RAISE NOTICE '✅ authenticate_pi_user_safe function created successfully!';
+    RAISE NOTICE '';
+    RAISE NOTICE '🔄 Schema cache refresh notification sent to PostgREST';
+    RAISE NOTICE '⏳ Please wait 30 seconds for the schema cache to reload...';
+    RAISE NOTICE '';
+    RAISE NOTICE '✅ Pi Authentication setup completed successfully!';
+END $$;
 
--- Step 6: Refresh the schema cache
 NOTIFY pgrst, 'reload schema';
-
-RAISE NOTICE '🔄 Schema cache refresh notification sent to PostgREST';
-RAISE NOTICE '⏳ Please wait 30 seconds for the schema cache to reload...';
-RAISE NOTICE '';
-RAISE NOTICE '✅ Pi Authentication setup completed successfully!';

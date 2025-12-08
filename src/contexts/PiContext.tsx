@@ -1043,45 +1043,87 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       const callbacks: PaymentCallbacks = {
         onReadyForServerApproval: async (paymentId: string) => {
           try {
+            console.log('[PAYMENT] 📋 Ready for server approval - Payment ID:', paymentId);
+            toast('Payment awaiting approval...', { 
+              description: 'Your payment is being verified on Pi Network', 
+              duration: 5000 
+            });
+            
             const { error } = await supabase.functions.invoke('pi-payment-approve', {
               body: { paymentId },
               headers: { 'Authorization': `Bearer ${accessToken}` }
             });
             if (error) {
-              console.error('Payment approval error:', error);
-              toast('Payment submitted but approval failed on server.', { description: 'Payment Error', duration: 5000 });
+              console.error('[PAYMENT] ❌ Payment approval error:', error);
+              toast('❌ Payment approval failed on server.', { 
+                description: 'Your payment was rejected: ' + (error.message || 'Unknown error'),
+                duration: 5000 
+              });
+            } else {
+              console.log('[PAYMENT] ✅ Payment approved by server');
+              toast('✅ Payment approved!', { 
+                description: 'Completing transaction...',
+                duration: 3000 
+              });
             }
           } catch (err) {
-            console.error('Payment approval error:', err);
+            console.error('[PAYMENT] ❌ Payment approval error:', err);
+            toast('❌ Payment approval failed', { 
+              description: 'Failed to approve payment: ' + (err instanceof Error ? err.message : 'Unknown error'),
+              duration: 5000 
+            });
           }
         },
         onReadyForServerCompletion: async (paymentId: string, txid: string) => {
           try {
+            console.log('[PAYMENT] 🔄 Ready for server completion - Transaction ID:', txid);
+            toast('Completing payment...', { 
+              description: 'Recording transaction on blockchain...',
+              duration: 5000 
+            });
+            
             const { error } = await supabase.functions.invoke('pi-payment-complete', {
               body: { paymentId, txid },
               headers: { 'Authorization': `Bearer ${accessToken}` }
             });
             if (error) {
-              console.error('Payment completion error:', error);
-              toast('Payment was submitted but completion failed.', { description: 'Payment Error', duration: 5000 });
+              console.error('[PAYMENT] ❌ Payment completion error:', error);
+              toast('❌ Payment completion failed', { 
+                description: 'Failed to record payment: ' + (error.message || 'Unknown error'),
+                duration: 5000 
+              });
               resolve(null);
             } else {
-              toast('Your payment has been completed successfully.', { description: 'Payment Successful', duration: 3000 });
+              console.log('[PAYMENT] ✅ Payment completed successfully - Transaction:', txid);
+              toast('✅ Payment completed successfully!', { 
+                description: 'Your payment has been recorded on the blockchain',
+                duration: 3000 
+              });
               resolve(txid);
             }
           } catch (err) {
-            console.error('Payment completion error:', err);
+            console.error('[PAYMENT] ❌ Payment completion error:', err);
+            toast('❌ Payment completion failed', { 
+              description: 'Failed to complete payment: ' + (err instanceof Error ? err.message : 'Unknown error'),
+              duration: 5000 
+            });
             resolve(null);
           }
         },
         onCancel: (paymentId: string) => {
-          console.log('Payment cancelled:', paymentId);
-          toast('The payment was cancelled.', { description: 'Payment Cancelled', duration: 3000 });
+          console.log('[PAYMENT] ⛔ Payment cancelled by user - Payment ID:', paymentId);
+          toast('❌ Payment cancelled', { 
+            description: 'You cancelled the payment. Your wallet was not charged.',
+            duration: 4000 
+          });
           resolve(null);
         },
         onError: (error: Error, payment?: any) => {
-          console.error('Payment error:', error, payment);
-          toast(error.message || 'An error occurred during payment.', { description: 'Payment Error', duration: 5000 });
+          console.error('[PAYMENT] ❌ Payment error:', error, payment);
+          toast('❌ Payment error', { 
+            description: error.message || 'An error occurred during payment.',
+            duration: 5000 
+          });
           resolve(null);
         }
       };
