@@ -81,7 +81,7 @@ export async function linkPiUserToSupabase(
     const { data: existingProfile, error: selectError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('username', piData.username)
+      .eq('pi_username', piData.username)
       .maybeSingle();
 
     if (selectError && selectError.code !== 'PGRST116') {
