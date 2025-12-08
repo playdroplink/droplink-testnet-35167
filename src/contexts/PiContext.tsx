@@ -1018,13 +1018,36 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const createPayment = async (amount: number, memo: string, metadata?: any): Promise<string | null> => {
-    if (!isAuthenticated || !window.Pi) {
-      throw new Error('User not authenticated');
+    console.log('[PAYMENT] 🚀 createPayment called with:', { amount, memo, metadata });
+    
+    // VALIDATION CHECKS
+    if (!window.Pi) {
+      const errorMsg = 'Pi SDK not available. Please ensure you are in the Pi Browser.';
+      console.error('[PAYMENT] ❌', errorMsg);
+      toast.error(errorMsg, { duration: 5000 });
+      throw new Error(errorMsg);
+    }
+
+    if (!isAuthenticated || !piUser) {
+      const errorMsg = 'User not authenticated. Please sign in with Pi Network first.';
+      console.error('[PAYMENT] ❌', errorMsg);
+      toast.error(errorMsg, { duration: 5000 });
+      throw new Error(errorMsg);
+    }
+
+    if (!accessToken) {
+      const errorMsg = 'No access token available. Please sign in again.';
+      console.error('[PAYMENT] ❌', errorMsg);
+      toast.error(errorMsg, { duration: 5000 });
+      throw new Error(errorMsg);
     }
 
     // MAINNET VERIFICATION
     if (PI_CONFIG.SANDBOX_MODE) {
-      throw new Error('CRITICAL ERROR: Sandbox mode is enabled! Payments must be mainnet only.');
+      const errorMsg = 'CRITICAL ERROR: Sandbox mode is enabled! Payments must be mainnet only.';
+      console.error('[PAYMENT] ❌', errorMsg);
+      toast.error(errorMsg, { duration: 5000 });
+      throw new Error(errorMsg);
     }
     
     console.log('[PAYMENT] ⚠️ REAL Pi Network MAINNET Payment');
@@ -1032,12 +1055,24 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     console.log('[PAYMENT] Memo:', memo);
     console.log('[PAYMENT] Network:', PI_CONFIG.NETWORK);
     console.log('[PAYMENT] Sandbox Mode:', PI_CONFIG.SANDBOX_MODE);
+    console.log('[PAYMENT] User:', piUser.username);
+    console.log('[PAYMENT] Access Token:', accessToken.substring(0, 20) + '...');
+
+    // Validate payment amount
+    if (amount <= 0) {
+      const errorMsg = 'Payment amount must be greater than 0';
+      console.error('[PAYMENT] ❌', errorMsg);
+      toast.error(errorMsg, { duration: 5000 });
+      throw new Error(errorMsg);
+    }
 
     const paymentData: PaymentData = {
       amount,
       memo,
       metadata: metadata || {}
     };
+
+    console.log('[PAYMENT] 📦 Payment data prepared:', JSON.stringify(paymentData, null, 2));
 
     return new Promise<string | null>((resolve) => {
       const callbacks: PaymentCallbacks = {
@@ -1055,21 +1090,21 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
             });
             if (error) {
               console.error('[PAYMENT] ❌ Payment approval error:', error);
-              toast('❌ Payment approval failed on server.', { 
-                description: 'Your payment was rejected: ' + (error.message || 'Unknown error'),
+              toast.error('Payment approval failed', { 
+                description: error.message || 'Unknown error',
                 duration: 5000 
               });
             } else {
               console.log('[PAYMENT] ✅ Payment approved by server');
-              toast('✅ Payment approved!', { 
+              toast.success('Payment approved!', { 
                 description: 'Completing transaction...',
                 duration: 3000 
               });
             }
           } catch (err) {
             console.error('[PAYMENT] ❌ Payment approval error:', err);
-            toast('❌ Payment approval failed', { 
-              description: 'Failed to approve payment: ' + (err instanceof Error ? err.message : 'Unknown error'),
+            toast.error('Payment approval failed', { 
+              description: err instanceof Error ? err.message : 'Unknown error',
               duration: 5000 
             });
           }
@@ -1088,14 +1123,14 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
             });
             if (error) {
               console.error('[PAYMENT] ❌ Payment completion error:', error);
-              toast('❌ Payment completion failed', { 
-                description: 'Failed to record payment: ' + (error.message || 'Unknown error'),
+              toast.error('Payment completion failed', { 
+                description: error.message || 'Unknown error',
                 duration: 5000 
               });
               resolve(null);
             } else {
               console.log('[PAYMENT] ✅ Payment completed successfully - Transaction:', txid);
-              toast('✅ Payment completed successfully!', { 
+              toast.success('Payment completed successfully!', { 
                 description: 'Your payment has been recorded on the blockchain',
                 duration: 3000 
               });
@@ -1103,8 +1138,8 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
             }
           } catch (err) {
             console.error('[PAYMENT] ❌ Payment completion error:', err);
-            toast('❌ Payment completion failed', { 
-              description: 'Failed to complete payment: ' + (err instanceof Error ? err.message : 'Unknown error'),
+            toast.error('Payment completion failed', { 
+              description: err instanceof Error ? err.message : 'Unknown error',
               duration: 5000 
             });
             resolve(null);
@@ -1112,7 +1147,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         },
         onCancel: (paymentId: string) => {
           console.log('[PAYMENT] ⛔ Payment cancelled by user - Payment ID:', paymentId);
-          toast('❌ Payment cancelled', { 
+          toast('Payment cancelled', { 
             description: 'You cancelled the payment. Your wallet was not charged.',
             duration: 4000 
           });
@@ -1120,7 +1155,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         },
         onError: (error: Error, payment?: any) => {
           console.error('[PAYMENT] ❌ Payment error:', error, payment);
-          toast('❌ Payment error', { 
+          toast.error('Payment error', { 
             description: error.message || 'An error occurred during payment.',
             duration: 5000 
           });
@@ -1129,10 +1164,23 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       };
 
       try {
+        console.log('[PAYMENT] 🎯 Calling window.Pi.createPayment()...');
+        console.log('[PAYMENT] 📦 Payment data:', paymentData);
+        console.log('[PAYMENT] 🔗 Callbacks configured:', Object.keys(callbacks));
+        
         window.Pi.createPayment(paymentData, callbacks);
+        console.log('[PAYMENT] ✅ window.Pi.createPayment() invoked successfully');
+        
+        toast('Payment initiated', { 
+          description: 'Please complete the payment in the Pi Network dialog',
+          duration: 5000 
+        });
       } catch (err) {
-        console.error('Failed to initiate payment:', err);
-        toast('Failed to initiate payment.', { description: 'Payment Error', duration: 5000 });
+        console.error('[PAYMENT] ❌ Failed to initiate payment:', err);
+        toast.error('Failed to initiate payment', { 
+          description: err instanceof Error ? err.message : 'Payment Error', 
+          duration: 5000 
+        });
         resolve(null);
       }
     });
