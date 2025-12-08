@@ -124,7 +124,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
   };
 
   return (
-    <div className="relative w-[340px] h-[700px] rounded-[3rem] border-[10px] border-foreground/20 shadow-2xl overflow-hidden"
+    <div className="relative w-[340px] h-[700px] rounded-[3rem] border-[10px] border-foreground/20 shadow-2xl overflow-hidden flex flex-col"
          style={
            (profile.theme?.backgroundType === 'gif' && profile.theme?.backgroundGif) || (profile.theme?.backgroundType === 'video' && profile.theme?.backgroundVideo)
              ? {}
@@ -190,11 +190,11 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
       {/* Phone Notch */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-foreground/20 rounded-b-3xl z-10" />
       
-      {/* Phone Screen Content */}
-      <div className="h-full overflow-y-auto pt-8 px-6 pb-6 relative z-10">
-        <div className="flex flex-col items-center text-center space-y-6">
+      {/* Phone Screen Content - Scrollable with proper flex layout */}
+      <div className="flex-1 overflow-y-auto pt-8 px-6 pb-6 relative z-10 w-full flex flex-col scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+        <div className="flex flex-col items-center text-center space-y-6 w-full min-w-0">
           {/* Logo */}
-          <div className={`w-20 h-20 ${iconRadius} bg-muted border border-border flex items-center justify-center overflow-hidden`}>
+          <div className={`w-20 h-20 ${iconRadius} bg-muted border border-border flex items-center justify-center overflow-hidden shadow-lg`}>
             {profile.logo ? (
               <img src={profile.logo} alt="Logo" className="w-full h-full object-cover" />
             ) : (
@@ -203,13 +203,13 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
           </div>
 
           {/* Business Name */}
-          <h1 className="text-lg font-bold px-4 text-white">
+          <h1 className="text-lg font-bold px-4 text-white drop-shadow-lg shadow-black/50">
             {profile.businessName || "YOUR BUSINESS NAME"}
           </h1>
 
           {/* Description */}
           {profile.description && (
-            <p className="text-sm text-white/80 px-4 leading-relaxed">
+            <p className="text-sm text-white/90 px-4 leading-relaxed drop-shadow-md shadow-black/50">
               {profile.description}
             </p>
           )}
@@ -242,10 +242,10 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
               {socialLinkData.map(({ key, icon: Icon }) => (
                 <div
                   key={key}
-                  className={`w-10 h-10 ${iconRadius} flex items-center justify-center transition-smooth cursor-pointer`}
+                  className={`w-10 h-10 ${iconRadius} flex items-center justify-center transition-smooth cursor-pointer shadow-lg hover:shadow-xl`}
                   style={{ 
                     backgroundColor: profile.theme?.primaryColor || '#3b82f6',
-                    border: '1px solid rgba(255,255,255,0.1)'
+                    border: '1px solid rgba(255,255,255,0.2)'
                   }}
                 >
                   <Icon className="w-5 h-5 text-white" />
@@ -278,7 +278,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
                     } else if (displayStyle === 'animated') {
                       return `${baseClass} p-4 rounded-lg animate-pulse hover:animate-bounce transition-all duration-300 shadow-md border border-blue-400/50`;
                     } else {
-                      return `${baseClass} p-3 rounded-lg transition-all duration-200 hover:scale-105`;
+                      return `${baseClass} p-3 rounded-lg transition-all duration-200 hover:scale-105 shadow-md`;
                     }
                   };
                   
@@ -300,13 +300,15 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
                         fontSize: `${customStyle.fontSize || (displayStyle === 'featured' ? 18 : 14)}px`,
                         fontWeight: customStyle.fontWeight || (displayStyle === 'featured' ? 600 : 500),
                         borderColor: customStyle.borderColor || 'transparent',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
                         animation: customStyle.animation === 'pulse' ? 'pulse 2s infinite' :
                                  customStyle.animation === 'bounce' ? 'bounce 1s infinite' :
                                  customStyle.animation === 'glow' ? 'glow 2s infinite' :
                                  displayStyle === 'animated' ? 'pulse 2s infinite' : 'none'
                       } : {
                         backgroundColor: link.color || '#3b82f6',
-                        color: link.textColor || '#ffffff'
+                        color: link.textColor || '#ffffff',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)'
                       }}
                     >
                       {/* Icon/Favicon */}
@@ -332,11 +334,11 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
 
                       {/* Content */}
                       <div className={`flex-1 text-left min-w-0 ${layoutType === 'carousel' ? 'hidden sm:block' : ''}`}>
-                        <div className={`font-medium truncate ${textSize} ${displayStyle === 'featured' ? 'mb-1' : ''}`}>
+                        <div className={`font-medium truncate ${textSize} ${displayStyle === 'featured' ? 'mb-1' : ''} drop-shadow-sm`}>
                           {link.title || "Untitled Link"}
                         </div>
                         {link.description && layoutType !== 'carousel' && (
-                          <div className={`text-xs opacity-80 mt-1 ${displayStyle === 'featured' || layoutType === 'showcase' ? 'line-clamp-2' : 'truncate'}`}>
+                          <div className={`text-xs opacity-80 mt-1 ${displayStyle === 'featured' || layoutType === 'showcase' ? 'line-clamp-2' : 'truncate'} drop-shadow-sm`}>
                             {link.description}
                           </div>
                         )}
@@ -418,7 +420,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
           {/* Payment Checkout Links */}
           {profile.paymentLinks && profile.paymentLinks.filter(link => link.active).length > 0 && (
             <div className="w-full space-y-2 pt-4">
-              <div className="flex items-center gap-2 text-white text-sm font-medium">
+              <div className="flex items-center gap-2 text-white text-sm font-medium drop-shadow-md">
                 <CreditCard className="w-4 h-4" />
                 <span>Payment Links ({profile.paymentLinks.filter(link => link.active).length})</span>
               </div>
@@ -426,20 +428,20 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
                 <button
                   key={link.id}
                   {...getButtonStyles()}
-                  className={`${getButtonStyles().className} flex items-center justify-between gap-2 group hover:scale-[1.02] transition-transform`}
+                  className={`${getButtonStyles().className} flex items-center justify-between gap-2 group hover:scale-[1.02] transition-transform shadow-md`}
                 >
                   <div className="flex items-center gap-2">
                     {getPaymentIcon(link.type)}
-                    <span className="truncate">{link.description}</span>
+                    <span className="truncate drop-shadow-sm">{link.description}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="text-xs font-bold">{formatPiAmount(link.amount)}</span>
+                    <span className="text-xs font-bold drop-shadow-sm">{formatPiAmount(link.amount)}</span>
                     <Pi className="w-3 h-3" />
                   </div>
                 </button>
               ))}
               {profile.paymentLinks.filter(link => link.active).length > 3 && (
-                <p className="text-[10px] text-white/60 text-center">
+                <p className="text-[10px] text-white/60 text-center drop-shadow-sm">
                   +{profile.paymentLinks.filter(link => link.active).length - 3} more payment options
                 </p>
               )}
@@ -449,24 +451,24 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
           {/* Products Preview */}
           {profile.products && profile.products.length > 0 && (
             <div className="w-full space-y-3 pt-4">
-              <div className="flex items-center gap-2 text-white text-sm font-medium">
+              <div className="flex items-center gap-2 text-white text-sm font-medium drop-shadow-md">
                 <ShoppingBag className="w-4 h-4" />
                 <span>Products ({profile.products.length})</span>
               </div>
               {profile.products.slice(0, 2).map((product) => (
                 <div 
                   key={product.id}
-                  className="bg-muted border border-border rounded-xl p-3 text-left"
+                  className="bg-muted border border-border rounded-xl p-3 text-left shadow-md"
                 >
                   <div className="flex justify-between items-start mb-1">
-                    <h4 className="text-xs font-semibold text-white truncate">{product.title || "Untitled"}</h4>
-                    <span className="text-xs font-bold text-white/90">{product.price ? product.price : "0"}</span>
+                    <h4 className="text-xs font-semibold text-white truncate drop-shadow-sm">{product.title || "Untitled"}</h4>
+                    <span className="text-xs font-bold text-white/90 drop-shadow-sm">{product.price ? product.price : "0"}</span>
                   </div>
-                  <p className="text-[10px] text-white/70 line-clamp-2">{product.description || "No description"}</p>
+                  <p className="text-[10px] text-white/70 line-clamp-2 drop-shadow-sm">{product.description || "No description"}</p>
                 </div>
               ))}
               {profile.products.length > 2 && (
-                <p className="text-[10px] text-white/60">+{profile.products.length - 2} more</p>
+                <p className="text-[10px] text-white/60 drop-shadow-sm">+{profile.products.length - 2} more</p>
               )}
             </div>
           )}
@@ -475,7 +477,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
           {/* Pi Wallet QR Code and Tip Section (always visible if wallet set) */}
           {profile.piWalletAddress && (
             <div className="w-full flex flex-col items-center pt-6 pb-2">
-              <div className="relative w-[120px] h-[120px] mb-2">
+              <div className="relative w-[120px] h-[120px] mb-2 shadow-lg rounded">
                 {/* QR code with Droplink logo overlay */}
                 <QRCodeDisplay value={profile.piWalletAddress} size={120} />
                 <img
@@ -485,16 +487,16 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
                   style={{ pointerEvents: 'none' }}
                 />
               </div>
-              <div className="text-xs text-white/80 text-center break-all mb-1">{profile.piWalletAddress}</div>
-              <div className="text-xs text-sky-300 text-center">Tip Pi or DROP</div>
+              <div className="text-xs text-white/80 text-center break-all mb-1 drop-shadow-md">{profile.piWalletAddress}</div>
+              <div className="text-xs text-sky-300 text-center drop-shadow-md">Tip Pi or DROP</div>
             </div>
           )}
 
           {/* Droplink Branding */}
           {!profile.hasPremium && profile.storeUrl && (
             <div className="w-full pt-6 pb-2 text-center">
-              <p className="text-xs text-white/50">
-                Join {profile.storeUrl} on <span className="text-sky-400">Droplink</span>
+              <p className="text-xs text-white/50 drop-shadow-md">
+                Join {profile.storeUrl} on <span className="text-sky-400 font-semibold">Droplink</span>
               </p>
             </div>
           )}
@@ -502,7 +504,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
           {/* Placeholder when empty */}
           {!profile.businessName && !profile.description && socialLinkData.length === 0 && profile.products?.length === 0 && (
             <div className="text-center py-8">
-              <p className="text-sm text-white/70">
+              <p className="text-sm text-white/70 drop-shadow-md">
                 Start customizing your profile to see changes here
               </p>
             </div>

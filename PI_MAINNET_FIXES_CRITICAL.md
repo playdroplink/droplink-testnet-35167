@@ -10,6 +10,10 @@
 **Error**: "duplicate key value violates unique constraint 'profiles_pi_username_key'"
 **Cause**: Unique constraint on `pi_username` preventing multiple accounts
 
+### 3. ✅ FIXED: Migration Error
+**Was**: "column 'metadata' does not exist"
+**Fixed**: Removed references to non-existent metadata column
+
 ---
 
 ## ✅ Solutions Applied

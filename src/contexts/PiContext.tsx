@@ -1079,13 +1079,14 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         onReadyForServerApproval: async (paymentId: string) => {
           try {
             console.log('[PAYMENT] 📋 Ready for server approval - Payment ID:', paymentId);
+            console.log('[PAYMENT] 📦 Sending client metadata to approval:', metadata);
             toast('Payment awaiting approval...', { 
               description: 'Your payment is being verified on Pi Network', 
               duration: 5000 
             });
             
             const { error } = await supabase.functions.invoke('pi-payment-approve', {
-              body: { paymentId },
+              body: { paymentId, metadata },
               headers: { 'Authorization': `Bearer ${accessToken}` }
             });
             if (error) {
@@ -1112,13 +1113,14 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         onReadyForServerCompletion: async (paymentId: string, txid: string) => {
           try {
             console.log('[PAYMENT] 🔄 Ready for server completion - Transaction ID:', txid);
+            console.log('[PAYMENT] 📦 Sending metadata to completion:', metadata);
             toast('Completing payment...', { 
               description: 'Recording transaction on blockchain...',
               duration: 5000 
             });
             
             const { error } = await supabase.functions.invoke('pi-payment-complete', {
-              body: { paymentId, txid },
+              body: { paymentId, txid, metadata },
               headers: { 'Authorization': `Bearer ${accessToken}` }
             });
             if (error) {

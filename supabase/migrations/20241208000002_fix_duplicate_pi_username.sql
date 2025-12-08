@@ -76,11 +76,10 @@ WITH ranked_profiles AS (
 duplicates AS (
   SELECT id FROM ranked_profiles WHERE rn > 1
 )
--- Instead of deleting, we'll mark them as merged
+-- Instead of deleting, we'll rename them as merged to preserve data
 UPDATE profiles 
 SET 
-  pi_username = pi_username || '_merged_' || id,
-  metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('merged', true, 'merged_at', NOW())
+  pi_username = pi_username || '_merged_' || CAST(id AS TEXT)
 WHERE id IN (SELECT id FROM duplicates);
 
 -- Step 8: Add helpful comments

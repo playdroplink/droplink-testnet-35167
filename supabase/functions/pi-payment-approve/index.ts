@@ -51,11 +51,14 @@ serve(async (req) => {
   }
 
   try {
-    const { paymentId } = await req.json();
+    const { paymentId, metadata } = await req.json();
 
     if (!paymentId) {
       throw new Error("Payment ID is required");
     }
+
+    // Log incoming client metadata
+    console.log('[APPROVAL] Client metadata received:', JSON.stringify(metadata));
 
     // Get authenticated user and profile (optional for Pi users)
     const authResult = await getAuthenticatedProfile(req);
@@ -116,12 +119,17 @@ serve(async (req) => {
 
     const paymentDetails = await getPaymentResponse.json();
     
-    // Extract metadata from payment details (client-side provided metadata)
-    const clientMetadata = paymentDetails?.metadata || {};
+    // Extract metadata from payment details (Pi SDK provided metadata)
+    const piMetadata = paymentDetails?.metadata || {};
+    
+    // Use client-provided metadata if available, otherwise use Pi SDK metadata
+    const clientMetadata = metadata || piMetadata;
+    console.log('[APPROVAL] Final metadata:', { piMetadata, clientMetadata, fromClient: !!metadata });
 
-    // Try to get profileId from various sources
+    // Try to get profileId from various sources (prioritize client-provided)
     if (!profileId && clientMetadata?.profileId) {
       profileId = clientMetadata.profileId as string;
+      console.log('[APPROVAL] profileId from client metadata:', profileId);
     }
 
     // If still no profileId, attempt to resolve by username if provided
@@ -133,12 +141,13 @@ serve(async (req) => {
         .maybeSingle();
       if (profileByUsername) {
         profileId = profileByUsername.id;
+        console.log('[APPROVAL] profileId resolved from username:', profileId);
       }
     }
 
     // Log warning if no profileId found
     if (!profileId) {
-      console.warn('Unable to determine profile for payment:', { paymentId, clientMetadata });
+      console.warn('Unable to determine profile for payment:', { paymentId, metadata: clientMetadata });
       // Don't throw - allow approval to continue, will be resolved in completion
     }
 
@@ -158,11 +167,18 @@ serve(async (req) => {
         metadata: {
           ...paymentDetails,
           clientMetadata: clientMetadata,
+          piMetadata: piMetadata,
           approvedAt: new Date().toISOString()
         },
       }, {
         onConflict: 'payment_id'
       });
+
+    console.log('[APPROVAL] Idempotency record created:', { 
+      paymentId, 
+      profileId,
+      clientMetadata 
+    });
 
     // Approve the payment with Pi API
     const approveUrl = `https://api.minepi.com/v2/payments/${paymentId}/approve`;
