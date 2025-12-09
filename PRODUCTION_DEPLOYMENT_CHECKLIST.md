@@ -1,26 +1,52 @@
 # DropLink Pi Network Mainnet - Production Deployment Checklist
 
-**Date:** December 7, 2025  
-**Status:** ✅ ALL ITEMS VERIFIED & READY  
+**Date:** December 10, 2025  
+**Status:** ✅ VERCEL & SUPABASE CONFIGURED - READY FOR DEPLOYMENT
 
 ---
 
 ## Pre-Deployment Verification
 
-### Code Configuration
+### 1. Environment Configuration
+- [x] `.env.production` updated with mainnet settings
+- [x] `vercel.json` configured with 44 environment variables
+- [x] `NODE_ENV=production` set
+- [x] `VITE_PI_SANDBOX_MODE=false` confirmed
+- [x] `VITE_PI_MAINNET_MODE=true` confirmed
+- [x] `VITE_PI_AUTHENTICATION_ENABLED=true`
+- [x] `VITE_PI_PAYMENTS_ENABLED=true`
+- [x] `VITE_PI_AD_NETWORK_ENABLED=true`
+
+### 2. Pi Network Configuration
+- [x] API Key: `b00j4felp0ctc1fexe8igldsjg9u7wbqitavc15si53fr9wwra7r6oluzk4j24qz`
+- [x] Validation Key configured
+- [x] Network set to `mainnet`
+- [x] Pi SDK URL: `https://sdk.minepi.com/pi-sdk.js`
+- [x] Pi API URL: `https://api.minepi.com`
+- [x] Payment timeout: 60000ms (60 seconds)
+- [x] Min payment amount: 0.1π
+- [x] Max payment amount: 1000π
+
+### 3. Supabase Configuration
+- [x] Supabase URL: `https://idkjfuctyukspexmijvb.supabase.co`
+- [x] Supabase Anon Key configured in vercel.json
+- [ ] `PI_API_KEY` secret set in Supabase (MANUAL STEP REQUIRED)
+- [x] Edge functions updated with timeout handling:
+  - [x] `pi-payment-approve` (45s timeout)
+  - [x] `pi-payment-complete` (45s timeout)
+  - [ ] Deploy edge functions (MANUAL STEP REQUIRED)
+
+### 4. Code Configuration  
 - [x] `src/config/pi-config.ts`: SANDBOX_MODE = false
 - [x] `src/config/pi-config.ts`: NETWORK = "mainnet"
-- [x] `src/config/pi-config.ts`: API_KEY configured (b00j4felp0ctc1...)
-- [x] `src/config/pi-config.ts`: VALIDATION_KEY configured (7511661aac45...)
-- [x] `src/config/pi-config.ts`: BASE_URL = "https://api.minepi.com"
-- [x] `src/config/pi-config.ts`: SDK.sandbox = false
-- [x] Pi Context: Validates mainnet in createPayment()
-- [x] PiPayments: Calls createPayment() with metadata
-- [x] PaymentPage: Handles completion and redirect
-- [x] useActiveSubscription: Fetches subscriptions from DB
-- [x] PlanGate: Gates features by plan tier
+- [x] `src/config/pi-config.ts`: API_KEY configured
+- [x] `src/config/pi-config.ts`: VALIDATION_KEY configured
+- [x] `src/contexts/PiContext.tsx`: Payment callbacks with deduplication
+- [x] `src/pages/PublicBio.tsx`: Case-insensitive username lookups
+- [x] TypeScript errors fixed (@types/node 20.17.6)
 
 ### Database Schema
+### 5. Database Schema
 - [x] `subscriptions` table exists with columns:
   - id (uuid, primary key)
   - profile_id (uuid, foreign key)
@@ -48,81 +74,365 @@
   - pi_username (text)
   - Proper indexes on username
 
-### Edge Functions
-- [x] `pi-payment-approve` function exists and deployed
-- [x] `pi-payment-complete` function exists and deployed
-- [x] Both functions have PI_API_KEY environment variable access
-- [x] Both functions connect to Supabase (subscriptions table)
+### 6. Feature Flags
+- [x] Pi Authentication: ENABLED
+- [x] Pi Payments: ENABLED
+- [x] Pi Ad Network: ENABLED
+- [x] Wallet Detection: ENABLED
+- [x] Token Detection: ENABLED
+- [x] Rewarded Ads: ENABLED
+- [x] Interstitial Ads: ENABLED
 
-### Environment Variables (Production)
-- [x] VITE_PI_API_KEY set to mainnet key
-- [x] VITE_PI_VALIDATION_KEY set correctly
-- [x] SUPABASE_URL configured for production
-- [x] SUPABASE_ANON_KEY configured
-- [x] SUPABASE_SERVICE_ROLE_KEY available for edge functions
-
-### TypeScript & Linting
-- [x] No TypeScript errors in modified files
-- [x] PiPayments.tsx: `any` types replaced with proper types
-- [x] PaymentPage.tsx: Proper type annotations
-- [x] No ESLint errors in new code
-- [x] All imports resolved correctly
-
-### Documentation
-- [x] MAINNET_VERIFICATION_REPORT.md created (600+ lines)
-- [x] PI_NETWORK_SUBSCRIPTION_IMPLEMENTATION.md created
-- [x] PI_NETWORK_SUBSCRIPTION_QUICK_START.md created
-- [x] DROPLINK_MAINNET_SUMMARY.md created
-- [x] IMPLEMENTATION_COMPLETION_REPORT.md created
-- [x] README updates with mainnet info
+### 7. Security Settings
+- [x] Debug Mode: DISABLED
+- [x] Sandbox Mode: DISABLED
+- [x] Error Reporting: ENABLED
+- [x] Analytics: ENABLED
+- [x] Telemetry: DISABLED
 
 ---
 
-## Functional Verification
+## Deployment Steps
 
-### Authentication Flow
-- [x] Pi Browser detection works
-- [x] Pi SDK initializes in mainnet mode
-- [x] window.Pi.authenticate() callable with scopes
-- [x] Access token returned and validated
-- [x] Token validated with Pi Mainnet API (https://api.minepi.com/v2/me)
-- [x] User profile retrieved and stored
-- [x] Auto-login with stored token works
-- [x] Token expires properly
-- [x] Sign out clears data
+### Step 1: Set Supabase PI_API_KEY Secret
 
-### Payment Creation
-- [x] Subscription plan selection works
-- [x] Billing period selection works
-- [x] Automatic price calculation correct (with 20% yearly discount)
-- [x] Metadata constructed correctly:
-  - subscriptionPlan, billingPeriod, profileId
-- [x] createPayment() validates mainnet
-- [x] Pi SDK payment initiated correctly
-- [x] Amount and memo visible in Pi Wallet
+**Option A: Automated (Recommended)**
+```powershell
+powershell -ExecutionPolicy Bypass -File setup-supabase-env.ps1
+```
 
-### Payment Completion
-- [x] onReadyForServerCompletion callback fires
-- [x] pi-payment-complete invoked with paymentId, txid
-- [x] Edge function validates with Pi API
-- [x] Idempotency check prevents duplicates
-- [x] Subscription record created in database with:
-  - Correct plan_type
-  - Correct billing_period
-  - Correct end_date (30 days for monthly, 365 for yearly)
-  - status = "active"
+**Option B: Manual**
+1. Go to: https://supabase.com/dashboard/project/idkjfuctyukspexmijvb/settings/functions
+2. Click "Edge Functions" → "Secrets"
+3. Add new secret:
+   - Name: `PI_API_KEY`
+   - Value: `b00j4felp0ctc1fexe8igldsjg9u7wbqitavc15si53fr9wwra7r6oluzk4j24qz`
+4. Save
 
-### Feature Unlocking
-- [x] useActiveSubscription hook fetches subscription
-- [x] Hook returns correct plan based on subscription
-- [x] PlanGate components check user plan
-- [x] Features show when plan >= minPlan
-- [x] Upgrade prompts show when plan < minPlan
-- [x] Features update without page reload
+**Verify:**
+- [ ] PI_API_KEY appears in secrets list
+- [ ] No errors shown
 
-### Plan System
-- [x] Free plan (0π) - baseline
-- [x] Basic plan (5π/month, 48π/year)
+### Step 2: Deploy Edge Functions to Supabase
+
+**If using automated script (from Step 1):**
+- [ ] Functions deployed automatically
+- [ ] Check script output for success messages
+
+**If manual setup:**
+```powershell
+# Deploy payment approval function
+supabase functions deploy pi-payment-approve
+
+# Deploy payment completion function
+supabase functions deploy pi-payment-complete
+```
+
+**Verify:**
+- [ ] Both functions show in Supabase Dashboard → Functions
+- [ ] No deployment errors
+- [ ] Functions can be tested
+
+### Step 3: Build Production Version
+
+```powershell
+npm run build:mainnet
+```
+
+**Check:**
+- [ ] Build completes without errors
+- [ ] `dist/` folder created
+- [ ] Assets generated correctly
+- [ ] No TypeScript errors
+- [ ] Environment variables loaded from .env.production
+
+### Step 4: Deploy to Vercel
+
+**Option A: Automated Script (Recommended)**
+```powershell
+powershell -ExecutionPolicy Bypass -File deploy-production.ps1
+```
+
+**Option B: Manual Deployment**
+```powershell
+# Install Vercel CLI (if needed)
+npm install -g vercel
+
+# Login
+vercel login
+
+# Deploy to production
+vercel --prod
+```
+
+**Verify:**
+- [ ] Deployment succeeds
+- [ ] No build errors
+- [ ] Environment variables loaded from vercel.json
+- [ ] Production URL accessible
+
+### Step 5: Verify Vercel Environment Variables
+
+Go to: https://vercel.com/dashboard → Your Project → Settings → Environment Variables
+
+**Confirm these critical variables exist:**
+- [ ] `VITE_SUPABASE_URL` = `https://idkjfuctyukspexmijvb.supabase.co`
+- [ ] `VITE_SUPABASE_ANON_KEY` (your anon key)
+- [ ] `VITE_PI_API_KEY` = `b00j4felp0ctc1fexe8igldsjg9u7wbqitavc15si53fr9wwra7r6oluzk4j24qz`
+- [ ] `VITE_PI_VALIDATION_KEY` (your validation key)
+- [ ] `VITE_PI_SANDBOX_MODE` = `false`
+- [ ] `VITE_PI_MAINNET_MODE` = `true`
+- [ ] `VITE_PI_AUTHENTICATION_ENABLED` = `true`
+- [ ] `VITE_PI_PAYMENTS_ENABLED` = `true`
+- [ ] `VITE_PI_AD_NETWORK_ENABLED` = `true`
+
+**Apply to:** Production only
+
+---
+
+## Post-Deployment Testing
+
+### Test 1: Pi SDK Loading
+1. Open app in Pi Browser
+2. Open Developer Console (if available)
+3. Check for: `window.Pi` object exists
+4. No SDK loading errors
+
+**Pass Criteria:**
+- [ ] Pi SDK loads successfully
+- [ ] No console errors related to Pi
+- [ ] `window.Pi.authenticate` available
+- [ ] SDK URL: `https://sdk.minepi.com/pi-sdk.js`
+
+### Test 2: Pi Authentication
+1. Click "Sign in with Pi"
+2. Complete Pi authentication
+3. Verify profile created
+
+**Pass Criteria:**
+- [ ] Authentication dialog appears
+- [ ] User can authenticate
+- [ ] Profile data saved to Supabase
+- [ ] Username displayed correctly
+- [ ] No "Profile Not Found" errors
+
+### Test 3: Pi Payment (Subscription)
+
+⚠️ **WARNING: This uses real Pi coins**
+
+1. Navigate to Subscription page
+2. Select "Premium Monthly" (15π)
+3. Click "Subscribe"
+4. Approve payment in Pi wallet
+5. Wait for confirmation
+
+**Pass Criteria:**
+- [ ] Payment dialog appears within 5 seconds
+- [ ] Amount shows correctly (15π)
+- [ ] Payment completes within 60 seconds
+- [ ] Success message displayed
+- [ ] Subscription activated in database
+- [ ] Premium features unlocked immediately
+- [ ] No "Payment Expired" errors
+
+### Test 4: Pi Ad Network
+1. Navigate to a page with ads
+2. Click "Show Rewarded Ad"
+3. Watch ad
+4. Verify reward
+
+**Pass Criteria:**
+- [ ] Ad loads successfully within 5 seconds
+- [ ] Ad plays without errors
+- [ ] Reward granted after completion
+- [ ] Cooldown timer works
+- [ ] No ad network errors
+
+### Test 5: Public Profile
+1. Create/update profile in Dashboard
+2. Copy profile URL
+3. Open URL in new browser
+4. Verify profile displays
+
+**Pass Criteria:**
+- [ ] Profile loads without "Profile Not Found"
+- [ ] All data displays correctly (bio, links, etc.)
+- [ ] Username case-insensitive (works with any case)
+- [ ] QR codes show (if set)
+- [ ] Social links work
+
+### Test 6: Database Verification
+
+Check Supabase Dashboard:
+
+```sql
+-- Check recent profiles
+SELECT * FROM profiles 
+ORDER BY created_at DESC 
+LIMIT 10;
+
+-- Check recent payments
+SELECT * FROM payment_idempotency 
+ORDER BY created_at DESC 
+LIMIT 10;
+
+-- Check active subscriptions
+SELECT * FROM subscriptions 
+WHERE status = 'active'
+ORDER BY start_date DESC;
+```
+
+**Pass Criteria:**
+- [ ] Profiles exist with pi_user_id
+- [ ] Payments recorded with txid
+- [ ] Subscriptions active with correct end_date
+
+---
+
+## Monitoring
+
+### Vercel Deployment
+
+Monitor at: https://vercel.com/dashboard
+
+Check:
+- [ ] Deployment status: Ready
+- [ ] No build errors
+- [ ] Functions executing
+- [ ] Response times < 1s
+- [ ] No 500 errors
+
+### Supabase Edge Functions
+
+Monitor at: https://supabase.com/dashboard/project/idkjfuctyukspexmijvb/functions
+
+Check logs for:
+- [ ] `[APPROVAL]` logs (payment approvals) - should complete in < 45s
+- [ ] `[COMPLETE]` logs (payment completions) - should complete in < 45s
+- [ ] `[SUBSCRIPTION]` logs (subscription creation)
+- [ ] No timeout errors
+- [ ] No "Payment Expired" patterns
+
+### Performance Metrics
+
+Monitor:
+- [ ] Page load time < 3 seconds
+- [ ] Pi SDK load time < 2 seconds
+- [ ] Payment approval < 45 seconds
+- [ ] Payment completion < 60 seconds
+- [ ] Ad load time < 5 seconds
+- [ ] API response time < 500ms
+
+---
+
+## Rollback Plan
+
+If critical issues occur:
+
+### Emergency Rollback
+
+```powershell
+# Revert to previous deployment
+vercel rollback
+```
+
+### Disable Features
+
+Update environment variables in Vercel Dashboard:
+
+```
+VITE_PI_PAYMENTS_ENABLED=false
+VITE_PI_AD_NETWORK_ENABLED=false
+```
+
+Then redeploy:
+```powershell
+vercel --prod
+```
+
+### Database Rollback
+
+If needed, restore from Supabase backup:
+1. Go to Database → Backups
+2. Select backup before deployment
+3. Click Restore
+4. Confirm
+
+---
+
+## Success Criteria
+
+✅ **Deployment Successful If:**
+- All pre-deployment checks pass
+- Build completes without errors
+- Vercel deployment succeeds
+- All environment variables configured
+- Pi SDK loads in production
+- Authentication works
+- At least one test payment succeeds
+- No critical errors in logs
+- Performance metrics within acceptable range
+- Public profiles accessible
+
+---
+
+## Known Issues & Mitigations
+
+### Issue 1: Payment Timeout After 60 Seconds
+**Mitigation:**
+- Edge functions have 45-second timeout
+- Payment callbacks have deduplication
+- User sees clear timeout message
+- Can retry payment
+
+### Issue 2: Case-Sensitive Usernames
+**Mitigation:**
+- Fixed with .ilike() fallback search
+- All existing profiles accessible
+
+### Issue 3: TypeScript Errors
+**Mitigation:**
+- Downgraded @types/node to 20.17.6
+- No more duplicate index signature errors
+
+---
+
+## Support & Documentation
+
+- **Vercel Dashboard:** https://vercel.com/dashboard
+- **Supabase Dashboard:** https://supabase.com/dashboard/project/idkjfuctyukspexmijvb
+- **Pi Developer Portal:** https://developers.pi
+- **Deployment Script:** `deploy-production.ps1`
+- **Setup Script:** `setup-supabase-env.ps1`
+- **Payment Fix Guide:** `PI_PAYMENT_FIX_GUIDE.md`
+- **Environment Setup:** `SUPABASE_ENV_SETUP_GUIDE.md`
+
+---
+
+## Manual Checklist Summary
+
+**Before Deployment:**
+1. [ ] Run `setup-supabase-env.ps1` to set PI_API_KEY and deploy functions
+2. [ ] Run `npm run build:mainnet` to build production version
+3. [ ] Run `deploy-production.ps1` to deploy to Vercel
+4. [ ] Verify environment variables in Vercel Dashboard
+
+**After Deployment:**
+5. [ ] Test Pi SDK loading
+6. [ ] Test Pi authentication
+7. [ ] Test one small payment (use lowest tier)
+8. [ ] Test ad network
+9. [ ] Test public profile
+10. [ ] Monitor logs for 24 hours
+
+---
+
+**Last Updated:** December 10, 2025  
+**Deployment Target:** Production (Pi Mainnet)  
+**Status:** ✅ READY FOR DEPLOYMENT
+
+**Next Action:** Run `powershell -ExecutionPolicy Bypass -File setup-supabase-env.ps1`
+
 - [x] Premium plan (15π/month, 144π/year) - recommended
 - [x] Pro plan (30π/month, 288π/year)
 - [x] Features correctly defined per plan
