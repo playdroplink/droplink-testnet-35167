@@ -122,39 +122,39 @@ const MerchantStorePreview: React.FC = () => {
   }
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-start p-6"
+      className="min-h-screen flex flex-col items-center justify-start p-3 sm:p-4 md:p-6 lg:p-8"
       style={{ background: store.backgroundColor, color: store.textColor }}
     >
-      <div className="w-full max-w-lg bg-white/80 rounded shadow p-6 mb-8">
+      <div className="w-full max-w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl bg-white/80 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-5 md:p-6 mb-6 sm:mb-8">
         {username && (
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-end mb-3 sm:mb-4">
             <button
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="px-3 sm:px-4 py-2 text-sm sm:text-base bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
               onClick={() => navigate(`/u/${username}`)}
             >
               View Bio
             </button>
           </div>
         )}
-        <h1 className="text-3xl font-bold mb-2">{store.name}</h1>
-        <div className="mb-2 text-sm text-gray-600">{store.location}</div>
-        <div className="mb-4 text-base">Theme: {store.theme}</div>
-        <div className="mb-4">Contact: <a href={`mailto:${store.contact}`} className="text-blue-600 underline">{store.contact}</a></div>
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2">Menu</h2>
-          <ul className="space-y-2">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">{store.name}</h1>
+        <div className="mb-2 text-xs sm:text-sm text-gray-600">{store.location}</div>
+        <div className="mb-3 sm:mb-4 text-sm sm:text-base">Theme: {store.theme}</div>
+        <div className="mb-4 sm:mb-6 text-sm sm:text-base">Contact: <a href={`mailto:${store.contact}`} className="text-blue-600 underline break-all">{store.contact}</a></div>
+        <div className="mb-4 sm:mb-6">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-3 sm:mb-4">Menu</h2>
+          <ul className="space-y-3 sm:space-y-4">
             {store.products.map((product) => (
-              <li key={product.id} className="border rounded p-3 flex flex-col md:flex-row md:items-center gap-4">
+              <li key={product.id} className="border rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow">
                 {product.image && (
-                  <img src={product.image} alt={product.name} className="w-20 h-20 object-cover rounded" />
+                  <img src={product.image} alt={product.name} className="w-full sm:w-20 md:w-24 h-40 sm:h-20 md:h-24 object-cover rounded" />
                 )}
                 <div className="flex-1">
-                  <span className="font-bold text-lg">{product.name}</span>
-                  <span className="block">Price: {product.price} Pi</span>
-                  <span className="block text-sm text-gray-600">{product.description}</span>
+                  <span className="font-bold text-base sm:text-lg block mb-1">{product.name}</span>
+                  <span className="block text-sm sm:text-base mb-1">Price: {product.price} Pi</span>
+                  <span className="block text-xs sm:text-sm text-gray-600">{product.description}</span>
                 </div>
                 <button
-                  className="mt-2 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                  className="w-full sm:w-auto mt-2 sm:mt-0 px-3 sm:px-4 py-2 text-sm sm:text-base bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
                   onClick={() => addToCart(product)}
                 >
                   Add to Cart
@@ -164,61 +164,63 @@ const MerchantStorePreview: React.FC = () => {
           </ul>
         </div>
         {/* Cart and order UI remain unchanged */}
-        <div className="flex flex-col gap-2 mt-6">
-          <div className="flex justify-between items-center">
-            <span className="text-xs text-gray-500">Preview URL:</span>
+        <div className="flex flex-col gap-2 sm:gap-3 mt-4 sm:mt-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+            <span className="text-xs sm:text-sm text-gray-500 flex-shrink-0">Preview URL:</span>
             <input
               type="text"
               readOnly
               value={window.location.href}
-              className="border px-2 py-1 rounded w-64 text-xs bg-gray-100"
+              className="border px-2 py-1 sm:py-1.5 rounded w-full sm:flex-1 text-xs sm:text-sm bg-gray-100"
               onFocus={e => e.target.select()}
             />
           </div>
-          <div className="flex justify-between items-center">
-            <span className="text-xs text-gray-500">Actual Store URL:</span>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+            <span className="text-xs sm:text-sm text-gray-500 flex-shrink-0">Actual Store URL:</span>
             <input
               type="text"
               readOnly
               value={`${window.location.origin}/storefront/${merchantId || 'your-merchant-id'}`}
-              className="border px-2 py-1 rounded w-64 text-xs bg-blue-50"
+              className="border px-2 py-1 sm:py-1.5 rounded w-full sm:flex-1 text-xs sm:text-sm bg-blue-50"
               onFocus={e => e.target.select()}
             />
           </div>
         </div>
-        <div className="mt-6 flex justify-end">
+        <div className="mt-4 sm:mt-6 flex justify-end">
           <button
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-3 sm:px-4 py-2 text-sm sm:text-base bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
             onClick={() => setShowCart((v) => !v)}
           >
             {showCart ? "Hide Cart" : `View Cart (${cart.reduce((sum, i) => sum + i.cartQuantity, 0)})`}
           </button>
         </div>
         {showCart && (
-          <div className="mt-4 p-4 border rounded bg-gray-50">
-            <h3 className="font-semibold mb-2">Your Cart</h3>
+          <div className="mt-3 sm:mt-4 p-3 sm:p-4 border rounded-lg bg-gray-50">
+            <h3 className="font-semibold mb-2 text-base sm:text-lg">Your Cart</h3>
             {cart.length === 0 ? (
-              <p className="text-sm">Cart is empty.</p>
+              <p className="text-xs sm:text-sm">Cart is empty.</p>
             ) : (
-              <ul className="space-y-2">
+              <ul className="space-y-2 sm:space-y-3">
                 {cart.map((item) => (
-                  <li key={item.id} className="flex items-center gap-2">
-                    <span className="flex-1">{item.name}</span>
-                    <input
-                      type="number"
-                      min={1}
-                      max={99}
-                      value={item.cartQuantity}
-                      onChange={e => updateQuantity(item.id, Number(e.target.value))}
-                      className="w-16 border rounded px-2 py-1 text-xs"
-                    />
-                    <span className="w-16 text-right">{item.price * item.cartQuantity} Pi</span>
-                    <button
-                      className="ml-2 text-red-600 hover:underline text-xs"
-                      onClick={() => removeFromCart(item.id)}
-                    >
-                      Remove
-                    </button>
+                  <li key={item.id} className="flex flex-col sm:flex-row sm:items-center gap-2 pb-2 border-b last:border-b-0">
+                    <span className="flex-1 text-sm sm:text-base">{item.name}</span>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min={1}
+                        max={99}
+                        value={item.cartQuantity}
+                        onChange={e => updateQuantity(item.id, Number(e.target.value))}
+                        className="w-16 sm:w-20 border rounded px-2 py-1 text-xs sm:text-sm"
+                      />
+                      <span className="w-16 sm:w-20 text-right text-sm sm:text-base">{item.price * item.cartQuantity} Pi</span>
+                      <button
+                        className="ml-2 text-red-600 hover:underline text-xs sm:text-sm whitespace-nowrap"
+                        onClick={() => removeFromCart(item.id)}
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -240,16 +242,16 @@ const MerchantStorePreview: React.FC = () => {
           </div>
         )}
         {order && (
-          <div className="mt-6 p-4 border rounded bg-green-50">
-            <h3 className="font-semibold mb-2">Order Placed!</h3>
-            <div className="text-sm mb-2">Order ID: {order.id}</div>
-            <div className="text-sm mb-2">Status: {order.status}</div>
-            <div className="text-sm mb-2">Total: {order.total} Pi</div>
-            <div className="text-sm mb-2">Created: {new Date(order.createdAt).toLocaleString()}</div>
-            <div className="text-sm mb-2">Payment Link: <a href={order.paymentLink} className="text-blue-600 underline">{order.paymentLink}</a></div>
+          <div className="mt-4 sm:mt-6 p-3 sm:p-4 border rounded-lg bg-green-50">
+            <h3 className="font-semibold mb-2 text-base sm:text-lg">Order Placed!</h3>
+            <div className="text-xs sm:text-sm mb-2">Order ID: {order.id}</div>
+            <div className="text-xs sm:text-sm mb-2">Status: {order.status}</div>
+            <div className="text-xs sm:text-sm mb-2">Total: {order.total} Pi</div>
+            <div className="text-xs sm:text-sm mb-2">Created: {new Date(order.createdAt).toLocaleString()}</div>
+            <div className="text-xs sm:text-sm mb-2 break-all">Payment Link: <a href={order.paymentLink} className="text-blue-600 underline">{order.paymentLink}</a></div>
             <ul className="mt-2 space-y-1">
               {order.items.map((item) => (
-                <li key={item.id} className="text-xs">
+                <li key={item.id} className="text-[10px] sm:text-xs">
                   {item.name} x {item.cartQuantity} = {item.price * item.cartQuantity} Pi
                 </li>
               ))}

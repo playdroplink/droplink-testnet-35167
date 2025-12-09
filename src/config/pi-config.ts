@@ -1,3 +1,19 @@
+/**
+ * Pi Network Configuration for DropLink Mainnet
+ * 
+ * Official Documentation:
+ * - Pi Developer Guide: https://pi-apps.github.io/community-developer-guide/
+ * - Pi Payment API: https://pi-apps.github.io/community-developer-guide/
+ * - Pi Ad Network: https://github.com/pi-apps/pi-platform-docs/tree/master
+ * 
+ * API Credentials:
+ * - API Key: b00j4felp0ctc1fexe8igldsjg9u7wbqitavc15si53fr9wwra7r6oluzk4j24qz
+ * - Validation Key: See VALIDATION_KEY below
+ * 
+ * Network: Pi Mainnet (Production)
+ * Mode: Sandbox DISABLED
+ */
+
 export const PI_CONFIG = {
   API_KEY: "b00j4felp0ctc1fexe8igldsjg9u7wbqitavc15si53fr9wwra7r6oluzk4j24qz", // MAINNET API KEY
   BASE_URL: "https://api.minepi.com",
@@ -9,6 +25,14 @@ export const PI_CONFIG = {
   SDK: {
     version: "2.0",
     sandbox: false, // MAINNET - SANDBOX MODE DISABLED
+  },
+  
+  // Official Documentation Links
+  DOCUMENTATION: {
+    DEVELOPER_GUIDE: "https://pi-apps.github.io/community-developer-guide/",
+    PAYMENT_API: "https://pi-apps.github.io/community-developer-guide/",
+    AD_NETWORK: "https://github.com/pi-apps/pi-platform-docs/tree/master",
+    PLATFORM_DOCS: "https://github.com/pi-apps/pi-platform-docs",
   },
   
   // Scopes for Droplink Mainnet - includes payments, wallet_address, and username
@@ -32,6 +56,7 @@ export const PI_CONFIG = {
     }
   },
   
+  // Validation key from validation-key.txt
   VALIDATION_KEY: "7511661aac4538b1832d2c9ba117f6d972b26a54640598d3fbb9824013c7079203f65b02d125be3f418605cfb89ba0e4443e3ec997e3800eb464df0bc5410d2a",
   
   PLATFORM_URL: "https://droplink.space",

@@ -124,7 +124,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
   };
 
   return (
-    <div className="relative w-[340px] h-[700px] rounded-[3rem] border-[10px] border-foreground/20 shadow-2xl overflow-hidden flex flex-col"
+    <div className="relative w-full max-w-[280px] sm:max-w-[320px] md:max-w-[340px] lg:max-w-[360px] h-[580px] sm:h-[640px] md:h-[700px] lg:h-[720px] rounded-[2.5rem] sm:rounded-[3rem] border-[8px] sm:border-[10px] border-foreground/20 shadow-2xl overflow-hidden flex flex-col mx-auto"
          style={
            (profile.theme?.backgroundType === 'gif' && profile.theme?.backgroundGif) || (profile.theme?.backgroundType === 'video' && profile.theme?.backgroundVideo)
              ? {}
@@ -188,28 +188,28 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
       )}
       
       {/* Phone Notch */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-foreground/20 rounded-b-3xl z-10" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 sm:w-28 md:w-32 h-5 sm:h-6 bg-foreground/20 rounded-b-2xl sm:rounded-b-3xl z-10" />
       
       {/* Phone Screen Content - Scrollable with proper flex layout */}
-      <div className="flex-1 overflow-y-auto pt-8 px-6 pb-6 relative z-10 w-full flex flex-col scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
-        <div className="flex flex-col items-center text-center space-y-6 w-full min-w-0">
+      <div className="flex-1 overflow-y-auto pt-6 sm:pt-8 px-3 sm:px-4 md:px-6 pb-4 sm:pb-6 relative z-10 w-full flex flex-col scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+        <div className="flex flex-col items-center text-center space-y-4 sm:space-y-5 md:space-y-6 w-full min-w-0">
           {/* Logo */}
-          <div className={`w-20 h-20 ${iconRadius} bg-muted border border-border flex items-center justify-center overflow-hidden shadow-lg`}>
+          <div className={`w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 ${iconRadius} bg-muted border border-border flex items-center justify-center overflow-hidden shadow-lg`}>
             {profile.logo ? (
               <img src={profile.logo} alt="Logo" className="w-full h-full object-cover" />
             ) : (
-              <User className="w-8 h-8 text-white/70" />
+              <User className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white/70" />
             )}
           </div>
 
           {/* Business Name */}
-          <h1 className="text-lg font-bold px-4 text-white drop-shadow-lg shadow-black/50">
+          <h1 className="text-base sm:text-lg md:text-xl px-3 sm:px-4 font-bold text-white drop-shadow-lg shadow-black/50">
             {profile.businessName || "YOUR BUSINESS NAME"}
           </h1>
 
           {/* Description */}
           {profile.description && (
-            <p className="text-sm text-white/90 px-4 leading-relaxed drop-shadow-md shadow-black/50">
+            <p className="text-xs sm:text-sm px-3 sm:px-4 text-white/90 leading-relaxed drop-shadow-md shadow-black/50">
               {profile.description}
             </p>
           )}
@@ -238,17 +238,17 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
 
           {/* Social Links */}
           {socialLinkData.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-3 pt-2">
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-2.5 md:gap-3 pt-2">
               {socialLinkData.map(({ key, icon: Icon }) => (
                 <div
                   key={key}
-                  className={`w-10 h-10 ${iconRadius} flex items-center justify-center transition-smooth cursor-pointer shadow-lg hover:shadow-xl`}
+                  className={`w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 ${iconRadius} flex items-center justify-center transition-smooth cursor-pointer shadow-lg hover:shadow-xl`}
                   style={{ 
                     backgroundColor: profile.theme?.primaryColor || '#3b82f6',
                     border: '1px solid rgba(255,255,255,0.2)'
                   }}
                 >
-                  <Icon className="w-5 h-5 text-white" />
+                  <Icon className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5 text-white" />
                 </div>
               ))}
             </div>
@@ -419,9 +419,9 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
 
           {/* Payment Checkout Links */}
           {profile.paymentLinks && profile.paymentLinks.filter(link => link.active).length > 0 && (
-            <div className="w-full space-y-2 pt-4">
-              <div className="flex items-center gap-2 text-white text-sm font-medium drop-shadow-md">
-                <CreditCard className="w-4 h-4" />
+            <div className="w-full space-y-1.5 sm:space-y-2 pt-3 sm:pt-4">
+              <div className="flex items-center gap-2 text-white text-xs sm:text-sm font-medium drop-shadow-md">
+                <CreditCard className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 <span>Payment Links ({profile.paymentLinks.filter(link => link.active).length})</span>
               </div>
               {profile.paymentLinks.filter(link => link.active).slice(0, 3).map((link) => (
@@ -450,25 +450,25 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
 
           {/* Products Preview */}
           {profile.products && profile.products.length > 0 && (
-            <div className="w-full space-y-3 pt-4">
-              <div className="flex items-center gap-2 text-white text-sm font-medium drop-shadow-md">
-                <ShoppingBag className="w-4 h-4" />
+            <div className="w-full space-y-2 sm:space-y-3 pt-3 sm:pt-4">
+              <div className="flex items-center gap-2 text-white text-xs sm:text-sm font-medium drop-shadow-md">
+                <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 <span>Products ({profile.products.length})</span>
               </div>
               {profile.products.slice(0, 2).map((product) => (
                 <div 
                   key={product.id}
-                  className="bg-muted border border-border rounded-xl p-3 text-left shadow-md"
+                  className="bg-muted border border-border rounded-lg sm:rounded-xl p-2 sm:p-3 text-left shadow-md"
                 >
                   <div className="flex justify-between items-start mb-1">
-                    <h4 className="text-xs font-semibold text-white truncate drop-shadow-sm">{product.title || "Untitled"}</h4>
-                    <span className="text-xs font-bold text-white/90 drop-shadow-sm">{product.price ? product.price : "0"}</span>
+                    <h4 className="text-[10px] sm:text-xs font-semibold text-white truncate drop-shadow-sm">{product.title || "Untitled"}</h4>
+                    <span className="text-[10px] sm:text-xs font-bold text-white/90 drop-shadow-sm">{product.price ? product.price : "0"}</span>
                   </div>
-                  <p className="text-[10px] text-white/70 line-clamp-2 drop-shadow-sm">{product.description || "No description"}</p>
+                  <p className="text-[9px] sm:text-[10px] text-white/70 line-clamp-2 drop-shadow-sm">{product.description || "No description"}</p>
                 </div>
               ))}
               {profile.products.length > 2 && (
-                <p className="text-[10px] text-white/60 drop-shadow-sm">+{profile.products.length - 2} more</p>
+                <p className="text-[9px] sm:text-[10px] text-white/60 drop-shadow-sm">+{profile.products.length - 2} more</p>
               )}
             </div>
           )}
@@ -476,19 +476,19 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
 
           {/* Pi Wallet QR Code and Tip Section (always visible if wallet set) */}
           {profile.piWalletAddress && (
-            <div className="w-full flex flex-col items-center pt-6 pb-2">
-              <div className="relative w-[120px] h-[120px] mb-2 shadow-lg rounded">
+            <div className="w-full flex flex-col items-center pt-4 sm:pt-5 md:pt-6 pb-2">
+              <div className="relative w-[100px] h-[100px] sm:w-[110px] sm:h-[110px] md:w-[120px] md:h-[120px] mb-2 shadow-lg rounded">
                 {/* QR code with Droplink logo overlay */}
-                <QRCodeDisplay value={profile.piWalletAddress} size={120} />
+                <QRCodeDisplay value={profile.piWalletAddress} size={window.innerWidth < 640 ? 100 : window.innerWidth < 768 ? 110 : 120} />
                 <img
                   src="/droplink-logo.png"
                   alt="Droplink Logo"
-                  className="absolute left-1/2 top-1/2 w-10 h-10 -translate-x-1/2 -translate-y-1/2 shadow-lg border-2 border-white bg-white rounded-lg"
+                  className="absolute left-1/2 top-1/2 w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 -translate-x-1/2 -translate-y-1/2 shadow-lg border-2 border-white bg-white rounded-lg"
                   style={{ pointerEvents: 'none' }}
                 />
               </div>
-              <div className="text-xs text-white/80 text-center break-all mb-1 drop-shadow-md">{profile.piWalletAddress}</div>
-              <div className="text-xs text-sky-300 text-center drop-shadow-md">Tip Pi or DROP</div>
+              <div className="text-[10px] sm:text-xs text-white/80 text-center break-all mb-1 px-2 drop-shadow-md">{profile.piWalletAddress}</div>
+              <div className="text-[10px] sm:text-xs text-sky-300 text-center drop-shadow-md">Tip Pi or DROP</div>
             </div>
           )}
 

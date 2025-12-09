@@ -2468,16 +2468,16 @@ const Dashboard = () => {
 
         {/* Preview Panel */}
         <div
-          className={`lg:w-[400px] xl:w-[500px] ${isMobile ? 'bg-background border-t' : 'glass-surface border-l'} border-border/30 flex-1 flex flex-col items-center justify-center overflow-hidden ${showPreview ? 'flex' : 'hidden lg:flex'}`}
+          className={`w-full lg:w-[380px] xl:w-[420px] 2xl:w-[480px] ${isMobile ? 'bg-background border-t' : 'glass-surface border-l'} border-border/30 flex flex-col items-center justify-center overflow-hidden ${showPreview ? 'flex' : 'hidden lg:flex'}`}
           style={{ minHeight: 0 }}
         >
-          <div className="mb-2 sm:mb-4 flex items-center justify-between w-full max-w-xs mx-auto px-2 sm:px-4">
-            <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">Preview</h3>
-            <Button variant="ghost" size="sm" onClick={handleCopyLink} className="text-xs h-8">
+          <div className="mb-2 sm:mb-3 md:mb-4 flex items-center justify-between w-full max-w-full px-3 sm:px-4 md:px-6 py-2">
+            <h3 className="text-xs sm:text-sm md:text-base font-medium text-muted-foreground">Live Preview</h3>
+            <Button variant="ghost" size="sm" onClick={handleCopyLink} className="text-xs sm:text-sm h-8 sm:h-9">
               Copy link
             </Button>
           </div>
-          <div className="flex-1 flex items-center justify-center w-full overflow-hidden">
+          <div className="flex-1 flex items-center justify-center w-full overflow-hidden px-2 sm:px-3 md:px-4 py-2 sm:py-3">
             <PhonePreview profile={profile} />
           </div>
         </div>

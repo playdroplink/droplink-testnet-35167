@@ -110,7 +110,7 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
             
             {/* App Name */}
             <motion.h1 
-              className={`mb-2 font-poppins text-4xl font-bold ${enableChristmasTheme ? 'text-red-100' : 'text-white'}`}
+              className={`mb-2 font-poppins text-4xl font-bold ${enableChristmasTheme ? 'text-white' : 'text-white'}`}
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" }}
