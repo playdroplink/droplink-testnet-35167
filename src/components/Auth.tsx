@@ -325,6 +325,15 @@ export const Auth = () => {
                   <a href="/terms" className="text-primary hover:underline">Terms</a>
                   <span className="text-muted-foreground">•</span>
                   <a href="/privacy" className="text-primary hover:underline">Privacy</a>
+                  <span className="text-muted-foreground">•</span>
+                  <a
+                    href="https://www.droplink.space/help"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    Help
+                  </a>
                 </div>
               </div>
             </div>

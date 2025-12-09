@@ -1144,12 +1144,20 @@ const Dashboard = () => {
       {/* Greeting Section */}
       <div className="px-2 sm:px-4 lg:px-6 pt-2 sm:pt-3 lg:pt-4 pb-1 sm:pb-2 relative z-10">
         {greeting && displayUsername && (
-          <h2 className="text-xl font-semibold text-sky-700 mb-2 animate-fade-in">
+          <h2
+            className={`text-xl font-semibold mb-2 animate-fade-in ${
+              enableChristmasTheme ? 'text-white drop-shadow' : 'text-sky-700'
+            }`}
+          >
             {greeting}, {displayUsername}!
           </h2>
         )}
         {greeting && !displayUsername && (
-          <h2 className="text-xl font-semibold text-sky-700 mb-2 animate-fade-in">
+          <h2
+            className={`text-xl font-semibold mb-2 animate-fade-in ${
+              enableChristmasTheme ? 'text-white drop-shadow' : 'text-sky-700'
+            }`}
+          >
             {greeting}!
           </h2>
         )}
