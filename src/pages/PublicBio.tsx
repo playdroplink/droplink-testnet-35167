@@ -221,14 +221,29 @@ const PublicBio = () => {
     }
 
     try {
-      // Direct table access (robust fallback)
-      console.log("Loading profile for username:", username);
+      // Normalize username to lowercase for case-insensitive matching
+      const normalizedUsername = username.toLowerCase();
+      console.log("Loading profile for username (normalized):", normalizedUsername, "original:", username);
       
-      const { data: profileData, error } = await supabase
+      // Try exact match first
+      let { data: profileData, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("username", username)
         .maybeSingle();
+
+      // If no exact match, try case-insensitive match
+      if (!profileData && !error) {
+        console.log("No exact match, trying case-insensitive search...");
+        const { data: caseInsensitiveData, error: caseInsensitiveError } = await supabase
+          .from("profiles")
+          .select("*")
+          .ilike("username", username)
+          .maybeSingle();
+        
+        profileData = caseInsensitiveData;
+        error = caseInsensitiveError;
+      }
 
       if (error) {
         console.error("Database error:", error);
@@ -239,6 +254,7 @@ const PublicBio = () => {
 
       if (!profileData) {
         console.log("No profile found for username:", username);
+        console.log("Tried both exact and case-insensitive match");
         setNotFound(true);
         setLoading(false);
         return;
