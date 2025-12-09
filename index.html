@@ -44,10 +44,10 @@
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script>
       // Initialize Pi SDK immediately after loading - Version 2.0 (MAINNET)
-      // Sandbox mode is set to FALSE for production mainnet
-      Pi.init({ version: "2.0", sandbox: false });
-      console.log('[PI SDK] ✅ Pi SDK initialized (Version 2.0, MAINNET Mode)');
-      console.log('Prod:', !window.location.hostname.includes('localhost'), '| Sandbox:', false);
+      // Sandbox mode is set to FALSE for production mainnet with Pi Storage enabled
+      Pi.init({ version: "2.0", sandbox: false, usePiStorage: true });
+      console.log('[PI SDK] ✅ Pi SDK initialized (Version 2.0, MAINNET Mode, Pi Storage Enabled)');
+      console.log('Prod:', !window.location.hostname.includes('localhost'), '| Sandbox:', false, '| Pi Storage:', true);
     </script>
     <script>
       // Enhanced Pi SDK loading with better error handling

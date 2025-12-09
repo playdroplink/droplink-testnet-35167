@@ -22,6 +22,7 @@ import PiAuth from "./pages/PiAuth";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import CustomDomain from "./pages/CustomDomain";
+import VotingPage from "./pages/VotingPage";
 // import ProfileDebug from "./pages/ProfileDebug";
 import Home from "./pages/Home";
 import SplashScreen from "./components/SplashScreen";
@@ -62,6 +63,7 @@ const App = () => {
             <Route path="/home" element={<Home />} />
             <Route path="/auth" element={<PiAuth />} />
             <Route path="/subscription" element={<Subscription />} />
+            <Route path="/voting" element={<VotingPage />} />
             <Route path="/followers" element={<Followers />} />
             <Route path="/wallet" element={<Wallet />} />
             <Route path="/profile" element={<Profile />} />

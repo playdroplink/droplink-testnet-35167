@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +22,7 @@ interface Props {
 
 export const MerchantConfigModal = ({ children }: Props) => {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -160,11 +162,24 @@ export const MerchantConfigModal = ({ children }: Props) => {
                   drive our development of these exciting marketplace features.
                 </p>
                 <div className="flex gap-3 justify-center">
-                  <Button className="gap-2" onClick={() => window.open('/subscription', '_self')}>
-                    <Heart className="w-4 h-4" />
-                    Support DropLink
+                  <Button 
+                    className="gap-2" 
+                    onClick={() => {
+                      setOpen(false);
+                      navigate('/switch-to-merchant');
+                    }}
+                  >
+                    <Store className="w-4 h-4" />
+                    Start Selling
                   </Button>
-                  <Button variant="outline" className="gap-2" onClick={() => window.open('/voting', '_self')}>
+                  <Button 
+                    variant="outline" 
+                    className="gap-2" 
+                    onClick={() => {
+                      setOpen(false);
+                      navigate('/voting');
+                    }}
+                  >
                     <ExternalLink className="w-4 h-4" />
                     Vote on Features
                   </Button>

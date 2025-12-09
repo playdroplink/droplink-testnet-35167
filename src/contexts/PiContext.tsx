@@ -94,7 +94,7 @@ interface AdResponse {
 declare global {
   interface Window {
     Pi: {
-      init: (config: { version: string; sandbox?: boolean }) => Promise<void>;
+      init: (config: { version: string; sandbox?: boolean; usePiStorage?: boolean }) => Promise<void>;
       authenticate: (
         scopes: string[],
         onIncompletePaymentFound?: (payment: any) => void
@@ -250,10 +250,10 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           
           console.log('[PI DEBUG] ✅ window.Pi is available, initializing SDK...');
           
-          // Initialize Pi SDK using configured SDK options
+          // Initialize Pi SDK using configured SDK options with Pi storage
           try {
-            await window.Pi.init(PI_CONFIG.SDK);
-            console.log('[PI DEBUG] ✅ Pi SDK initialized successfully (Mainnet)');
+            await window.Pi.init({ ...PI_CONFIG.SDK, usePiStorage: true });
+            console.log('[PI DEBUG] ✅ Pi SDK initialized successfully (Mainnet with Pi Storage)');
             setIsInitialized(true);
           } catch (initErr) {
             console.error('[PI DEBUG] ❌ Failed to initialize Pi SDK:', initErr);
@@ -380,9 +380,9 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           console.log('[PI DEBUG] ✅ window.Pi is available, initializing...');
           console.log('[PI DEBUG] 🔧 Initializing with config:', JSON.stringify(PI_CONFIG.SDK));
           
-          await window.Pi.init(PI_CONFIG.SDK);
+          await window.Pi.init({ ...PI_CONFIG.SDK, usePiStorage: true });
           setIsInitialized(true);
-          console.log('[PI DEBUG] ✅ Pi SDK reinitialized successfully (Mainnet)');
+          console.log('[PI DEBUG] ✅ Pi SDK reinitialized successfully (Mainnet with Pi Storage)');
         } catch (reinitError: any) {
           const msg = reinitError?.message || String(reinitError);
           console.error('[PI DEBUG] ❌ Failed to initialize Pi SDK:', msg);

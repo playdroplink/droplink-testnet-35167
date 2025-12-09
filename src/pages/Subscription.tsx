@@ -348,4 +348,5 @@ const Subscription = () => {
   );
 };
 
+// Subscription component for DropLink platform - Pi Network integration
 export default Subscription;
