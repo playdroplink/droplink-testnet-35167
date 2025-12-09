@@ -1,4 +1,4 @@
-#!/bin/bash
+ #!/bin/bash
 
 # Setup script for Pi Network API Key in Supabase
 # Run this script to set the PI_API_KEY environment variable
@@ -14,7 +14,7 @@ if ! command -v supabase &> /dev/null; then
 fi
 
 # Mainnet API Key
-PI_API_KEY="96tnxytg82pevnvvxfowap4bwctcxo6wkp2dexoraevtj8svh0mvqxttpbtwvjm5"
+PI_API_KEY="b00j4felp0ctc1fexe8igldsjg9u7wbqitavc15si53fr9wwra7r6oluzk4j24qz"
 
 echo "Setting PI_API_KEY environment variable..."
 supabase secrets set PI_API_KEY="$PI_API_KEY"

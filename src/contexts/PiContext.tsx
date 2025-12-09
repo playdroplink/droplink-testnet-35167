@@ -1076,33 +1076,63 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     console.log('[PAYMENT] 📦 Payment data prepared:', JSON.stringify(paymentData, null, 2));
 
     return new Promise<string | null>((resolve) => {
+      let resolvedOnce = false; // Prevent multiple resolutions
+      
       // Callbacks the developer needs to implement (following Pi SDK documentation):
       const paymentCallbacks = {
         onReadyForServerApproval: async (paymentId: string) => {
+          if (resolvedOnce) return;
+          
           try {
             console.log('[PAYMENT] 📋 onReadyForServerApproval - Payment ID:', paymentId);
             console.log('[PAYMENT] 📦 Sending client metadata to approval:', metadata);
+            console.log('[PAYMENT] ⏱️ Approval timeout: 45 seconds');
+            
             toast('Payment awaiting approval...', { 
               description: 'Your payment is being verified on Pi Network', 
               duration: 5000 
             });
             
-            const { error } = await supabase.functions.invoke('pi-payment-approve', {
-              body: { paymentId, metadata },
-              headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
+            // Set a safety timeout to prevent hanging
+            const approvalTimeout = setTimeout(() => {
+              console.warn('[PAYMENT] ⚠️ Approval timeout after 50 seconds');
+              if (!resolvedOnce) {
+                resolvedOnce = true;
+                toast.error('Payment approval timeout', { 
+                  description: 'Please try again',
+                  duration: 5000 
+                });
+                resolve(null);
+              }
+            }, 50000);
             
-            if (error) {
-              console.error('[PAYMENT] ❌ Payment approval error:', error);
-              toast.error('Payment approval failed', { 
-                description: error.message || 'Unknown error',
-                duration: 5000 
+            try {
+              const { error, data } = await supabase.functions.invoke('pi-payment-approve', {
+                body: { paymentId, metadata },
+                headers: { 'Authorization': `Bearer ${accessToken}` }
               });
-            } else {
-              console.log('[PAYMENT] ✅ Payment approved by server');
-              toast.success('Payment approved!', { 
-                description: 'Completing transaction...',
-                duration: 3000 
+              
+              clearTimeout(approvalTimeout);
+              
+              if (error) {
+                console.error('[PAYMENT] ❌ Payment approval error:', error);
+                toast.error('Payment approval failed', { 
+                  description: error.message || 'Unknown error',
+                  duration: 5000 
+                });
+              } else {
+                console.log('[PAYMENT] ✅ Payment approved by server:', data);
+                toast.success('Payment approved!', { 
+                  description: 'Completing transaction...',
+                  duration: 3000 
+                });
+              }
+            } catch (invokeErr) {
+              clearTimeout(approvalTimeout);
+              console.error('[PAYMENT] ❌ Approval invoke error:', invokeErr);
+              toast.error('Approval request failed', { 
+                description: invokeErr instanceof Error ? invokeErr.message : 'Network error',
+                duration: 5000 
               });
             }
           } catch (err) {
@@ -1115,36 +1145,65 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         },
         
         onReadyForServerCompletion: async (paymentId: string, txid: string) => {
+          if (resolvedOnce) return; // Already resolved
+          resolvedOnce = true; // Mark as resolved
+          
           try {
             console.log('[PAYMENT] 🔄 onReadyForServerCompletion');
             console.log('[PAYMENT] Payment ID:', paymentId);
             console.log('[PAYMENT] Transaction ID:', txid);
             console.log('[PAYMENT] 📦 Sending metadata to completion:', metadata);
+            console.log('[PAYMENT] ⏱️ Completion timeout: 45 seconds');
             
             toast('Completing payment...', { 
               description: 'Recording transaction on blockchain...',
               duration: 5000 
             });
             
-            const { error } = await supabase.functions.invoke('pi-payment-complete', {
-              body: { paymentId, txid, metadata },
-              headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
+            // Set a safety timeout
+            const completionTimeout = setTimeout(() => {
+              console.warn('[PAYMENT] ⚠️ Completion timeout after 50 seconds');
+              if (resolvedOnce) { // Still resolved
+                toast.error('Payment completion timeout', { 
+                  description: 'Your payment may still be processing',
+                  duration: 5000 
+                });
+                resolve(null);
+              }
+            }, 50000);
             
-            if (error) {
-              console.error('[PAYMENT] ❌ Payment completion error:', error);
-              toast.error('Payment completion failed', { 
-                description: error.message || 'Unknown error',
+            try {
+              const { error, data } = await supabase.functions.invoke('pi-payment-complete', {
+                body: { paymentId, txid, metadata },
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+              });
+              
+              clearTimeout(completionTimeout);
+              
+              if (error) {
+                console.error('[PAYMENT] ❌ Payment completion error:', error);
+                toast.error('Payment completion failed', { 
+                  description: error.message || 'Unknown error',
+                  duration: 5000 
+                });
+                resolve(null);
+              } else {
+                console.log('[PAYMENT] ✅ Payment completed successfully - TXID:', txid);
+                console.log('[PAYMENT] ✅ Completion response:', data);
+                toast.success('Payment completed successfully!', { 
+                  description: `Transaction: ${txid.substring(0, 16)}...`,
+                  duration: 5000 
+                });
+                resolve(txid);
+              }
+            } catch (invokeErr) {
+              clearTimeout(completionTimeout);
+              console.error('[PAYMENT] ❌ Completion invoke error:', invokeErr);
+              toast.error('Completion request failed', { 
+                description: invokeErr instanceof Error ? invokeErr.message : 'Network error',
                 duration: 5000 
               });
               resolve(null);
-            } else {
-              console.log('[PAYMENT] ✅ Payment completed successfully - TXID:', txid);
-              toast.success('Payment completed successfully!', { 
-                description: `Transaction: ${txid.substring(0, 16)}...`,
-                duration: 5000 
-              });
-              resolve(txid);
             }
           } catch (err) {
             console.error('[PAYMENT] ❌ Payment completion exception:', err);
@@ -1157,6 +1216,9 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         },
         
         onCancel: (paymentId: string) => {
+          if (resolvedOnce) return;
+          resolvedOnce = true;
+          
           console.log('[PAYMENT] ⛔ onCancel - Payment cancelled by user');
           console.log('[PAYMENT] Cancelled Payment ID:', paymentId);
           toast('Payment cancelled', { 
@@ -1167,6 +1229,9 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         },
         
         onError: (error: Error, payment?: any) => {
+          if (resolvedOnce) return;
+          resolvedOnce = true;
+          
           console.error('[PAYMENT] ❌ onError - Payment error occurred');
           console.error('[PAYMENT] Error:', error);
           console.error('[PAYMENT] Payment object:', payment);
@@ -1199,7 +1264,10 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           description: err instanceof Error ? err.message : 'Payment Error', 
           duration: 5000 
         });
-        resolve(null);
+        if (!resolvedOnce) {
+          resolvedOnce = true;
+          resolve(null);
+        }
       }
     });
   };

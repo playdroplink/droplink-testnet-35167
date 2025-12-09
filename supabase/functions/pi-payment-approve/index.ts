@@ -50,6 +50,9 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+  const TIMEOUT_MS = 45000; // 45 seconds to stay within Pi's 60-second window
+
   try {
     const { paymentId, metadata } = await req.json();
 
@@ -57,24 +60,34 @@ serve(async (req) => {
       throw new Error("Payment ID is required");
     }
 
-    // Log incoming client metadata
+    console.log('[APPROVAL] 🔄 Payment approval started for:', paymentId);
     console.log('[APPROVAL] Client metadata received:', JSON.stringify(metadata));
 
-    // Get authenticated user and profile (optional for Pi users)
-    const authResult = await getAuthenticatedProfile(req);
+    const PI_API_KEY = Deno.env.get('PI_API_KEY');
+    if (!PI_API_KEY) {
+      throw new Error("PI_API_KEY not configured");
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, serviceKey);
     
     let profileId: string | null = null;
     
-    if (authResult) {
-      // User has Supabase session - use their profile
-      profileId = authResult.profile.id;
-    } else {
-      // No Supabase session - validate payment with Pi API and derive profile from payment metadata
-      // For now, we'll approve the payment without profile_id (Pi users)
-      console.log("Payment approval without Supabase session (Pi user)");
+    // Get authenticated user and profile (optional for Pi users) - with timeout
+    try {
+      const authResult = await Promise.race([
+        getAuthenticatedProfile(req),
+        new Promise<null>((_, reject) => 
+          setTimeout(() => reject(new Error('Auth timeout')), 5000)
+        )
+      ]);
+      
+      if (authResult) {
+        profileId = authResult.profile.id;
+      }
+    } catch (authErr) {
+      console.log("Auth check skipped (timeout or error):", authErr instanceof Error ? authErr.message : authErr);
     }
 
     // Check idempotency - prevent duplicate approvals
@@ -84,12 +97,13 @@ serve(async (req) => {
       .eq('payment_id', paymentId)
       .maybeSingle();
 
-    if (existingPayment && existingPayment.status === 'completed') {
+    if (existingPayment && (existingPayment.status === 'completed' || existingPayment.status === 'approved')) {
+      console.log('[APPROVAL] ✅ Payment already processed:', paymentId);
       return new Response(
         JSON.stringify({ 
           success: true, 
           message: 'Payment already processed',
-          payment: { id: paymentId, status: 'completed' }
+          payment: { id: paymentId, status: existingPayment.status }
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -98,26 +112,33 @@ serve(async (req) => {
       );
     }
 
-    // Validate payment with Pi API first
-    const PI_API_KEY = Deno.env.get('PI_API_KEY');
-    if (!PI_API_KEY) {
-      throw new Error("PI_API_KEY not configured");
-    }
-
-    // Get payment details from Pi API to validate
+    // Get payment details from Pi API - with timeout
     const getPaymentUrl = `https://api.minepi.com/v2/payments/${paymentId}`;
-    const getPaymentResponse = await fetch(getPaymentUrl, {
-      headers: {
-        'Authorization': `Key ${PI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 10000); // 10s timeout
+    
+    let paymentDetails;
+    try {
+      const getPaymentResponse = await fetch(getPaymentUrl, {
+        headers: {
+          'Authorization': `Key ${PI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        signal: abortController.signal,
+      });
 
-    if (!getPaymentResponse.ok) {
-      throw new Error(`Failed to fetch payment: ${getPaymentResponse.statusText}`);
+      clearTimeout(timeoutId);
+
+      if (!getPaymentResponse.ok) {
+        throw new Error(`Failed to fetch payment: ${getPaymentResponse.statusText}`);
+      }
+
+      paymentDetails = await getPaymentResponse.json();
+    } catch (fetchErr) {
+      clearTimeout(timeoutId);
+      console.error('[APPROVAL] Pi API fetch error:', fetchErr);
+      throw new Error(`Failed to get payment details: ${fetchErr instanceof Error ? fetchErr.message : 'Network error'}`);
     }
-
-    const paymentDetails = await getPaymentResponse.json();
     
     // Extract metadata from payment details (Pi SDK provided metadata)
     const piMetadata = paymentDetails?.metadata || {};
@@ -134,14 +155,18 @@ serve(async (req) => {
 
     // If still no profileId, attempt to resolve by username if provided
     if (!profileId && clientMetadata?.username) {
-      const { data: profileByUsername } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', clientMetadata.username as string)
-        .maybeSingle();
-      if (profileByUsername) {
-        profileId = profileByUsername.id;
-        console.log('[APPROVAL] profileId resolved from username:', profileId);
+      try {
+        const { data: profileByUsername } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', clientMetadata.username as string)
+          .maybeSingle();
+        if (profileByUsername) {
+          profileId = profileByUsername.id;
+          console.log('[APPROVAL] profileId resolved from username:', profileId);
+        }
+      } catch (usernameErr) {
+        console.warn('Error resolving username:', usernameErr);
       }
     }
 
@@ -156,23 +181,33 @@ serve(async (req) => {
       throw new Error(`Payment is not ready for approval. Current status: ${paymentDetails.status}`);
     }
 
+    // Check timeout - must complete before 45 seconds
+    const elapsedMs = Date.now() - startTime;
+    if (elapsedMs > TIMEOUT_MS) {
+      throw new Error(`Payment approval timeout: ${elapsedMs}ms elapsed`);
+    }
+
     // Record payment attempt for idempotency with full metadata
-    await supabase
-      .from('payment_idempotency')
-      .upsert({
-        payment_id: paymentId,
-        profile_id: profileId,
-        amount: paymentDetails.amount || 0,
-        status: 'pending',
-        metadata: {
-          ...paymentDetails,
-          clientMetadata: clientMetadata,
-          piMetadata: piMetadata,
-          approvedAt: new Date().toISOString()
-        },
-      }, {
-        onConflict: 'payment_id'
-      });
+    try {
+      await supabase
+        .from('payment_idempotency')
+        .upsert({
+          payment_id: paymentId,
+          profile_id: profileId,
+          amount: paymentDetails.amount || 0,
+          status: 'pending',
+          metadata: {
+            ...paymentDetails,
+            clientMetadata: clientMetadata,
+            piMetadata: piMetadata,
+            approvedAt: new Date().toISOString()
+          },
+        }, {
+          onConflict: 'payment_id'
+        });
+    } catch (idempotencyErr) {
+      console.warn('[APPROVAL] Idempotency record update warning:', idempotencyErr);
+    }
 
     console.log('[APPROVAL] Idempotency record created:', { 
       paymentId, 
@@ -180,44 +215,65 @@ serve(async (req) => {
       clientMetadata 
     });
 
-    // Approve the payment with Pi API
+    // Approve the payment with Pi API - CRITICAL: must complete quickly
     const approveUrl = `https://api.minepi.com/v2/payments/${paymentId}/approve`;
+    const approveAbortController = new AbortController();
+    const approveTimeoutId = setTimeout(() => approveAbortController.abort(), 15000); // 15s timeout
     
-    const response = await fetch(approveUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Key ${PI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    let approveResponse;
+    try {
+      approveResponse = await fetch(approveUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Key ${PI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        signal: approveAbortController.signal,
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Pi API error:", response.status, errorText);
-      
-      // Update idempotency record
-      await supabase
-        .from('payment_idempotency')
-        .update({ status: 'failed' })
-        .eq('payment_id', paymentId);
-      
-      throw new Error(`Failed to approve payment: ${errorText}`);
+      clearTimeout(approveTimeoutId);
+
+      if (!approveResponse.ok) {
+        const errorText = await approveResponse.text();
+        console.error('[APPROVAL] Pi API error:', approveResponse.status, errorText);
+        
+        // Try to update idempotency record
+        try {
+          await supabase
+            .from('payment_idempotency')
+            .update({ status: 'failed' })
+            .eq('payment_id', paymentId);
+        } catch (updateErr) {
+          console.warn('Error updating failed status:', updateErr);
+        }
+        
+        throw new Error(`Failed to approve payment: ${errorText}`);
+      }
+    } catch (approveErr) {
+      clearTimeout(approveTimeoutId);
+      throw new Error(`Approval request failed: ${approveErr instanceof Error ? approveErr.message : 'Network error'}`);
     }
 
-    const paymentData = await response.json();
+    const paymentData = await approveResponse.json();
 
     // Update idempotency record with approval details
-    await supabase
-      .from('payment_idempotency')
-      .update({ status: 'approved' })
-      .eq('payment_id', paymentId);
+    try {
+      await supabase
+        .from('payment_idempotency')
+        .update({ status: 'approved' })
+        .eq('payment_id', paymentId);
+    } catch (updateErr) {
+      console.warn('[APPROVAL] Warning updating approved status:', updateErr);
+    }
 
-    console.log('[APPROVAL SUCCESS]', {
+    const totalTime = Date.now() - startTime;
+    console.log('[APPROVAL SUCCESS] ✅', {
       paymentId,
       profileId,
       amount: paymentData.amount,
       status: paymentData.status,
-      subscriptionPlan: clientMetadata?.subscriptionPlan
+      subscriptionPlan: clientMetadata?.subscriptionPlan,
+      totalTimeMs: totalTime
     });
 
     return new Response(
@@ -229,11 +285,17 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error("Payment approval error:", error);
+    const totalTime = Date.now() - startTime;
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[APPROVAL FAILED] ❌', {
+      error: errorMsg,
+      totalTimeMs: totalTime
+    });
+    
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error' 
+        error: errorMsg
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

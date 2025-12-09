@@ -49,6 +49,9 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+  const TIMEOUT_MS = 45000; // 45 seconds max
+
   try {
     const { paymentId, txid, metadata } = await req.json();
 
@@ -56,23 +59,36 @@ serve(async (req) => {
       throw new Error("Payment ID and transaction ID are required");
     }
 
-    // Get authenticated user and profile (optional for Pi users)
-    const authResult = await getAuthenticatedProfile(req);
+    console.log('[COMPLETE] 🔄 Payment completion started:', paymentId);
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, serviceKey);
     
+    const PI_API_KEY = Deno.env.get('PI_API_KEY');
+    if (!PI_API_KEY) {
+      throw new Error("PI_API_KEY not configured");
+    }
+    
     let profileId: string | null = null;
     
-    if (authResult) {
-      // User has Supabase session - use their profile
-      profileId = authResult.profile.id;
-    } else {
-      // No Supabase session - will use metadata.profileId if available
+    // Get authenticated user and profile (optional for Pi users) - with timeout
+    try {
+      const authResult = await Promise.race([
+        getAuthenticatedProfile(req),
+        new Promise<null>((_, reject) => 
+          setTimeout(() => reject(new Error('Auth timeout')), 5000)
+        )
+      ]);
+      
+      if (authResult) {
+        profileId = authResult.profile.id;
+      }
+    } catch (authErr) {
+      console.log('[COMPLETE] Auth check skipped:', authErr instanceof Error ? authErr.message : authErr);
       if (metadata?.profileId) {
         profileId = metadata.profileId;
       }
-      console.log("Payment completion without Supabase session (Pi user)");
     }
 
     // Check idempotency - prevent duplicate completions
@@ -83,6 +99,7 @@ serve(async (req) => {
       .maybeSingle();
 
     if (existingPayment && existingPayment.status === 'completed') {
+      console.log('[COMPLETE] ✅ Payment already completed:', paymentId);
       return new Response(
         JSON.stringify({ 
           success: true, 
@@ -98,52 +115,50 @@ serve(async (req) => {
 
     // Get metadata from idempotency record (stored during approval)
     const storedMetadata = existingPayment?.metadata || {};
-    
-    // Extract client metadata - prioritize from storedMetadata.clientMetadata
     const clientMetadata = storedMetadata?.clientMetadata || {};
     
     console.log('[COMPLETE] Retrieved metadata:', {
-      existingPaymentId: existingPayment?.id,
-      storedMetadata,
+      hasStoredMetadata: !!existingPayment?.metadata,
       clientMetadata,
       incomingMetadata: metadata
     });
-    
-    // Validate payment with Pi API
-    const PI_API_KEY = Deno.env.get('PI_API_KEY');
-    if (!PI_API_KEY) {
-      throw new Error("PI_API_KEY not configured");
-    }
 
-    // Verify payment status and details with Pi API
+    // Verify payment status and details with Pi API - with timeout
     const getPaymentUrl = `https://api.minepi.com/v2/payments/${paymentId}`;
-    const getPaymentResponse = await fetch(getPaymentUrl, {
-      headers: {
-        'Authorization': `Key ${PI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 10000);
+    
+    let paymentDetails;
+    try {
+      const getPaymentResponse = await fetch(getPaymentUrl, {
+        headers: {
+          'Authorization': `Key ${PI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        signal: abortController.signal,
+      });
 
-    if (!getPaymentResponse.ok) {
-      throw new Error(`Failed to fetch payment: ${getPaymentResponse.statusText}`);
+      clearTimeout(timeoutId);
+
+      if (!getPaymentResponse.ok) {
+        throw new Error(`Failed to fetch payment: ${getPaymentResponse.statusText}`);
+      }
+
+      paymentDetails = await getPaymentResponse.json();
+    } catch (fetchErr) {
+      clearTimeout(timeoutId);
+      throw new Error(`Failed to get payment details: ${fetchErr instanceof Error ? fetchErr.message : 'Network error'}`);
     }
-
-    const paymentDetails = await getPaymentResponse.json();
     
     // Validate payment belongs to this profile (if metadata provided)
     if (metadata?.profileId && profileId && metadata.profileId !== profileId) {
       throw new Error('Payment does not belong to authenticated user');
     }
     
-    // Use profileId from auth or metadata, or fallback to idempotency record
+    // Use profileId from auth or metadata, or fallback to stored data
     let finalProfileId = profileId || metadata?.profileId || clientMetadata?.profileId;
-    if (!finalProfileId) {
-      const { data: idem } = await supabase
-        .from('payment_idempotency')
-        .select('profile_id')
-        .eq('payment_id', paymentId)
-        .maybeSingle();
-      if (idem?.profile_id) finalProfileId = idem.profile_id;
+    if (!finalProfileId && existingPayment?.profile_id) {
+      finalProfileId = existingPayment.profile_id;
     }
     
     console.log('[COMPLETE] Profile ID resolution:', {
@@ -163,53 +178,64 @@ serve(async (req) => {
       throw new Error('Transaction ID mismatch');
     }
 
-    // Complete the payment with Pi API
-    const completeUrl = `https://api.minepi.com/v2/payments/${paymentId}/complete`;
-    
-    const response = await fetch(completeUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Key ${PI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ txid }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      const errorMessage = `Failed to complete payment: ${response.status} ${errorText}`;
-      
-      // Update idempotency record
-      try {
-        await supabase
-          .from('payment_idempotency')
-          .update({ status: 'failed' })
-          .eq('payment_id', paymentId);
-      } catch (idempotencyError) {
-        // Log but don't throw - payment failure is more important
-        console.error("Error updating idempotency:", idempotencyError);
-      }
-      
-      throw new Error(errorMessage);
+    // Check timeout
+    const elapsedMs = Date.now() - startTime;
+    if (elapsedMs > TIMEOUT_MS) {
+      throw new Error(`Payment completion timeout: ${elapsedMs}ms elapsed`);
     }
 
-    const paymentData = await response.json();
+    // Complete the payment with Pi API - CRITICAL: fast response needed
+    const completeUrl = `https://api.minepi.com/v2/payments/${paymentId}/complete`;
+    const completeAbortController = new AbortController();
+    const completeTimeoutId = setTimeout(() => completeAbortController.abort(), 15000);
+    
+    let completeResponse;
+    try {
+      completeResponse = await fetch(completeUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Key ${PI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ txid }),
+        signal: completeAbortController.signal,
+      });
+
+      clearTimeout(completeTimeoutId);
+
+      if (!completeResponse.ok) {
+        const errorText = await completeResponse.text();
+        console.error('[COMPLETE] Pi API error:', completeResponse.status, errorText);
+        
+        throw new Error(`Failed to complete payment: ${completeResponse.status}`);
+      }
+    } catch (completeErr) {
+      clearTimeout(completeTimeoutId);
+      throw new Error(`Completion request failed: ${completeErr instanceof Error ? completeErr.message : 'Network error'}`);
+    }
+
+    const paymentData = await completeResponse.json();
 
     // Mark payment as completed in idempotency table
-    await supabase
-      .from('payment_idempotency')
-      .update({
-        status: 'completed',
-        txid: txid,
-        completed_at: new Date().toISOString(),
-        metadata: { ...metadata, paymentData }
-      })
-      .eq('payment_id', paymentId);
+    try {
+      await supabase
+        .from('payment_idempotency')
+        .update({
+          status: 'completed',
+          txid: txid,
+          completed_at: new Date().toISOString(),
+          metadata: { ...storedMetadata, ...metadata, paymentData }
+        })
+        .eq('payment_id', paymentId);
+    } catch (updateErr) {
+      console.warn('[COMPLETE] Warning updating idempotency:', updateErr);
+    }
 
     // Update subscription in database if this was a subscription payment
-    if ((clientMetadata?.subscriptionPlan || metadata?.subscriptionPlan) && finalProfileId) {
-      const planType = (clientMetadata?.subscriptionPlan || metadata?.subscriptionPlan || '').toLowerCase();
-      const billingPeriod = clientMetadata?.billingPeriod || metadata?.billingPeriod || 'monthly';
+    const planType = (clientMetadata?.subscriptionPlan || metadata?.subscriptionPlan || '').toLowerCase();
+    const billingPeriod = clientMetadata?.billingPeriod || metadata?.billingPeriod || 'monthly';
+    
+    if (planType && finalProfileId) {
       const endDate = new Date();
       
       if (billingPeriod === 'yearly') {
@@ -218,45 +244,58 @@ serve(async (req) => {
         endDate.setMonth(endDate.getMonth() + 1);
       }
 
-      console.log('[SUBSCRIPTION CREATE] 🎯 Creating subscription with:', {
+      console.log('[SUBSCRIPTION] 🎯 Creating/updating subscription:', {
         profileId: finalProfileId,
         planType,
         billingPeriod,
         endDate: endDate.toISOString(),
         amount: paymentData.amount || paymentDetails.amount,
-        clientMetadataSource: clientMetadata,
       });
 
-      const { error: subError } = await supabase
-        .from("subscriptions")
-        .upsert({
-          profile_id: finalProfileId,
-          plan_type: planType,
-          billing_period: billingPeriod,
-          pi_amount: paymentData.amount || paymentDetails.amount,
-          start_date: new Date().toISOString(),
-          end_date: endDate.toISOString(),
-          status: "active",
-          auto_renew: true,
-        }, {
-          onConflict: 'profile_id'
-        });
+      try {
+        const { error: subError } = await supabase
+          .from("subscriptions")
+          .upsert({
+            profile_id: finalProfileId,
+            plan_type: planType,
+            billing_period: billingPeriod,
+            pi_amount: paymentData.amount || paymentDetails.amount,
+            start_date: new Date().toISOString(),
+            end_date: endDate.toISOString(),
+            status: "active",
+            auto_renew: true,
+          }, {
+            onConflict: 'profile_id'
+          });
 
-      if (subError) {
-        // Log error but don't fail payment - subscription can be fixed later
-        console.error("Subscription creation error (non-critical):", JSON.stringify(subError));
-      } else {
-        console.log('[SUBSCRIPTION CREATED]', finalProfileId, planType);
+        if (subError) {
+          console.error('[SUBSCRIPTION] Error creating subscription:', JSON.stringify(subError));
+          // Log but don't fail payment - subscription can be retried
+        } else {
+          console.log('[SUBSCRIPTION] ✅ CREATED/UPDATED:', finalProfileId, planType);
+        }
+      } catch (subException) {
+        console.error('[SUBSCRIPTION] Exception creating subscription:', subException);
+        // Don't throw - payment succeeded, subscription issue is secondary
       }
     } else {
-      console.log('[NO SUBSCRIPTION DATA] ⚠️ Missing subscription details:', { 
-        hasClientMetadata: !!clientMetadata?.subscriptionPlan,
-        hasRequestMetadata: !!metadata?.subscriptionPlan,
-        finalProfileId,
+      console.warn('[SUBSCRIPTION] ⚠️ Subscription not created - missing data:', { 
+        hasPlanType: !!planType,
+        hasProfileId: !!finalProfileId,
         clientMetadata,
         requestMetadata: metadata
       });
     }
+
+    const totalTime = Date.now() - startTime;
+    console.log('[COMPLETE] ✅ SUCCESS:', {
+      paymentId,
+      txid: txid.substring(0, 16) + '...',
+      profileId: finalProfileId,
+      amount: paymentData.amount,
+      planType,
+      totalTimeMs: totalTime
+    });
 
     return new Response(
       JSON.stringify({ success: true, payment: paymentData }),
@@ -267,14 +306,13 @@ serve(async (req) => {
     );
 
   } catch (error) {
+    const totalTime = Date.now() - startTime;
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorDetails = error instanceof Error ? error.stack : String(error);
     
-    // Log error with details (but don't expose stack in production)
-    console.error("Payment completion error:", errorMessage);
-    if (Deno.env.get('DENO_ENV') === 'development') {
-      console.error("Error details:", errorDetails);
-    }
+    console.error('[COMPLETE] ❌ FAILED:', {
+      error: errorMessage,
+      totalTimeMs: totalTime
+    });
     
     return new Response(
       JSON.stringify({ 
