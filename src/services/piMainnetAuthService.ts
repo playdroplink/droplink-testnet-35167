@@ -41,8 +41,13 @@ export async function validatePiAccessToken(accessToken: string) {
     
     return piData;
   } catch (error: any) {
-    console.error('[Pi Auth Service] ❌ Failed to validate Pi token:', error);
-    throw new Error(`Failed to validate Pi access token: ${error.message}`);
+    // Network errors in sandbox are often caused by blocked HTTPS or misconfigured sandbox URLs
+    const networkHint = PI_CONFIG.SANDBOX_MODE
+      ? 'Check sandbox API URL (VITE_PI_SANDBOX_URL), Pi Browser network, and ensure HTTPS is allowed.'
+      : 'Check mainnet connectivity and API URL.';
+
+    console.error('[Pi Auth Service] ❌ Failed to validate Pi token:', error, networkHint);
+    throw new Error(`Failed to validate Pi access token: ${error.message}. ${networkHint}`);
   }
 }
 
