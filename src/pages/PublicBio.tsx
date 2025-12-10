@@ -92,6 +92,14 @@ const PublicBio = () => {
     }
   }, [profileId, currentUserProfileId]);
 
+  // Redirect to Dashboard if current user is viewing their own profile
+  useEffect(() => {
+    if (profile && currentUserProfileId && profileId && currentUserProfileId === profileId) {
+      console.log("User is viewing their own profile, redirecting to Dashboard");
+      navigate("/");
+    }
+  }, [profile, currentUserProfileId, profileId, navigate]);
+
   const loadCurrentUserProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
@@ -361,7 +369,7 @@ const PublicBio = () => {
         piWalletAddress: profileData.pi_wallet_address || "",
         piDonationMessage: profileData.pi_donation_message || "",
         showShareButton: profileData.show_share_button || false,
-        storeUrl: "",
+        storeUrl: typeof (profileData as any).store_url === 'string' ? (profileData as any).store_url : `@${profileData.username || username || 'user'}`,
         showPiWalletTips,
       });
     } catch (error) {
