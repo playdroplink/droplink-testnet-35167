@@ -75,6 +75,7 @@ const App = () => {
             <Route path="/pay/:linkId" element={<PaymentPage />} />
             <Route path="/u/:username" element={<PublicBio />} />
             <Route path="/profile/:username" element={<PublicBio />} />
+            <Route path="/@:username" element={<PublicBio />} />
             <Route path="/:username" element={<PublicBio />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="/switch-to-merchant" element={<SwitchToMerchant />} />

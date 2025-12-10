@@ -44,7 +44,9 @@ import { FaInstagram, FaFacebook, FaYoutube, FaGlobe, FaLinkedin, FaTiktok, FaTw
 import type { ProfileData } from "@/types/profile";
 
 const PublicBio = () => {
-  const { username } = useParams();
+  const { username: rawUsername } = useParams();
+  // Strip @ prefix if present (for @username URLs)
+  const username = rawUsername?.startsWith('@') ? rawUsername.substring(1) : rawUsername;
   const navigate = useNavigate();
   const [profileId, setProfileId] = useState<string | null>(null);
   // Subscription for viewed profile (must be after username is defined)

@@ -208,20 +208,21 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   
   // Set isAuthenticated based on real authentication state
   const isAuthenticated = !!(piUser && accessToken);
+  const networkLabel = PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet';
 
   useEffect(() => {
     const initializePi = async () => {
       try {
         console.log('[PI DEBUG] 🥧 Starting Pi Network initialization...');
         
-        // Validate mainnet configuration only
+        // Validate configuration (supports sandbox or mainnet)
         if (!validateMainnetConfig()) {
-          console.error('[PI DEBUG] ❌ Invalid Pi Network mainnet configuration');
-          setError('Invalid Pi Network mainnet configuration');
+          console.error('[PI DEBUG] ❌ Invalid Pi Network configuration');
+          setError('Invalid Pi Network configuration');
           return;
         }
 
-        console.log('[PI DEBUG] ✅ Mainnet configuration validated');
+        console.log(`[PI DEBUG] ✅ ${networkLabel} configuration validated`);
         console.log('[PI DEBUG] 📍 Network:', PI_CONFIG.NETWORK);
         console.log('[PI DEBUG] 🔗 API Endpoint:', PI_CONFIG.BASE_URL);
 
@@ -253,7 +254,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           // Initialize Pi SDK using configured SDK options with Pi storage
           try {
             await window.Pi.init({ ...PI_CONFIG.SDK, usePiStorage: true });
-            console.log('[PI DEBUG] ✅ Pi SDK initialized successfully (Mainnet with Pi Storage)');
+            console.log(`[PI DEBUG] ✅ Pi SDK initialized successfully (${networkLabel} with Pi Storage)`);
             setIsInitialized(true);
           } catch (initErr) {
             console.error('[PI DEBUG] ❌ Failed to initialize Pi SDK:', initErr);
@@ -288,7 +289,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           const storedUser = localStorage.getItem('pi_user');
           
           if (storedToken && storedUser) {
-            console.log('[PI DEBUG] 🔍 Found stored Pi authentication, verifying with Mainnet API...');
+            console.log(`[PI DEBUG] 🔍 Found stored Pi authentication, verifying with ${networkLabel} API...`);
             try {
               // Verify token is still valid using the authentication service
               const isValid = await verifyStoredPiToken(storedToken);
@@ -297,7 +298,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
                 const userData = JSON.parse(storedUser);
                 setAccessToken(storedToken);
                 setPiUser(userData);
-                console.log('[PI DEBUG] ✅ Auto-authenticated with stored credentials (Mainnet)');
+                console.log(`[PI DEBUG] ✅ Auto-authenticated with stored credentials (${networkLabel})`);
               } else {
                 console.warn('[PI DEBUG] ⚠️ Stored token verification failed, clearing...');
                 localStorage.removeItem('pi_access_token');
@@ -322,7 +323,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     initializePi();
   }, []);
 
-  // Sign In with Pi Network (Mainnet)
+  // Sign In with Pi Network (sandbox or mainnet)
   const signIn = async (scopes?: string[]) => {
     // Use scopes from config if not provided
     const requestedScopes = scopes || PI_CONFIG.scopes || ['username'];
@@ -382,7 +383,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           
           await window.Pi.init({ ...PI_CONFIG.SDK, usePiStorage: true });
           setIsInitialized(true);
-          console.log('[PI DEBUG] ✅ Pi SDK reinitialized successfully (Mainnet with Pi Storage)');
+          console.log(`[PI DEBUG] ✅ Pi SDK reinitialized successfully (${networkLabel} with Pi Storage)`);
         } catch (reinitError: any) {
           const msg = reinitError?.message || String(reinitError);
           console.error('[PI DEBUG] ❌ Failed to initialize Pi SDK:', msg);
@@ -394,7 +395,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
-      console.log('[PI DEBUG] 🔐 Starting Pi Network authentication (Mainnet)...');
+      console.log(`[PI DEBUG] 🔐 Starting Pi Network authentication (${networkLabel})...`);
       console.log('[PI DEBUG] 📍 Browser detected:', isPiBrowserEnv());
       console.log('[PI DEBUG] 🔑 Requesting scopes:', requestedScopes.join(', '));
 
@@ -457,7 +458,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
-      // Validate access token with Pi API (Mainnet)
+      // Validate access token with Pi API (sandbox or mainnet)
       if (!authResult) {
         console.error('[PI DEBUG] ❌ authResult is null/undefined');
         const err = 'No authentication result received from Pi Network.';
@@ -475,13 +476,13 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       }
       console.log('[PI DEBUG] ✅ Access token received:', accessToken.substring(0, 20) + '...');
 
-      // Use the Pi Mainnet authentication service for proper validation and linking
-      console.log('[PI DEBUG] 🔐 Authenticating with Pi Mainnet service...');
+      // Use the Pi authentication service for proper validation and linking
+      console.log(`[PI DEBUG] 🔐 Authenticating with Pi ${networkLabel} service...`);
       const authResult_fromService = await authenticatePiUser(accessToken, {
         createIfNotExists: true,
       });
 
-      console.log('[PI DEBUG] ✅ Pi Mainnet authentication successful');
+      console.log(`[PI DEBUG] ✅ Pi ${networkLabel} authentication successful`);
       const piUser = authResult_fromService.piUser;
       const supabaseProfile = authResult_fromService.supabaseProfile;
 
@@ -1042,15 +1043,12 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       throw new Error(errorMsg);
     }
 
-    // MAINNET VERIFICATION
+    // Network awareness: allow sandbox for testing
     if (PI_CONFIG.SANDBOX_MODE) {
-      const errorMsg = 'CRITICAL ERROR: Sandbox mode is enabled! Payments must be mainnet only.';
-      console.error('[PAYMENT] ❌', errorMsg);
-      toast.error(errorMsg, { duration: 5000 });
-      throw new Error(errorMsg);
+      console.log('[PAYMENT] 🧪 Sandbox payment mode enabled (test network)');
+    } else {
+      console.log('[PAYMENT] ⚠️ REAL Pi Network MAINNET Payment');
     }
-    
-    console.log('[PAYMENT] ⚠️ REAL Pi Network MAINNET Payment');
     console.log('[PAYMENT] Amount:', amount, 'Pi');
     console.log('[PAYMENT] Memo:', memo);
     console.log('[PAYMENT] Network:', PI_CONFIG.NETWORK);

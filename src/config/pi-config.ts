@@ -1,30 +1,42 @@
 /**
- * Pi Network Configuration for DropLink Mainnet
- * 
+ * Pi Network Configuration for DropLink (Mainnet or Sandbox)
+ *
  * Official Documentation:
  * - Pi Developer Guide: https://pi-apps.github.io/community-developer-guide/
  * - Pi Payment API: https://pi-apps.github.io/community-developer-guide/
  * - Pi Ad Network: https://github.com/pi-apps/pi-platform-docs/tree/master
- * 
- * API Credentials:
- * - API Key: b00j4felp0ctc1fexe8igldsjg9u7wbqitavc15si53fr9wwra7r6oluzk4j24qz
- * - Validation Key: See VALIDATION_KEY below
- * 
- * Network: Pi Mainnet (Production)
- * Mode: Sandbox DISABLED
  */
 
+import { isPiBrowserEnv } from "@/contexts/PiContext";
+
+const sandboxFlag = String(import.meta.env.VITE_PI_SANDBOX_MODE ?? "false").toLowerCase() === "true";
+const PI_API_KEY = import.meta.env.VITE_PI_API_KEY ?? "";
+const PI_VALIDATION_KEY = import.meta.env.VITE_PI_VALIDATION_KEY ?? "";
+const PLATFORM_URL = import.meta.env.VITE_PLATFORM_URL ?? "https://droplink.space";
+
+// Toggle API endpoints based on sandbox flag
+const BASE_API_URL = sandboxFlag
+  ? (import.meta.env.VITE_PI_SANDBOX_URL ?? "https://sandbox-api.minepi.com")
+  : (import.meta.env.VITE_API_URL ?? "https://api.minepi.com");
+
+const HORIZON_URL = sandboxFlag
+  ? (import.meta.env.VITE_PI_TESTNET_HORIZON_URL ?? "https://api.testnet.minepi.com")
+  : (import.meta.env.VITE_PI_HORIZON_URL ?? "https://api.minepi.com");
+
+const NETWORK_NAME = sandboxFlag ? "sandbox" : "mainnet";
+const NETWORK_PASSPHRASE = sandboxFlag ? "Pi Testnet" : "Pi Mainnet";
+
 export const PI_CONFIG = {
-  API_KEY: "b00j4felp0ctc1fexe8igldsjg9u7wbqitavc15si53fr9wwra7r6oluzk4j24qz", // MAINNET API KEY
-  BASE_URL: "https://api.minepi.com",
-  NETWORK: "mainnet",
-  NETWORK_PASSPHRASE: "Pi Mainnet",
-  SANDBOX_MODE: false, // MAINNET - SANDBOX MODE DISABLED
+  API_KEY: PI_API_KEY,
+  BASE_URL: BASE_API_URL,
+  NETWORK: NETWORK_NAME,
+  NETWORK_PASSPHRASE,
+  SANDBOX_MODE: sandboxFlag,
   ALLOW_MULTIPLE_ACCOUNTS: true,
 
   SDK: {
     version: "2.0",
-    sandbox: false, // MAINNET - SANDBOX MODE DISABLED
+    sandbox: sandboxFlag,
   },
   
   // Official Documentation Links
@@ -57,10 +69,10 @@ export const PI_CONFIG = {
   },
   
   // Validation key from validation-key.txt
-  VALIDATION_KEY: "7511661aac4538b1832d2c9ba117f6d972b26a54640598d3fbb9824013c7079203f65b02d125be3f418605cfb89ba0e4443e3ec997e3800eb464df0bc5410d2a",
+  VALIDATION_KEY: PI_VALIDATION_KEY,
   
-  PLATFORM_URL: "https://droplink.space",
-  MAINNET_URL: "https://droplink.space",
+  PLATFORM_URL,
+  MAINNET_URL: PLATFORM_URL,
   
   getAuthHeaders: (accessToken: string) => ({
     'Authorization': `Bearer ${accessToken}`,
@@ -68,19 +80,19 @@ export const PI_CONFIG = {
   }),
   
   ENDPOINTS: {
-    ME: "https://api.minepi.com/v2/me",
-    WALLETS: "https://api.minepi.com/v2/wallets",
-    TRANSACTIONS: "https://api.minepi.com/v2/transactions",
-    PAYMENTS: "https://api.minepi.com/v2/payments",
-    OPERATIONS: "https://api.minepi.com/v2/operations",
-    LEDGERS: "https://api.minepi.com/v2/ledgers",
-    EFFECTS: "https://api.minepi.com/v2/effects",
-    FEE_STATS: "https://api.minepi.com/v2/fee_stats",
-    PI_BLOCKCHAIN: "https://api.minepi.com/v2/blockchain",
-    PI_ASSETS: "https://api.minepi.com/v2/assets",
-    PI_ACCOUNT_BALANCES: "https://api.minepi.com/v2/accounts",
-    HORIZON: "https://horizon.stellar.org",
-    PI_ASSET_DISCOVERY: "https://api.minepi.com/v2/assets"
+    ME: `${BASE_API_URL}/v2/me`,
+    WALLETS: `${BASE_API_URL}/v2/wallets`,
+    TRANSACTIONS: `${BASE_API_URL}/v2/transactions`,
+    PAYMENTS: `${BASE_API_URL}/v2/payments`,
+    OPERATIONS: `${BASE_API_URL}/v2/operations`,
+    LEDGERS: `${BASE_API_URL}/v2/ledgers`,
+    EFFECTS: `${BASE_API_URL}/v2/effects`,
+    FEE_STATS: `${BASE_API_URL}/v2/fee_stats`,
+    PI_BLOCKCHAIN: `${BASE_API_URL}/v2/blockchain`,
+    PI_ASSETS: `${BASE_API_URL}/v2/assets`,
+    PI_ACCOUNT_BALANCES: `${BASE_API_URL}/v2/accounts`,
+    HORIZON: HORIZON_URL,
+    PI_ASSET_DISCOVERY: `${BASE_API_URL}/v2/assets`
   },
 
   // Mainnet token configuration should be added here if/when available
@@ -95,27 +107,28 @@ export const PI_CONFIG = {
 };
 
 // Helper to check if Pi Network is available
-import { isPiBrowserEnv } from "@/contexts/PiContext";
-
 export const isPiNetworkAvailable = (): boolean => {
   return isPiBrowserEnv();
 };
 
-// Helper to validate Pi configuration (mainnet only)
+// Helper to validate Pi configuration (sandbox or mainnet)
 export const validatePiConfig = (): boolean => {
   return PI_CONFIG.API_KEY.length > 0 &&
          PI_CONFIG.VALIDATION_KEY.length > 0 &&
-         PI_CONFIG.NETWORK === "mainnet" &&
-         PI_CONFIG.SANDBOX_MODE === false;
+         PI_CONFIG.BASE_URL.length > 0 &&
+         PI_CONFIG.NETWORK.length > 0 &&
+         PI_CONFIG.SDK.version.length > 0;
 };
 
-// Helper to validate mainnet configuration
+// Network-aware validation to ensure SDK/base URL align with sandbox flag
 export const validateMainnetConfig = (): boolean => {
-  return PI_CONFIG.NETWORK === "mainnet" &&
-         PI_CONFIG.SANDBOX_MODE === false &&
-         PI_CONFIG.SDK.sandbox === false &&
-         PI_CONFIG.BASE_URL.includes("minepi.com") &&
-         validatePiConfig();
+  const networkMatches = PI_CONFIG.SANDBOX_MODE ? PI_CONFIG.NETWORK === "sandbox" : PI_CONFIG.NETWORK === "mainnet";
+  const sdkMatches = PI_CONFIG.SDK.sandbox === PI_CONFIG.SANDBOX_MODE;
+  const baseUrlMatches = PI_CONFIG.SANDBOX_MODE
+    ? PI_CONFIG.BASE_URL.includes("sandbox") || PI_CONFIG.BASE_URL.includes("testnet")
+    : PI_CONFIG.BASE_URL.includes("minepi.com");
+
+  return validatePiConfig() && networkMatches && sdkMatches && baseUrlMatches;
 };
 
 // Enhanced Pi Network token detection for mainnet

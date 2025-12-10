@@ -1,8 +1,8 @@
 /**
- * Pi Network Mainnet Authentication Service
- * 
+ * Pi Network Authentication Service (Mainnet or Sandbox)
+ *
  * Handles:
- * - Pi access token validation with Mainnet API
+ * - Pi access token validation with the active Pi API
  * - User profile retrieval from Pi
  * - Supabase profile linking
  * - Complete authentication flow
@@ -11,16 +11,18 @@
 import { supabase } from "@/integrations/supabase/client";
 import { PI_CONFIG } from "@/config/pi-config";
 
+const networkLabel = PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet';
+
 /**
- * Validates Pi access token by querying Pi Mainnet API
- * Uses: https://api.minepi.com/v2/me
+ * Validates Pi access token by querying Pi API
+ * Uses: https://api.minepi.com/v2/me (or sandbox equivalent)
  */
 export async function validatePiAccessToken(accessToken: string) {
   if (!accessToken) {
     throw new Error('Missing Pi access token');
   }
 
-  console.log('[Pi Auth Service] 🔐 Validating Pi access token with Mainnet API...');
+  console.log(`[Pi Auth Service] 🔐 Validating Pi access token with ${networkLabel} API...`);
   
   try {
     const response = await fetch(PI_CONFIG.ENDPOINTS.ME, {
@@ -162,7 +164,7 @@ export async function linkPiUserToSupabase(
  * 4. Return authenticated user data
  */
 export async function authenticatePiUser(accessToken: string, options?: any) {
-  console.log('[Pi Auth Service] 🔐 Starting Pi Mainnet authentication flow...');
+  console.log(`[Pi Auth Service] 🔐 Starting Pi ${networkLabel} authentication flow...`);
   
   try {
     // Step 1: Validate token and get Pi user data
@@ -181,7 +183,7 @@ export async function authenticatePiUser(accessToken: string, options?: any) {
       accessToken: accessToken,
     };
 
-    console.log('[Pi Auth Service] ✅ Pi Mainnet authentication complete!');
+    console.log(`[Pi Auth Service] ✅ Pi ${networkLabel} authentication complete!`);
     return result;
   } catch (error: any) {
     console.error('[Pi Auth Service] ❌ Authentication failed:', error);

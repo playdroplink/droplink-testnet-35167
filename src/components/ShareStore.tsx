@@ -19,7 +19,7 @@ export const ShareStore = ({ username, businessName, followersCount = 0 }: Share
 
   useEffect(() => {
     if (username) {
-      setStoreUrl(`${window.location.origin}/u/${username}`);
+      setStoreUrl(`${window.location.origin}/@${username}`);
     }
   }, [username]);
 
