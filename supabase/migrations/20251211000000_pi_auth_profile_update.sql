@@ -80,6 +80,9 @@ DROP POLICY IF EXISTS "Users can read all profiles" ON public.profiles;
 DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
+DROP POLICY IF EXISTS "Anyone can read profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Authenticated users can insert profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can delete own profile" ON public.profiles;
 
 -- Enable RLS
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
