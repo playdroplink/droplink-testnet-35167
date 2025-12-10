@@ -18,6 +18,7 @@ const sandboxFlag = String(import.meta.env.VITE_PI_SANDBOX_MODE ?? "").toLowerCa
 const PI_API_KEY = import.meta.env.VITE_PI_API_KEY ?? "";
 const PI_VALIDATION_KEY = import.meta.env.VITE_PI_VALIDATION_KEY ?? "";
 const PLATFORM_URL = import.meta.env.VITE_PLATFORM_URL ?? "https://droplink.space";
+const PAYMENT_RECEIVER_WALLET = import.meta.env.VITE_PI_PAYMENT_RECEIVER_WALLET ?? "GDSXE723WPHZ5RGIJCSYXTPKSOIGPTSXE4RF5U3JTNGTCHXON7ZVD4LJ";
 
 // Toggle API endpoints based on sandbox flag (force HTTPS to avoid Pi Browser mixed content errors)
 // Pi Browser sandbox certs are valid on sandbox.minepi.com (not sandbox-api.minepi.com)
@@ -76,6 +77,9 @@ export const PI_CONFIG = {
   
   // Validation key from validation-key.txt
   VALIDATION_KEY: PI_VALIDATION_KEY,
+  
+  // Subscription payment receiver wallet address
+  PAYMENT_RECEIVER_WALLET: PAYMENT_RECEIVER_WALLET,
   
   PLATFORM_URL,
   MAINNET_URL: PLATFORM_URL,
