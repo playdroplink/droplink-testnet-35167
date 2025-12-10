@@ -967,7 +967,6 @@ const Dashboard = () => {
 
   const handleSave = async () => {
     setSaving(true);
-    toast.info('Saving changes...');
     try {
       if (!profileId) throw new Error('No profile ID found.');
       // Update main profile data in Supabase
@@ -2340,15 +2339,7 @@ const Dashboard = () => {
                       Cancel
                     </Button>
                     <Button 
-                      onClick={async () => {
-                        toast.info('Attempting to save changes...');
-                        try {
-                          await autoSave.updateData(profile);
-                          await handleSave();
-                        } catch (e) {
-                          toast.error('Save failed. Please check your connection or Pi authentication.');
-                        }
-                      }}
+                      onClick={handleSave}
                       className="flex-1 h-11 sm:h-12 bg-sky-400 hover:bg-sky-500 text-white font-medium rounded-lg border-none shadow-md"
                       style={{ transition: 'box-shadow 0.2s', boxShadow: '0 2px 8px #0284c71a' }}
                       disabled={saving}
