@@ -17,6 +17,7 @@ import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 import { isDevModeEnabled, MOCK_DEV_USER, getDevModeStatus } from "@/lib/dev-auth";
 // Removed duplicate Dialog imports to fix duplicate identifier errors
 import { useAutoSave } from "@/hooks/useAutoSave";
+import { saveProfileToSupabase } from "@/lib/realtimeSync";
 import { supabase } from "@/integrations/supabase/client";
 import { usePi } from "@/contexts/PiContext";
 import { Switch } from "@/components/ui/switch";
@@ -377,12 +378,65 @@ const Dashboard = () => {
     }
   });
 
-  // Update auto-save data when profile changes
+  // Update auto-save data when profile changes (debounced)
   useEffect(() => {
     if (profileId && !loading) {
+      console.log('📤 Profile changed, triggering auto-save in 3s...');
       autoSave.updateData(profile);
     }
-  }, [profile, profileId, loading]);
+  }, [profile, profileId, loading, autoSave]);
+
+  // Helper function to save profile immediately (for critical changes)
+  const saveProfileNow = async (updatedProfile?: any) => {
+    const dataToSave = updatedProfile || profile;
+    if (!profileId) {
+      console.error('❌ No profile ID - cannot save');
+      return false;
+    }
+
+    try {
+      console.log('💾 Saving profile to Supabase immediately...');
+      const success = await saveProfileToSupabase(profileId, {
+        id: profileId,
+        business_name: dataToSave.businessName,
+        description: dataToSave.description,
+        email: dataToSave.email,
+        youtube_video_url: dataToSave.youtubeVideoUrl,
+        social_links: dataToSave.socialLinks as any,
+        theme_settings: {
+          ...dataToSave.theme,
+          customLinks: dataToSave.customLinks || [],
+          paymentLinks: (dataToSave.paymentLinks || []).map((link: any) => ({
+            id: link.id,
+            amount: link.amount,
+            description: link.description,
+            type: link.type,
+            url: link.url,
+            created: link.created?.toISOString?.() || new Date().toISOString(),
+            active: link.active,
+            totalReceived: link.totalReceived,
+            transactionCount: link.transactionCount
+          }))
+        } as any,
+        logo: dataToSave.logo,
+        has_premium: dataToSave.hasPremium,
+        pi_wallet_address: dataToSave.piWalletAddress,
+        pi_donation_message: dataToSave.piDonationMessage,
+        custom_domain: dataToSave.customDomain,
+        background_music_url: dataToSave.backgroundMusicUrl,
+      });
+
+      if (success) {
+        console.log('✅ Profile saved immediately');
+        toast.success('Changes saved to Supabase', { duration: 2000 });
+      }
+      return success;
+    } catch (error) {
+      console.error('❌ Failed to save profile immediately:', error);
+      toast.error('Failed to save changes', { duration: 5000 });
+      return false;
+    }
+  };
 
   // Update Pi Wallet QR data when wallet address changes
   useEffect(() => {
@@ -516,7 +570,10 @@ const Dashboard = () => {
       if (storedProfile) {
         try {
           const parsed = JSON.parse(storedProfile);
-          setProfile(parsed);
+          console.log('📱 Found cached profile in localStorage for:', userIdentifier);
+          console.log('ℹ️ NOTE: Cached data may be stale. Using database profile if available.');
+          // Don't load from localStorage directly anymore - wait for database
+          // setProfile(parsed);
         } catch (e) {
           console.error("Error parsing stored profile:", e);
         }
@@ -720,10 +777,13 @@ const Dashboard = () => {
         const defaultName = isPiUser && piUser ? piUser.username : (supabaseUser?.email?.split("@")[0] || "user");
         console.log("Profile not found, auto-creating with name:", defaultName);
         
-        // Create profile in database first
+        // Create profile in database first (MANDATORY - not optional)
         let newProfileId = null;
+        let profileCreateSuccess = false;
+        
         try {
           if (isPiUser && piUser) {
+            console.log('🗄️ Creating Pi user profile in Supabase...');
             // Upsert Pi user profile to avoid UNIQUE_VIOLATION
             const { data: newProfile, error: createError } = await supabase
               .from("profiles")
@@ -738,13 +798,18 @@ const Dashboard = () => {
               .single();
             
             if (createError) {
-              console.error("Error creating Pi user profile:", createError);
+              console.error("❌ Error creating Pi user profile:", createError);
+              throw new Error(`Failed to create Pi profile: ${createError.message}`);
             } else if (newProfile) {
               newProfileId = newProfile.id;
+              profileCreateSuccess = true;
               setProfileId(newProfileId);
-              console.log("Created Pi user profile:", newProfileId);
+              console.log("✅ Created Pi user profile in Supabase:", newProfileId);
+            } else {
+              throw new Error('Profile creation returned no data');
             }
           } else if (supabaseUser) {
+            console.log('🗄️ Creating email user profile in Supabase...');
             // Create email user profile
             const emailUsername = supabaseUser.email?.split("@")[0] || `user-${supabaseUser.id.slice(0, 8)}`;
             const sanitizedUsername = emailUsername.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
@@ -763,13 +828,14 @@ const Dashboard = () => {
               .single();
             
             if (createError) {
-              console.error("Error creating email user profile:", createError);
+              console.error("❌ Error creating email user profile:", createError);
               // Check if it's a duplicate username error
               if (createError.code === '23505') {
+                console.log('📝 Username conflict detected, retrying with unique suffix...');
                 // Username conflict, try with a random suffix
                 const randomSuffix = Math.random().toString(36).substring(2, 8);
                 const uniqueUsername = `${sanitizedUsername}-${randomSuffix}`;
-                console.log('Username conflict, trying:', uniqueUsername);
+                console.log('Trying unique username:', uniqueUsername);
                 
                 const { data: retryProfile, error: retryError } = await supabase
                   .from("profiles")
@@ -784,19 +850,26 @@ const Dashboard = () => {
                   .single();
                   
                 if (retryError) {
-                  throw retryError;
+                  console.error("❌ Retry also failed:", retryError);
+                  throw new Error(`Failed to create profile with unique username: ${retryError.message}`);
                 } else if (retryProfile) {
                   newProfileId = retryProfile.id;
+                  profileCreateSuccess = true;
                   setProfileId(newProfileId);
-                  console.log("Created email user profile with unique username:", newProfileId);
+                  console.log("✅ Created email user profile with unique username:", newProfileId);
+                } else {
+                  throw new Error('Profile creation returned no data');
                 }
               } else {
-                throw createError;
+                throw new Error(`Failed to create email profile: ${createError.message}`);
               }
             } else if (newProfile) {
               newProfileId = newProfile.id;
+              profileCreateSuccess = true;
               setProfileId(newProfileId);
-              console.log("Created email user profile:", newProfileId);
+              console.log("✅ Created email user profile:", newProfileId);
+            } else {
+              throw new Error('Profile creation returned no data');
             }
           }
         } catch (dbError) {
@@ -882,18 +955,24 @@ const Dashboard = () => {
           piDonationMessage: "Send me a coffee ☕",
         };
         setProfile(defaultProfile);
-        // Save to localStorage with metadata
-        try {
-          const profileToStore = {
-            ...defaultProfile,
-            lastSynced: new Date().toISOString(),
-            profileId: newProfileId // Use the actual database profile ID
-          };
-          const storageKey = isPiUser ? `profile_${userIdentifier}` : `profile_email_${supabaseUser?.id}`;
-          localStorage.setItem(storageKey, JSON.stringify(profileToStore));
-          localStorage.setItem(`${storageKey}_backup`, JSON.stringify(profileToStore));
-        } catch (e) {
-          console.error("Error saving to localStorage:", e);
+        
+        // ONLY save to localStorage if database creation was successful
+        if (profileCreateSuccess && newProfileId) {
+          try {
+            const profileToStore = {
+              ...defaultProfile,
+              lastSynced: new Date().toISOString(),
+              profileId: newProfileId // Use the actual database profile ID
+            };
+            const storageKey = isPiUser ? `profile_${userIdentifier}` : `profile_email_${supabaseUser?.id}`;
+            localStorage.setItem(storageKey, JSON.stringify(profileToStore));
+            localStorage.setItem(`${storageKey}_backup`, JSON.stringify(profileToStore));
+            console.log('✅ Profile backed up to localStorage');
+          } catch (e) {
+            console.error("Error saving to localStorage:", e);
+          }
+        } else {
+          console.warn('⚠️ Skipping localStorage save - database creation failed');
         }
         
         if (newProfileId && isNewUser) {
@@ -905,11 +984,20 @@ const Dashboard = () => {
           }, 2000);
         } else if (newProfileId && !isNewUser) {
           console.log('Profile restored for returning user');
-        } else if (isNewUser) {
-          // New user but no DB profile created - show different message
-          toast.info(`Profile created locally. ${isPiUser ? 'Pi username' : 'Email'} recognized!`);
+          toast.success(`Welcome back, ${defaultName}! 👋`);
+        } else if (!profileCreateSuccess) {
+          // Database creation failed
+          console.error('❌ Failed to create profile in Supabase database');
+          toast.error('⚠️ Failed to save profile to database', {
+            description: 'Your profile was NOT saved. Check your internet connection and try again.',
+            duration: 10000
+          });
         } else {
-          console.log('Using cached profile data');
+          console.log('Using local profile data only (not in database)');
+          toast.warning('⚠️ Using local profile only', {
+            description: 'Your profile is not saved to the database. Refresh to sync.',
+            duration: 10000
+          });
         }
       }
     } catch (error) {
@@ -1676,7 +1764,12 @@ const Dashboard = () => {
                 <Input
                   id="business-name"
                   value={profile.businessName}
-                  onChange={(e) => setProfile({ ...profile, businessName: e.target.value })}
+                  onChange={(e) => {
+                    const newProfile = { ...profile, businessName: e.target.value };
+                    setProfile(newProfile);
+                    // Save business name immediately
+                    saveProfileNow(newProfile);
+                  }}
                   placeholder="Enter business name"
                   className="bg-input-bg text-sm"
                 />
@@ -1725,7 +1818,12 @@ const Dashboard = () => {
                 <Textarea
                   id="description"
                   value={profile.description}
-                  onChange={(e) => setProfile({ ...profile, description: e.target.value })}
+                  onChange={(e) => {
+                    const newProfile = { ...profile, description: e.target.value };
+                    setProfile(newProfile);
+                    // Save description immediately
+                    saveProfileNow(newProfile);
+                  }}
                   placeholder="Tell people about your business..."
                   className="bg-input-bg min-h-[100px] sm:min-h-[120px] resize-none text-sm"
                   maxLength={400}
@@ -2174,10 +2272,15 @@ const Dashboard = () => {
                     id="primary-color"
                     type="color"
                     value={profile.theme.primaryColor}
-                    onChange={(e) => setProfile({
-                      ...profile,
-                      theme: { ...profile.theme, primaryColor: e.target.value }
-                    })}
+                    onChange={(e) => {
+                      const newProfile = {
+                        ...profile,
+                        theme: { ...profile.theme, primaryColor: e.target.value }
+                      };
+                      setProfile(newProfile);
+                      // Save theme changes immediately
+                      saveProfileNow(newProfile);
+                    }}
                     className="h-11 sm:h-12 w-full rounded-lg"
                   />
                 </div>

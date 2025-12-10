@@ -191,6 +191,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [adNetworkSupported, setAdNetworkSupported] = useState<boolean>(false);
+  const [grantedScopes, setGrantedScopes] = useState<string[]>([]);
   
   // Wallet and token state
   const [dropBalance, setDropBalance] = useState<DropTokenBalance>({ balance: "0", hasTrustline: false });
@@ -435,6 +436,9 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           hasUser: !!authResult?.user,
           userId: authResult?.user?.uid
         });
+        // Store granted scopes
+        setGrantedScopes(requestedScopes);
+        console.log('[PI DEBUG] 📋 Granted scopes:', requestedScopes.join(', '));
       } catch (authErr: any) {
         const msg = typeof authErr === 'string' ? authErr : (authErr?.message || 'Authentication failed');
         const lowerMsg = String(msg).toLowerCase();
@@ -448,7 +452,9 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           toast('Permissions not available; signing in with username only.', { duration: 5000 });
           try {
             authResult = await tryScopes(['username']);
+            setGrantedScopes(['username']);
             console.log('[PI DEBUG] ✅ Fallback authentication successful');
+            console.log('[PI DEBUG] ⚠️ Payments scope not granted - will need re-auth for payments');
           } catch (fallbackErr: any) {
             console.error('[PI DEBUG] ❌ Fallback authentication also failed:', fallbackErr);
             throw fallbackErr;
@@ -1041,6 +1047,20 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       console.error('[PAYMENT] ❌', errorMsg);
       toast.error(errorMsg, { duration: 5000 });
       throw new Error(errorMsg);
+    }
+
+    // CHECK FOR PAYMENTS SCOPE
+    console.log('[PAYMENT] 🔍 Checking granted scopes:', grantedScopes);
+    if (!grantedScopes.includes('payments')) {
+      console.warn('[PAYMENT] ⚠️ Payments scope not granted. Requesting it now...');
+      
+      const errorMsg = 'Cannot create a payment without "payments" scope.\n\nPlease sign out and sign in again, then approve the payments permission when prompted.';
+      console.error('[PAYMENT] ❌', errorMsg);
+      toast.error('Payment Permission Required', {
+        description: 'Please sign out and sign in again to grant payments permission',
+        duration: 10000
+      });
+      return null;
     }
 
     // Network awareness: allow sandbox for testing
