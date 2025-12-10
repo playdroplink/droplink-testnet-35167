@@ -216,7 +216,8 @@ serve(async (req) => {
     });
 
     // Approve the payment with Pi API - CRITICAL: must complete quickly
-    const approveUrl = `https://api.minepi.com/v2/payments/${paymentId}/approve`;
+    const PI_API_BASE_URL = Deno.env.get('PI_API_BASE_URL') || 'https://api.minepi.com';
+    const approveUrl = `${PI_API_BASE_URL}/v2/payments/${paymentId}/approve`;
     const approveAbortController = new AbortController();
     const approveTimeoutId = setTimeout(() => approveAbortController.abort(), 15000); // 15s timeout
     
@@ -225,7 +226,7 @@ serve(async (req) => {
       approveResponse = await fetch(approveUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Key ${PI_API_KEY}`,
+          'Authorization': `key ${PI_API_KEY}`,
           'Content-Type': 'application/json',
         },
         signal: approveAbortController.signal,

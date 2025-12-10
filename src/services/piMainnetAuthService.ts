@@ -22,12 +22,21 @@ export async function validatePiAccessToken(accessToken: string) {
     throw new Error('Missing Pi access token');
   }
 
-  console.log(`[Pi Auth Service] 🔐 Validating Pi access token with ${networkLabel} API...`);
+  const baseUrl = PI_CONFIG.ENDPOINTS.ME.replace('/v2/me', '');
+  console.log(`[Pi Auth Service] 🔐 Validating Pi access token with ${networkLabel} API at ${baseUrl} ...`);
+  if (!PI_CONFIG.SANDBOX_MODE && PI_CONFIG.NETWORK !== 'mainnet') {
+    console.warn('[Pi Auth Service] Network mismatch: expected mainnet but config says', PI_CONFIG.NETWORK);
+  }
+  if (PI_CONFIG.SANDBOX_MODE && !baseUrl.includes('sandbox')) {
+    console.warn('[Pi Auth Service] Sandbox mode is enabled but base URL is not sandbox:', baseUrl);
+  }
   
   try {
     const response = await fetch(PI_CONFIG.ENDPOINTS.ME, {
       method: 'GET',
       headers: PI_CONFIG.getAuthHeaders(accessToken),
+      mode: 'cors',
+      cache: 'no-store',
     });
 
     if (!response.ok) {
@@ -41,13 +50,18 @@ export async function validatePiAccessToken(accessToken: string) {
     
     return piData;
   } catch (error: any) {
-    // Network errors in sandbox are often caused by blocked HTTPS or misconfigured sandbox URLs
+    // Handle browser fetch errors that manifest as TypeError: Failed to fetch
+    const isFetchError = error && error.message && error.message.toLowerCase().includes('failed to fetch');
     const networkHint = PI_CONFIG.SANDBOX_MODE
-      ? 'Check sandbox API URL (VITE_PI_SANDBOX_URL), Pi Browser network, and ensure HTTPS is allowed.'
+      ? 'Check sandbox API URL (VITE_PI_SANDBOX_URL), Pi Browser network connectivity, and ensure HTTPS is allowed.'
       : 'Check mainnet connectivity and API URL.';
 
     console.error('[Pi Auth Service] ❌ Failed to validate Pi token:', error, networkHint);
-    throw new Error(`Failed to validate Pi access token: ${error.message}. ${networkHint}`);
+    throw new Error(
+      isFetchError
+        ? `Failed to validate Pi access token: network request failed. ${networkHint}`
+        : `Failed to validate Pi access token: ${error.message}. ${networkHint}`
+    );
   }
 }
 

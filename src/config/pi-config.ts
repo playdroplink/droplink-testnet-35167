@@ -9,19 +9,25 @@
 
 import { isPiBrowserEnv } from "@/contexts/PiContext";
 
-const sandboxFlag = String(import.meta.env.VITE_PI_SANDBOX_MODE ?? "false").toLowerCase() === "true";
+// Prefer explicit sandbox flag but also honor VITE_PI_NETWORK=sandbox|testnet to avoid mismatched configs
+const networkEnv = String(import.meta.env.VITE_PI_NETWORK ?? "").toLowerCase();
+const sandboxFlag = String(import.meta.env.VITE_PI_SANDBOX_MODE ?? "").toLowerCase() === "true"
+  || networkEnv === "sandbox"
+  || networkEnv === "testnet";
+
 const PI_API_KEY = import.meta.env.VITE_PI_API_KEY ?? "";
 const PI_VALIDATION_KEY = import.meta.env.VITE_PI_VALIDATION_KEY ?? "";
 const PLATFORM_URL = import.meta.env.VITE_PLATFORM_URL ?? "https://droplink.space";
 
-// Toggle API endpoints based on sandbox flag
-const BASE_API_URL = sandboxFlag
-  ? (import.meta.env.VITE_PI_SANDBOX_URL ?? "https://sandbox-api.minepi.com")
-  : (import.meta.env.VITE_API_URL ?? "https://api.minepi.com");
+// Toggle API endpoints based on sandbox flag (force HTTPS to avoid Pi Browser mixed content errors)
+// Pi Browser sandbox certs are valid on sandbox.minepi.com (not sandbox-api.minepi.com)
+const resolvedSandboxApi = (import.meta.env.VITE_PI_SANDBOX_URL ?? "https://sandbox.minepi.com").replace(/^http:/, "https:");
+const resolvedMainnetApi = (import.meta.env.VITE_API_URL ?? "https://api.minepi.com").replace(/^http:/, "https:");
+const BASE_API_URL = sandboxFlag ? resolvedSandboxApi : resolvedMainnetApi;
 
-const HORIZON_URL = sandboxFlag
-  ? (import.meta.env.VITE_PI_TESTNET_HORIZON_URL ?? "https://api.testnet.minepi.com")
-  : (import.meta.env.VITE_PI_HORIZON_URL ?? "https://api.minepi.com");
+const resolvedSandboxHorizon = (import.meta.env.VITE_PI_TESTNET_HORIZON_URL ?? "https://api.testnet.minepi.com").replace(/^http:/, "https:");
+const resolvedMainnetHorizon = (import.meta.env.VITE_PI_HORIZON_URL ?? "https://api.minepi.com").replace(/^http:/, "https:");
+const HORIZON_URL = sandboxFlag ? resolvedSandboxHorizon : resolvedMainnetHorizon;
 
 const NETWORK_NAME = sandboxFlag ? "sandbox" : "mainnet";
 const NETWORK_PASSPHRASE = sandboxFlag ? "Pi Testnet" : "Pi Mainnet";

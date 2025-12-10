@@ -38,7 +38,7 @@ app.post('/verify-pi-token', async (req, res) => {
       `${BASE_URL}/v2/ads_network/status/${adId}`,
       {
         headers: {
-          Authorization: `Key ${API_KEY}`,
+          Authorization: `key ${API_KEY}`,
         },
       }
     );
@@ -56,10 +56,10 @@ app.post('/approve-payment', async (req, res) => {
   try {
     const response = await axios.post(
       `${BASE_URL}/v2/payments/${paymentId}/approve`,
-      {},
+      null,
       {
         headers: {
-          Authorization: `Key ${API_KEY}`,
+          Authorization: `key ${API_KEY}`,
         },
       }
     );
@@ -82,7 +82,7 @@ app.post('/complete-payment', async (req, res) => {
       { txid },
       {
         headers: {
-          Authorization: `Key ${API_KEY}`,
+          Authorization: `key ${API_KEY}`,
         },
       }
     );

@@ -14,6 +14,7 @@ import { PiAdBanner } from "@/components/PiAdBanner";
 import { AdGatedFeature } from "@/components/AdGatedFeature";
 import { PlanGate } from "@/components/PlanGate";
 import { useActiveSubscription } from "@/hooks/useActiveSubscription";
+import { isDevModeEnabled, MOCK_DEV_USER, getDevModeStatus } from "@/lib/dev-auth";
 // Removed duplicate Dialog imports to fix duplicate identifier errors
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { supabase } from "@/integrations/supabase/client";
@@ -132,9 +133,16 @@ const Dashboard = () => {
   const { piUser, isAuthenticated, signIn, signOut: piSignOut, loading: piLoading, getCurrentWalletAddress } = piContext;
   const [showPiAuthModal, setShowPiAuthModal] = useState(false);
 
-  // Enforce Pi Auth on dashboard load
+  // Enforce Pi Auth on dashboard load (with dev mode bypass)
   useEffect(() => {
-    if (!isAuthenticated || !piUser) {
+    const devModeActive = isDevModeEnabled();
+    
+    if (devModeActive) {
+      // Dev mode: Mock authentication
+      console.log('🛠️ Dev mode active - bypassing Pi auth requirement');
+      setShowPiAuthModal(false);
+    } else if (!isAuthenticated || !piUser) {
+      // Production: Require Pi auth
       setShowPiAuthModal(true);
     } else {
       setShowPiAuthModal(false);

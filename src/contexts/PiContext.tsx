@@ -251,10 +251,10 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           
           console.log('[PI DEBUG] ✅ window.Pi is available, initializing SDK...');
           
-          // Initialize Pi SDK using configured SDK options with Pi storage
+          // Initialize Pi SDK using official SDK options (version and sandbox)
           try {
-            await window.Pi.init({ ...PI_CONFIG.SDK, usePiStorage: true });
-            console.log(`[PI DEBUG] ✅ Pi SDK initialized successfully (${networkLabel} with Pi Storage)`);
+            await window.Pi.init(PI_CONFIG.SDK);
+            console.log(`[PI DEBUG] ✅ Pi SDK initialized successfully (${networkLabel})`);
             setIsInitialized(true);
           } catch (initErr) {
             console.error('[PI DEBUG] ❌ Failed to initialize Pi SDK:', initErr);
@@ -381,9 +381,9 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           console.log('[PI DEBUG] ✅ window.Pi is available, initializing...');
           console.log('[PI DEBUG] 🔧 Initializing with config:', JSON.stringify(PI_CONFIG.SDK));
           
-          await window.Pi.init({ ...PI_CONFIG.SDK, usePiStorage: true });
+          await window.Pi.init(PI_CONFIG.SDK);
           setIsInitialized(true);
-          console.log(`[PI DEBUG] ✅ Pi SDK reinitialized successfully (${networkLabel} with Pi Storage)`);
+          console.log(`[PI DEBUG] ✅ Pi SDK reinitialized successfully (${networkLabel})`);
         } catch (reinitError: any) {
           const msg = reinitError?.message || String(reinitError);
           console.error('[PI DEBUG] ❌ Failed to initialize Pi SDK:', msg);

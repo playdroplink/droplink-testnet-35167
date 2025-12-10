@@ -202,10 +202,10 @@ export class PiPaymentService {
     try {
       const response = await axios.post(
         `${PI_CONFIG.BASE_URL}/v2/payments/${paymentId}/approve`,
-        {},
+        null,
         {
           headers: {
-            'Authorization': `Key ${PI_CONFIG.API_KEY}`,
+            'Authorization': `key ${PI_CONFIG.API_KEY}`,
             'Content-Type': 'application/json',
           },
         }
@@ -273,7 +273,7 @@ export class PiPaymentService {
         { txid },
         {
           headers: {
-            'Authorization': `Key ${PI_CONFIG.API_KEY}`,
+            'Authorization': `key ${PI_CONFIG.API_KEY}`,
             'Content-Type': 'application/json',
           },
         }

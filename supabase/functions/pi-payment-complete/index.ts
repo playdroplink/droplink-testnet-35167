@@ -185,7 +185,8 @@ serve(async (req) => {
     }
 
     // Complete the payment with Pi API - CRITICAL: fast response needed
-    const completeUrl = `https://api.minepi.com/v2/payments/${paymentId}/complete`;
+    const PI_API_BASE_URL = Deno.env.get('PI_API_BASE_URL') || 'https://api.minepi.com';
+    const completeUrl = `${PI_API_BASE_URL}/v2/payments/${paymentId}/complete`;
     const completeAbortController = new AbortController();
     const completeTimeoutId = setTimeout(() => completeAbortController.abort(), 15000);
     
@@ -194,7 +195,7 @@ serve(async (req) => {
       completeResponse = await fetch(completeUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Key ${PI_API_KEY}`,
+          'Authorization': `key ${PI_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ txid }),

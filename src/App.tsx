@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Dashboard from "./pages/Dashboard";
+import { DevModeToggle } from "@/components/DevModeToggle";
 import SwitchToMerchant from "./pages/SwitchToMerchant";
 import MerchantStoreSetup from "./pages/MerchantStoreSetup";
 import MerchantProductManager from "./pages/MerchantProductManager";
@@ -52,6 +53,7 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <DevModeToggle />
         <BrowserRouter
           future={{
             v7_startTransition: true,
