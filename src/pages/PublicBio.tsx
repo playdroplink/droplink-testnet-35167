@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { usePublicSubscription } from "@/hooks/usePublicSubscription";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { usePi } from "@/contexts/PiContext";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -48,6 +49,7 @@ const PublicBio = () => {
   // Strip @ prefix if present (for @username URLs)
   const username = rawUsername?.startsWith('@') ? rawUsername.substring(1) : rawUsername;
   const navigate = useNavigate();
+  const { piUser, isAuthenticated: isPiAuthenticated } = usePi();
   const [profileId, setProfileId] = useState<string | null>(null);
   // Subscription for viewed profile (must be after username is defined)
   const { plan, expiresAt, loading: subLoading } = usePublicSubscription(username ? String(username) : "");
@@ -84,7 +86,7 @@ const PublicBio = () => {
       if (profile && profile.id) setProfileId(profile.id);
     };
     fetchProfileId();
-  }, [username]);
+  }, [username, isPiAuthenticated, piUser]);
 
   useEffect(() => {
     if (profileId && currentUserProfileId) {
@@ -101,6 +103,7 @@ const PublicBio = () => {
   }, [profile, currentUserProfileId, profileId, navigate]);
 
   const loadCurrentUserProfile = async () => {
+    // Check for Supabase session (Gmail users)
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { data: profile } = await supabase
@@ -111,6 +114,20 @@ const PublicBio = () => {
       
       if (profile) {
         setCurrentUserProfileId(profile.id);
+        return;
+      }
+    }
+
+    // Check for Pi-authenticated users (no Supabase session)
+    if (isPiAuthenticated && piUser?.username) {
+      const { data: piProfile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", piUser.username)
+        .maybeSingle();
+      
+      if (piProfile) {
+        setCurrentUserProfileId(piProfile.id);
       }
     }
   };
@@ -187,7 +204,14 @@ const PublicBio = () => {
 
   const handleFollow = async () => {
     if (!currentUserProfileId || !profileId) {
-      toast.error("Please sign in to follow");
+      // Provide helpful message based on context
+      if (typeof window !== 'undefined' && window.Pi && !isPiAuthenticated) {
+        toast.error("Please sign in with Pi Network to follow", {
+          description: "Go to Dashboard to authenticate"
+        });
+      } else {
+        toast.error("Please sign in to follow");
+      }
       return;
     }
 
@@ -701,12 +725,23 @@ const PublicBio = () => {
                   Like this store? Follow to stay connected!
                 </p>
                 <Button
-                  onClick={handleSignUpToFollow}
+                  onClick={() => {
+                    // If in Pi Browser, redirect to dashboard for Pi auth
+                    if (typeof window !== 'undefined' && window.Pi) {
+                      sessionStorage.setItem('redirectAfterAuth', window.location.pathname);
+                      sessionStorage.setItem('authAction', 'follow');
+                      sessionStorage.setItem('profileToFollow', username || '');
+                      navigate('/');
+                    } else {
+                      // Otherwise redirect to signup
+                      handleSignUpToFollow();
+                    }
+                  }}
                   className={`${getIconStyle(profile.theme.iconStyle)} gap-2`}
                   style={{ backgroundColor: profile.theme.primaryColor }}
                 >
                   <UserPlus className="w-4 h-4" />
-                  Sign Up to Follow
+                  {typeof window !== 'undefined' && window.Pi ? 'Sign In with Pi to Follow' : 'Sign Up to Follow'}
                 </Button>
               </div>
             </div>
@@ -882,8 +917,8 @@ const PublicBio = () => {
               Receive DROP or Pi Tips
               <span className="relative group ml-2">
                 <Info className="w-4 h-4 text-blue-300 cursor-pointer" />
-                <span className="absolute left-1/2 -translate-x-1/2 mt-2 w-56 bg-blue-900 text-white text-xs rounded p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                  DROP is the utility token for DropLink. Send only Pi Network DROP tokens to this address. <br/>You can copy or scan the QR code below.
+                <span className="absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-blue-900 text-white text-xs rounded p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 text-center">
+                  DROP is the utility token for DropLink. Send only Pi Network DROP tokens to this address. <br/><br/>You can copy or scan the QR code below.
                 </span>
               </span>
             </h2>
