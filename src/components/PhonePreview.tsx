@@ -134,16 +134,6 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
              : { backgroundColor: profile.theme?.backgroundColor || '#000000' }
          }>
 
-      {/* Report Flag Icon Button */}
-      <button
-        className="absolute top-3 right-3 z-20 bg-white/80 hover:bg-red-100 rounded-full p-2 shadow-lg border border-red-300 flex items-center justify-center"
-        title="Report unwanted content"
-        onClick={() => setShowReportModal(true)}
-        style={{ transition: 'background 0.2s' }}
-      >
-        <Flag className="w-5 h-5 text-red-500" />
-      </button>
-
       {/* Report Modal */}
       {showReportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -541,6 +531,18 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
               </p>
             </div>
           )}
+
+          {/* Report Button in Footer */}
+          <div className="w-full pt-4 pb-2 flex justify-center">
+            <button
+              className="bg-white/80 hover:bg-red-100 rounded-full p-2 shadow-lg border border-red-300 flex items-center gap-2 px-4 transition-all"
+              title="Report unwanted content"
+              onClick={() => setShowReportModal(true)}
+            >
+              <Flag className="w-4 h-4 text-red-500" />
+              <span className="text-xs text-red-600 font-medium">Report</span>
+            </button>
+          </div>
 
           {/* Placeholder when empty */}
           {!profile.businessName && !profile.description && socialLinkData.length === 0 && profile.products?.length === 0 && (
