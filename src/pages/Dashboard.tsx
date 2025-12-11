@@ -78,6 +78,7 @@ import {
   CreditCard,
   Crown,
   Store,
+  Mail,
 } from "lucide-react";
 import { 
   FaTwitter, 
@@ -1279,6 +1280,15 @@ const Dashboard = () => {
             )}
           </div>
           <div className="flex items-center gap-1 sm:gap-2 lg:gap-3">
+                        {/* Inbox Button (Desktop) */}
+                        <Button
+                          onClick={() => navigate("/inbox")}
+                          size="sm"
+                          className="hidden md:inline-flex gap-2 bg-sky-400 text-white hover:bg-sky-500 border-none"
+                        >
+                          <Mail className="w-4 h-4" />
+                          Inbox
+                        </Button>
             {isMobile && (
               <Button
                 onClick={() => setShowPreview(!showPreview)}
@@ -1381,6 +1391,12 @@ const Dashboard = () => {
                     <div className="space-y-2">
                       <h3 className="font-medium text-sm text-muted-foreground px-2">Profile & Share</h3>
                       <div className="grid grid-cols-2 gap-2">
+                                                <Button onClick={() => navigate("/inbox")}
+                                                  size="sm"
+                                                  className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
+                                                  <Mail className="w-4 h-4" />
+                                                  <span>Inbox</span>
+                                                </Button>
                         <Button onClick={handleShowQRCode} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
                           <QrCode className="w-4 h-4" />
                           <span>QR Code</span>

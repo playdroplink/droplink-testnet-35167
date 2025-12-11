@@ -42,20 +42,19 @@ export const usePiNetwork = () => {
   const authenticate = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-
     try {
       const authResult = await piAuth.authenticate();
       setUser(authResult.user);
       setIsAuthenticated(true);
-      
       // Store auth state
       localStorage.setItem('pi-auth-state', JSON.stringify({ user: authResult.user }));
-      
       return authResult;
     } catch (error: any) {
       setError(error?.message || 'Authentication failed');
       throw error;
-    } finally {
+    }
+  }, []);
+
   // Sign out
   const signOut = useCallback(() => {
     try {
@@ -63,13 +62,8 @@ export const usePiNetwork = () => {
       setUser(null);
       setIsAuthenticated(false);
       setError(null);
-      
       // Clear stored auth state
       localStorage.removeItem('pi-auth-state');
-    } catch (error) {
-      console.error('Sign out error:', error);
-    }
-  }, []);Error(null);
     } catch (error) {
       console.error('Sign out error:', error);
     }

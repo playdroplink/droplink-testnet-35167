@@ -27,6 +27,7 @@ import VotingPage from "./pages/VotingPage";
 // import ProfileDebug from "./pages/ProfileDebug";
 import Home from "./pages/Home";
 import SplashScreen from "./components/SplashScreen";
+import InboxPage from "./pages/Inbox";
 
 const queryClient = new QueryClient();
 
@@ -85,6 +86,7 @@ const App = () => {
             <Route path="/merchant-products" element={<MerchantProductManager />} />
             <Route path="/store/:merchantId" element={<MerchantStorePreview />} />
             <Route path="/storefront/:storeId" element={<StoreFront />} />
+            <Route path="/inbox" element={<InboxPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
