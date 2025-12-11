@@ -6,7 +6,8 @@ create table if not exists messages (
   message text not null,
   created_at timestamptz not null default now(),
   read boolean not null default false,
-  reply text
+  reply text,
+  creator_paid boolean not null default false
 );
 
 -- Index for fast lookup by receiver

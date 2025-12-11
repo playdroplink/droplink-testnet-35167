@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { usePiNetwork } from '@/hooks/usePiNetwork';
 
 export default function InboxMessages({ receiverUsername }) {
+  const { createPayment } = usePiNetwork();
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -41,6 +43,18 @@ export default function InboxMessages({ receiverUsername }) {
     setMessages(msgs => msgs.map(m => m.id === id ? { ...m, reply: replyContent[id] } : m));
     setReplying(r => ({ ...r, [id]: false }));
     setReplyContent(c => ({ ...c, [id]: '' }));
+  };
+
+  // Pay 1 PI to unlock reply
+  const payToUnlock = async (id: number, sender: string) => {
+    await createPayment(1, `Unlock reply to @${sender}`, {
+      to: sender,
+      type: 'reply',
+      creator: receiverUsername,
+      message_id: id,
+    });
+    await supabase.from('messages').update({ creator_paid: true } as any).eq('id', id);
+    setMessages(msgs => msgs.map(m => m.id === id ? { ...m, creator_paid: true } : m));
   };
 
   // Filter messages
@@ -83,20 +97,31 @@ export default function InboxMessages({ receiverUsername }) {
             <div>{msg.content}</div>
             {/* Reply section */}
             <div className="mt-2">
-              <textarea
-                className="w-full border rounded p-2 mb-2"
-                placeholder="Type a reply..."
-                value={replyContent[msg.id] || ''}
-                onChange={e => setReplyContent(c => ({ ...c, [msg.id]: e.target.value }))}
-                rows={2}
-              />
-              <button
-                className="bg-blue-600 text-white px-3 py-1 rounded"
-                onClick={() => sendReply(msg.id)}
-                disabled={replying[msg.id] || !(replyContent[msg.id] && replyContent[msg.id].trim())}
-              >
-                {replying[msg.id] ? 'Replying...' : 'Reply'}
-              </button>
+              {!msg.creator_paid ? (
+                <button
+                  className="bg-yellow-500 text-white px-3 py-1 rounded"
+                  onClick={() => payToUnlock(msg.id, msg.sender)}
+                >
+                  Pay 1 PI to unlock reply
+                </button>
+              ) : (
+                <>
+                  <textarea
+                    className="w-full border rounded p-2 mb-2"
+                    placeholder="Type a reply..."
+                    value={replyContent[msg.id] || ''}
+                    onChange={e => setReplyContent(c => ({ ...c, [msg.id]: e.target.value }))}
+                    rows={2}
+                  />
+                  <button
+                    className="bg-blue-600 text-white px-3 py-1 rounded"
+                    onClick={() => sendReply(msg.id)}
+                    disabled={replying[msg.id] || !(replyContent[msg.id] && replyContent[msg.id].trim())}
+                  >
+                    {replying[msg.id] ? 'Replying...' : 'Reply'}
+                  </button>
+                </>
+              )}
               {msg.reply && (
                 <div className="mt-2 p-2 bg-blue-50 border rounded text-sm text-blue-700">
                   <b>Creator reply:</b> {msg.reply}
