@@ -40,25 +40,27 @@ if (theme === 'dark') {
 
 // Run Pi environment validation before rendering to avoid silent white screens in Pi Browser
 (async () => {
+
   let validationError = null;
   try {
     await validatePiEnvironment();
   } catch (err) {
     validationError = err;
-    // Log error to console and show fallback UI if possible
+    // Log error to console only, let ErrorBoundary handle UI
     console.error('Pi environment validation failed:', err);
-    // Optionally, you can show a fallback error message here if React hasn't mounted yet
-    const root = document.getElementById("root");
-    if (root) {
-      root.innerHTML = `<div style='padding:32px;text-align:center;color:red;'><h2>Pi environment validation failed</h2><pre style='white-space:pre-wrap;'>${err instanceof Error ? err.message : err}</pre><p>Please check your Pi Developer Portal settings, HTTPS, manifest, and validation key.</p></div>`;
-    }
   }
 
   createRoot(document.getElementById("root")!).render(
     <ErrorBoundary>
       <PiProvider>
         <UserPreferencesProvider>
-          <App />
+          {validationError ? (
+            <div style={{padding:32, textAlign:'center', color:'#b91c1c', background:'#fff'}}>
+              <h2 style={{fontSize:24, marginBottom:12}}>Pi environment validation failed</h2>
+              <pre style={{whiteSpace:'pre-wrap', wordBreak:'break-word', color:'#111'}}>{validationError instanceof Error ? validationError.message : String(validationError)}</pre>
+              <p style={{marginTop:14, color:'#666'}}>Please check your Pi Developer Portal settings, HTTPS, manifest, and validation key.<br/>If the problem persists, try clearing Pi Browser cache or open this site in a regular browser.</p>
+            </div>
+          ) : <App />}
         </UserPreferencesProvider>
       </PiProvider>
     </ErrorBoundary>

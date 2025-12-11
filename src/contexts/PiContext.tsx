@@ -1053,12 +1053,16 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     console.log('[PAYMENT] 🔍 Checking granted scopes:', grantedScopes);
     if (!grantedScopes.includes('payments')) {
       console.warn('[PAYMENT] ⚠️ Payments scope not granted. Requesting it now...');
-      
-      const errorMsg = 'Cannot create a payment without "payments" scope.\n\nPlease sign out and sign in again, then approve the payments permission when prompted.';
-      console.error('[PAYMENT] ❌', errorMsg);
       toast.error('Payment Permission Required', {
-        description: 'Please sign out and sign in again to grant payments permission',
-        duration: 10000
+        description: 'You must grant the payments permission to use PI payments. Please sign out and sign in again, then approve the payments permission when prompted.',
+        duration: 10000,
+        action: {
+          label: 'Sign Out & Re-authenticate',
+          onClick: async () => {
+            await signOut();
+            window.location.reload();
+          }
+        }
       });
       return null;
     }

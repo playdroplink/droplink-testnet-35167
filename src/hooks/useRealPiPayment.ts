@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { usePi } from "@/contexts/PiContext";
 import { 
   realPiPaymentService, 
   PaymentItem, 
@@ -14,16 +15,23 @@ export const useRealPiPayment = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentPayment, setCurrentPayment] = useState<PaymentItem | null>(null);
   const [paymentProgress, setPaymentProgress] = useState<string>('');
-
+  const { piUser, signIn } = usePi();
   const processPayment = useCallback(async (item: PaymentItem): Promise<PaymentResult> => {
     setIsProcessing(true);
     setCurrentPayment(item);
     setPaymentProgress('Initializing payment...');
 
     try {
-      console.log('🛒 Starting payment for:', item.name);
+      // Auto-authenticate if not signed in
+      if (!piUser && typeof signIn === 'function') {
+        setPaymentProgress('Authenticating with Pi Network...');
+        await signIn(['payments']);
+        setPaymentProgress('User authenticated...');
+      }
 
-      const result = await realPiPaymentService.processPayment(item, (phase, details) => {
+      console.log('Starting payment for:', item.name);
+
+      const result = await realPiPaymentService.processPayment(item, (phase: string, details: any) => {
         // Update progress for UI
         switch (phase) {
           case 'init':
@@ -54,15 +62,15 @@ export const useRealPiPayment = () => {
       });
 
       if (result.success) {
-        console.log('✅ Payment successful:', result);
+        console.log('Payment successful:', result);
       } else {
-        console.error('❌ Payment failed:', result.error);
+        console.error('Payment failed:', result.error);
       }
 
       return result;
 
     } catch (error) {
-      console.error('❌ Payment error:', error);
+      console.error('Payment error:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error)
@@ -72,7 +80,7 @@ export const useRealPiPayment = () => {
       setCurrentPayment(null);
       setTimeout(() => setPaymentProgress(''), 3000);
     }
-  }, []);
+  }, [piUser, signIn]);
 
   return {
     isProcessing,
