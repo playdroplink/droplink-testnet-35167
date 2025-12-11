@@ -4,7 +4,9 @@ create table if not exists messages (
   sender_username text not null,
   receiver_username text not null,
   message text not null,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  read boolean not null default false,
+  reply text
 );
 
 -- Index for fast lookup by receiver
