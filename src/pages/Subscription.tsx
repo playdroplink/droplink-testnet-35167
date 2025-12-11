@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { usePi } from "@/contexts/PiContext";
+import { useRealPiPayment } from "@/hooks/useRealPiPayment";
 import { validateMainnetConfig } from "@/config/pi-config";
 
 // Helper: Drop available only when mainnet validated
@@ -110,7 +111,8 @@ const Subscription = () => {
   const [subscription, setSubscription] = useState<any>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { piUser, createPayment } = usePi() as any;
+  const { piUser } = usePi() as any;
+  const { processPayment, isProcessing, paymentProgress } = useRealPiPayment();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -181,25 +183,27 @@ const Subscription = () => {
       console.log('[SUBSCRIPTION] Profile ID:', profileId);
       
       const toastId = toast.loading('Processing payment...', {
-        description: `Waiting for Pi Network approval for ${price} Pi`
+        description: paymentProgress || `Waiting for Pi Network approval for ${price} Pi`
       });
       
-      // Call Pi payment function
-      const result = await createPayment(
-        price,
-        `Droplink ${planName} ${isYearly ? 'Yearly' : 'Monthly'} Subscription`,
-        {
+      // Use new payment service
+      const result = await processPayment({
+        id: `subscription-${planName.toLowerCase()}-${Date.now()}`,
+        name: `DropLink ${planName} ${isYearly ? 'Yearly' : 'Monthly'} Subscription`,
+        type: 'subscription',
+        price: price,
+        description: `${planName} plan subscription`,
+        metadata: {
           subscriptionPlan: planName.toLowerCase(),
           billingPeriod: isYearly ? 'yearly' : 'monthly',
           username: piUser.username,
           profileId: profileId || '',
-          type: 'subscription'
         }
-      );
+      });
       
       console.log('[SUBSCRIPTION] Payment result:', result);
       
-      if (result) {
+      if (result.success) {
         // Calculate subscription dates
         const startDate = new Date();
         const endDate = new Date(startDate);
@@ -210,7 +214,7 @@ const Subscription = () => {
           endDate.setMonth(endDate.getMonth() + 1);
         }
         
-        // Save subscription to database
+        // Save subscription to database (may already be saved by backend)
         const { error: subError } = await supabase
           .from('subscriptions')
           .upsert({
@@ -220,11 +224,12 @@ const Subscription = () => {
             start_date: startDate.toISOString(),
             end_date: endDate.toISOString(),
             pi_amount: price,
-            pi_transaction_id: typeof result === 'string' ? result : result.txid || '',
+            pi_transaction_id: result.txid || '',
             billing_period: isYearly ? 'yearly' : 'monthly',
             metadata: {
+              paymentId: result.paymentId,
               paymentApprovedAt: new Date().toISOString(),
-              paymentHash: typeof result === 'string' ? result : result.txid || '',
+              paymentHash: result.txid || '',
               username: piUser.username
             }
           }, {
@@ -234,16 +239,16 @@ const Subscription = () => {
         if (subError) {
           console.error('[SUBSCRIPTION] Database error:', subError);
           toast.dismiss(toastId);
-          toast.error('Payment successful but subscription record failed. Please contact support.');
-          setLoading(false);
-          return;
+          toast.success('Payment successful!', {
+            description: 'Subscription may take a moment to activate. Please refresh if needed.'
+          });
+        } else {
+          toast.dismiss(toastId);
+          toast.success(`Successfully subscribed to ${planName} plan! 🎉`, {
+            description: `Your subscription is now active`,
+            duration: 5000
+          });
         }
-        
-        toast.dismiss(toastId);
-        toast.success(`Successfully subscribed to ${planName} plan! 🎉`, {
-          description: `Your subscription is now active`,
-          duration: 5000
-        });
         
         setCurrentPlan(planName);
         setSubscription({
@@ -256,8 +261,8 @@ const Subscription = () => {
         setTimeout(() => navigate('/'), 2000);
       } else {
         toast.dismiss(toastId);
-        toast.error('Payment was not completed', {
-          description: 'Your Pi wallet may have cancelled the transaction. Please try again.',
+        toast.error('Payment failed', {
+          description: result.error || 'Please try again',
           duration: 5000
         });
       }
@@ -318,8 +323,8 @@ const Subscription = () => {
                       </li>
                     ))}
                   </ul>
-                  <Button className="w-full mb-2" variant="default" disabled={isCurrent || loading} onClick={() => handleSubscribe(plan.name, price)}>
-                    {isCurrent ? '✓ Current Plan' : loading ? '⏳ Processing...' : plan.name === 'Free' ? 'Activate Free Plan' : `Subscribe with Pi`}
+                  <Button className="w-full mb-2" variant="default" disabled={isCurrent || loading || isProcessing} onClick={() => handleSubscribe(plan.name, price)}>
+                    {isCurrent ? '✓ Current Plan' : (loading || isProcessing) ? `⏳ ${paymentProgress || 'Processing...'}` : plan.name === 'Free' ? 'Activate Free Plan' : `Subscribe with Pi`}
                   </Button>
 
                   {plan.name !== 'Free' && (

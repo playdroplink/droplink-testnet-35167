@@ -34,6 +34,8 @@ import { QRCodeDisplay } from "./QRCodeDisplay";
 import { BackgroundMusicPlayer } from "./BackgroundMusicPlayer";
 import { toast } from "sonner";
 import { ProfileData } from "@/types/profile";
+import React, { useState } from "react";
+import { Flag } from "lucide-react";
 
 import type { ThemeData } from "@/types/profile";
 interface PhonePreviewProps {
@@ -41,6 +43,7 @@ interface PhonePreviewProps {
 }
 
 export const PhonePreview = ({ profile }: PhonePreviewProps) => {
+  const [showReportModal, setShowReportModal] = useState(false);
   const iconRadius = profile.theme?.iconStyle === 'circle' ? 'rounded-full' : 
                      profile.theme?.iconStyle === 'square' ? 'rounded-lg' : 'rounded-2xl';
   
@@ -130,6 +133,44 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
              ? {}
              : { backgroundColor: profile.theme?.backgroundColor || '#000000' }
          }>
+
+      {/* Report Flag Icon Button */}
+      <button
+        className="absolute top-3 right-3 z-20 bg-white/80 hover:bg-red-100 rounded-full p-2 shadow-lg border border-red-300 flex items-center justify-center"
+        title="Report unwanted content"
+        onClick={() => setShowReportModal(true)}
+        style={{ transition: 'background 0.2s' }}
+      >
+        <Flag className="w-5 h-5 text-red-500" />
+      </button>
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-xs w-full relative">
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+              onClick={() => setShowReportModal(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+            <div className="flex flex-col items-center gap-3">
+              <Flag className="w-8 h-8 text-red-500 mb-2" />
+              <h2 className="text-lg font-bold text-red-600">Report Unwanted Content</h2>
+              <p className="text-sm text-gray-700 text-center mb-2">If you see inappropriate, abusive, or unwanted content on this profile, please report it. Your feedback helps keep Droplink safe for everyone.</p>
+              <a
+                href="https://www.droplink.space/report-abuse"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 px-4 py-2 bg-red-500 text-white rounded-lg font-semibold shadow hover:bg-red-600 transition"
+              >
+                Go to Report Page
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Video Background for Phone Preview */}
       {profile.theme?.backgroundType === 'video' && profile.theme?.backgroundVideo && (
@@ -511,6 +552,44 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
           )}
         </div>
       </div>
+
+      {/* ...existing code... */}
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 text-center shadow-2xl relative">
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+              onClick={() => setShowReportModal(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+            <div className="mb-4 flex flex-col items-center">
+              <Flag className="w-8 h-8 text-red-500 mb-2" />
+              <h2 className="text-xl font-bold mb-1 text-gray-800">Report Profile</h2>
+            </div>
+            <p className="text-gray-700 mb-4 text-sm">
+              If you see unwanted, abusive, or inappropriate content on this profile, please let us know. Your report is confidential and helps keep the community safe.
+            </p>
+            <a
+              href="https://www.droplink.space/report-abuse"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-xl shadow-lg transition-colors mb-2"
+            >
+              Go to Report Abuse Form
+            </a>
+            <button
+              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 rounded-xl transition-colors"
+              onClick={() => setShowReportModal(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
