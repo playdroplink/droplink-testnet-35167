@@ -535,12 +535,12 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
           {/* Report Button in Footer */}
           <div className="w-full pt-4 pb-2 flex justify-center">
             <button
-              className="bg-white/80 hover:bg-red-100 rounded-full p-2 shadow-lg border border-red-300 flex items-center gap-2 px-4 transition-all"
+              className="bg-white/80 hover:bg-red-100 rounded-full p-3 shadow-lg border border-red-300 inline-flex items-center gap-2 px-6 transition-all"
               title="Report unwanted content"
               onClick={() => setShowReportModal(true)}
             >
               <Flag className="w-4 h-4 text-red-500" />
-              <span className="text-xs text-red-600 font-medium">Report</span>
+              <span className="text-sm text-red-600 font-medium">Report Unwanted Content</span>
             </button>
           </div>
 
