@@ -112,11 +112,20 @@ export class RealPiPaymentService {
     metadata: any;
   }, onProgress?: (phase: string, details: any) => void): Promise<any> {
     return new Promise((resolve, reject) => {
-      const paymentData = {
+      // Ensure all required fields are present
+      const paymentData: any = {
         amount: params.amount,
         memo: params.memo,
         metadata: params.metadata,
       };
+      // Add 'to' field if available from config/env
+      if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_PI_WALLET_ADDRESS) {
+        paymentData.to = import.meta.env.VITE_PI_WALLET_ADDRESS;
+      } else if (PI_CONFIG && PI_CONFIG.WALLET_ADDRESS) {
+        paymentData.to = PI_CONFIG.WALLET_ADDRESS;
+      }
+      // Debug log for troubleshooting
+      console.log('[PI PAYMENT] Calling window.Pi.createPayment with:', paymentData);
 
       const callbacks = {
         // Phase I: Server-Side Approval

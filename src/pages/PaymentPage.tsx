@@ -18,6 +18,7 @@ import {
 import { PI_CONFIG } from '@/config/pi-config';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { usePiNetwork } from '@/hooks/usePiNetwork';
 
 interface PaymentLink {
   id: string;
@@ -52,6 +53,7 @@ const PaymentPage: React.FC = () => {
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'completed' | 'failed'>('pending');
   const [transactionHash, setTransactionHash] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const { createPayment, isAuthenticated, authenticate } = usePiNetwork();
 
   useEffect(() => {
     if (linkId) {
@@ -231,6 +233,33 @@ const PaymentPage: React.FC = () => {
     return `${amount.toFixed(2)} π`;
   };
 
+  const handlePiPayment = async () => {
+    if (!isAuthenticated) {
+      try {
+        await authenticate();
+      } catch (err) {
+        toast.error('Pi authentication failed.');
+        return;
+      }
+    }
+    setProcessing(true);
+    setError('');
+    try {
+      const payment = await createPayment(
+        paymentLink?.amount || 0,
+        paymentLink?.description || 'Droplink Payment',
+        { linkId: paymentLink?.id }
+      );
+      toast.success('Payment initiated! Complete in Pi Browser.');
+      // Optionally, redirect or update UI here
+    } catch (err: any) {
+      setError(err?.message || 'Payment failed');
+      toast.error(err?.message || 'Payment failed');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
@@ -364,6 +393,7 @@ const PaymentPage: React.FC = () => {
               size="lg"
               className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-semibold"
               disabled={processing || paymentStatus === 'completed' || paymentStatus === 'failed'}
+              onClick={handlePiPayment}
             >
               <Pi className="w-5 h-5 mr-2" />
               {processing ? 'Processing Payment...' : 'Continue with Pi Wallet'}
