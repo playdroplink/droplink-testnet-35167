@@ -66,6 +66,16 @@ const PublicBio = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [showGiftDialog, setShowGiftDialog] = useState(false);
   const [showPiWalletTip, setShowPiWalletTip] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 640);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
   const [followerCount, setFollowerCount] = useState(0);
   const [visitCount, setVisitCount] = useState(0);
@@ -1006,76 +1016,120 @@ const PublicBio = () => {
             <h2 className="text-xl font-semibold text-white text-center mb-6 flex items-center justify-center gap-2">
               <Wallet className="w-5 h-5 text-blue-400" />
               Receive DROP or Pi Tips
-              <span className="relative group ml-2">
-                <Info className="w-4 h-4 text-blue-300 cursor-pointer" />
-                <span className="absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-blue-900 text-white text-xs rounded p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 text-center">
-                  DROP is the utility token for DropLink. Send only Pi Network DROP tokens to this address. <br/><br/>You can copy or scan the QR code below.
+              {isMobile ? (
+                <>
+                  <Info
+                    className="w-4 h-4 text-blue-300 cursor-pointer ml-2"
+                    onClick={() => setShowPiWalletTip(true)}
+                  />
+                  <Dialog open={showPiWalletTip} onOpenChange={setShowPiWalletTip}>
+                    <DialogContent className="max-w-xs w-full">
+                      <DialogHeader>
+                        <DialogTitle>About DROP Tips</DialogTitle>
+                      </DialogHeader>
+                      <div className="text-center text-blue-100 text-xs leading-snug">
+                        DROP is the utility token for DropLink. Send only Pi Network DROP tokens to this address.<br /><br />You can copy or scan the QR code below.
+                      </div>
+                      <div className="flex justify-center mt-4">
+                        <Button onClick={() => setShowPiWalletTip(false)} className="bg-blue-500 text-white w-full">Close</Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </>
+              ) : (
+                <span className="relative group ml-2">
+                  <Info className="w-4 h-4 text-blue-300 cursor-pointer" />
+                  <span
+                    className="absolute left-1/2 -translate-x-1/2 mt-2 w-72 max-w-xs sm:max-w-sm bg-blue-900 text-white text-xs sm:text-sm rounded p-3 sm:p-4 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center justify-center text-center"
+                    style={{ minWidth: '180px', maxWidth: '90vw', wordBreak: 'break-word' }}
+                  >
+                    <span className="w-full block text-center leading-snug">
+                      DROP is the utility token for DropLink. Send only Pi Network DROP tokens to this address.<br /><br />You can copy or scan the QR code below.
+                    </span>
+                  </span>
                 </span>
-              </span>
+              )}
             </h2>
             <div className="text-center space-y-4">
               {profile.piWalletAddress ? (
-                <div className="bg-blue-500/20 backdrop-blur rounded-lg border border-blue-400/30 p-4">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <Wallet className="w-5 h-5 text-blue-400" />
-                    <span className="text-blue-300 font-medium">Pi Network Wallet</span>
+                <>
+                  {/* Instructional Example Dialog Note */}
+                  <div className="bg-blue-900/80 rounded-lg border border-blue-400/30 p-4 mb-4 text-center">
+                    <div className="text-blue-200 font-semibold mb-1">Example: How to Send DROP Tokens</div>
+                    <div className="text-blue-100 text-sm mb-2">This is an example dialog to help you understand how to send DROP tokens using the Pi Network Wallet. Follow the instructions below to complete your transaction.</div>
                   </div>
-                  <p className="text-white text-sm mb-4">
-                    {profile.piDonationMessage || "Send me DROP tokens on Pi Network!"}
-                  </p>
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-center gap-4 mb-4">
-                    {/* Inline QR code for wallet address */}
-                    <div className="flex flex-col items-center">
-                      <div className="relative w-[96px] h-[96px]">
-                        <QRCodeSVG value={profile.piWalletAddress} size={96} bgColor="#fff" fgColor="#2563eb" />
-                        <img
-                          src="/droplink-logo.png"
-                          alt="Droplink Logo"
-                          className="absolute left-1/2 top-1/2 w-8 h-8 -translate-x-1/2 -translate-y-1/2 z-10 shadow-lg border-2 border-white bg-white rounded-lg"
-                          style={{ pointerEvents: 'none' }}
+                  <div className="bg-blue-500/20 backdrop-blur rounded-lg border border-blue-400/30 p-4">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Wallet className="w-5 h-5 text-blue-400" />
+                      <span className="text-blue-300 font-medium">Pi Network Wallet</span>
+                    </div>
+                    <p className="text-white text-sm mb-4">
+                      {profile.piDonationMessage || "Send me DROP tokens on Pi Network!"}
+                    </p>
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-center gap-4 mb-4">
+                      {/* Inline QR code for wallet address */}
+                      <div className="flex flex-col items-center">
+                        <div className="relative w-[96px] h-[96px]">
+                          <QRCodeSVG value={profile.piWalletAddress} size={96} bgColor="#fff" fgColor="#2563eb" />
+                          <img
+                            src="/droplink-logo.png"
+                            alt="Droplink Logo"
+                            className="absolute left-1/2 top-1/2 w-8 h-8 -translate-x-1/2 -translate-y-1/2 z-10 shadow-lg border-2 border-white bg-white rounded-lg"
+                            style={{ pointerEvents: 'none' }}
+                          />
+                        </div>
+                        <span className="text-xs text-blue-400 mt-1">Scan to send DROP</span>
+                      </div>
+                      <div className="flex-1 flex flex-col gap-2 items-center justify-center">
+                        <input
+                          type="text"
+                          value={profile.piWalletAddress}
+                          readOnly
+                          className="w-full bg-black/50 border border-blue-400/30 rounded px-3 py-2 text-white text-xs font-mono"
                         />
+                        <div className="flex gap-2 w-full justify-center">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              navigator.clipboard.writeText(profile.piWalletAddress!);
+                              setCopied(true);
+                              setTimeout(() => setCopied(false), 2000);
+                              toast.success("Wallet address copied!");
+                            }}
+                            className="border-blue-400/30 text-blue-300 hover:bg-blue-500/20"
+                          >
+                            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                            <span className="ml-1">Copy</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const shareUrl = `${window.location.origin}/pay/${profile.piWalletAddress}`;
+                              navigator.clipboard.writeText(shareUrl);
+                              toast.success("Shareable wallet link copied!");
+                            }}
+                            className="border-blue-400/30 text-blue-300 hover:bg-blue-500/20"
+                          >
+                            <Share2 className="w-4 h-4" />
+                            <span className="ml-1">Share Wallet</span>
+                          </Button>
+                        </div>
                       </div>
-                      <span className="text-xs text-blue-400 mt-1">Scan to send DROP</span>
                     </div>
-                    <div className="flex-1 flex flex-col gap-2 items-center justify-center">
-                      <input
-                        type="text"
-                        value={profile.piWalletAddress}
-                        readOnly
-                        className="w-full bg-black/50 border border-blue-400/30 rounded px-3 py-2 text-white text-xs font-mono"
-                      />
-                      <div className="flex gap-2 w-full justify-center">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            navigator.clipboard.writeText(profile.piWalletAddress!);
-                            setCopied(true);
-                            setTimeout(() => setCopied(false), 2000);
-                            toast.success("Wallet address copied!");
-                          }}
-                          className="border-blue-400/30 text-blue-300 hover:bg-blue-500/20"
-                        >
-                          {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                          <span className="ml-1">Copy</span>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const shareUrl = `${window.location.origin}/pay/${profile.piWalletAddress}`;
-                            navigator.clipboard.writeText(shareUrl);
-                            toast.success("Shareable wallet link copied!");
-                          }}
-                          className="border-blue-400/30 text-blue-300 hover:bg-blue-500/20"
-                        >
-                          <Share2 className="w-4 h-4" />
-                          <span className="ml-1">Share Wallet</span>
-                        </Button>
-                      </div>
+                    {/* Example instructions for sending DROP tokens */}
+                    <div className="bg-blue-100/30 rounded-lg p-3 mt-2 text-xs text-blue-900 text-left">
+                      <div className="font-semibold mb-1">How to send DROP tokens:</div>
+                      <ol className="list-decimal list-inside space-y-1">
+                        <li>Open your Pi Wallet app</li>
+                        <li>Scan this QR code or enter the address</li>
+                        <li>Enter the amount of DROP tokens to send</li>
+                        <li>Confirm the transaction</li>
+                      </ol>
                     </div>
                   </div>
-                </div>
+                </>
               ) : (
                 <div className="bg-blue-500/10 rounded-lg border border-blue-400/10 p-6 text-center text-white">
                   <Wallet className="w-6 h-6 text-blue-300 mx-auto mb-2" />
