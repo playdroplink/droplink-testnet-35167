@@ -173,15 +173,15 @@ const Wallet = () => {
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       {/* Header Card with Gradient Background */}
-      <Card className="mb-6 border-0 shadow-lg" style={{ background: DROP_TOKEN.colors.background }}>
+      <Card className="mb-6 border-0 shadow-lg bg-sky-400" style={{ background: DROP_TOKEN.colors.background, color: '#fff' }}>
         <CardHeader className="text-center">
           <CardTitle className="flex items-center justify-center gap-2 text-white text-2xl">
-            <Droplets className="w-8 h-8" />
-            DropLink Wallet
+            <Droplets className="w-8 h-8 text-white" />
+            <span className="text-white">DropLink Wallet</span>
           </CardTitle>
           <p className="text-white/90">Manage your DROP tokens and gift transactions</p>
         </CardHeader>
-        <CardContent className="text-center">
+        <CardContent className="text-center text-white">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Pi Network DROP Balance */}
             <div className="bg-card border border-border rounded-lg p-6">
