@@ -121,8 +121,8 @@ export class RealPiPaymentService {
       // Add 'to' field if available from config/env
       if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_PI_WALLET_ADDRESS) {
         paymentData.to = import.meta.env.VITE_PI_WALLET_ADDRESS;
-      } else if (PI_CONFIG && PI_CONFIG.WALLET_ADDRESS) {
-        paymentData.to = PI_CONFIG.WALLET_ADDRESS;
+      } else if (PI_CONFIG && PI_CONFIG.PAYMENT_RECEIVER_WALLET) {
+        paymentData.to = PI_CONFIG.PAYMENT_RECEIVER_WALLET;
       }
       // Debug log for troubleshooting
       console.log('[PI PAYMENT] Calling window.Pi.createPayment with:', paymentData);
