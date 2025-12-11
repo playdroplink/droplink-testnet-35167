@@ -49,7 +49,7 @@ const PublicBio = () => {
   // Strip @ prefix if present (for @username URLs)
   const username = rawUsername?.startsWith('@') ? rawUsername.substring(1) : rawUsername;
   const navigate = useNavigate();
-  const { piUser, isAuthenticated: isPiAuthenticated } = usePi();
+  const { piUser, isAuthenticated: isPiAuthenticated, signOut } = usePi();
   const [profileId, setProfileId] = useState<string | null>(null);
   // Subscription for viewed profile (must be after username is defined)
   const { plan, expiresAt, loading: subLoading } = usePublicSubscription(username ? String(username) : "");
@@ -202,12 +202,36 @@ const PublicBio = () => {
     window.location.href = 'https://www.droplink.space';
   };
 
+  const handlePiSignIn = async () => {
+    try {
+      // Store the profile to follow after authentication
+      sessionStorage.setItem('authAction', 'follow');
+      sessionStorage.setItem('profileToFollow', profileId || '');
+      sessionStorage.setItem('redirectAfterAuth', window.location.pathname);
+      
+      toast.loading("Redirecting to sign in...");
+      
+      // Redirect to dashboard for Pi authentication
+      navigate('/', { state: { authAction: 'follow', profileToFollow: profileId } });
+    } catch (error) {
+      console.error("Pi sign in error:", error);
+      toast.error("Failed to redirect to sign in", {
+        description: "Please try again"
+      });
+    }
+  };
+
   const handleFollow = async () => {
     if (!currentUserProfileId || !profileId) {
-      // Provide helpful message based on context
+      // Show sign-in prompt for Pi Browser users
       if (typeof window !== 'undefined' && window.Pi && !isPiAuthenticated) {
-        toast.error("Please sign in with Pi Network to follow", {
-          description: "Go to Dashboard to authenticate"
+        toast("Please sign in to follow", {
+          description: "Click the 'Sign in with Pi' button to continue",
+          action: {
+            label: "Sign In",
+            onClick: handlePiSignIn
+          },
+          duration: 5000
         });
       } else {
         toast.error("Please sign in to follow");
@@ -571,6 +595,28 @@ const PublicBio = () => {
           : { backgroundColor: profile.theme.backgroundColor }
       }
     >
+      {/* Pi User Header with Sign Out */}
+      {isPiAuthenticated && piUser && (
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-3 bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+          <div className="text-white text-sm font-medium">
+            @{piUser.username}
+          </div>
+          <Button
+            onClick={async () => {
+              await signOut();
+              toast.success("Signed out successfully");
+              // Reload to update UI
+              window.location.reload();
+            }}
+            size="sm"
+            variant="ghost"
+            className="text-white hover:bg-white/10 h-8 px-3"
+          >
+            Sign out
+          </Button>
+        </div>
+      )}
+      
       {/* GIF Background - lock if expired */}
       {profile.theme.backgroundType === 'gif' && profile.theme.backgroundGif && !isPlanExpired && (
         <div className="fixed inset-0 z-0">
@@ -667,9 +713,23 @@ const PublicBio = () => {
             </div>
           )}
 
-          {/* Follow and Gift Buttons */}
-          {currentUserProfileId && currentUserProfileId !== profileId && (
-            <div className="flex gap-3 justify-center pt-4">
+          {/* Follow/Sign In and Gift Buttons */}
+          <div className="flex gap-3 justify-center pt-4">
+            {/* Show Sign In button if user is not authenticated, otherwise show Follow */}
+            {!currentUserProfileId && isPiAuthenticated === false && typeof window !== 'undefined' && window.Pi ? (
+              <Button
+                onClick={handlePiSignIn}
+                className={`${getIconStyle(profile.theme.iconStyle)} gap-2 px-6 py-3 text-white`}
+                style={{ 
+                  backgroundColor: profile.theme.primaryColor,
+                  color: '#fff',
+                  textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+                }}
+              >
+                <UserPlus className="w-5 h-5" />
+                Sign in to Follow
+              </Button>
+            ) : currentUserProfileId && currentUserProfileId !== profileId ? (
               <Button
                 onClick={handleFollow}
                 className={`${getIconStyle(profile.theme.iconStyle)} gap-2 px-6 py-3 text-white`}
@@ -697,45 +757,38 @@ const PublicBio = () => {
                   </>
                 )}
               </Button>
-              {/* Gift button - only show if allowed in preferences */}
-              {userPreferences?.store_settings?.allowGifts !== false && (
-                <Button
-                  onClick={() => setShowGiftDialog(true)}
-                  className={`${getIconStyle(profile.theme.iconStyle)} gap-2 px-6 py-3 text-white`}
-                  style={{ 
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                    border: `2px solid ${profile.theme.primaryColor}`,
-                    color: '#fff',
-                    textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)',
-                  }}
-                  variant="outline"
-                >
-                  <Gift className="w-5 h-5" />
-                  Gift
-                </Button>
-              )}
-            </div>
-          )}
+            ) : null}
+            
+            {/* Gift button - only show if user is authenticated */}
+            {currentUserProfileId && currentUserProfileId !== profileId && userPreferences?.store_settings?.allowGifts !== false && (
+              <Button
+                onClick={() => setShowGiftDialog(true)}
+                className={`${getIconStyle(profile.theme.iconStyle)} gap-2 px-6 py-3 text-white`}
+                style={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  border: `2px solid ${profile.theme.primaryColor}`,
+                  color: '#fff',
+                  textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)',
+                }}
+                variant="outline"
+              >
+                <Gift className="w-5 h-5" />
+                Gift
+              </Button>
+            )}
+          </div>
 
-          {/* Anonymous Follow Prompt */}
-          {!currentUserProfileId && (
+          {/* Anonymous Follow Prompt - Only show if not in Pi Browser or not showing sign-in button */}
+          {!currentUserProfileId && !(typeof window !== 'undefined' && window.Pi && isPiAuthenticated === false) && (
             <div className="flex justify-center pt-4">
               <div className="text-center p-4 bg-white/5 rounded-lg border border-white/10">
                 <p className="text-sm text-white mb-3">
-                  Like this store? Follow to stay connected!
+                  Like this store? Sign up to follow!
                 </p>
                 <Button
                   onClick={() => {
-                    // If in Pi Browser, redirect to dashboard for Pi auth
-                    if (typeof window !== 'undefined' && window.Pi) {
-                      sessionStorage.setItem('redirectAfterAuth', window.location.pathname);
-                      sessionStorage.setItem('authAction', 'follow');
-                      sessionStorage.setItem('profileToFollow', username || '');
-                      navigate('/');
-                    } else {
-                      // Otherwise redirect to signup
-                      handleSignUpToFollow();
-                    }
+                    // Redirect to signup
+                    handleSignUpToFollow();
                   }}
                   className={`${getIconStyle(profile.theme.iconStyle)} gap-2`}
                   style={{ backgroundColor: profile.theme.primaryColor }}
