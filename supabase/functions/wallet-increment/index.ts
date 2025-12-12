@@ -1,21 +1,12 @@
 // @ts-ignore - Deno runtime types (available at runtime)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-// @ts-ignore
-// @deno-types="https://deno.land/x/supabase_js@2.38.2/mod.d.ts"
-import { createClient } from "https://deno.land/x/supabase_js@2.38.2/mod.ts";
-// @ts-ignore - Deno module (available at runtime)
-import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+// @ts-ignore - ESM module (available at runtime)
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-const walletIncrementSchema = z.object({
-  profileId: z.string().uuid(),
-  amount: z.number().positive(),
-  reason: z.string().min(1).max(200),
-});
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -24,64 +15,53 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const validationResult = walletIncrementSchema.safeParse(body);
+    const { profileId, amount, reason } = body;
     
-    if (!validationResult.success) {
+    if (!profileId || !amount || amount <= 0) {
       return new Response(JSON.stringify({ 
-        error: 'Invalid request data',
-        details: validationResult.error.errors 
+        error: 'Invalid request: profileId and positive amount required'
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const { profileId, amount, reason } = validationResult.data;
-
-    // Verify authentication
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new Error('Missing or invalid authorization header');
-    }
-
-    const token = authHeader.replace('Bearer ', '');
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) {
-      throw new Error('Invalid or expired token');
-    }
-
-    // Verify profile ownership
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const serviceSupabase = createClient(supabaseUrl, serviceKey);
-    
-    const { data: profile, error: profileError } = await serviceSupabase
-      .from('profiles')
-      .select('id, user_id')
-      .eq('id', profileId)
-      .eq('user_id', user.id)
+    const supabase = createClient(supabaseUrl, serviceKey);
+
+    // Get current wallet
+    const { data: wallet, error: walletError } = await supabase
+      .from('user_wallets')
+      .select('drop_tokens')
+      .eq('profile_id', profileId)
       .maybeSingle();
 
-    if (profileError || !profile) {
-      throw new Error('Profile not found or access denied');
+    if (walletError) {
+      throw new Error(`Failed to get wallet: ${walletError.message}`);
     }
 
-    // Call the secure server function to increment balance
-    const { data, error } = await serviceSupabase.rpc('increment_wallet_balance', {
-      p_profile_id: profileId,
-      p_amount: amount,
-      p_reason: reason,
-    });
+    const currentBalance = wallet?.drop_tokens || 0;
+    const newBalance = currentBalance + amount;
 
-    if (error) {
-      throw new Error(`Failed to increment wallet: ${error.message}`);
+    // Update or insert wallet balance
+    const { error: updateError } = await supabase
+      .from('user_wallets')
+      .upsert({
+        profile_id: profileId,
+        drop_tokens: newBalance,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'profile_id' });
+
+    if (updateError) {
+      throw new Error(`Failed to update wallet: ${updateError.message}`);
     }
+
+    console.log(`Wallet incremented: ${profileId} +${amount} (${reason || 'no reason'})`);
 
     return new Response(JSON.stringify({ 
       success: true,
+      new_balance: newBalance,
       message: 'Wallet balance incremented successfully'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -99,4 +79,3 @@ serve(async (req) => {
     });
   }
 });
-

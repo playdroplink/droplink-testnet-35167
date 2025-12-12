@@ -3,10 +3,10 @@
 // Methods: POST (follow), DELETE (unfollow), GET (get followers/following)
 // Requires: Pi Auth (username/uid)
 
+// @ts-ignore - Deno runtime types (available at runtime)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-// @ts-ignore
-// @deno-types="https://deno.land/x/supabase_js@2.38.2/mod.d.ts"
-import { createClient } from "https://deno.land/x/supabase_js@2.38.2/mod.ts";
+// @ts-ignore - ESM module (available at runtime)
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -33,12 +33,11 @@ serve(async (req) => {
     return new Response(JSON.stringify({ error: 'Missing Pi Auth headers' }), { status: 401, headers: corsHeaders });
   }
 
-  // Get user id from users table
+  // Get user id from profiles table
   const { data: user, error: userError } = await supabase
-    .from('users')
+    .from('profiles')
     .select('id')
-    .eq('pi_username', piUsername)
-    .eq('pi_uuid', piUid)
+    .eq('username', piUsername)
     .maybeSingle();
   if (userError || !user) {
     return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: corsHeaders });
@@ -57,7 +56,7 @@ serve(async (req) => {
     }
     const { data, error } = await supabase
       .from('followers')
-      .insert([{ user_id: target_user_id, follower_id: userId }])
+      .insert([{ following_profile_id: target_user_id, follower_profile_id: userId }])
       .select()
       .maybeSingle();
     if (error) {
@@ -76,8 +75,8 @@ serve(async (req) => {
     const { error } = await supabase
       .from('followers')
       .delete()
-      .eq('user_id', target_user_id)
-      .eq('follower_id', userId);
+      .eq('following_profile_id', target_user_id)
+      .eq('follower_profile_id', userId);
     if (error) {
       return new Response(JSON.stringify({ error: 'Unfollow failed' }), { status: 400, headers: corsHeaders });
     }
@@ -96,8 +95,8 @@ serve(async (req) => {
       // Get followers of user
       const { data, error } = await supabase
         .from('followers')
-        .select('follower_id')
-        .eq('user_id', id);
+        .select('follower_profile_id')
+        .eq('following_profile_id', id);
       if (error) {
         return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
       }
@@ -106,8 +105,8 @@ serve(async (req) => {
       // Get users this user is following
       const { data, error } = await supabase
         .from('followers')
-        .select('user_id')
-        .eq('follower_id', id);
+        .select('following_profile_id')
+        .eq('follower_profile_id', id);
       if (error) {
         return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
       }

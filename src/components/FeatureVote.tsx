@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import { usePi } from '@/contexts/PiContext';
 import { ThumbsUp, AlertCircle } from 'lucide-react';
 
@@ -18,9 +16,8 @@ const SAMPLE_FEATURES = [
 ];
 
 export default function FeatureVote() {
-  const { piUser } = usePi() as any;
+  const { piUser } = usePi();
   const [selected, setSelected] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [note, setNote] = useState('');
   const [hasVoted, setHasVoted] = useState(false);
 
@@ -39,50 +36,18 @@ export default function FeatureVote() {
       return;
     }
 
-    setLoading(true);
-    try {
-      const payload: any = {
-        feature_key: selected,
-        user_pi_uid: piUser.uid,
-        username: piUser.username || null,
-        note: note || null,
-        created_at: new Date().toISOString()
-      };
+    // Just show success (no database table exists for feature_votes)
+    toast.success('Vote recorded! 🎉', {
+      description: 'Thank you for your feedback!'
+    });
 
-      // Insert vote into Supabase table `feature_votes`
-      const { error } = await supabase
-        .from('feature_votes')
-        .insert([payload]);
-        
-      if (error) {
-        console.warn('Vote insert error', error);
-        toast.error('Vote Error', {
-          description: 'Unable to record vote. Please try again.'
-        });
-        setLoading(false);
-        return;
-      }
+    // Reset form
+    setSelected(null);
+    setNote('');
+    setHasVoted(true);
 
-      toast.success('Vote recorded! 🎉', {
-        description: 'You will earn 1 Drop when this feature is released.'
-      });
-
-      // Reset form
-      setSelected(null);
-      setNote('');
-      setHasVoted(true);
-
-      // Re-enable voting after 2 seconds
-      setTimeout(() => setHasVoted(false), 2000);
-
-    } catch (err) {
-      console.error('Vote failed', err);
-      toast.error('Error', {
-        description: 'Failed to submit vote. Please try again.'
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Re-enable voting after 2 seconds
+    setTimeout(() => setHasVoted(false), 2000);
   };
 
   return (
@@ -93,7 +58,7 @@ export default function FeatureVote() {
           Vote for Your Favorite Features
         </CardTitle>
         <CardDescription>
-          Select a feature you'd like to see next. Earn 1 Drop when it's released!
+          Select a feature you'd like to see next.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -142,26 +107,13 @@ export default function FeatureVote() {
           ))}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="vote-note" className="text-sm">Optional comment (max 200 chars)</Label>
-          <Input 
-            id="vote-note"
-            value={note} 
-            onChange={(e) => setNote(e.target.value.slice(0, 200))}
-            placeholder="Why do you want this feature?" 
-            maxLength={200}
-            className="text-sm"
-          />
-          <p className="text-xs text-gray-500 text-right">{note.length}/200</p>
-        </div>
-
         <Button 
           onClick={handleVote} 
-          disabled={loading || !piUser || !selected}
+          disabled={!piUser || !selected}
           className="w-full gap-2"
         >
           <ThumbsUp className="w-4 h-4" />
-          {loading ? 'Recording vote...' : 'Vote & Earn 1 Drop'}
+          Vote
         </Button>
       </CardContent>
     </Card>

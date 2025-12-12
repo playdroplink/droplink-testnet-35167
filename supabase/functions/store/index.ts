@@ -3,10 +3,10 @@
 // Methods: POST (create), GET (get by id), PUT (update), DELETE (delete)
 // Requires: Pi Auth (username/uid)
 
+// @ts-ignore - Deno runtime types (available at runtime)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-// @ts-ignore
-// @deno-types="https://deno.land/x/supabase_js@2.38.2/mod.d.ts"
-import { createClient } from "https://deno.land/x/supabase_js@2.38.2/mod.ts";
+// @ts-ignore - ESM module (available at runtime)
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -33,12 +33,11 @@ serve(async (req) => {
     return new Response(JSON.stringify({ error: 'Missing Pi Auth headers' }), { status: 401, headers: corsHeaders });
   }
 
-  // Get user id from users table
+  // Get user id from profiles table
   const { data: user, error: userError } = await supabase
-    .from('users')
+    .from('profiles')
     .select('id')
-    .eq('pi_username', piUsername)
-    .eq('pi_uuid', piUid)
+    .eq('username', piUsername)
     .maybeSingle();
   if (userError || !user) {
     return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: corsHeaders });
@@ -47,15 +46,16 @@ serve(async (req) => {
 
   // Route by method
   if (req.method === 'POST') {
-    // Create store
+    // Create store - update profile with store settings
     const body = await req.json();
-    const { name, description, theme } = body;
+    const { name, description } = body;
     if (!name) {
       return new Response(JSON.stringify({ error: 'Missing store name' }), { status: 400, headers: corsHeaders });
     }
     const { data, error } = await supabase
-      .from('stores')
-      .insert([{ owner_id: ownerId, name, description, theme }])
+      .from('profiles')
+      .update({ business_name: name, description })
+      .eq('id', ownerId)
       .select()
       .maybeSingle();
     if (error) {
@@ -72,7 +72,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Missing store id' }), { status: 400, headers: corsHeaders });
     }
     const { data, error } = await supabase
-      .from('stores')
+      .from('profiles')
       .select('*')
       .eq('id', id)
       .maybeSingle();
@@ -90,10 +90,10 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Missing store id' }), { status: 400, headers: corsHeaders });
     }
     const { data, error } = await supabase
-      .from('stores')
-      .update({ name, description, theme })
+      .from('profiles')
+      .update({ business_name: name, description, theme_settings: theme })
       .eq('id', id)
-      .eq('owner_id', ownerId)
+      .eq('id', ownerId)
       .select()
       .maybeSingle();
     if (error || !data) {
@@ -103,17 +103,17 @@ serve(async (req) => {
   }
 
   if (req.method === 'DELETE') {
-    // Delete store (by id)
+    // Can't delete profile, just clear store data
     const url = new URL(req.url);
     const id = url.searchParams.get('id');
     if (!id) {
       return new Response(JSON.stringify({ error: 'Missing store id' }), { status: 400, headers: corsHeaders });
     }
     const { error } = await supabase
-      .from('stores')
-      .delete()
+      .from('profiles')
+      .update({ business_name: '', description: null })
       .eq('id', id)
-      .eq('owner_id', ownerId);
+      .eq('id', ownerId);
     if (error) {
       return new Response(JSON.stringify({ error: 'Delete failed' }), { status: 400, headers: corsHeaders });
     }

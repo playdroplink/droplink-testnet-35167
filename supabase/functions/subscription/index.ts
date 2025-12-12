@@ -1,12 +1,11 @@
-// Supabase Edge Function: Subscription Management (create, get, update, delete)
+// Supabase Edge Function: Subscription Management
 // Endpoint: /subscription
 // Methods: POST (create/upgrade), GET (get by user), PUT (update), DELETE (cancel)
-// Requires: Pi Auth (username/uid)
 
+// @ts-ignore - Deno runtime types (available at runtime)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-// @ts-ignore
-// @deno-types="https://deno.land/x/supabase_js@2.38.2/mod.d.ts"
-import { createClient } from "https://deno.land/x/supabase_js@2.38.2/mod.ts";
+// @ts-ignore - ESM module (available at runtime)
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -33,31 +32,49 @@ serve(async (req) => {
     return new Response(JSON.stringify({ error: 'Missing Pi Auth headers' }), { status: 401, headers: corsHeaders });
   }
 
-  // Get user id from users table
+  // Get user id from profiles table
   const { data: user, error: userError } = await supabase
-    .from('users')
+    .from('profiles')
     .select('id')
-    .eq('pi_username', piUsername)
-    .eq('pi_uuid', piUid)
+    .eq('username', piUsername)
     .maybeSingle();
   if (userError || !user) {
     return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: corsHeaders });
   }
-  const userId = user.id;
+  const profileId = user.id;
 
   if (req.method === 'POST') {
     // Create or upgrade subscription
     const body = await req.json();
-    const { plan, status, ends_at } = body;
-    if (!plan || !status) {
-      return new Response(JSON.stringify({ error: 'Missing plan or status' }), { status: 400, headers: corsHeaders });
+    const { plan_type, billing_period, pi_amount } = body;
+    if (!plan_type || !billing_period) {
+      return new Response(JSON.stringify({ error: 'Missing plan_type or billing_period' }), { status: 400, headers: corsHeaders });
     }
+    
+    // Calculate end date based on billing period
+    const endDate = new Date();
+    if (billing_period === 'yearly') {
+      endDate.setFullYear(endDate.getFullYear() + 1);
+    } else {
+      endDate.setMonth(endDate.getMonth() + 1);
+    }
+    
     // Upsert subscription
     const { data, error } = await supabase
       .from('subscriptions')
-      .upsert([{ user_id: userId, plan, status, started_at: new Date().toISOString(), ends_at }], { onConflict: 'user_id' })
+      .upsert({
+        profile_id: profileId,
+        plan_type,
+        billing_period,
+        pi_amount: pi_amount || 0,
+        start_date: new Date().toISOString(),
+        end_date: endDate.toISOString(),
+        status: 'active',
+        auto_renew: true
+      }, { onConflict: 'profile_id' })
       .select()
       .maybeSingle();
+      
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
     }
@@ -65,14 +82,17 @@ serve(async (req) => {
   }
 
   if (req.method === 'GET') {
-    // Get subscription by user
+    // Get subscription by profile
     const { data, error } = await supabase
       .from('subscriptions')
       .select('*')
-      .eq('user_id', userId)
+      .eq('profile_id', profileId)
       .maybeSingle();
-    if (error || !data) {
-      return new Response(JSON.stringify({ error: 'Subscription not found' }), { status: 404, headers: corsHeaders });
+    if (error) {
+      return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
+    }
+    if (!data) {
+      return new Response(JSON.stringify({ subscription: null }), { status: 200, headers: corsHeaders });
     }
     return new Response(JSON.stringify(data), { status: 200, headers: corsHeaders });
   }
@@ -80,17 +100,15 @@ serve(async (req) => {
   if (req.method === 'PUT') {
     // Update subscription
     const body = await req.json();
-    const { id, plan, status, ends_at } = body;
-    if (!id) {
-      return new Response(JSON.stringify({ error: 'Missing subscription id' }), { status: 400, headers: corsHeaders });
-    }
+    const { plan_type, billing_period, status, auto_renew } = body;
+    
     const { data, error } = await supabase
       .from('subscriptions')
-      .update({ plan, status, ends_at })
-      .eq('id', id)
-      .eq('user_id', userId)
+      .update({ plan_type, billing_period, status, auto_renew })
+      .eq('profile_id', profileId)
       .select()
       .maybeSingle();
+      
     if (error || !data) {
       return new Response(JSON.stringify({ error: 'Update failed' }), { status: 400, headers: corsHeaders });
     }
@@ -98,19 +116,14 @@ serve(async (req) => {
   }
 
   if (req.method === 'DELETE') {
-    // Cancel subscription
-    const url = new URL(req.url);
-    const id = url.searchParams.get('id');
-    if (!id) {
-      return new Response(JSON.stringify({ error: 'Missing subscription id' }), { status: 400, headers: corsHeaders });
-    }
+    // Cancel subscription (set status to cancelled)
     const { error } = await supabase
       .from('subscriptions')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', userId);
+      .update({ status: 'cancelled', auto_renew: false })
+      .eq('profile_id', profileId);
+      
     if (error) {
-      return new Response(JSON.stringify({ error: 'Delete failed' }), { status: 400, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: 'Cancel failed' }), { status: 400, headers: corsHeaders });
     }
     return new Response(JSON.stringify({ success: true }), { status: 200, headers: corsHeaders });
   }

@@ -114,7 +114,7 @@ serve(async (req) => {
         // Get preset settings
         const { data: preset, error: presetError } = await serviceSupabase
           .from('advanced_customization_presets')
-          .select('settings')
+          .select('settings, usage_count')
           .eq('preset_name', presetName)
           .single();
 
@@ -138,7 +138,7 @@ serve(async (req) => {
         // Increment preset usage count
         await serviceSupabase
           .from('advanced_customization_presets')
-          .update({ usage_count: serviceSupabase.raw('usage_count + 1') })
+          .update({ usage_count: (preset.usage_count || 0) + 1 })
           .eq('preset_name', presetName);
 
         console.log(`✅ Applied preset ${presetName} to profile ${profileId} (username: ${username})`);

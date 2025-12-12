@@ -1,14 +1,19 @@
 import React, { useEffect } from "react";
 
-// Pi AdNetwork Banner Integration (see: https://github.com/pi-apps/pi-platform-docs/blob/master/ads.md)
+// Pi AdNetwork Banner Integration
 const PiAdsBanner: React.FC = () => {
   useEffect(() => {
-    if (typeof window !== "undefined" && window.Pi && window.Pi.openAd) {
-      // Show a banner ad at the bottom
-      window.Pi.openAd({
-        type: "banner",
-        position: "bottom"
-      });
+    if (typeof window !== "undefined" && window.Pi && window.Pi.Ads) {
+      try {
+        // Use the Pi Ads API if available - check for showAd method
+        if (window.Pi.Ads.showAd) {
+          window.Pi.Ads.showAd("interstitial").catch((err: any) => {
+            console.log('Pi Ads show failed:', err);
+          });
+        }
+      } catch (err) {
+        console.log('Pi Ads not available:', err);
+      }
     }
   }, []);
 
