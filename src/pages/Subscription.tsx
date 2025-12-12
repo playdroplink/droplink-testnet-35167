@@ -53,7 +53,7 @@ const plans: Plan[] = [
       "Standard profile customization",
       "Standard QR code sharing",
       "No DropLink watermark",
-      "Ad-free experience",
+      "Pi Ad Network banners shown",
       "Access to analytics dashboard (basic)",
       "Email support (standard)",
       "More theme options (3+)",
@@ -77,7 +77,8 @@ const plans: Plan[] = [
       "DROP token receiving",
       "Product listings with pricing",
       "Priority email support",
-      "Custom domain support (coming soon)"
+      "Custom domain support (coming soon)",
+      "Ad-free experience"
     ],
     popular: true,
     savings: "20% savings on yearly"
@@ -99,7 +100,8 @@ const plans: Plan[] = [
       "Pi Payments integration (DropPay)",
       "Transaction history & management",
       "AI chat widget",
-      "Multi-profile management"
+      "Multi-profile management",
+      "Ad-free experience"
     ]
   }
 ];
