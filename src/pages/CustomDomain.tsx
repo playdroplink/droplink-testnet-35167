@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, Globe, Check, X, AlertCircle, ExternalLink, Info } from "lucide-react";
+import { ArrowLeft, Globe, AlertCircle, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePi } from "@/contexts/PiContext";
 import { toast } from "sonner";
@@ -13,8 +13,7 @@ import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 
 const CustomDomain = () => {
   const navigate = useNavigate();
-  // Pi auth disabled: open to all users
-  // const { piUser, isAuthenticated } = usePi();
+  const { piUser, isAuthenticated } = usePi();
   const { plan } = useActiveSubscription();
   const isPremiumPlan = plan === "premium" || plan === "pro";
   const [loading, setLoading] = useState(true);
@@ -26,11 +25,14 @@ const CustomDomain = () => {
 
   useEffect(() => {
     loadDomainSettings();
-  }, []);
+  }, [piUser, isAuthenticated]);
 
   const loadDomainSettings = async () => {
     try {
-      // Pi auth disabled: allow all users
+      if (!isAuthenticated || !piUser?.username) {
+        setLoading(false);
+        return;
+      }
 
       const { data: profile } = await supabase
         .from("profiles")
@@ -40,9 +42,6 @@ const CustomDomain = () => {
 
       if (profile) {
         setProfileId(profile.id);
-        // Note: custom_domain column doesn't exist in current schema
-        // setCurrentDomain((profile as any).custom_domain || null);
-        // setDomain((profile as any).custom_domain || "");
       }
     } catch (error) {
       console.error("Error loading domain settings:", error);
@@ -62,7 +61,6 @@ const CustomDomain = () => {
       return;
     }
 
-    // Basic domain validation
     const domainRegex = /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/i;
     if (!domainRegex.test(domain.trim())) {
       toast.error("Please enter a valid domain (e.g., example.com)");
@@ -76,24 +74,7 @@ const CustomDomain = () => {
         return;
       }
 
-      // Save domain to profile
-      // Note: custom_domain column doesn't exist in current schema
-      // const { error } = await supabase
-      //   .from("profiles")
-      //   .update({
-      //     custom_domain: domain.trim(),
-      //   })
-      //   .eq("id", profileId);
-
-      // if (error) throw error;
-
-      // Placeholder - domain functionality not yet implemented
       toast.info("Custom domain feature is not yet available");
-      return;
-
-      // setCurrentDomain(domain.trim());
-      // toast.success("Domain saved! Please configure DNS settings below.");
-      // setVerificationStatus("pending");
     } catch (error: any) {
       console.error("Error saving domain:", error);
       toast.error(error.message || "Failed to save domain");
@@ -111,24 +92,7 @@ const CustomDomain = () => {
     setSaving(true);
     try {
       if (!profileId) return;
-
-      // Note: custom_domain column doesn't exist in current schema
-      // const { error } = await supabase
-      //   .from("profiles")
-      //   .update({
-      //     custom_domain: null,
-      //   })
-      //   .eq("id", profileId);
-
-      // if (error) throw error;
-
       toast.info("Custom domain feature is not yet available");
-      return;
-
-      // setCurrentDomain(null);
-      // setDomain("");
-      // setVerificationStatus(null);
-      // toast.success("Domain removed");
     } catch (error: any) {
       console.error("Error removing domain:", error);
       toast.error("Failed to remove domain");
@@ -165,7 +129,7 @@ const CustomDomain = () => {
               <strong>Custom domains are a Premium feature.</strong>
               <br />
               <span className="text-sm text-muted-foreground">
-                Upgrade to Premium or Pro to connect your own domain. While you're on the Free plan, you can review the setup steps below.
+                Upgrade to Premium or Pro to connect your own domain.
               </span>
             </AlertDescription>
           </Alert>
@@ -178,11 +142,10 @@ const CustomDomain = () => {
               Connect Your Domain
             </CardTitle>
             <CardDescription>
-              Connect your custom domain (e.g., from GoDaddy, Hostinger, etc.) to your Droplink profile
+              Connect your custom domain to your Droplink profile
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Domain Input */}
             <div className="space-y-2">
               <Label htmlFor="domain">Custom Domain</Label>
               <div className="flex gap-2">
@@ -197,8 +160,6 @@ const CustomDomain = () => {
                 <Button 
                   onClick={handleSaveDomain} 
                   disabled={saving || !domain.trim() || !isPremiumPlan}
-                  variant="default"
-                  size="default"
                 >
                   {saving ? "Saving..." : "Save"}
                 </Button>
@@ -207,18 +168,16 @@ const CustomDomain = () => {
                     variant="outline" 
                     onClick={handleRemoveDomain} 
                     disabled={saving || !isPremiumPlan}
-                    size="default"
                   >
                     Remove
                   </Button>
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Enter your domain without http:// or https:// (e.g., example.com)
+                Enter your domain without http:// or https://
               </p>
             </div>
 
-            {/* Current Domain Status */}
             {currentDomain && (
               <Alert>
                 <Globe className="h-4 w-4" />
@@ -234,69 +193,28 @@ const CustomDomain = () => {
               </Alert>
             )}
 
-            {/* DNS Configuration Instructions */}
-            {currentDomain && (
-              <div className="space-y-4 p-4 bg-muted/50 rounded-lg border">
-                <h3 className="font-semibold flex items-center gap-2">
-                  <Info className="w-4 h-4" />
-                  DNS Configuration Instructions
-                </h3>
-                <div className="space-y-3 text-sm">
-                  <div>
-                    <p className="font-medium mb-1">For GoDaddy, Hostinger, Namecheap, etc.:</p>
-                    <ol className="list-decimal list-inside space-y-1 ml-2 text-muted-foreground">
-                      <li>Log in to your domain registrar</li>
-                      <li>Go to DNS Management / DNS Settings</li>
-                      <li>Add a CNAME record:</li>
-                      <ul className="list-disc list-inside ml-4 mt-1">
-                        <li><strong>Type:</strong> CNAME</li>
-                        <li><strong>Name/Host:</strong> @ or your subdomain (e.g., www)</li>
-                        <li><strong>Value/Target:</strong> your-vercel-app.vercel.app</li>
-                        <li><strong>TTL:</strong> 3600 (or default)</li>
-                      </ul>
-                      <li>Save the DNS record</li>
-                      <li>Wait 24-48 hours for DNS propagation</li>
-                    </ol>
-                  </div>
-                  <div className="mt-4 p-3 bg-background rounded border">
-                    <p className="font-medium mb-2">Example CNAME Record:</p>
-                    <code className="text-xs block">
-                      @ CNAME your-vercel-app.vercel.app
-                    </code>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Or for subdomain: www CNAME your-vercel-app.vercel.app
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* .pi Domain Coming Soon */}
             <Alert className="border-primary/50 bg-primary/5">
               <AlertCircle className="h-4 w-4 text-primary" />
               <AlertDescription>
                 <strong>.pi Domain Support Coming Soon!</strong>
                 <br />
                 <span className="text-sm text-muted-foreground">
-                  We're working on native .pi domain support. Stay tuned for updates!
+                  We're working on native .pi domain support. Stay tuned!
                 </span>
               </AlertDescription>
             </Alert>
 
-            {/* Help Section */}
             <div className="pt-4 border-t">
               <h3 className="font-semibold mb-2">Need Help?</h3>
               <p className="text-sm text-muted-foreground mb-3">
-                If you're having trouble connecting your domain, check your registrar's documentation or contact support.
+                Contact support if you're having trouble connecting your domain.
               </p>
-              <div className="flex gap-2">
-                <Button variant="outline" size="default" asChild>
-                  <a href="/ai-support" target="_blank" rel="noopener noreferrer">
-                    <Info className="w-4 h-4 mr-2" />
-                    Get Help
-                  </a>
-                </Button>
-              </div>
+              <Button variant="outline" asChild>
+                <a href="/ai-support">
+                  <Info className="w-4 h-4 mr-2" />
+                  Get Help
+                </a>
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -306,4 +224,3 @@ const CustomDomain = () => {
 };
 
 export default CustomDomain;
-

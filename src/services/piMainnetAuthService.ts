@@ -15,7 +15,6 @@ const networkLabel = PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet';
 
 /**
  * Validates Pi access token by querying Pi API
- * Uses: https://api.minepi.com/v2/me (or sandbox equivalent)
  */
 export async function validatePiAccessToken(accessToken: string) {
   if (!accessToken) {
@@ -24,12 +23,6 @@ export async function validatePiAccessToken(accessToken: string) {
 
   const baseUrl = PI_CONFIG.ENDPOINTS.ME.replace('/v2/me', '');
   console.log(`[Pi Auth Service] 🔐 Validating Pi access token with ${networkLabel} API at ${baseUrl} ...`);
-  if (!PI_CONFIG.SANDBOX_MODE && PI_CONFIG.NETWORK !== 'mainnet') {
-    console.warn('[Pi Auth Service] Network mismatch: expected mainnet but config says', PI_CONFIG.NETWORK);
-  }
-  if (PI_CONFIG.SANDBOX_MODE && !baseUrl.includes('sandbox')) {
-    console.warn('[Pi Auth Service] Sandbox mode is enabled but base URL is not sandbox:', baseUrl);
-  }
   
   try {
     const response = await fetch(PI_CONFIG.ENDPOINTS.ME, {
@@ -50,10 +43,9 @@ export async function validatePiAccessToken(accessToken: string) {
     
     return piData;
   } catch (error: any) {
-    // Handle browser fetch errors that manifest as TypeError: Failed to fetch
-    const isFetchError = error && error.message && error.message.toLowerCase().includes('failed to fetch');
+    const isFetchError = error?.message?.toLowerCase().includes('failed to fetch');
     const networkHint = PI_CONFIG.SANDBOX_MODE
-      ? 'Check sandbox API URL (VITE_PI_SANDBOX_URL), Pi Browser network connectivity, and ensure HTTPS is allowed.'
+      ? 'Check sandbox API URL, Pi Browser network connectivity, and ensure HTTPS is allowed.'
       : 'Check mainnet connectivity and API URL.';
 
     console.error('[Pi Auth Service] ❌ Failed to validate Pi token:', error, networkHint);
@@ -67,7 +59,6 @@ export async function validatePiAccessToken(accessToken: string) {
 
 /**
  * Gets extended Pi user profile information
- * Retrieves: username, wallet addresses, and other Pi user metadata
  */
 export async function getPiUserProfile(accessToken: string) {
   const piData = await validatePiAccessToken(accessToken);
@@ -77,13 +68,11 @@ export async function getPiUserProfile(accessToken: string) {
     username: piData.username,
     wallet_address: piData.wallet_address || null,
     meta: piData.meta || {},
-    // Add any other Pi user fields needed
   };
 }
 
 /**
  * Links a Pi user to a Supabase profile
- * Creates profile if it doesn't exist for Pi-only users
  */
 export async function linkPiUserToSupabase(
   piData: any,
@@ -98,11 +87,11 @@ export async function linkPiUserToSupabase(
   console.log(`[Pi Auth Service] Pi username: ${piData.username}`);
 
   try {
-    // First, try to find existing profile by Pi username
+    // Find existing profile by username
     const { data: existingProfile, error: selectError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('pi_username', piData.username)
+      .eq('username', piData.username)
       .maybeSingle();
 
     if (selectError && selectError.code !== 'PGRST116') {
@@ -117,8 +106,6 @@ export async function linkPiUserToSupabase(
       const { data: updated, error: updateError } = await supabase
         .from('profiles')
         .update({
-          pi_user_id: piData.uid,
-          pi_username: piData.username,
           pi_wallet_address: piData.wallet_address || existingProfile.pi_wallet_address,
           updated_at: new Date().toISOString(),
         })
@@ -135,7 +122,7 @@ export async function linkPiUserToSupabase(
       return updated;
     }
 
-    // If profile doesn't exist and we're allowed to create
+    // Create new profile if allowed
     if (createIfNotExists) {
       console.log('[Pi Auth Service] 📝 Creating new Supabase profile for Pi user...');
       
@@ -144,9 +131,7 @@ export async function linkPiUserToSupabase(
         .insert([
           {
             username: piData.username,
-            display_name: displayName || piData.username,
-            pi_user_id: piData.uid,
-            pi_username: piData.username,
+            business_name: displayName || piData.username,
             pi_wallet_address: piData.wallet_address || null,
             theme_settings: {
               primaryColor: '#3b82f6',
@@ -176,25 +161,18 @@ export async function linkPiUserToSupabase(
 }
 
 /**
- * Complete Pi authentication flow:
- * 1. Validate Pi access token
- * 2. Get Pi user profile
- * 3. Link to Supabase
- * 4. Return authenticated user data
+ * Complete Pi authentication flow
  */
 export async function authenticatePiUser(accessToken: string, options?: any) {
   console.log(`[Pi Auth Service] 🔐 Starting Pi ${networkLabel} authentication flow...`);
   
   try {
-    // Step 1: Validate token and get Pi user data
     const piData = await getPiUserProfile(accessToken);
     console.log('[Pi Auth Service] ✅ Step 1: Pi user profile retrieved');
 
-    // Step 2: Link to Supabase
     const supabaseProfile = await linkPiUserToSupabase(piData, options);
     console.log('[Pi Auth Service] ✅ Step 2: Supabase profile linked/created');
 
-    // Step 3: Return complete authentication result
     const result = {
       success: true,
       piUser: piData,
@@ -212,7 +190,6 @@ export async function authenticatePiUser(accessToken: string, options?: any) {
 
 /**
  * Verify that a stored Pi access token is still valid
- * Used for auto-login/session persistence
  */
 export async function verifyStoredPiToken(accessToken: string): Promise<boolean> {
   try {
@@ -227,7 +204,6 @@ export async function verifyStoredPiToken(accessToken: string): Promise<boolean>
 
 /**
  * Get Pi user wallet information
- * Includes: wallet address, balance, assets
  */
 export async function getPiUserWallet(accessToken: string) {
   try {
