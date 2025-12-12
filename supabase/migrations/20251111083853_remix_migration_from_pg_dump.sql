@@ -85,13 +85,25 @@ $$;
 -- Name: update_updated_at_column(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.update_updated_at_column() RETURNS trigger
-    LANGUAGE plpgsql
-    SET search_path TO 'public'
-    AS $$
+
+-- Drop the function if it already exists to avoid duplicate error
+DO $$
 BEGIN
-  NEW.updated_at = now();
-  RETURN NEW;
+    IF EXISTS (
+        SELECT 1 FROM pg_proc 
+        WHERE proname = 'update_updated_at_column' AND pronamespace = 'public'::regnamespace
+    ) THEN
+        DROP FUNCTION public.update_updated_at_column();
+    END IF;
+END $$;
+
+CREATE FUNCTION public.update_updated_at_column() RETURNS trigger
+        LANGUAGE plpgsql
+        SET search_path TO 'public'
+        AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
 END;
 $$;
 

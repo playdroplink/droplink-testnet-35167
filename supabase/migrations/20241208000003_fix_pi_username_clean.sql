@@ -40,7 +40,7 @@ WITH ranked_profiles AS (
   AND pi_username IS NOT NULL
 )
 UPDATE public.profiles 
-SET pi_username = pi_username || '_old_' || SUBSTRING(id::text, 1, 8)
+SET pi_username = public.profiles.pi_username || '_old_' || SUBSTRING(public.profiles.id::text, 1, 8)
 FROM ranked_profiles
 WHERE public.profiles.id = ranked_profiles.id 
 AND ranked_profiles.row_num > 1;
