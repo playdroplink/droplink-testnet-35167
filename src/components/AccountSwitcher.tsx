@@ -151,12 +151,10 @@ export const AccountSwitcher: React.FC<AccountSwitcherProps> = ({
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="flex items-center gap-2 px-3 py-2 h-auto">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={
-              <AvatarWithPollination
-                displayName={currentDisplayAccount?.display_name || "Unknown"}
-                username={currentDisplayAccount?.pi_username || "unknown"}
-              />
-            } alt={`${currentDisplayAccount?.display_name}'s avatar`} />
+            <AvatarImage 
+              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${currentDisplayAccount?.pi_username || 'unknown'}`}
+              alt={`${currentDisplayAccount?.display_name}'s avatar`} 
+            />
           </Avatar>
           
           <div className="flex flex-col items-start text-left min-w-0">

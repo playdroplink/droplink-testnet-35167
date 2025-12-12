@@ -198,7 +198,7 @@ const Dashboard = () => {
   // Helper: is plan expired?
   const isPlanExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
   
-  const { preferences, updateDashboardLayout } = useUserPreferences();
+  const { preferences, updateNestedPreference } = useUserPreferences();
   
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
