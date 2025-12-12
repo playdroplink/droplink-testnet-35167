@@ -286,7 +286,7 @@ const Subscription = () => {
         <div className="flex justify-center mb-8">
           <Button
             variant="default"
-            className="px-8 py-3 text-lg font-semibold bg-yellow-400 hover:bg-yellow-500 text-black border border-yellow-600 shadow-lg"
+            className="px-8 py-3 text-lg font-semibold bg-sky-500 hover:bg-sky-600 text-white border border-sky-700 shadow-lg"
             onClick={() => signIn()}
             disabled={piLoading}
           >
