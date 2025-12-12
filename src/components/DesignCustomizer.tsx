@@ -104,25 +104,6 @@ const themeTemplates: ThemeTemplate[] = [
   },
 ];
 
-  // Template select handler (move above handleRandomTheme for hoisting)
-  const handleTemplateSelect = (template: ThemeTemplate) => {
-    onThemeChange({
-      primaryColor: template.primaryColor,
-      backgroundColor: template.backgroundColor,
-      backgroundType: theme.backgroundType, // Preserve current background type
-      backgroundGif: theme.backgroundGif, // Preserve current GIF
-      iconStyle: template.iconStyle,
-      buttonStyle: theme.buttonStyle, // Preserve existing button style
-    });
-  };
-
-  // Random Theme Button Handler
-  const handleRandomTheme = () => {
-    const randomIndex = Math.floor(Math.random() * themeTemplates.length);
-    const template = themeTemplates[randomIndex];
-    handleTemplateSelect(template);
-  };
-
 interface DesignCustomizerProps {
   theme: {
     primaryColor: string;
@@ -137,6 +118,24 @@ interface DesignCustomizerProps {
 }
 
 export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps) => {
+  // Template select handler
+  const handleTemplateSelect = (template: ThemeTemplate) => {
+    onThemeChange({
+      primaryColor: template.primaryColor,
+      backgroundColor: template.backgroundColor,
+      backgroundType: theme.backgroundType,
+      backgroundGif: theme.backgroundGif,
+      iconStyle: template.iconStyle,
+      buttonStyle: theme.buttonStyle,
+    });
+  };
+
+  // Random Theme Button Handler
+  const handleRandomTheme = () => {
+    const randomIndex = Math.floor(Math.random() * themeTemplates.length);
+    const template = themeTemplates[randomIndex];
+    handleTemplateSelect(template);
+  };
   const [uploadingGif, setUploadingGif] = useState(false);
   const [customizationMode, setCustomizationMode] = useState<'simple' | 'advanced'>('simple');
   const [showLinkCustomizer, setShowLinkCustomizer] = useState(false);
@@ -191,16 +190,6 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
     }
   });
 
-  const handleTemplateSelect = (template: ThemeTemplate) => {
-    onThemeChange({
-      primaryColor: template.primaryColor,
-      backgroundColor: template.backgroundColor,
-      backgroundType: theme.backgroundType, // Preserve current background type
-      backgroundGif: theme.backgroundGif, // Preserve current GIF
-      iconStyle: template.iconStyle,
-      buttonStyle: theme.buttonStyle, // Preserve existing button style
-    });
-  };
 
   // Fetch a random GIF from Giphy
   const handleRandomGif = async () => {
