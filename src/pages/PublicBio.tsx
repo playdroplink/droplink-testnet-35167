@@ -61,6 +61,8 @@ const PublicBio = () => {
   // Subscription for viewed profile (must be after username is defined)
   const { plan, expiresAt, loading: subLoading } = usePublicSubscription(username ? String(username) : "");
   const isPlanExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
+  // Pi AdNetwork logic: show ads for free/basic/expired, hide for premium/pro
+  const showPiAds = !plan || plan === 'free' || plan === 'basic' || isPlanExpired;
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [currentUserProfileId, setCurrentUserProfileId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -708,8 +710,12 @@ const PublicBio = () => {
       )}
       
       <div className="w-full max-w-2xl space-y-8 py-12 relative z-10">
-        {/* Pi Ad Banner for free plan users */}
-        {!profile.hasPremium && <PiAdsBanner />}
+        {/* Pi AdNetwork logic based on creator's plan */}
+        {showPiAds && (
+          <div className="mb-6">
+            <PiAdsBanner />
+          </div>
+        )}
         
         {/* Logo and Business Info */}
         <div className="text-center space-y-4">

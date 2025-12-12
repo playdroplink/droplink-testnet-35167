@@ -111,7 +111,7 @@ const Subscription = () => {
   const [subscription, setSubscription] = useState<any>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { piUser } = usePi() as any;
+  const { piUser, signIn, loading: piLoading } = usePi() as any;
   const { processPayment, isProcessing, paymentProgress } = useRealPiPayment();
 
   useEffect(() => {
@@ -281,6 +281,19 @@ const Subscription = () => {
       <div className="mb-6">
         <Button variant="outline" onClick={() => navigate('/')}> ← Back to Dashboard</Button>
       </div>
+      {/* Pi Auth Sign In Button */}
+      {!piUser && (
+        <div className="flex justify-center mb-8">
+          <Button
+            variant="default"
+            className="px-8 py-3 text-lg font-semibold bg-yellow-400 hover:bg-yellow-500 text-black border border-yellow-600 shadow-lg"
+            onClick={() => signIn()}
+            disabled={piLoading}
+          >
+            {piLoading ? 'Signing in with Pi...' : 'Sign in with Pi Network'}
+          </Button>
+        </div>
+      )}
       <div className="max-w-4xl mx-auto">
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold mb-2">Choose Your Plan</h1>
