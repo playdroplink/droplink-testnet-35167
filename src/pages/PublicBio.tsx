@@ -1,3 +1,22 @@
+  // Auto-follow after redirect from auth if needed
+  // This must be inside the PublicBio component to access all variables
+  useEffect(() => {
+    const authAction = sessionStorage.getItem('authAction');
+    const profileToFollow = sessionStorage.getItem('profileToFollow');
+    if (
+      authAction === 'follow' &&
+      profileToFollow &&
+      (profileToFollow === username || profileToFollow === profileId) &&
+      currentUserProfileId &&
+      currentUserProfileId !== profileId &&
+      !isFollowing
+    ) {
+      // Remove intent so it doesn't repeat
+      sessionStorage.removeItem('authAction');
+      sessionStorage.removeItem('profileToFollow');
+      handleFollow();
+    }
+  }, [username, profileId, currentUserProfileId, isFollowing]);
 import { useEffect, useState } from "react";
 import { usePublicSubscription } from "@/hooks/usePublicSubscription";
 import { useParams, useNavigate } from "react-router-dom";
@@ -11,6 +30,7 @@ import { Info, Flag } from "lucide-react";
 import { FollowersSection } from "@/components/FollowersSection";
 import { GiftDialog } from "@/components/GiftDialog";
 import { AIChatWidget } from "@/components/AIChatWidget";
+import PublicBioMessageForm from "@/components/PublicBioMessageForm";
 import { BackgroundMusicPlayer } from "@/components/BackgroundMusicPlayer";
 import { PiAdBanner } from "@/components/PiAdBanner";
 import PiAdsBanner from "@/components/PiAdsBanner";
@@ -1137,21 +1157,11 @@ const PublicBio = () => {
         {/* Message Input Section - Only for followers */}
         {currentUserProfileId && currentUserProfileId !== profileId && (
           <div className="mt-8">
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Write a message to the merchant..."
-              className="w-full p-4 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none h-24"
+            {/* Use the Pi payment + message form */}
+            <PublicBioMessageForm 
+              receiverUsername={profile.username} 
+              senderUsername={piUser?.username || ''} 
             />
-            <div className="flex justify-end gap-2 mt-4">
-              <Button
-                onClick={sendMessage}
-                className="flex-shrink-0"
-                style={{ backgroundColor: profile.theme.primaryColor }}
-              >
-                Send Message
-              </Button>
-            </div>
           </div>
         )}
 
