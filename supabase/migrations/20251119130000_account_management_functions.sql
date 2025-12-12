@@ -179,11 +179,11 @@ BEGIN
     END IF;
     
     -- Check if username already exists (comprehensive check)
-    SELECT COUNT(*) INTO existing_count
-    FROM profiles 
-    WHERE LOWER(username) = cleaned_username 
-       OR LOWER(pi_username) = cleaned_username 
-       OR (pi_user_id = create_pi_network_account.pi_user_id AND pi_user_id IS NOT NULL);
+     SELECT COUNT(*) INTO existing_count
+     FROM profiles 
+     WHERE LOWER(username) = cleaned_username 
+         OR LOWER(profiles.pi_username) = cleaned_username 
+         OR (pi_user_id = create_pi_network_account.pi_user_id AND pi_user_id IS NOT NULL);
     
     username_exists := (existing_count > 0);
     

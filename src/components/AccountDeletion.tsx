@@ -86,8 +86,14 @@ export const AccountDeletion: React.FC<AccountDeletionProps> = ({
         duration: 5000
       });
 
+
       // Call the callback to handle app-level reset
       onAccountDeleted();
+
+      // Force a full page reload to ensure all state is reset
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
 
     } catch (error) {
       console.error('Account deletion error:', error);
