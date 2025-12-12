@@ -15,7 +15,7 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 const serviceSupabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// Simple AI response generation (in production, integrate with OpenAI, Claude, etc.)
+// Simple AI response generation
 const generateAIResponse = (userMessage: string, context: any = {}): string => {
   const lowerMessage = userMessage.toLowerCase();
   
@@ -401,11 +401,17 @@ serve(async (req) => {
 
         if (aiError) throw aiError;
 
-        // Update conversation message count
+        // Update conversation message count - get current count first
+        const { data: currentConv } = await serviceSupabase
+          .from('ai_chat_conversations')
+          .select('message_count')
+          .eq('id', conversation.id)
+          .single();
+
         await serviceSupabase
           .from('ai_chat_conversations')
           .update({
-            message_count: serviceSupabase.raw('message_count + 2'),
+            message_count: (currentConv?.message_count || 0) + 2,
             updated_at: new Date().toISOString()
           })
           .eq('id', conversation.id);

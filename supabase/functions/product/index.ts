@@ -3,10 +3,10 @@
 // Methods: POST (create), GET (get by id or list by store), PUT (update), DELETE (delete)
 // Requires: Pi Auth (username/uid)
 
+// @ts-ignore - Deno runtime types (available at runtime)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-// @ts-ignore
-// @deno-types="https://deno.land/x/supabase_js@2.38.2/mod.d.ts"
-import { createClient } from "https://deno.land/x/supabase_js@2.38.2/mod.ts";
+// @ts-ignore - ESM module (available at runtime)
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -33,12 +33,11 @@ serve(async (req) => {
     return new Response(JSON.stringify({ error: 'Missing Pi Auth headers' }), { status: 401, headers: corsHeaders });
   }
 
-  // Get user id from users table
+  // Get user id from profiles table
   const { data: user, error: userError } = await supabase
-    .from('users')
+    .from('profiles')
     .select('id')
-    .eq('pi_username', piUsername)
-    .eq('pi_uuid', piUid)
+    .eq('username', piUsername)
     .maybeSingle();
   if (userError || !user) {
     return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: corsHeaders });
@@ -49,22 +48,14 @@ serve(async (req) => {
   if (req.method === 'POST') {
     // Create product
     const body = await req.json();
-    const { store_id, name, price, description, image_url, stock } = body;
-    if (!store_id || !name || price == null) {
+    const { title, price, description, image, file_url } = body;
+    if (!title || price == null) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400, headers: corsHeaders });
     }
-    // Check store ownership
-    const { data: store, error: storeError } = await supabase
-      .from('stores')
-      .select('id, owner_id')
-      .eq('id', store_id)
-      .maybeSingle();
-    if (storeError || !store || store.owner_id !== userId) {
-      return new Response(JSON.stringify({ error: 'Store not found or not owned by user' }), { status: 403, headers: corsHeaders });
-    }
+    
     const { data, error } = await supabase
       .from('products')
-      .insert([{ store_id, name, price, description, image_url, stock }])
+      .insert([{ profile_id: userId, title, price: String(price), description, image, file_url }])
       .select()
       .maybeSingle();
     if (error) {
@@ -74,10 +65,10 @@ serve(async (req) => {
   }
 
   if (req.method === 'GET') {
-    // Get product by id or list by store
+    // Get product by id or list by profile
     const url = new URL(req.url);
     const id = url.searchParams.get('id');
-    const storeId = url.searchParams.get('store_id');
+    const profileId = url.searchParams.get('profile_id');
     if (id) {
       // Get product by id
       const { data, error } = await supabase
@@ -89,48 +80,44 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: 'Product not found' }), { status: 404, headers: corsHeaders });
       }
       return new Response(JSON.stringify(data), { status: 200, headers: corsHeaders });
-    } else if (storeId) {
-      // List products by store
+    } else if (profileId) {
+      // List products by profile
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('store_id', storeId);
+        .eq('profile_id', profileId);
       if (error) {
         return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
       }
       return new Response(JSON.stringify(data), { status: 200, headers: corsHeaders });
     } else {
-      return new Response(JSON.stringify({ error: 'Missing id or store_id' }), { status: 400, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: 'Missing id or profile_id' }), { status: 400, headers: corsHeaders });
     }
   }
 
   if (req.method === 'PUT') {
     // Update product
     const body = await req.json();
-    const { id, name, price, description, image_url, stock } = body;
+    const { id, title, price, description, image, file_url } = body;
     if (!id) {
       return new Response(JSON.stringify({ error: 'Missing product id' }), { status: 400, headers: corsHeaders });
     }
     // Check product ownership
     const { data: product, error: productError } = await supabase
       .from('products')
-      .select('id, store_id')
+      .select('id, profile_id')
       .eq('id', id)
       .maybeSingle();
     if (productError || !product) {
       return new Response(JSON.stringify({ error: 'Product not found' }), { status: 404, headers: corsHeaders });
     }
-    const { data: store, error: storeError } = await supabase
-      .from('stores')
-      .select('id, owner_id')
-      .eq('id', product.store_id)
-      .maybeSingle();
-    if (storeError || !store || store.owner_id !== userId) {
+    if (product.profile_id !== userId) {
       return new Response(JSON.stringify({ error: 'Not authorized' }), { status: 403, headers: corsHeaders });
     }
+    
     const { data, error } = await supabase
       .from('products')
-      .update({ name, price, description, image_url, stock })
+      .update({ title, price: String(price), description, image, file_url })
       .eq('id', id)
       .select()
       .maybeSingle();
@@ -150,20 +137,16 @@ serve(async (req) => {
     // Check product ownership
     const { data: product, error: productError } = await supabase
       .from('products')
-      .select('id, store_id')
+      .select('id, profile_id')
       .eq('id', id)
       .maybeSingle();
     if (productError || !product) {
       return new Response(JSON.stringify({ error: 'Product not found' }), { status: 404, headers: corsHeaders });
     }
-    const { data: store, error: storeError } = await supabase
-      .from('stores')
-      .select('id, owner_id')
-      .eq('id', product.store_id)
-      .maybeSingle();
-    if (storeError || !store || store.owner_id !== userId) {
+    if (product.profile_id !== userId) {
       return new Response(JSON.stringify({ error: 'Not authorized' }), { status: 403, headers: corsHeaders });
     }
+    
     const { error } = await supabase
       .from('products')
       .delete()

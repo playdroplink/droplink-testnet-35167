@@ -1,9 +1,7 @@
-/// <reference path="./types.d.ts" />
-
-// @deno-types="https://deno.land/std@0.168.0/http/server.ts"
+// @ts-ignore - Deno runtime types (available at runtime)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-// @deno-types="https://esm.sh/@supabase/supabase-js@2.7.1"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+// @ts-ignore - ESM module (available at runtime)
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
