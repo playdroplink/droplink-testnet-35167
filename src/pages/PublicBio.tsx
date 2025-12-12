@@ -1,25 +1,9 @@
-  // Auto-follow after redirect from auth if needed
-  // This must be inside the PublicBio component to access all variables
-  useEffect(() => {
-    const authAction = sessionStorage.getItem('authAction');
-    const profileToFollow = sessionStorage.getItem('profileToFollow');
-    if (
-      authAction === 'follow' &&
-      profileToFollow &&
-      (profileToFollow === username || profileToFollow === profileId) &&
-      currentUserProfileId &&
-      currentUserProfileId !== profileId &&
-      !isFollowing
-    ) {
-      // Remove intent so it doesn't repeat
-      sessionStorage.removeItem('authAction');
-      sessionStorage.removeItem('profileToFollow');
-      handleFollow();
-    }
-  }, [username, profileId, currentUserProfileId, isFollowing]);
 import { useEffect, useState } from "react";
 import { usePublicSubscription } from "@/hooks/usePublicSubscription";
 import { useParams, useNavigate } from "react-router-dom";
+// ...existing code...
+
+// The following useEffect should be placed inside the PublicBio component definition, not at the top level.
 import { supabase } from "@/integrations/supabase/client";
 import { usePi } from "@/contexts/PiContext";
 import { QRCodeSVG } from "qrcode.react";
@@ -65,6 +49,8 @@ import { FaInstagram, FaFacebook, FaYoutube, FaGlobe, FaLinkedin, FaTiktok, FaTw
 import type { ProfileData } from "@/types/profile";
 
 const PublicBio = () => {
+    // ...existing code...
+
   const [showReportModal, setShowReportModal] = useState(false);
   const { username: rawUsername } = useParams();
   // Strip @ prefix if present (for @username URLs)
@@ -96,6 +82,26 @@ const PublicBio = () => {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+
+  // Auto-follow after redirect from auth if needed
+  useEffect(() => {
+    const authAction = sessionStorage.getItem('authAction');
+    const profileToFollow = sessionStorage.getItem('profileToFollow');
+    if (
+      authAction === 'follow' &&
+      profileToFollow &&
+      (profileToFollow === username || profileToFollow === profileId) &&
+      currentUserProfileId &&
+      currentUserProfileId !== profileId &&
+      !isFollowing
+    ) {
+      // Remove intent so it doesn't repeat
+      sessionStorage.removeItem('authAction');
+      sessionStorage.removeItem('profileToFollow');
+      handleFollow();
+    }
+  }, [username, profileId, currentUserProfileId, isFollowing]);
   const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
   const [followerCount, setFollowerCount] = useState(0);
   const [visitCount, setVisitCount] = useState(0);
@@ -301,6 +307,25 @@ const PublicBio = () => {
       toast.error("Failed to update follow status");
     }
   };
+
+  // Auto-follow after redirect from auth if needed
+  useEffect(() => {
+    const authAction = sessionStorage.getItem('authAction');
+    const profileToFollow = sessionStorage.getItem('profileToFollow');
+    if (
+      authAction === 'follow' &&
+      profileToFollow &&
+      (profileToFollow === username || profileToFollow === profileId) &&
+      currentUserProfileId &&
+      currentUserProfileId !== profileId &&
+      !isFollowing
+    ) {
+      // Remove intent so it doesn't repeat
+      sessionStorage.removeItem('authAction');
+      sessionStorage.removeItem('profileToFollow');
+      handleFollow();
+    }
+  }, [username, profileId, currentUserProfileId, isFollowing]);
 
   const loadProfile = async () => {
     if (!username) {
