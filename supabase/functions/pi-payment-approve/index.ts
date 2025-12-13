@@ -226,7 +226,7 @@ serve(async (req) => {
       approveResponse = await fetch(approveUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `key ${PI_API_KEY}`,
+          'Authorization': `Key ${PI_API_KEY}`,
           'Content-Type': 'application/json',
         },
         signal: approveAbortController.signal,
