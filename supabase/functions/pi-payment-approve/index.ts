@@ -1,3 +1,5 @@
+// @ts-ignore: Deno global is available at runtime in Supabase Edge Functions
+declare const Deno: any;
 // @ts-ignore - Deno runtime types (available at runtime)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // @ts-ignore - ESM module (available at runtime)
