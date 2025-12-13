@@ -207,8 +207,8 @@ if ($warnings.Count -gt 0) {
 
 if ($errors.Count -gt 0) {
     Write-Host "❌ Errors:" -ForegroundColor Red
-    foreach ($error in $errors) {
-        Write-Host "  - $error" -ForegroundColor Red
+    foreach ($errMsg in $errors) {
+        Write-Host "  - $errMsg" -ForegroundColor Red
     }
     Write-Host ""
     Write-Host "🔧 Fix the errors above before deployment!" -ForegroundColor Red
