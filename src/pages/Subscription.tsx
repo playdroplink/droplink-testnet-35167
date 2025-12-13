@@ -226,14 +226,8 @@ const Subscription = () => {
             start_date: startDate.toISOString(),
             end_date: endDate.toISOString(),
             pi_amount: price,
-            pi_transaction_id: result.txid || '',
             billing_period: isYearly ? 'yearly' : 'monthly',
-            metadata: {
-              paymentId: result.paymentId,
-              paymentApprovedAt: new Date().toISOString(),
-              paymentHash: result.txid || '',
-              username: piUser.username
-            }
+            auto_renew: true,
           }, {
             onConflict: 'profile_id'
           });

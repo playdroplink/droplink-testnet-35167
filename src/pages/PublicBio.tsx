@@ -455,7 +455,7 @@ const PublicBio = () => {
       setProfile({
         id: profileData.id,
         username: profileData.username || (username ? String(username) : ""),
-        email: profileData.email,
+        email: "", // email column doesn't exist in profiles table
         logo: profileData.logo || "",
         businessName: profileData.business_name || "",
         description: profileData.description || "",
@@ -475,7 +475,7 @@ const PublicBio = () => {
         piWalletAddress: profileData.pi_wallet_address || "",
         piDonationMessage: profileData.pi_donation_message || "",
         showShareButton: profileData.show_share_button || false,
-        storeUrl: typeof (profileData as any).store_url === 'string' ? (profileData as any).store_url : `@${profileData.username || username || 'user'}`,
+        storeUrl: `@${profileData.username || username || 'user'}`,
         showPiWalletTips,
       });
     } catch (error) {
@@ -522,13 +522,15 @@ const PublicBio = () => {
   };
 
   const sendMessage = async () => {
-    if (!message.trim()) return;
+    if (!message.trim() || !profileId) return;
 
     try {
-      const { error } = await supabase.from("messages").insert({
-        sender: profileId,
+      // Use ai_chat_messages table instead of non-existent messages table
+      const { error } = await supabase.from("ai_chat_messages").insert({
+        profile_id: profileId,
         content: message,
-        created_at: new Date().toISOString(),
+        role: "user",
+        session_id: `public_${Date.now()}`,
       });
 
       if (error) {
@@ -538,6 +540,8 @@ const PublicBio = () => {
         setMessage("");
       }
     } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message");
       console.error("Error sending message:", error);
       toast.error("An unexpected error occurred.");
     }

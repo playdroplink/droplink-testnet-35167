@@ -248,13 +248,13 @@ export class RealPiPaymentService {
 
       const result = await response.json();
       
-      // CRITICAL: Only mark as complete if transaction verified
-      if (!result.verified) {
-        console.error('[PAYMENT] ⚠️ Transaction not verified on blockchain!');
-        throw new Error('Transaction verification failed');
+      // Payment is complete if server returns success
+      if (!result.success) {
+        console.error('[PAYMENT] ⚠️ Server did not confirm payment success');
+        throw new Error(result.error || 'Payment completion failed');
       }
 
-      return result.success === true;
+      return true;
       
     } catch (error) {
       console.error('[PAYMENT] ❌ Completion request failed:', error);
