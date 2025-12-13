@@ -247,7 +247,7 @@ const PiAuth = () => {
               />
             ) : (
               <img 
-                src={droplinkLogo} 
+                src="https://i.ibb.co/67KHWdv9/Add-a-subheading-2-removebg-preview.png" 
                 alt="Droplink" 
                 className="w-16 h-16 object-contain"
               />
