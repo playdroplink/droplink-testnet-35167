@@ -8,9 +8,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabaseUrl = process.env.SUPABASE_URL!;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+
+// Helper to get Supabase client with user's JWT
+function getUserSupabaseClient(req: Request) {
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader) throw new Error('Missing authorization header');
+  const jwt = authHeader.replace('Bearer ', '');
+  return createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${jwt}` } } });
+}
 
 const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 const serviceSupabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -81,10 +90,15 @@ serve(async (req) => {
     // POST: Apply theme or preset
     if (req.method === 'POST') {
       const body = await req.json();
-      const { profileId, themeId, presetName, username } = body;
+
+      const { profileId, themeId, presetName, username, userId } = body;
+
 
       if (!profileId) {
         throw new Error('Missing profileId');
+      }
+      if (!userId) {
+        throw new Error('Missing userId');
       }
 
       if (action === 'apply-theme' && themeId) {
@@ -110,6 +124,7 @@ serve(async (req) => {
         );
       }
 
+
       if (action === 'apply-preset' && presetName) {
         // Get preset settings
         const { data: preset, error: presetError } = await serviceSupabase
@@ -120,11 +135,13 @@ serve(async (req) => {
 
         if (presetError) throw presetError;
 
-        // Save to user preferences
-        const { data, error } = await serviceSupabase
+        // Use user's auth context for upsert (RLS compliance)
+        const userSupabase = getUserSupabaseClient(req);
+        const { data, error } = await userSupabase
           .from('user_preferences')
           .upsert({
             profile_id: profileId,
+            user_id: userId,
             advanced_settings: preset.settings,
             updated_at: new Date().toISOString()
           }, {
@@ -135,7 +152,7 @@ serve(async (req) => {
 
         if (error) throw error;
 
-        // Increment preset usage count
+        // Increment preset usage count (service key OK)
         await serviceSupabase
           .from('advanced_customization_presets')
           .update({ usage_count: (preset.usage_count || 0) + 1 })

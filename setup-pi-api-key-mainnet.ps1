@@ -15,7 +15,7 @@ try {
 }
 
 # Mainnet API Key (DropLink Official)
-$PI_API_KEY = "b00j4felp0ctc1fexe8igldsjg9u7wbqitavc15si53fr9wwra7r6oluzk4j24qz"
+$PI_API_KEY = "ajm48wt1i2x4texoodypcs2rekfuoyrgg3hqowq2pefsfxqnixzlmbtztubzquuw"
 
 Write-Host "Setting PI_API_KEY environment variable..." -ForegroundColor Cyan
 Write-Host "API Key: $($PI_API_KEY.Substring(0, 10))..." -ForegroundColor Gray

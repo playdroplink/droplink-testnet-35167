@@ -14,7 +14,7 @@ try {
 }
 
 # Mainnet API Key
-$PI_API_KEY = "96tnxytg82pevnvvxfowap4bwctcxo6wkp2dexoraevtj8svh0mvqxttpbtwvjm5"
+$PI_API_KEY = "ajm48wt1i2x4texoodypcs2rekfuoyrgg3hqowq2pefsfxqnixzlmbtztubzquuw"
 
 Write-Host "Setting PI_API_KEY environment variable..." -ForegroundColor Yellow
 supabase secrets set PI_API_KEY="$PI_API_KEY"

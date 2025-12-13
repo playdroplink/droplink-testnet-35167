@@ -14,7 +14,7 @@ if ! command -v supabase &> /dev/null; then
 fi
 
 # Mainnet API Key
-PI_API_KEY="b00j4felp0ctc1fexe8igldsjg9u7wbqitavc15si53fr9wwra7r6oluzk4j24qz"
+PI_API_KEY="ajm48wt1i2x4texoodypcs2rekfuoyrgg3hqowq2pefsfxqnixzlmbtztubzquuw"
 
 echo "Setting PI_API_KEY environment variable..."
 supabase secrets set PI_API_KEY="$PI_API_KEY"

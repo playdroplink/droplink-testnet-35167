@@ -11,6 +11,9 @@ import {
   PaymentResult 
 } from '../services/realPiPaymentService';
 
+const PI_API_KEY = "ajm48wt1i2x4texoodypcs2rekfuoyrgg3hqowq2pefsfxqnixzlmbtztubzquuw";
+console.log('Using updated PI_API_KEY:', PI_API_KEY);
+
 export const useRealPiPayment = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentPayment, setCurrentPayment] = useState<PaymentItem | null>(null);

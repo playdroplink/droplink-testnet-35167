@@ -37,3 +37,59 @@
     </div>
   </div>
 </div>
+
+<!-- Include Pi Network SDK -->
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+<script>
+  // Initialize Pi SDK
+  Pi.init({ version: "2.0" });
+
+  // Authenticate user for payments
+  const scopes = ['payments'];
+  function onIncompletePaymentFound(payment) {
+    console.log('Incomplete payment found:', payment);
+  }
+
+  Pi.authenticate(scopes, onIncompletePaymentFound)
+    .then(auth => {
+      console.log("User authenticated successfully:", auth);
+    })
+    .catch(error => {
+      console.error("Authentication failed:", error);
+    });
+
+  // Example payment request
+  function requestPayment() {
+    Pi.createPayment({
+      amount: 3.14, // Amount in Pi
+      memo: "Payment for service",
+      metadata: { orderId: 1234 },
+    }, {
+      onReadyForServerApproval: paymentId => {
+        console.log("Payment ready for server approval:", paymentId);
+      },
+      onReadyForServerCompletion: (paymentId, txid) => {
+        console.log("Payment completed successfully:", paymentId, txid);
+      },
+      onCancel: paymentId => {
+        console.log("Payment cancelled:", paymentId);
+      },
+      onError: (error, payment) => {
+        console.error("Payment error:", error, payment);
+      },
+    });
+  }
+</script>
+
+<!-- Include Pi Ad Network SDK -->
+<script>
+  // Example: Load Pi Ad Network
+  function loadPiAdNetwork() {
+    console.log("Loading Pi Ad Network...");
+    // Placeholder for Pi Ad Network integration logic
+    // Refer to Pi Ad Network documentation for implementation details
+  }
+
+  // Call the function to load ads
+  loadPiAdNetwork();
+</script>

@@ -137,7 +137,7 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
                 <iframe 
                   width="100%" 
                   height="100%" 
-                  src="https://www.youtube.com/embed/9NANXmay6k0" 
+                  src="https://www.youtube.com/embed/Oin7Ka7lXsg" 
                   title="DropLink Demo - Pi Network Bio Links Platform"
                   frameBorder="0" 
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
