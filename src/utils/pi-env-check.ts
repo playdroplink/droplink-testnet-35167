@@ -28,12 +28,27 @@ export const validatePiEnvironment = async (): Promise<void> => {
       if (!piApp) {
         errors.push('manifest.json missing `pi_app` section');
       } else {
-        const expectedApi = import.meta.env.VITE_PI_API_KEY || '';
-        const expectedVal = import.meta.env.VITE_PI_VALIDATION_KEY || '';
-        if (expectedApi && String(piApp.api_key) !== String(expectedApi)) {
+        const expectedApi = (import.meta.env.VITE_PI_API_KEY || '').trim();
+        const expectedVal = (import.meta.env.VITE_PI_VALIDATION_KEY || '').trim();
+        const manifestApi = String(piApp.api_key || '').trim();
+        const manifestVal = String(piApp.validation_key || '').trim();
+        
+        if (expectedApi && manifestApi !== expectedApi) {
+          console.error('API Key mismatch:', {
+            manifest: manifestApi.substring(0, 20) + '...',
+            environment: expectedApi.substring(0, 20) + '...',
+            manifestLength: manifestApi.length,
+            envLength: expectedApi.length
+          });
           errors.push('manifest.pi_app.api_key does not match environment API key');
         }
-        if (expectedVal && String(piApp.validation_key) !== String(expectedVal)) {
+        if (expectedVal && manifestVal !== expectedVal) {
+          console.error('Validation Key mismatch:', {
+            manifest: manifestVal.substring(0, 20) + '...',
+            environment: expectedVal.substring(0, 20) + '...',
+            manifestLength: manifestVal.length,
+            envLength: expectedVal.length
+          });
           errors.push('manifest.pi_app.validation_key does not match environment validation key');
         }
       }
