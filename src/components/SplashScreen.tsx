@@ -97,9 +97,9 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
               }}
             >
               <img 
-                src={enableChristmasTheme ? "https://i.ibb.co/W4yN9rQ4/Gemini-Generated-Image-uo458huo458huo45-removebg-preview.png" : "/droplink-logo.png"} 
-                alt={enableChristmasTheme ? "Christmas Droplink Logo" : "Droplink Logo"} 
-                className="h-full w-full object-contain" 
+                src="https://i.ibb.co/LDGGGXCk/Gemini-Generated-Image-ar8t52ar8t52ar8t-1.png"
+                alt="Droplink Logo"
+                className="h-full w-full object-contain"
                 onError={(e) => {
                   console.warn('Failed to load splash screen logo');
                   // Fallback to SVG if PNG fails
