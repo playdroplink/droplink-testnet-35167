@@ -156,69 +156,16 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
               }}
             >
               {enableChristmasTheme ? (
-                // Christmas SVG Logo with Santa Hat
-                <svg viewBox="0 0 100 100" className="h-full w-full">
-                  {/* Animated Snowflakes around logo */}
-                  <motion.text
-                    x="5"
-                    y="20"
-                    fontSize="12"
-                    animate={{ opacity: [0.3, 1, 0.3], rotate: [0, 360] }}
-                    transition={{ duration: 3, repeat: Infinity }}
-                  >
-                    ❄️
-                  </motion.text>
-                  <motion.text
-                    x="80"
-                    y="25"
-                    fontSize="10"
-                    animate={{ opacity: [0.5, 1, 0.5], rotate: [360, 0] }}
-                    transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
-                  >
-                    ❄️
-                  </motion.text>
-                  
-                  {/* Water drop (Droplink logo) */}
-                  <ellipse cx="50" cy="60" rx="20" ry="30" fill="#3B82F6" />
-                  <ellipse cx="50" cy="55" rx="15" ry="22" fill="#60A5FA" opacity="0.7" />
-                  <circle cx="45" cy="50" r="5" fill="white" opacity="0.6" />
-                  
-                  {/* Santa Hat on top of drop */}
-                  <path
-                    d="M 35 35 Q 50 20 65 35 L 60 45 L 40 45 Z"
-                    fill="#DC2626"
-                  />
-                  <ellipse cx="50" cy="35" rx="17" ry="5" fill="white" />
-                  <circle cx="65" cy="32" r="4" fill="white" />
-                  
-                  {/* Sparkles */}
-                  <motion.circle
-                    cx="25"
-                    cy="70"
-                    r="2"
-                    fill="#FCD34D"
-                    animate={{ opacity: [0, 1, 0], scale: [0.5, 1.5, 0.5] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                  />
-                  <motion.circle
-                    cx="75"
-                    cy="65"
-                    r="2"
-                    fill="#FCD34D"
-                    animate={{ opacity: [0, 1, 0], scale: [0.5, 1.5, 0.5] }}
-                    transition={{ duration: 1.5, repeat: Infinity, delay: 0.7 }}
-                  />
-                </svg>
-              ) : (
-                // Default logo
                 <img 
-                  src="https://i.ibb.co/LDGGGXCk/Gemini-Generated-Image-ar8t52ar8t52ar8t-1.png"
+                  src="https://i.ibb.co/DH2HWD9w/Gemini-Generated-Image-uo458huo458huo45-removebg-preview.png"
+                  alt="Droplink Christmas Logo"
+                  className="h-full w-full object-contain"
+                />
+              ) : (
+                <img 
+                  src="https://i.ibb.co/67KHWdv9/Add-a-subheading-2-removebg-preview.png"
                   alt="Droplink Logo"
                   className="h-full w-full object-contain"
-                  onError={(e) => {
-                    console.warn('Failed to load splash screen logo');
-                    e.currentTarget.src = '/droplink-logo.svg';
-                  }}
                 />
               )}
             </motion.div>
