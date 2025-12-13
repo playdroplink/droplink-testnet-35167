@@ -195,7 +195,7 @@ serve(async (req) => {
       completeResponse = await fetch(completeUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `key ${PI_API_KEY}`,
+          'Authorization': `Key ${PI_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ txid }),
