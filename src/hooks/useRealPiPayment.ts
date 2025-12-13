@@ -11,8 +11,8 @@ import {
   PaymentResult 
 } from '../services/realPiPaymentService';
 
-const PI_API_KEY = "ajm48wt1i2x4texoodypcs2rekfuoyrgg3hqowq2pefsfxqnixzlmbtztubzquuw";
-console.log('Using updated PI_API_KEY:', PI_API_KEY);
+const PI_API_KEY = import.meta.env.VITE_PI_API_KEY || "";
+console.log('Using env PI_API_KEY:', PI_API_KEY);
 
 export const useRealPiPayment = () => {
   const [isProcessing, setIsProcessing] = useState(false);

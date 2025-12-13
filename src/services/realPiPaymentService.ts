@@ -203,7 +203,7 @@ export class RealPiPaymentService {
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pi-payment-approve`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ajm48wt1i2x4texoodypcs2rekfuoyrgg3hqowq2pefsfxqnixzlmbtztubzquuw`,
+          'Authorization': `Bearer ${import.meta.env.VITE_PI_API_KEY || ''}`,
           'Content-Type': 'application/json',
           'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
         },
@@ -234,7 +234,7 @@ export class RealPiPaymentService {
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pi-payment-complete`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ajm48wt1i2x4texoodypcs2rekfuoyrgg3hqowq2pefsfxqnixzlmbtztubzquuw`,
+          'Authorization': `Bearer ${import.meta.env.VITE_PI_API_KEY || ''}`,
           'Content-Type': 'application/json',
           'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
         },

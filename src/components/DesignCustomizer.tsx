@@ -4,8 +4,8 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Palette, Sparkles, Upload, Image, Monitor, X, Settings, Sliders, Link } from "lucide-react";
 import { useState } from "react";
-// Giphy API key (public beta key for demo)
-const GIPHY_API_KEY = "dc6zaTOxFJmzC";
+// Giphy API key from environment (fallback to public beta key for demo)
+const GIPHY_API_KEY = import.meta.env.VITE_GIPHY_API_KEY || "dc6zaTOxFJmzC";
 import { supabase } from "@/integrations/supabase/client";
 import { PlanGate } from "@/components/PlanGate";
 import ReadyThemeSelector from "./ReadyThemeSelector";
