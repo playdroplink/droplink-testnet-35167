@@ -1,10 +1,10 @@
 /**
  * Real Pi Payment Service for DropLink
- * Implements 3-phase Pi payment flow
- * Based on FlappyPi working implementation
+ * Implements 3-phase Pi payment flow per Pi Network documentation
  */
 
 import { PI_CONFIG } from '@/config/piConfig';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface PaymentItem {
   id: string;
@@ -44,31 +44,49 @@ export class RealPiPaymentService {
 
       // Check Pi SDK availability
       if (typeof window === 'undefined' || typeof window.Pi === 'undefined') {
-        throw new Error('Pi SDK not available. Use Pi Browser.');
+        throw new Error('Pi SDK not available. Please open in Pi Browser.');
       }
 
-      // Authenticate if needed
+      // Authenticate with Pi Network
       const currentUser = await this.authenticateUser();
       if (!currentUser) {
-        throw new Error('Authentication required');
+        throw new Error('Pi Network authentication required');
       }
 
       console.log('🔐 Authenticated user:', currentUser.username);
       onProgress?.('authenticated', { username: currentUser.username });
 
+      // Get profileId from localStorage (Pi authentication stores it there)
+      const storedProfile = localStorage.getItem('pi_user_profile');
+      let profileId = '';
+      if (storedProfile) {
+        try {
+          const parsed = JSON.parse(storedProfile);
+          profileId = parsed.id || '';
+        } catch (e) {
+          console.warn('Failed to parse stored profile');
+        }
+      }
+
+      // Build complete metadata including profileId
+      const paymentMetadata = {
+        itemId: item.id,
+        itemType: item.type,
+        itemName: item.name,
+        userId: currentUser.uid,
+        username: currentUser.username,
+        profileId: profileId,
+        timestamp: Date.now(),
+        ...item.metadata
+      };
+
+      console.log('[PAYMENT] Full metadata:', paymentMetadata);
+
       // Create payment with 3-phase flow
       const payment = await this.createPaymentWithCallbacks({
         amount: item.price,
         memo: `${item.name} - DropLink`,
-        metadata: {
-          itemId: item.id,
-          itemType: item.type,
-          itemName: item.name,
-          userId: currentUser.uid,
-          username: currentUser.username,
-          timestamp: Date.now(),
-          ...item.metadata
-        }
+        metadata: paymentMetadata
       }, onProgress);
 
       console.log('✅ Payment completed successfully:', payment);
@@ -92,9 +110,7 @@ export class RealPiPaymentService {
    * Authenticate user with Pi Network
    */
   private async authenticateUser() {
-    // Check if already authenticated by trying to get current user
     try {
-      // Pi SDK doesn't have isAuthenticated method, just try authenticate
       const auth = await window.Pi.authenticate(['username', 'payments', 'wallet_address']);
       return auth.user;
     } catch (error) {
@@ -112,20 +128,18 @@ export class RealPiPaymentService {
     metadata: any;
   }, onProgress?: (phase: string, details: any) => void): Promise<any> {
     return new Promise((resolve, reject) => {
-      // Ensure all required fields are present
       const paymentData: any = {
         amount: params.amount,
         memo: params.memo,
         metadata: params.metadata,
       };
-      // Add 'to' field if available from config/env
-      if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_PI_WALLET_ADDRESS) {
-        paymentData.to = import.meta.env.VITE_PI_WALLET_ADDRESS;
-      } else if (PI_CONFIG && PI_CONFIG.PAYMENT_RECEIVER_WALLET) {
+
+      // Set receiver wallet address
+      if (PI_CONFIG?.PAYMENT_RECEIVER_WALLET) {
         paymentData.to = PI_CONFIG.PAYMENT_RECEIVER_WALLET;
       }
-      // Debug log for troubleshooting
-      console.log('[PI PAYMENT] Calling window.Pi.createPayment with:', paymentData);
+
+      console.log('[PI PAYMENT] Creating payment with:', JSON.stringify(paymentData, null, 2));
 
       const callbacks = {
         // Phase I: Server-Side Approval
@@ -134,7 +148,7 @@ export class RealPiPaymentService {
           onProgress?.('approval', { paymentId });
 
           try {
-            const approved = await this.approvePaymentOnServer(paymentId);
+            const approved = await this.approvePaymentOnServer(paymentId, params.metadata);
             
             if (!approved) {
               throw new Error('Payment approval failed on server');
@@ -150,7 +164,7 @@ export class RealPiPaymentService {
 
         // Phase III: Server-Side Completion
         onReadyForServerCompletion: async (paymentId: string, txid: string) => {
-          console.log('[PAYMENT] ⏳ Phase III - Completing payment:', paymentId, 'Transaction:', txid);
+          console.log('[PAYMENT] ⏳ Phase III - Completing payment:', paymentId, 'TxID:', txid);
           onProgress?.('completion', { paymentId, txid });
 
           try {
@@ -196,27 +210,22 @@ export class RealPiPaymentService {
   /**
    * Approve payment on server (calls Supabase edge function)
    */
-  private async approvePaymentOnServer(paymentId: string): Promise<boolean> {
+  private async approvePaymentOnServer(paymentId: string, metadata: any): Promise<boolean> {
     try {
       console.log('[PAYMENT] 📡 Sending approval request to server...');
       
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pi-payment-approve`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_PI_API_KEY || ''}`,
-          'Content-Type': 'application/json',
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify({ paymentId }),
+      // Use supabase.functions.invoke for proper edge function calls
+      const { data, error } = await supabase.functions.invoke('pi-payment-approve', {
+        body: { paymentId, metadata }
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Approval failed: ${response.status} - ${errorText}`);
+      if (error) {
+        console.error('[PAYMENT] ❌ Approval error:', error);
+        throw new Error(error.message || 'Approval failed');
       }
 
-      const result = await response.json();
-      return result.success === true;
+      console.log('[PAYMENT] Approval response:', data);
+      return data?.success === true;
       
     } catch (error) {
       console.error('[PAYMENT] ❌ Approval request failed:', error);
@@ -231,30 +240,18 @@ export class RealPiPaymentService {
     try {
       console.log('[PAYMENT] 📡 Sending completion request to server...');
       
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pi-payment-complete`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_PI_API_KEY || ''}`,
-          'Content-Type': 'application/json',
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify({ paymentId, txid, metadata }),
+      // Use supabase.functions.invoke for proper edge function calls
+      const { data, error } = await supabase.functions.invoke('pi-payment-complete', {
+        body: { paymentId, txid, metadata }
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Completion failed: ${response.status} - ${errorText}`);
+      if (error) {
+        console.error('[PAYMENT] ❌ Completion error:', error);
+        throw new Error(error.message || 'Completion failed');
       }
 
-      const result = await response.json();
-      
-      // Payment is complete if server returns success
-      if (!result.success) {
-        console.error('[PAYMENT] ⚠️ Server did not confirm payment success');
-        throw new Error(result.error || 'Payment completion failed');
-      }
-
-      return true;
+      console.log('[PAYMENT] Completion response:', data);
+      return data?.success === true;
       
     } catch (error) {
       console.error('[PAYMENT] ❌ Completion request failed:', error);
