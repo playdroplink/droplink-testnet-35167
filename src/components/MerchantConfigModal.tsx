@@ -38,7 +38,7 @@ export const MerchantConfigModal = ({ children }: Props) => {
         <DialogHeader className="pr-8">
           <DialogTitle className="flex items-center gap-2 text-xl flex-wrap">
             <Store className="w-6 h-6 text-sky-500" />
-            DropLink: The Future Digital Marketplace
+            DropStore: The Future Digital Marketplace
             <Badge variant="secondary" className="bg-sky-500 text-white">
               Coming Soon
             </Badge>
@@ -56,7 +56,7 @@ export const MerchantConfigModal = ({ children }: Props) => {
             </CardHeader>
             <CardContent>
               <p className="text-gray-700 leading-relaxed">
-                DropLink is evolving from a simple "link in bio" platform into a comprehensive 
+                Droplink is evolving from a simple "link in bio" platform into a comprehensive 
                 <strong> digital marketplace</strong> where businesses, artists, developers, and creators 
                 can build thriving online storefronts. We're creating the future of decentralized commerce 
                 powered by Pi Network and blockchain technology.
@@ -68,7 +68,7 @@ export const MerchantConfigModal = ({ children }: Props) => {
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Users className="w-5 h-5 text-sky-500" />
-              Who Can Build on DropLink?
+              Who Can Build on Dropstore?
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card className="border-l-4 border-l-sky-500">
@@ -126,7 +126,7 @@ export const MerchantConfigModal = ({ children }: Props) => {
               </div>
               <div className="flex gap-3 p-3 bg-gray-50 rounded-lg overflow-hidden">
                 <div className="w-2 h-2 bg-sky-500 rounded-full flex-shrink-0 mt-0.5"></div>
-                <span className="text-sm break-words"><strong>Marketplace Discovery:</strong> Browse and search all DropLink stores</span>
+                <span className="text-sm break-words"><strong>Marketplace Discovery:</strong> Browse and search all Dropstore stores</span>
               </div>
               <div className="flex gap-3 p-3 bg-gray-50 rounded-lg overflow-hidden">
                 <div className="w-2 h-2 bg-sky-500 rounded-full flex-shrink-0 mt-0.5"></div>
@@ -156,7 +156,7 @@ export const MerchantConfigModal = ({ children }: Props) => {
                     <Heart className="w-6 h-6 text-white" />
                   </div>
                 </div>
-                <h3 className="text-lg font-semibold">Continue Supporting DropLink</h3>
+                <h3 className="text-lg font-semibold">Continue Supporting Dropstore</h3>
                 <p className="text-gray-600 max-w-md mx-auto">
                   Help us build the future of decentralized commerce! Your support and feedback 
                   drive our development of these exciting marketplace features.
@@ -164,13 +164,12 @@ export const MerchantConfigModal = ({ children }: Props) => {
                 <div className="flex gap-3 justify-center">
                   <Button 
                     className="gap-2" 
-                    onClick={() => {
-                      setOpen(false);
-                      navigate('/switch-to-merchant');
-                    }}
+                    asChild
                   >
-                    <Store className="w-4 h-4" />
-                    Start Selling
+                    <a href="https://www.dropshops.space/" target="_blank" rel="noopener noreferrer">
+                      <Store className="w-4 h-4" />
+                      Start Selling
+                    </a>
                   </Button>
                   <Button 
                     variant="outline" 
