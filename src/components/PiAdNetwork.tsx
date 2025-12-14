@@ -33,30 +33,71 @@ const PiAdNetwork: React.FC = () => {
     maxAdsPerDay: 20,
     minWatchTime: 30
   });
+
+  // Debug state for ad network
+  const [adDebug, setAdDebug] = useState<string>("");
+
+  useEffect(() => {
+    let debugMsg = "";
+    if (!adConfig.enabled) debugMsg += "Ad network is disabled by env (VITE_PI_AD_NETWORK_ENABLED != true). ";
+    if (!(window as any).Pi) debugMsg += "Pi SDK not detected (must use Pi Browser). ";
+    if (!isAuthenticated) debugMsg += "User not authenticated with Pi. ";
+    if (!piUser) debugMsg += "No Pi user loaded. ";
+    setAdDebug(debugMsg.trim());
+  }, [adConfig.enabled, isAuthenticated, piUser]);
+
   // Withdraw state (must be outside of adConfig useState)
   const [withdrawAddress, setWithdrawAddress] = useState<string>("");
   const [withdrawAmount, setWithdrawAmount] = useState<string>("");
   const [withdrawStatus, setWithdrawStatus] = useState<string>("");
   const minWithdraw = 10;
 
-  useEffect(() => {
-    loadAdHistory();
-  }, [piUser]);
 
-  const loadAdHistory = async () => {
+
+
+  // Load ad history from localStorage for the current user
+  const loadAdHistory = () => {
     if (!piUser) return;
-    
     try {
-      const savedData = localStorage.getItem(`ad_history_${piUser.uid}`);
-      if (savedData) {
-        const data = JSON.parse(savedData);
-        setDailyWatched(data.dailyWatched || 0);
-        setTotalEarnings(data.totalEarnings || 0);
+      const data = localStorage.getItem(`ad_history_${piUser.uid}`);
+      if (data) {
+        const parsed = JSON.parse(data);
+        setDailyWatched(parsed.dailyWatched || 0);
+        setTotalEarnings(parsed.totalEarnings || 0);
+        if (parsed.lastReward) {
+          setLastAdReward({
+            ...parsed.lastReward,
+            timestamp: new Date(parsed.lastReward.timestamp)
+          });
+        }
+      } else {
+        setDailyWatched(0);
+        setTotalEarnings(0);
+        setLastAdReward(null);
       }
-    } catch (error) {
-      console.error('Error loading ad history:', error);
+    } catch (e) {
+      setDailyWatched(0);
+      setTotalEarnings(0);
+      setLastAdReward(null);
     }
   };
+
+  useEffect(() => {
+    loadAdHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [piUser]);
+
+
+
+  // Show debug info if ads are not enabled
+  if (!adConfig.enabled || !(window as any).Pi || !isAuthenticated || !piUser) {
+    return (
+      <div style={{ color: '#fff', padding: 16, background: '#38bdf8', border: '1px solid #0ea5e9', borderRadius: 8 }}>
+        <strong style={{ color: '#fff' }}>Pi Ad Network not available:</strong>
+        <div>{adDebug || 'Unknown reason.'}</div>
+      </div>
+    );
+  }
 
   const watchAd = async () => {
     if (!isAuthenticated || dailyWatched >= adConfig.maxAdsPerDay) {

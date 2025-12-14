@@ -9,6 +9,7 @@ import { usePi } from "@/contexts/PiContext";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PiPaymentDialog } from "@/components/PiPaymentDialog";
 import { toast } from "sonner";
 import { Info, Flag } from "lucide-react";
 import { FollowersSection } from "@/components/FollowersSection";
@@ -50,6 +51,11 @@ import type { ProfileData } from "@/types/profile";
 
 const PublicBio = () => {
     // ...existing code...
+
+  // Pi Payment Dialog state
+  const [showPiPaymentDialog, setShowPiPaymentDialog] = useState(false);
+  const [piPaymentLoading, setPiPaymentLoading] = useState(false);
+  const { createPayment } = usePi();
 
   const [showReportModal, setShowReportModal] = useState(false);
   const { username: rawUsername } = useParams();
@@ -1070,7 +1076,7 @@ const PublicBio = () => {
             </h2>
             <div className="text-center space-y-4">
               {profile.piWalletAddress ? (
-                <>
+                <div>
                   {/* Instructional Example Dialog Note */}
                   <div className="bg-blue-900/80 rounded-lg border border-blue-400/30 p-4 mb-4 text-center">
                     <div className="text-blue-200 font-semibold mb-1">Example: How to Send DROP Tokens</div>
@@ -1081,9 +1087,7 @@ const PublicBio = () => {
                       <Wallet className="w-5 h-5 text-blue-400" />
                       <span className="text-blue-300 font-medium">Pi Network Wallet</span>
                     </div>
-                    <p className="text-white text-sm mb-4">
-                      {profile.piDonationMessage || "Send me DROP tokens on Pi Network!"}
-                    </p>
+                    <p className="text-white text-sm mb-4">{profile.piDonationMessage || "Send me DROP tokens on Pi Network!"}</p>
                     <div className="flex flex-col md:flex-row md:items-center md:justify-center gap-4 mb-4">
                       {/* Inline QR code for wallet address */}
                       <div className="flex flex-col items-center">
@@ -1136,6 +1140,22 @@ const PublicBio = () => {
                         </div>
                       </div>
                     </div>
+                    {/* Pay with Pi Button */}
+                    <div className="flex flex-col items-center gap-2 mt-4">
+                      <Button
+                        className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-6 py-2 rounded-full shadow-lg"
+                        onClick={() => setShowPiPaymentDialog(true)}
+                      >
+                        Pay with Pi
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="text-blue-600 border-blue-400 hover:bg-blue-50 mt-2"
+                        onClick={() => navigate('/dashboard?tab=payments')}
+                      >
+                        Manage Pi Payments in Dashboard
+                      </Button>
+                    </div>
                     {/* Example instructions for sending DROP tokens */}
                     <div className="bg-blue-100/30 rounded-lg p-3 mt-2 text-xs text-blue-900 text-left">
                       <div className="font-semibold mb-1">How to send DROP tokens:</div>
@@ -1147,7 +1167,38 @@ const PublicBio = () => {
                       </ol>
                     </div>
                   </div>
-                </>
+                  {/* Pi Payment Dialog */}
+                  <PiPaymentDialog
+                    open={showPiPaymentDialog}
+                    onOpenChange={setShowPiPaymentDialog}
+                    walletAddress={profile.piWalletAddress}
+                    loading={piPaymentLoading}
+                    onSubmit={async (amount, message) => {
+                      setPiPaymentLoading(true);
+                      try {
+                        // Memo can include the message and receiver info
+                        const memo = message ? `${message}` : "";
+                        const metadata = {
+                          receiverWallet: profile.piWalletAddress,
+                          receiverUsername: profile.username,
+                          senderUsername: piUser?.username || undefined,
+                          publicBio: true
+                        };
+                        const txid = await createPayment(Number(amount), memo, metadata);
+                        if (txid) {
+                          toast.success(`Payment of ${amount} Pi sent!`, { description: `Transaction: ${txid.substring(0, 16)}...` });
+                          setShowPiPaymentDialog(false);
+                        } else {
+                          toast.error("Payment was not completed.");
+                        }
+                      } catch (err) {
+                        toast.error("Payment failed", { description: err instanceof Error ? err.message : String(err) });
+                      } finally {
+                        setPiPaymentLoading(false);
+                      }
+                    }}
+                  />
+                </div>
               ) : (
                 <div className="bg-blue-500/10 rounded-lg border border-blue-400/10 p-6 text-center text-white">
                   <Wallet className="w-6 h-6 text-blue-300 mx-auto mb-2" />
@@ -1158,8 +1209,10 @@ const PublicBio = () => {
               )}
             </div>
           </div>
+
         )}
-        {profile.showPiWalletTips !== false && isPlanExpired && (
+
+        {profile && profile.showPiWalletTips !== false && isPlanExpired && (
           <div className="bg-blue-900/80 rounded-lg border border-blue-400/30 p-6 text-center my-6 text-white">
             <Wallet className="w-6 h-6 text-blue-300 mx-auto mb-2" />
             <div className="text-blue-200 font-semibold mb-1">Pi Tips are locked</div>
