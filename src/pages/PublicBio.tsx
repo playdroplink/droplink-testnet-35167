@@ -81,6 +81,12 @@ const PublicBio = () => {
   const [showGiftDialog, setShowGiftDialog] = useState(false);
   const [showPiWalletTip, setShowPiWalletTip] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [visitCount, setVisitCount] = useState(0);
+  const [message, setMessage] = useState("");
+  // State to trigger auto-refresh after Pi Auth if Profile Not Found
+  const [shouldAutoRefresh, setShouldAutoRefresh] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -90,7 +96,6 @@ const PublicBio = () => {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-
 
   // Auto-follow after redirect from auth if needed
   useEffect(() => {
@@ -110,10 +115,6 @@ const PublicBio = () => {
       handleFollow();
     }
   }, [username, profileId, currentUserProfileId, isFollowing]);
-  const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
-  const [followerCount, setFollowerCount] = useState(0);
-  const [visitCount, setVisitCount] = useState(0);
-  const [message, setMessage] = useState("");
 
 
   useEffect(() => {
@@ -625,6 +626,24 @@ const PublicBio = () => {
     return null;
   };
 
+  useEffect(() => {
+    if (notFound || !profile) {
+      if (typeof window !== 'undefined') {
+        const piAuthJustSignedIn = sessionStorage.getItem('piAuthJustSignedIn');
+        if (piAuthJustSignedIn === 'true') {
+          sessionStorage.removeItem('piAuthJustSignedIn');
+          setShouldAutoRefresh(true);
+        }
+      }
+    }
+  }, [notFound, profile]);
+
+  useEffect(() => {
+    if (shouldAutoRefresh) {
+      window.location.reload();
+    }
+  }, [shouldAutoRefresh]);
+
   if (loading) {
     return (
       <div 
@@ -645,6 +664,12 @@ const PublicBio = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-2">Profile Not Found</h1>
           <p className="text-gray-400">This store doesn't exist or has been removed.</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          >
+            Refresh
+          </button>
         </div>
       </div>
     );
