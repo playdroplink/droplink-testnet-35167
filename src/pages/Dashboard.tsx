@@ -1679,10 +1679,19 @@ const Dashboard = () => {
                               {/* Merchant Tab */}
                               <TabsContent value="merchant" className="pb-6 sm:pb-8">
                                 <div className="max-w-lg mx-auto mt-12 sm:mt-20 p-4 sm:p-8 bg-white rounded-lg sm:rounded-xl shadow border text-center">
-                                  <Store className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-sky-400 mb-4" />
-                                  <h2 className="text-2xl sm:text-3xl font-bold mb-2">Merchant Section</h2>
-                                  <p className="text-base sm:text-lg text-gray-700 mb-2">Feature Coming Soon</p>
-                                  <p className="text-sm sm:text-base text-gray-500">We are working hard to bring you powerful merchant tools. Stay tuned!</p>
+                                  <Store className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-sky-500 mb-4" />
+                                  <h2 className="text-2xl sm:text-3xl font-bold mb-2">Dropstore: The Future Digital Marketplace</h2>
+                                  <p className="text-base sm:text-lg text-gray-700 mb-2">
+                                    Dropstore empowers anyone to launch a digital storefront, accept Pi payments, and reach a global audience. Sell digital products, services, and experiences with ease. Join the future of decentralized commerce!
+                                  </p>
+                                  <a href="https://www.dropshops.space/" target="_blank" rel="noopener noreferrer">
+                                    <button className="mt-4 px-6 py-2 bg-sky-500 text-white rounded-lg font-semibold shadow hover:bg-sky-600 transition">
+                                      Start Selling on Dropstore
+                                    </button>
+                                  </a>
+                                  <div className="mt-6 text-sm text-gray-500">
+                                    <strong>Coming soon:</strong> Advanced storefronts, marketplace discovery, Pi Network integration, smart contracts, analytics, and more!
+                                  </div>
                                 </div>
                               </TabsContent>
                                {/* Pi Data tab removed for production */}
