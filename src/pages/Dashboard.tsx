@@ -212,6 +212,7 @@ const Dashboard = () => {
   const [displayUsername, setDisplayUsername] = useState<string | null>(null);
   const [hasSupabaseSession, setHasSupabaseSession] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   // Check for Supabase session on mount
   useEffect(() => {
@@ -295,6 +296,10 @@ const Dashboard = () => {
 
       try {
         // 1. Upsert main profile data with all features (prevents UNIQUE_VIOLATION)
+        if (!profileId || !data.username) {
+          toast.error('Profile ID or username missing. Cannot save profile.');
+          throw new Error('Profile ID or username missing');
+        }
         const { error: profileError } = await supabase
           .from('profiles')
           .upsert({
@@ -328,7 +333,21 @@ const Dashboard = () => {
             username: data.username
           }, { onConflict: 'id' });
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          // Log full error for debugging
+          console.error('Supabase profile upsert error:', profileError);
+          // Show specific error messages for common issues
+          if (profileError.message?.includes('permission denied') || profileError.message?.includes('row level security')) {
+            toast.error('Supabase permissions error. Please check RLS policies and API key permissions.');
+          } else if (profileError.message?.includes('does not exist') || profileError.message?.includes('column')) {
+            toast.error('Supabase schema error. Please check that the profiles table and all columns exist.');
+          } else if (profileError.code === '23505' || profileError.message?.includes('duplicate key')) {
+            toast.error('Username or ID already exists. Please use a unique username.');
+          } else {
+            toast.error('Failed to save profile to database. Please try again.');
+          }
+          throw profileError;
+        }
 
         // 2. Sync products to database
         if (data.products && data.products.length > 0) {
@@ -786,6 +805,10 @@ const Dashboard = () => {
           if (isPiUser && piUser) {
             console.log('🗄️ Creating Pi user profile in Supabase...');
             // Upsert Pi user profile to avoid UNIQUE_VIOLATION
+            if (!piUser.username) {
+              toast.error('Pi username missing. Cannot create profile.');
+              throw new Error('Pi username missing');
+            }
             const { data: newProfile, error: createError } = await supabase
               .from("profiles")
               .upsert({
@@ -797,9 +820,17 @@ const Dashboard = () => {
               }, { onConflict: 'username' })
               .select()
               .single();
-            
             if (createError) {
               console.error("❌ Error creating Pi user profile:", createError);
+              if (createError.message?.includes('permission denied') || createError.message?.includes('row level security')) {
+                toast.error('Supabase permissions error. Please check RLS policies and API key permissions.');
+              } else if (createError.message?.includes('does not exist') || createError.message?.includes('column')) {
+                toast.error('Supabase schema error. Please check that the profiles table and all columns exist.');
+              } else if (createError.code === '23505' || createError.message?.includes('duplicate key')) {
+                toast.error('Username already exists. Please use a unique username.');
+              } else {
+                toast.error('Failed to create Pi profile. Please try again.');
+              }
               throw new Error(`Failed to create Pi profile: ${createError.message}`);
             } else if (newProfile) {
               newProfileId = newProfile.id;
@@ -814,8 +845,10 @@ const Dashboard = () => {
             // Create email user profile
             const emailUsername = supabaseUser.email?.split("@")[0] || `user-${supabaseUser.id.slice(0, 8)}`;
             const sanitizedUsername = emailUsername.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-            
-            console.log('Creating email user profile for:', sanitizedUsername);
+            if (!sanitizedUsername) {
+              toast.error('Email username missing. Cannot create profile.');
+              throw new Error('Email username missing');
+            }
             const { data: newProfile, error: createError } = await supabase
               .from("profiles")
               .insert({
@@ -827,17 +860,18 @@ const Dashboard = () => {
               })
               .select()
               .single();
-            
             if (createError) {
               console.error("❌ Error creating email user profile:", createError);
-              // Check if it's a duplicate username error
-              if (createError.code === '23505') {
-                console.log('📝 Username conflict detected, retrying with unique suffix...');
+              if (createError.message?.includes('permission denied') || createError.message?.includes('row level security')) {
+                toast.error('Supabase permissions error. Please check RLS policies and API key permissions.');
+              } else if (createError.message?.includes('does not exist') || createError.message?.includes('column')) {
+                toast.error('Supabase schema error. Please check that the profiles table and all columns exist.');
+              } else if (createError.code === '23505' || createError.message?.includes('duplicate key')) {
+                toast.error('Username already exists. Please use a unique username.');
                 // Username conflict, try with a random suffix
                 const randomSuffix = Math.random().toString(36).substring(2, 8);
                 const uniqueUsername = `${sanitizedUsername}-${randomSuffix}`;
                 console.log('Trying unique username:', uniqueUsername);
-                
                 const { data: retryProfile, error: retryError } = await supabase
                   .from("profiles")
                   .insert({
@@ -849,9 +883,9 @@ const Dashboard = () => {
                   })
                   .select()
                   .single();
-                  
                 if (retryError) {
                   console.error("❌ Retry also failed:", retryError);
+                  toast.error('Failed to create profile with unique username. Please try again.');
                   throw new Error(`Failed to create profile with unique username: ${retryError.message}`);
                 } else if (retryProfile) {
                   newProfileId = retryProfile.id;
@@ -862,6 +896,7 @@ const Dashboard = () => {
                   throw new Error('Profile creation returned no data');
                 }
               } else {
+                toast.error('Failed to create email profile. Please try again.');
                 throw new Error(`Failed to create email profile: ${createError.message}`);
               }
             } else if (newProfile) {
@@ -1155,8 +1190,9 @@ const Dashboard = () => {
   };
 
   const handleShowQRCode = () => {
-    if (!profile.storeUrl) {
-      toast.error("Please set your store URL first");
+    // Allow QR code dialog to open even if profile is not set up
+    if (!profile || !profile.storeUrl) {
+      toast.error("No store URL set yet. Set up your profile to get a store link.");
       return;
     }
     setShowQRCode(true);
@@ -1165,16 +1201,23 @@ const Dashboard = () => {
   const handleLogout = async () => {
     try {
       console.log("🚪 Initiating logout...");
-      
-      // Use comprehensive sign-out utility
+      // Use comprehensive sign-out utility, but allow logout even if profile is not set up
       await performCompleteSignOut();
-      
     } catch (error) {
       console.error('Logout error:', error);
-      // Force navigation even if logout has errors
+    } finally {
+      // Always navigate to auth page, even if error or no profile
       window.location.href = "/auth";
     }
   };
+
+  // Show welcome modal only on first visit per session
+  useEffect(() => {
+    if (!sessionStorage.getItem('droplink-welcome-shown')) {
+      setShowWelcomeModal(true);
+      sessionStorage.setItem('droplink-welcome-shown', '1');
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -1574,9 +1617,10 @@ const Dashboard = () => {
         <div className={`flex-1 overflow-y-auto p-2 sm:p-4 lg:p-8 ${isMobile ? 'bg-background' : 'glass-card'} m-1 sm:m-2 rounded-lg sm:rounded-xl ${showPreview ? 'hidden lg:block' : 'block'}`} style={{ position: 'relative', minHeight: 0 }}>
           <div className="max-w-2xl mx-auto">
             <Tabs 
-              defaultValue={preferences.dashboard_layout.activeTab} 
+              defaultValue={preferences.dashboard_layout.activeTab}
               className="w-full"
               onValueChange={(value) => {
+                // All menu/tabs should work regardless of profile state
                 // Refresh payment links when payments tab is accessed
                 if (value === 'payments' && piUser?.uid) {
                   const paymentLinks = loadPaymentLinks();
@@ -1641,7 +1685,7 @@ const Dashboard = () => {
                                   <p className="text-sm sm:text-base text-gray-500">We are working hard to bring you powerful merchant tools. Stay tuned!</p>
                                 </div>
                               </TabsContent>
-                {/* Pi Data tab removed for production */}
+                               {/* Pi Data tab removed for production */}
               </TabsList>
 
               {/* Profile Tab */}
@@ -2631,6 +2675,20 @@ const Dashboard = () => {
         open={showAboutModal}
         onOpenChange={setShowAboutModal}
       />
+
+      {/* Welcome Modal */}
+      <Dialog open={showWelcomeModal} onOpenChange={setShowWelcomeModal}>
+        <DialogContent>
+          <DialogTitle>Welcome to DropLink!</DialogTitle>
+          <DialogDescription>
+            👋 Hi, {displayUsername || 'there'}!<br />
+            This is your dashboard. Here you can manage your profile, customize your page, and access all features.
+          </DialogDescription>
+          <DialogFooter>
+            <button onClick={() => setShowWelcomeModal(false)} className="bg-sky-400 text-white px-4 py-2 rounded hover:bg-sky-500">Get Started</button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

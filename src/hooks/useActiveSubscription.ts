@@ -21,6 +21,7 @@ export const useActiveSubscription = (): ActiveSubscription => {
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -33,9 +34,10 @@ export const useActiveSubscription = (): ActiveSubscription => {
           return;
         }
 
+        // Get profile with plan info
         const { data: profile } = await supabase
           .from("profiles")
-          .select("id")
+          .select("id, subscription_plan, subscription_expires_at, subscription_period")
           .eq("username", piUser.username)
           .maybeSingle();
 
@@ -44,6 +46,7 @@ export const useActiveSubscription = (): ActiveSubscription => {
           return;
         }
 
+        // Check for active subscription in subscriptions table
         const { data: sub } = await supabase
           .from("subscriptions")
           .select("plan_type, end_date, status")
@@ -56,6 +59,11 @@ export const useActiveSubscription = (): ActiveSubscription => {
           setPlan((sub.plan_type as PlanType) || "free");
           setExpiresAt(new Date(sub.end_date));
           setStatus(sub.status || null);
+        } else if (profile.subscription_plan && profile.subscription_plan !== "free" && profile.subscription_expires_at && new Date(profile.subscription_expires_at) > new Date()) {
+          // Fallback: use plan from profiles table if still valid
+          setPlan(profile.subscription_plan as PlanType);
+          setExpiresAt(new Date(profile.subscription_expires_at));
+          setStatus("active");
         } else {
           setPlan("free");
           setExpiresAt(null);
@@ -67,7 +75,6 @@ export const useActiveSubscription = (): ActiveSubscription => {
         setLoading(false);
       }
     };
-
     load();
   }, [piUser]);
 
