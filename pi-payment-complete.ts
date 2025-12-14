@@ -29,8 +29,11 @@ app.post('/pi-payment-complete', async (req: Request, res: Response) => {
 
     const piApiKey = process.env.PI_API_KEY;
     if (!piApiKey) {
-      console.error('PI_API_KEY not configured');
+      console.error('PI_API_KEY not configured (missing in environment)');
       return res.status(500).json({ error: 'Server configuration error: PI_API_KEY missing' });
+    } else {
+      // Debug log for presence of PI_API_KEY (do not log the key value)
+      console.log('PI_API_KEY loaded from environment.');
     }
 
     console.log('Calling Pi API to complete payment...');
