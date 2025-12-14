@@ -1,1 +1,10 @@
-project_id = "idkjfuctyukspexmijvb"
+project_id = "lxyzuyayzqjzposadsyz"
+
+[functions.pi-payment-approve]
+verify_jwt = false
+
+[functions.pi-payment-complete]
+verify_jwt = false
+
+[functions.theme-management]
+verify_jwt = true
