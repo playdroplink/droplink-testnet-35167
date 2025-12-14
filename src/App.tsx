@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Dashboard from "./pages/Dashboard";
+import UserSearchPage from "./pages/UserSearchPage";
 import { DevModeToggle } from "@/components/DevModeToggle";
 import SwitchToMerchant from "./pages/SwitchToMerchant";
 import MerchantStoreSetup from "./pages/MerchantStoreSetup";
@@ -76,6 +77,7 @@ const App = () => {
             <Route path="/domain" element={<CustomDomain />} />
             {/* <Route path="/debug" element={<ProfileDebug />} /> */}
             <Route path="/pay/:linkId" element={<PaymentPage />} />
+            <Route path="/search-users" element={<UserSearchPage />} />
             <Route path="/u/:username" element={<PublicBio />} />
             <Route path="/profile/:username" element={<PublicBio />} />
             <Route path="/@:username" element={<PublicBio />} />

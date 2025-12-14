@@ -1471,7 +1471,10 @@ const Dashboard = () => {
                           <Globe className="w-4 h-4" />
                           <span className="hidden sm:inline">Domain</span>
                         </Button>
-                        {/* Store button removed as requested */}
+                        <Button onClick={() => navigate("/search-users")} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-blue-600 text-white hover:bg-blue-700 border-none text-xs sm:text-sm">
+                          <Users className="w-4 h-4" />
+                          <span className="hidden sm:inline">User Search</span>
+                        </Button>
                       </div>
                     </div>
 

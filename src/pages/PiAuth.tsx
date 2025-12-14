@@ -306,7 +306,7 @@ const PiAuth = () => {
             size="lg"
             variant="default"
           >
-            <a href="/droplinkofficial">
+            <a href="/search-users">
               {enableChristmasTheme ? "👥 Droplink Community 👥" : "Droplink Community"}
             </a>
           </Button>
