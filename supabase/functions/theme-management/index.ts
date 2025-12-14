@@ -3,15 +3,17 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // @ts-ignore - ESM module (available at runtime)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// @ts-ignore: Deno global is available at runtime in Supabase Edge Functions
+declare const Deno: any;
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 // Helper to get Supabase client with user's JWT
 function getUserSupabaseClient(req: Request) {
