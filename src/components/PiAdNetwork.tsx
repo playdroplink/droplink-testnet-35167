@@ -87,8 +87,6 @@ const PiAdNetwork: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [piUser]);
 
-
-
   // Show debug info if ads are not enabled
   if (!adConfig.enabled || !(window as any).Pi || !isAuthenticated || !piUser) {
     return (
