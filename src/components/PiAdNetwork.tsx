@@ -335,6 +335,6 @@ const PiAdNetwork: React.FC = () => {
       </CardContent>
     </Card>
   );
-};
+}
 
 export default PiAdNetwork;
