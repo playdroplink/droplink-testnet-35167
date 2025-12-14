@@ -19,7 +19,6 @@ const UserSearchPage = () => {
   type ProfileResult = {
     id: string;
     username: string;
-    plan?: string;
     follower_count?: number;
     created_at?: string;
   };
@@ -50,7 +49,7 @@ const UserSearchPage = () => {
     try {
       let search = supabase
         .from("profiles")
-        .select("id, username, plan, follower_count, created_at")
+        .select("id, username, follower_count, created_at")
         .ilike("username", `%${query.replace(/^@/, "")}%`);
       if (selectedPlan !== "all") search = search.eq("plan", selectedPlan);
       let { data, error } = await search;
@@ -148,34 +147,33 @@ const UserSearchPage = () => {
         {!loading && results.length === 0 && query && !error && (
           <div className="text-gray-500 mt-4 text-center">No profiles found.</div>
         )}
-        <div className="grid gap-4 mt-2">
-          {results.map((profile: any) => (
-            <Card key={profile.id} className="flex items-center gap-4 p-4 hover:shadow-xl transition cursor-pointer border border-sky-200 bg-white" onClick={() => { setSelectedProfile(profile); setShowModal(true); }}>
-              <img
-                 src={`https://api.dicebear.com/7.x/identicon/svg?seed=${profile.username}`}
-                alt={profile.username}
-                className="w-14 h-14 rounded-full border-2 border-sky-300 object-cover"
-              />
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-lg text-sky-700">{highlightText("@" + profile.username)}</div>
-                {/* {profile.display_name && <div className="text-sky-500 font-medium truncate">{profile.display_name}</div>} */}
-                {/* bio removed: not in schema */}
-                <div className="flex gap-2 mt-1 text-xs">
-                  <span className="bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">{profile.plan || "free"}</span>
-                  <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{profile.follower_count || 0} followers</span>
+        {!loading && results.length > 0 && (
+          <div className="grid gap-4 mt-2">
+            {results.map((profile: ProfileResult) => (
+              <Card key={profile.id} className="flex items-center gap-4 p-4 hover:shadow-xl transition cursor-pointer border border-sky-200 bg-white" onClick={() => { setSelectedProfile(profile); setShowModal(true); }}>
+                <img
+                  src={`https://api.dicebear.com/7.x/identicon/svg?seed=${profile.username}`}
+                  alt={profile.username}
+                  className="w-14 h-14 rounded-full border-2 border-sky-300 object-cover"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-lg text-sky-700">{highlightText("@" + profile.username)}</div>
+                  <div className="flex gap-2 mt-1 text-xs">
+                    <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{profile.follower_count || 0} followers</span>
+                  </div>
                 </div>
-              </div>
-              <Button
-                size="sm"
-                className="bg-sky-500 hover:bg-sky-600 text-white"
-                disabled={followLoading === profile.id}
-                onClick={e => { e.stopPropagation(); handleFollow(profile); }}
-              >
-                {followLoading === profile.id ? "Following..." : "Follow"}
-              </Button>
-            </Card>
-          ))}
-        </div>
+                <Button
+                  size="sm"
+                  className="bg-sky-500 hover:bg-sky-600 text-white"
+                  disabled={followLoading === profile.id}
+                  onClick={e => { e.stopPropagation(); handleFollow(profile); }}
+                >
+                  {followLoading === profile.id ? "Following..." : "Follow"}
+                </Button>
+              </Card>
+            ))}
+          </div>
+        )}
       </Card>
 
       {/* Profile Preview Modal */}
@@ -195,7 +193,6 @@ const UserSearchPage = () => {
               {/* {selectedProfile.display_name && <div className="text-sky-500 font-medium">{selectedProfile.display_name}</div>} */}
               {/* bio removed: not in schema */}
               <div className="flex gap-2 mt-1 text-xs">
-                <span className="bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">{selectedProfile.plan || "free"}</span>
                 <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{selectedProfile.follower_count || 0} followers</span>
               </div>
               <Button className="w-full bg-sky-500 hover:bg-sky-600 text-white" onClick={() => { setShowModal(false); navigate(`/@${selectedProfile.username}`); }}>View Full Profile</Button>
