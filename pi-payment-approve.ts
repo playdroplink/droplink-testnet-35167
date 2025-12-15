@@ -1,5 +1,6 @@
-
-import express, { Request, Response } from 'express';
+import expressPkg from 'express';
+const { Request, Response } = expressPkg;
+const express = expressPkg;
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 

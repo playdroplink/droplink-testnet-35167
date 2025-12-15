@@ -1,5 +1,4 @@
-
-import express, { Request, Response } from 'express';
+import express from 'express';
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
@@ -19,7 +18,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.post('/pi-payment-complete', async (req: Request, res: Response) => {
+app.post('/pi-payment-complete', async (req: any, res: any) => {
   try {
     const { paymentId, txid } = req.body;
     if (!paymentId || !txid) {
@@ -146,7 +145,7 @@ app.post('/pi-payment-complete', async (req: Request, res: Response) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
