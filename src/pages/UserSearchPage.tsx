@@ -33,16 +33,81 @@ const UserSearchPage = () => {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<ProfileResult | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [showPiAuthModal, setShowPiAuthModal] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
+
+  // Placeholder for Pi Network sign-in
+  const signInWithPiNetwork = async () => {
+    setSigningIn(true);
+    // Simulate sign-in delay
+    setTimeout(() => {
+      // Here you would integrate with Pi Network auth
+      setSigningIn(false);
+      setShowPiAuthModal(false);
+      // Optionally, set auth token in localStorage or context
+      localStorage.setItem("pi_auth_token", "dummy_token");
+    }, 1200);
+  };
   const [followLoading, setFollowLoading] = useState<string | null>(null);
   const [highlight, setHighlight] = useState("");
   const [profileProducts, setProfileProducts] = useState<any[]>([]);
+  const [showFollowedModal, setShowFollowedModal] = useState(false);
+  const [followedUsername, setFollowedUsername] = useState<string | null>(null);
+  const [userCount, setUserCount] = useState<number | null>(null);
+  const [viewAll, setViewAll] = useState(false); // Only declare once
   const navigate = useNavigate();
+  // Fetch total user count and subscribe to changes
+  useEffect(() => {
+    let subscription: any;
+    const fetchCount = async () => {
+      const { count } = await supabase
+        .from("profiles")
+        .select("id", { count: "exact", head: true });
+      setUserCount(count || 0);
+    };
+    fetchCount();
+    // Real-time subscription for new/deleted users
+    subscription = supabase
+      .channel('public:profiles')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        fetchCount();
+      })
+      .subscribe();
+    return () => {
+      if (subscription) supabase.removeChannel(subscription);
+    };
+  }, []);
+
+  // Fetch all users when 'View All' is clicked
+  const handleViewAll = async () => {
+    setLoading(true);
+    setViewAll(true);
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, username, logo, created_at, avatar_url, bio, display_name"); // follower_count removed
+    if (!error && data) {
+      // If follower_count is needed, fetch it separately for each profile
+      const withFollowers = await Promise.all(data.map(async (profile: any) => {
+        if (profile.id) {
+          const { count, error: countError } = await supabase
+            .from("followers")
+            .select("*", { count: "exact", head: true })
+            .eq("following_profile_id", profile.id);
+          if (!countError) profile.follower_count = count || 0;
+        }
+        return profile;
+      }));
+      setResults(withFollowers);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem("droplink_recent_searches");
     if (stored) setRecentSearches(JSON.parse(stored));
   }, []);
 
+    // Removed duplicate declaration of viewAll and setViewAll
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!query.trim()) return;
@@ -147,14 +212,32 @@ const UserSearchPage = () => {
 
   const handleFollow = async (profile: any) => {
     if (!isPiAuthenticated()) {
-      alert("You must be signed in with Pi Network to follow users.");
+      setShowPiAuthModal(true);
       return;
     }
     setFollowLoading(profile.id);
-    // Simulate follow (replace with real API call)
+    // Save follow relationship to Supabase
+    try {
+      // Get current user id (assuming it's stored in localStorage or context)
+      const currentUserId = localStorage.getItem("pi_user_id");
+      if (!currentUserId) throw new Error("User not authenticated");
+      // Insert into followers table: follower_profile_id (current user), following_profile_id (profile.id)
+      const { error } = await supabase
+        .from("followers")
+        .insert([
+          {
+            follower_profile_id: currentUserId,
+            following_profile_id: profile.id,
+          },
+        ]);
+      if (error) throw error;
+    } catch (err) {
+      // Optionally handle error (show message, etc)
+    }
     setTimeout(() => {
       setFollowLoading(null);
-      alert(`Followed @${profile.username}!`);
+      setFollowedUsername(profile.username);
+      setShowFollowedModal(true);
     }, 800);
   };
 
@@ -184,10 +267,24 @@ const UserSearchPage = () => {
   }, [selectedProfile]);
 
   return (
-    <div className="min-h-screen bg-sky-100 flex flex-col items-center py-8 px-2">
-      <Card className="w-full max-w-2xl p-6 shadow-lg rounded-xl">
-        <h1 className="text-2xl font-bold mb-4 text-sky-700">Search Droplink Profiles</h1>
-        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2 mb-4">
+    <div className="min-h-screen bg-sky-100 flex flex-col items-center py-4 px-1 sm:py-8 sm:px-2">
+      <Card className="w-full max-w-2xl p-2 sm:p-6 shadow-lg rounded-xl">
+        {/* User Count and View All */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+          <div className="text-lg font-semibold text-sky-700">
+            {userCount !== null ? `${userCount} Droplink Users` : 'Loading user count...'}
+          </div>
+          <Button
+            size="sm"
+            className="bg-sky-500 hover:bg-sky-600 text-white"
+            onClick={handleViewAll}
+            disabled={loading || viewAll}
+          >
+            View All
+          </Button>
+        </div>
+        <h1 className="text-xl sm:text-2xl font-bold mb-4 text-sky-700 text-center">Search Droplink Profiles</h1>
+        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2 mb-4 w-full">
           <Input
             type="text"
             className="flex-1"
@@ -198,9 +295,9 @@ const UserSearchPage = () => {
           />
           <Button type="submit" className="bg-sky-500 hover:bg-sky-600 text-white font-semibold">Search</Button>
         </form>
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2 mb-4 w-full">
           <select
-            className="border rounded px-2 py-1 text-sm"
+            className="border rounded px-2 py-1 text-sm w-full sm:w-auto"
             value={selectedPlan}
             onChange={e => setSelectedPlan(e.target.value)}
           >
@@ -209,7 +306,7 @@ const UserSearchPage = () => {
             ))}
           </select>
           <select
-            className="border rounded px-2 py-1 text-sm"
+            className="border rounded px-2 py-1 text-sm w-full sm:w-auto"
             value={sortBy}
             onChange={e => setSortBy(e.target.value)}
           >
@@ -221,7 +318,7 @@ const UserSearchPage = () => {
         {recentSearches.length > 0 && (
           <div className="mb-4">
             <div className="text-xs text-gray-500 mb-1">Recent searches:</div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 w-full">
               {recentSearches.map((q, i) => (
                 <Button key={i} size="sm" variant="outline" onClick={() => { setQuery(q); setTimeout(() => handleSearch(), 0); }}>{q}</Button>
               ))}
@@ -241,27 +338,46 @@ const UserSearchPage = () => {
         )}
         {!loading && results.length > 0 && (
           <div className="grid gap-4 mt-2">
-            {results.map((profile: ProfileResult) => (
-              <Card key={profile.id} className="flex items-center gap-4 p-4 hover:shadow-xl transition cursor-pointer border border-sky-200 bg-white" onClick={() => { setSelectedProfile(profile); setShowModal(true); }}>
+            {results
+              .filter((profile: ProfileResult) =>
+                ![
+                  "angrlobasit2020@gmail.com",
+                  "angelobasit2022@gmail.com",
+                  "angelobasit2020@gmail.com"
+                ].includes(profile.username)
+              )
+              .map((profile: ProfileResult) => (
+              <Card key={profile.id} className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 p-2 sm:p-4 hover:shadow-xl transition cursor-pointer border border-sky-200 bg-white" onClick={() => { setSelectedProfile(profile); setShowModal(true); }}>
                 <img
                   src={profile.logo || profile.avatar_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${profile.username}`}
                   alt={profile.username || "User"}
-                  className="w-14 h-14 rounded-full border-2 border-sky-300 object-cover"
+                  className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-sky-300 object-cover"
                 />
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 w-full">
                   <div className="font-semibold text-lg text-sky-700">{highlightText("@" + (profile.username || ""))}</div>
                   <div className="flex gap-2 mt-1 text-xs">
                     <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{profile.follower_count ?? 0} followers</span>
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  className="bg-sky-500 hover:bg-sky-600 text-white"
-                  disabled={followLoading === profile.id}
-                  onClick={e => { e.stopPropagation(); handleFollow(profile); }}
-                >
-                  {followLoading === profile.id ? "Following..." : "Follow"}
-                </Button>
+                <div className="flex gap-2 mt-2 sm:mt-0">
+                  <Button
+                    size="sm"
+                    className="bg-sky-400 hover:bg-sky-500 text-white min-w-[60px] sm:min-w-[72px]"
+                    style={{height: 32, minWidth: 60}}
+                    onClick={e => { e.stopPropagation(); setSelectedProfile(profile); setShowModal(true); }}
+                  >
+                    View
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="bg-sky-500 hover:bg-sky-600 text-white min-w-[60px] sm:min-w-[72px]"
+                    style={{height: 32, minWidth: 60}}
+                    disabled={followLoading === profile.id}
+                    onClick={e => { e.stopPropagation(); handleFollow(profile); }}
+                  >
+                    {followLoading === profile.id ? "Following..." : "Follow"}
+                  </Button>
+                </div>
               </Card>
             ))}
           </div>
@@ -309,6 +425,42 @@ const UserSearchPage = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Pi Network Auth Required Modal */}
+      <Dialog open={showPiAuthModal} onOpenChange={setShowPiAuthModal}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Sign in Required</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 text-center">
+            <p className="mb-4">You must be signed in with <span className="font-semibold text-sky-600">Pi Network</span> to follow users.</p>
+            <Button
+              className="w-full bg-sky-600 hover:bg-sky-700 text-white mb-2"
+              onClick={signInWithPiNetwork}
+              disabled={signingIn}
+            >
+              {signingIn ? "Signing in..." : "Sign in with Pi Network"}
+            </Button>
+            <Button className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700" variant="outline" onClick={() => setShowPiAuthModal(false)} disabled={signingIn}>
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    {/* Followed Modal for any user */}
+    <Dialog open={showFollowedModal} onOpenChange={setShowFollowedModal}>
+      <DialogContent className="max-w-xs">
+        <DialogHeader>
+          <DialogTitle>Followed!</DialogTitle>
+        </DialogHeader>
+        <div className="py-4 text-center">
+          <p className="mb-2">You have followed <span className="font-semibold text-sky-600">@{followedUsername}</span>!</p>
+          <Button className="w-full bg-sky-500 hover:bg-sky-600 text-white" onClick={() => setShowFollowedModal(false)}>
+            Close
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
     </div>
   );
 };
