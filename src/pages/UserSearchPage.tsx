@@ -21,7 +21,10 @@ const UserSearchPage = () => {
     username: string;
     follower_count?: number;
     created_at?: string;
-  };
+    avatar_url?: string;
+    bio?: string;
+    display_name?: string;
+  } & Record<string, any>;
   const [results, setResults] = useState<ProfileResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -47,20 +50,51 @@ const UserSearchPage = () => {
     setResults([]);
     setHighlight(query.replace(/^@/, ""));
     try {
-      let search = supabase
-        .from("profiles")
-        .select("id, username, follower_count, created_at")
-        .ilike("username", `%${query.replace(/^@/, "")}%`);
-      if (selectedPlan !== "all") search = search.eq("plan", selectedPlan);
-      let { data, error } = await search;
-      if (error) throw error;
-      // Sorting
-      if (sortBy === "followers") {
-        data = data.sort((a: any, b: any) => (b.follower_count || 0) - (a.follower_count || 0));
-      } else if (sortBy === "recent") {
-        data = data.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      let data = null;
+      // If query starts with @, fetch from droplink.space
+      if (query.trim().startsWith("@")) {
+        const username = query.trim().replace(/^@/, "");
+        const resp = await fetch(`https://droplink.space/@${username}`);
+        if (resp.ok) {
+          // Try to parse JSON if available, fallback to minimal info
+          let profile: ProfileResult;
+          try {
+            const json = await resp.json();
+            profile = {
+              id: json.id || username,
+              username: json.username || username,
+              follower_count: json.follower_count,
+              created_at: json.created_at,
+              avatar_url: json.avatar_url,
+              bio: json.bio,
+              display_name: json.display_name,
+              ...json
+            };
+          } catch {
+            // If not JSON, just use username
+            profile = { id: username, username };
+          }
+          data = [profile];
+        } else {
+          throw new Error("User not found");
+        }
       } else {
-        data = data.sort((a: any, b: any) => a.username.localeCompare(b.username));
+        let search = supabase
+          .from("profiles")
+          .select("id, username, follower_count, created_at")
+          .ilike("username", `%${query.replace(/^@/, "")}%`);
+        if (selectedPlan !== "all") search = search.eq("plan", selectedPlan);
+        let result = await search;
+        if (result.error) throw result.error;
+        data = result.data;
+        // Sorting
+        if (sortBy === "followers") {
+          data = data.sort((a: any, b: any) => (b.follower_count || 0) - (a.follower_count || 0));
+        } else if (sortBy === "recent") {
+          data = data.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        } else {
+          data = data.sort((a: any, b: any) => a.username.localeCompare(b.username));
+        }
       }
       setResults(data || []);
       // Save to recent searches
@@ -152,12 +186,18 @@ const UserSearchPage = () => {
             {results.map((profile: ProfileResult) => (
               <Card key={profile.id} className="flex items-center gap-4 p-4 hover:shadow-xl transition cursor-pointer border border-sky-200 bg-white" onClick={() => { setSelectedProfile(profile); setShowModal(true); }}>
                 <img
-                  src={`https://api.dicebear.com/7.x/identicon/svg?seed=${profile.username}`}
+                  src={profile.avatar_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${profile.username}`}
                   alt={profile.username}
                   className="w-14 h-14 rounded-full border-2 border-sky-300 object-cover"
                 />
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-lg text-sky-700">{highlightText("@" + profile.username)}</div>
+                  {profile.display_name && (
+                    <div className="text-sky-500 font-medium">{profile.display_name}</div>
+                  )}
+                  {profile.bio && (
+                    <div className="text-gray-600 text-sm mt-1">{profile.bio}</div>
+                  )}
                   <div className="flex gap-2 mt-1 text-xs">
                     <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{profile.follower_count || 0} followers</span>
                   </div>
@@ -185,13 +225,17 @@ const UserSearchPage = () => {
           {selectedProfile && (
             <div className="flex flex-col items-center gap-3">
               <img
-                 src={`https://api.dicebear.com/7.x/identicon/svg?seed=${selectedProfile.username}`}
+                src={selectedProfile.avatar_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${selectedProfile.username}`}
                 alt={selectedProfile.username}
                 className="w-20 h-20 rounded-full border-2 border-sky-300 object-cover"
               />
               <div className="font-semibold text-lg text-sky-700">@{selectedProfile.username}</div>
-              {/* {selectedProfile.display_name && <div className="text-sky-500 font-medium">{selectedProfile.display_name}</div>} */}
-              {/* bio removed: not in schema */}
+              {selectedProfile.display_name && (
+                <div className="text-sky-500 font-medium">{selectedProfile.display_name}</div>
+              )}
+              {selectedProfile.bio && (
+                <div className="text-gray-600 text-sm mt-1">{selectedProfile.bio}</div>
+              )}
               <div className="flex gap-2 mt-1 text-xs">
                 <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{selectedProfile.follower_count || 0} followers</span>
               </div>
