@@ -91,22 +91,15 @@ const UserSearchPage = () => {
   const handleViewAll = async () => {
     setLoading(true);
     setViewAll(true);
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, username, logo, created_at, avatar_url, bio, display_name, pi_auth_username, pi_adnetwork"); // follower_count removed
+    // Fetch all profile fields from Supabase (only existing columns)
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, username, logo, created_at");
     if (!error && data) {
-      // If follower_count is needed, fetch it separately for each profile
-      const withFollowers = await Promise.all(data.map(async (profile: any) => {
-        if (profile.id) {
-          const { count, error: countError } = await supabase
-            .from("followers")
-            .select("*", { count: "exact", head: true })
-            .eq("following_profile_id", profile.id);
-          if (!countError) profile.follower_count = count || 0;
-        }
-        return profile;
-      }));
-      setResults(withFollowers);
+      setResults(data);
+    } else {
+      setResults([]);
+      setError(error?.message || "Failed to fetch profiles");
     }
     setLoading(false);
   };
@@ -281,9 +274,11 @@ const UserSearchPage = () => {
       <Card className="w-full max-w-2xl p-2 sm:p-6 shadow-lg rounded-xl">
         {/* User Count and View All */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
-          <div className="text-lg font-semibold text-sky-700">
-            {userCount !== null ? `${userCount} Droplink Users` : 'Loading user count...'}
-          </div>
+          {!viewAll && (
+            <div className="text-lg font-semibold text-sky-700">
+              {userCount !== null ? `${userCount} Droplink Users` : 'Loading user count...'}
+            </div>
+          )}
           <Button
             size="sm"
             className="bg-sky-500 hover:bg-sky-600 text-white"
