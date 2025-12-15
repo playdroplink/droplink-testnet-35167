@@ -27,13 +27,15 @@ app.post('/pi-payment-approve', async (req: Request, res: Response) => {
 
     console.log('Approving Pi payment:', paymentId);
 
-    const piApiKey = process.env.PI_API_KEY;
+
+    // Use VITE_PI_API_KEY if present, else fallback to PI_API_KEY
+    const piApiKey = process.env.VITE_PI_API_KEY || process.env.PI_API_KEY;
     if (!piApiKey) {
-      console.error('PI_API_KEY not configured (missing in environment)');
-      return res.status(500).json({ error: 'Server configuration error: PI_API_KEY missing' });
+      console.error('PI_API_KEY or VITE_PI_API_KEY not configured (missing in environment)');
+      return res.status(500).json({ error: 'Server configuration error: PI_API_KEY or VITE_PI_API_KEY missing' });
     } else {
       // Debug log for presence of PI_API_KEY (do not log the key value)
-      console.log('PI_API_KEY loaded from environment.');
+      console.log('PI_API_KEY (or VITE_PI_API_KEY) loaded from environment.');
     }
 
     console.log('Calling Pi API to approve payment...');

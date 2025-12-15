@@ -1,3 +1,4 @@
+
 import express, { Request, Response } from 'express';
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
@@ -27,13 +28,14 @@ app.post('/pi-payment-complete', async (req: Request, res: Response) => {
 
     console.log('Completing Pi payment:', paymentId, 'txid:', txid);
 
-    const piApiKey = process.env.PI_API_KEY;
+    // Use VITE_PI_API_KEY if present, else fallback to PI_API_KEY
+    const piApiKey = process.env.VITE_PI_API_KEY || process.env.PI_API_KEY;
     if (!piApiKey) {
-      console.error('PI_API_KEY not configured (missing in environment)');
-      return res.status(500).json({ error: 'Server configuration error: PI_API_KEY missing' });
+      console.error('PI_API_KEY or VITE_PI_API_KEY not configured (missing in environment)');
+      return res.status(500).json({ error: 'Server configuration error: PI_API_KEY or VITE_PI_API_KEY missing' });
     } else {
       // Debug log for presence of PI_API_KEY (do not log the key value)
-      console.log('PI_API_KEY loaded from environment.');
+      console.log('PI_API_KEY (or VITE_PI_API_KEY) loaded from environment.');
     }
 
     console.log('Calling Pi API to complete payment...');
@@ -56,7 +58,7 @@ app.post('/pi-payment-complete', async (req: Request, res: Response) => {
       return res.status(400).json({ error: `Failed to complete payment: ${responseText}` });
     }
 
-    let paymentData: any;
+    let paymentData;
     try {
       paymentData = JSON.parse(responseText);
     } catch {
@@ -148,3 +150,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
