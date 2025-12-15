@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -16,7 +15,7 @@ const sortOptions = [
 
 const UserSearchPage = () => {
   const [query, setQuery] = useState("");
-  type ProfileResult = {
+  interface ProfileResult {
     id: string;
     username: string;
     follower_count?: number;
@@ -24,7 +23,7 @@ const UserSearchPage = () => {
     avatar_url?: string;
     bio?: string;
     display_name?: string;
-  } & Record<string, any>;
+  }
   const [results, setResults] = useState<ProfileResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -35,6 +34,7 @@ const UserSearchPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [followLoading, setFollowLoading] = useState<string | null>(null);
   const [highlight, setHighlight] = useState("");
+  const [profileProducts, setProfileProducts] = useState<any[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -56,10 +56,19 @@ const UserSearchPage = () => {
         const username = query.trim().replace(/^@/, "");
         const resp = await fetch(`https://droplink.space/@${username}`);
         if (resp.ok) {
-          // Try to parse JSON if available, fallback to minimal info
           let profile: ProfileResult;
           try {
             const json = await resp.json();
+            // If we have a profile id, fetch full profile from Supabase
+            let fullProfile = null;
+            if (json.id) {
+              const { data: supaProfile, error: supaError } = await supabase
+                .from("profiles")
+                .select("id, username, follower_count, created_at, avatar_url, bio, display_name, plan, logo, business_name")
+                .eq("id", json.id)
+                .maybeSingle();
+              if (!supaError && supaProfile) fullProfile = supaProfile;
+            }
             profile = {
               id: json.id || username,
               username: json.username || username,
@@ -68,11 +77,19 @@ const UserSearchPage = () => {
               avatar_url: json.avatar_url,
               bio: json.bio,
               display_name: json.display_name,
-              ...json
+              ...json,
+              ...fullProfile
             };
           } catch {
-            // If not JSON, just use username
             profile = { id: username, username };
+          }
+          // Fetch follower count from Supabase if we have an id
+          if (profile.id) {
+            const { count, error: countError } = await supabase
+              .from("followers")
+              .select("*", { count: "exact", head: true })
+              .eq("following_profile_id", profile.id);
+            if (!countError) profile.follower_count = count || 0;
           }
           data = [profile];
         } else {
@@ -81,12 +98,25 @@ const UserSearchPage = () => {
       } else {
         let search = supabase
           .from("profiles")
-          .select("id, username, follower_count, created_at")
+          .select("id, username, follower_count, created_at, avatar_url, bio, display_name, plan")
           .ilike("username", `%${query.replace(/^@/, "")}%`);
-        if (selectedPlan !== "all") search = search.eq("plan", selectedPlan);
+        if (selectedPlan !== "all") (search as any) = (search as any).eq("plan", selectedPlan);
         let result = await search;
         if (result.error) throw result.error;
         data = result.data;
+        // Fetch follower count for each profile
+        if (Array.isArray(data)) {
+          data = await Promise.all(data.map(async (profile: ProfileResult) => {
+            if (profile.id) {
+              const { count, error: countError } = await supabase
+                .from("followers")
+                .select("*", { count: "exact", head: true })
+                .eq("following_profile_id", profile.id);
+              if (!countError) profile.follower_count = count || 0;
+            }
+            return profile;
+          }));
+        }
         // Sorting
         if (sortBy === "followers") {
           data = data.sort((a: any, b: any) => (b.follower_count || 0) - (a.follower_count || 0));
@@ -124,6 +154,23 @@ const UserSearchPage = () => {
       regex.test(part) ? <span key={i} className="bg-yellow-200 rounded px-1">{part}</span> : part
     );
   };
+
+  useEffect(() => {
+    // Fetch products when a profile is selected
+    const fetchProducts = async () => {
+      if (selectedProfile && selectedProfile.id) {
+        const { data, error } = await supabase
+          .from("products")
+          .select("id, title, price, image, description")
+          .eq("profile_id", selectedProfile.id);
+        if (!error && data) setProfileProducts(data);
+        else setProfileProducts([]);
+      } else {
+        setProfileProducts([]);
+      }
+    };
+    fetchProducts();
+  }, [selectedProfile]);
 
   return (
     <div className="min-h-screen bg-sky-100 flex flex-col items-center py-8 px-2">
@@ -240,6 +287,25 @@ const UserSearchPage = () => {
                 <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{selectedProfile.follower_count || 0} followers</span>
               </div>
               <Button className="w-full bg-sky-500 hover:bg-sky-600 text-white" onClick={() => { setShowModal(false); navigate(`/@${selectedProfile.username}`); }}>View Full Profile</Button>
+
+              {/* Products Section */}
+              {profileProducts.length > 0 && (
+                <div className="w-full mt-4">
+                  <div className="font-semibold text-sky-700 mb-2">Products</div>
+                  <div className="grid gap-2">
+                    {profileProducts.map(product => (
+                      <div key={product.id} className="border rounded p-2 flex gap-2 items-center bg-sky-50">
+                        {product.image && <img src={product.image} alt={product.title} className="w-10 h-10 object-cover rounded" />}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sky-800 truncate">{product.title}</div>
+                          {product.description && <div className="text-xs text-gray-600 truncate">{product.description}</div>}
+                        </div>
+                        <div className="text-sky-600 font-bold text-sm">{product.price}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
