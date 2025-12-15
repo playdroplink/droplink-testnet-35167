@@ -24,6 +24,8 @@ const UserSearchPage = () => {
     avatar_url?: string;
     bio?: string;
     display_name?: string;
+    pi_auth_username?: string;
+    pi_adnetwork?: string;
   }
   const [results, setResults] = useState<ProfileResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -82,9 +84,9 @@ const UserSearchPage = () => {
   const handleViewAll = async () => {
     setLoading(true);
     setViewAll(true);
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, username, logo, created_at, avatar_url, bio, display_name"); // follower_count removed
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, username, logo, created_at, avatar_url, bio, display_name, pi_auth_username, pi_adnetwork"); // follower_count removed
     if (!error && data) {
       // If follower_count is needed, fetch it separately for each profile
       const withFollowers = await Promise.all(data.map(async (profile: any) => {
@@ -130,7 +132,7 @@ const UserSearchPage = () => {
             if (json.id) {
               const { data: supaProfile, error: supaError } = await supabase
                 .from("profiles")
-                .select("id, username, follower_count, created_at, avatar_url, bio, display_name, plan, logo, business_name")
+                  .select("id, username, follower_count, created_at, avatar_url, bio, display_name, plan, logo, business_name, pi_auth_username, pi_adnetwork")
                 .eq("id", json.id)
                 .maybeSingle();
               if (!supaError && supaProfile) fullProfile = supaProfile;
@@ -163,8 +165,8 @@ const UserSearchPage = () => {
         }
       } else {
         let search = supabase
-          .from("profiles")
-          .select("id, username, logo, follower_count, created_at, avatar_url, bio, display_name")
+            .from("profiles")
+            .select("id, username, logo, follower_count, created_at, avatar_url, bio, display_name, pi_auth_username, pi_adnetwork")
           .ilike("username", `%${query.replace(/^@/, "")}%`);
         if (selectedPlan !== "all") (search as any) = (search as any).eq("plan", selectedPlan);
         let result = await search;
@@ -358,6 +360,15 @@ const UserSearchPage = () => {
                   <div className="flex gap-2 mt-1 text-xs">
                     <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{profile.follower_count ?? 0} followers</span>
                   </div>
+                  {profile.bio && (
+                    <div className="text-xs text-gray-600 mt-1">{profile.bio}</div>
+                  )}
+                  {profile.pi_auth_username && (
+                    <div className="text-xs text-sky-700 mt-1">Pi Auth Username: <span className="font-semibold">{profile.pi_auth_username}</span></div>
+                  )}
+                  {profile.pi_adnetwork && (
+                    <div className="text-xs text-sky-700 mt-1">Pi AdNetwork: <span className="font-semibold">{profile.pi_adnetwork}</span></div>
+                  )}
                 </div>
                 <div className="flex gap-2 mt-2 sm:mt-0">
                   <Button
@@ -401,6 +412,15 @@ const UserSearchPage = () => {
               <div className="flex gap-2 mt-1 text-xs">
                 <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{selectedProfile.follower_count ?? 0} followers</span>
               </div>
+              {selectedProfile.bio && (
+                <div className="text-xs text-gray-600 mt-1">{selectedProfile.bio}</div>
+              )}
+              {selectedProfile.pi_auth_username && (
+                <div className="text-xs text-sky-700 mt-1">Pi Auth Username: <span className="font-semibold">{selectedProfile.pi_auth_username}</span></div>
+              )}
+              {selectedProfile.pi_adnetwork && (
+                <div className="text-xs text-sky-700 mt-1">Pi AdNetwork: <span className="font-semibold">{selectedProfile.pi_adnetwork}</span></div>
+              )}
               <Button className="w-full bg-sky-500 hover:bg-sky-600 text-white" onClick={() => { setShowModal(false); navigate(`/@${selectedProfile.username}`); }}>View Full Profile</Button>
 
               {/* Products Section */}
