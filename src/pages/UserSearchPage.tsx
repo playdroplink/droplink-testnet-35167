@@ -57,6 +57,13 @@ const UserSearchPage = () => {
   const [followedUsername, setFollowedUsername] = useState<string | null>(null);
   const [userCount, setUserCount] = useState<number | null>(null);
   const [viewAll, setViewAll] = useState(false); // Only declare once
+
+  // Reset viewAll if query changes and is not empty
+  useEffect(() => {
+    if (query.trim() !== "") {
+      setViewAll(false);
+    }
+  }, [query]);
   const navigate = useNavigate();
   // Fetch total user count and subscribe to changes
   useEffect(() => {
@@ -113,6 +120,7 @@ const UserSearchPage = () => {
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!query.trim()) return;
+    setViewAll(false); // Reset viewAll when searching
     setLoading(true);
     setError("");
     setResults([]);

@@ -77,20 +77,17 @@ app.post('/pi-payment-complete', async (req: any, res: any) => {
     // Get subscription details from payment metadata
     const profileId = paymentData.metadata?.profile_id || paymentData.metadata?.profileId;
     const plan = paymentData.metadata?.plan;
-    const period = paymentData.metadata?.period;
+    // Only allow monthly period for now
+    const period = 'monthly';
     const piAmount = paymentData.amount;
 
     console.log('Subscription metadata:', { profileId, plan, period, piAmount });
 
     if (profileId && plan) {
-      // Calculate expiration date
+      // Calculate expiration date (monthly only)
       const now = new Date();
       const expiresAt = new Date(now);
-      if (period === 'yearly') {
-        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-      } else {
-        expiresAt.setMonth(expiresAt.getMonth() + 1);
-      }
+      expiresAt.setMonth(expiresAt.getMonth() + 1);
 
       console.log('Updating profile subscription:', profileId, 'to', plan, 'expires:', expiresAt.toISOString());
 
