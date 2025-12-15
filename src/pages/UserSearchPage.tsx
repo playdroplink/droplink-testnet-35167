@@ -18,6 +18,7 @@ const UserSearchPage = () => {
   interface ProfileResult {
     id: string;
     username: string;
+    logo?: string;
     follower_count?: number;
     created_at?: string;
     avatar_url?: string;
@@ -98,16 +99,16 @@ const UserSearchPage = () => {
       } else {
         let search = supabase
           .from("profiles")
-          .select("id, username, follower_count, created_at, avatar_url, bio, display_name, plan")
+          .select("id, username, logo, follower_count, created_at, avatar_url, bio, display_name")
           .ilike("username", `%${query.replace(/^@/, "")}%`);
         if (selectedPlan !== "all") (search as any) = (search as any).eq("plan", selectedPlan);
         let result = await search;
         if (result.error) throw result.error;
         data = result.data;
-        // Fetch follower count for each profile
+        // Fetch follower count for each profile if not present
         if (Array.isArray(data)) {
           data = await Promise.all(data.map(async (profile: ProfileResult) => {
-            if (profile.id) {
+            if (profile.id && (profile.follower_count === undefined || profile.follower_count === null)) {
               const { count, error: countError } = await supabase
                 .from("followers")
                 .select("*", { count: "exact", head: true })
@@ -138,7 +139,17 @@ const UserSearchPage = () => {
     }
   };
 
+  // Add Pi Auth check (pseudo, replace with your real auth logic)
+  const isPiAuthenticated = () => {
+    // Example: check for a token in localStorage or context
+    return Boolean(localStorage.getItem("pi_auth_token"));
+  };
+
   const handleFollow = async (profile: any) => {
+    if (!isPiAuthenticated()) {
+      alert("You must be signed in with Pi Network to follow users.");
+      return;
+    }
     setFollowLoading(profile.id);
     // Simulate follow (replace with real API call)
     setTimeout(() => {
@@ -233,20 +244,14 @@ const UserSearchPage = () => {
             {results.map((profile: ProfileResult) => (
               <Card key={profile.id} className="flex items-center gap-4 p-4 hover:shadow-xl transition cursor-pointer border border-sky-200 bg-white" onClick={() => { setSelectedProfile(profile); setShowModal(true); }}>
                 <img
-                  src={profile.avatar_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${profile.username}`}
-                  alt={profile.username}
+                  src={profile.logo || profile.avatar_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${profile.username}`}
+                  alt={profile.username || "User"}
                   className="w-14 h-14 rounded-full border-2 border-sky-300 object-cover"
                 />
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-lg text-sky-700">{highlightText("@" + profile.username)}</div>
-                  {profile.display_name && (
-                    <div className="text-sky-500 font-medium">{profile.display_name}</div>
-                  )}
-                  {profile.bio && (
-                    <div className="text-gray-600 text-sm mt-1">{profile.bio}</div>
-                  )}
+                  <div className="font-semibold text-lg text-sky-700">{highlightText("@" + (profile.username || ""))}</div>
                   <div className="flex gap-2 mt-1 text-xs">
-                    <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{profile.follower_count || 0} followers</span>
+                    <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{profile.follower_count ?? 0} followers</span>
                   </div>
                 </div>
                 <Button
@@ -272,19 +277,13 @@ const UserSearchPage = () => {
           {selectedProfile && (
             <div className="flex flex-col items-center gap-3">
               <img
-                src={selectedProfile.avatar_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${selectedProfile.username}`}
-                alt={selectedProfile.username}
+                src={selectedProfile.logo || selectedProfile.avatar_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${selectedProfile.username}`}
+                alt={selectedProfile.username || "User"}
                 className="w-20 h-20 rounded-full border-2 border-sky-300 object-cover"
               />
-              <div className="font-semibold text-lg text-sky-700">@{selectedProfile.username}</div>
-              {selectedProfile.display_name && (
-                <div className="text-sky-500 font-medium">{selectedProfile.display_name}</div>
-              )}
-              {selectedProfile.bio && (
-                <div className="text-gray-600 text-sm mt-1">{selectedProfile.bio}</div>
-              )}
+              <div className="font-semibold text-lg text-sky-700">@{selectedProfile.username || ""}</div>
               <div className="flex gap-2 mt-1 text-xs">
-                <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{selectedProfile.follower_count || 0} followers</span>
+                <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{selectedProfile.follower_count ?? 0} followers</span>
               </div>
               <Button className="w-full bg-sky-500 hover:bg-sky-600 text-white" onClick={() => { setShowModal(false); navigate(`/@${selectedProfile.username}`); }}>View Full Profile</Button>
 
