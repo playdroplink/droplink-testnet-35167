@@ -710,6 +710,223 @@ const AdminMrwain = () => {
 
               <Separator />
 
+              {/* Username Change Section */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Change Username</Label>
+                <p className="text-sm text-muted-foreground">Update your @username (available for admin users)</p>
+                <div className="flex gap-2">
+                  <Input
+                    type="text"
+                    placeholder="Enter new username"
+                    defaultValue={profileData?.username || ''}
+                    id="new-username-input"
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={async () => {
+                      const input = document.getElementById('new-username-input') as HTMLInputElement;
+                      const newUsername = input?.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+                      
+                      if (!newUsername || newUsername.length < 3) {
+                        toast.error('Username must be at least 3 characters');
+                        return;
+                      }
+
+                      try {
+                        // Check if username already exists
+                        const { data: existing, error: checkError } = await supabase
+                          .from('profiles')
+                          .select('id')
+                          .eq('username', newUsername)
+                          .neq('id', currentUser.id)
+                          .maybeSingle();
+
+                        if (checkError && checkError.code !== 'PGRST116') {
+                          throw checkError;
+                        }
+
+                        if (existing) {
+                          toast.error('Username already taken');
+                          return;
+                        }
+
+                        // Update username
+                        const { error } = await supabase
+                          .from('profiles')
+                          .update({ 
+                            username: newUsername,
+                            updated_at: new Date().toISOString() 
+                          })
+                          .eq('id', currentUser.id);
+
+                        if (error) {
+                          toast.error('Failed to update username');
+                        } else {
+                          await loadProfileData(currentUser.id);
+                          toast.success(`Username changed to @${newUsername}`);
+                        }
+                      } catch (error) {
+                        console.error('Username update error:', error);
+                        toast.error('Failed to update username');
+                      }
+                    }}
+                  >
+                    Update
+                  </Button>
+                </div>
+                <div className="mt-2 p-2 bg-muted/50 rounded text-xs">
+                  Current: <strong>@{profileData?.username || 'Not set'}</strong>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Theme Customization Section */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Theme Customization</Label>
+                <p className="text-sm text-muted-foreground">Customize your profile colors and theme</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Primary Color */}
+                  <div className="space-y-2">
+                    <Label className="text-sm">Primary Color</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="color"
+                        defaultValue={profileData?.theme_settings?.primaryColor || '#0ea5e9'}
+                        id="primary-color-input"
+                        className="w-20 h-10 cursor-pointer"
+                      />
+                      <Input
+                        type="text"
+                        placeholder="#0ea5e9"
+                        defaultValue={profileData?.theme_settings?.primaryColor || '#0ea5e9'}
+                        id="primary-color-text"
+                        className="flex-1"
+                        onChange={(e) => {
+                          const colorInput = document.getElementById('primary-color-input') as HTMLInputElement;
+                          if (colorInput) colorInput.value = e.target.value;
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Secondary Color */}
+                  <div className="space-y-2">
+                    <Label className="text-sm">Secondary Color</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="color"
+                        defaultValue={profileData?.theme_settings?.secondaryColor || '#38bdf8'}
+                        id="secondary-color-input"
+                        className="w-20 h-10 cursor-pointer"
+                      />
+                      <Input
+                        type="text"
+                        placeholder="#38bdf8"
+                        defaultValue={profileData?.theme_settings?.secondaryColor || '#38bdf8'}
+                        id="secondary-color-text"
+                        className="flex-1"
+                        onChange={(e) => {
+                          const colorInput = document.getElementById('secondary-color-input') as HTMLInputElement;
+                          if (colorInput) colorInput.value = e.target.value;
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Accent Color */}
+                  <div className="space-y-2">
+                    <Label className="text-sm">Accent Color</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="color"
+                        defaultValue={profileData?.theme_settings?.accentColor || '#eab308'}
+                        id="accent-color-input"
+                        className="w-20 h-10 cursor-pointer"
+                      />
+                      <Input
+                        type="text"
+                        placeholder="#eab308"
+                        defaultValue={profileData?.theme_settings?.accentColor || '#eab308'}
+                        id="accent-color-text"
+                        className="flex-1"
+                        onChange={(e) => {
+                          const colorInput = document.getElementById('accent-color-input') as HTMLInputElement;
+                          if (colorInput) colorInput.value = e.target.value;
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Background Style */}
+                  <div className="space-y-2">
+                    <Label className="text-sm">Background Style</Label>
+                    <select
+                      defaultValue={profileData?.theme_settings?.backgroundStyle || 'gradient'}
+                      id="background-style-select"
+                      className="w-full px-3 py-2 border rounded-lg bg-background"
+                    >
+                      <option value="solid">Solid Color</option>
+                      <option value="gradient">Gradient</option>
+                      <option value="image">Image (upload above)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <Button
+                  className="w-full mt-4"
+                  onClick={async () => {
+                    try {
+                      const primaryColor = (document.getElementById('primary-color-input') as HTMLInputElement)?.value;
+                      const secondaryColor = (document.getElementById('secondary-color-input') as HTMLInputElement)?.value;
+                      const accentColor = (document.getElementById('accent-color-input') as HTMLInputElement)?.value;
+                      const backgroundStyle = (document.getElementById('background-style-select') as HTMLSelectElement)?.value;
+
+                      const themeSettings = {
+                        ...(profileData?.theme_settings || {}),
+                        primaryColor,
+                        secondaryColor,
+                        accentColor,
+                        backgroundStyle,
+                      };
+
+                      const { error } = await supabase
+                        .from('profiles')
+                        .update({ 
+                          theme_settings: themeSettings,
+                          updated_at: new Date().toISOString() 
+                        })
+                        .eq('id', currentUser.id);
+
+                      if (error) {
+                        toast.error('Failed to save theme');
+                      } else {
+                        await loadProfileData(currentUser.id);
+                        toast.success('Theme customization saved!');
+                      }
+                    } catch (error) {
+                      console.error('Theme save error:', error);
+                      toast.error('Failed to save theme');
+                    }
+                  }}
+                >
+                  Save Theme Settings
+                </Button>
+
+                {/* Theme Preview */}
+                <div className="mt-4 p-4 border rounded-lg" style={{
+                  background: profileData?.theme_settings?.backgroundStyle === 'gradient'
+                    ? `linear-gradient(135deg, ${profileData?.theme_settings?.primaryColor || '#0ea5e9'}, ${profileData?.theme_settings?.secondaryColor || '#38bdf8'})`
+                    : profileData?.theme_settings?.primaryColor || '#0ea5e9'
+                }}>
+                  <div className="text-white font-bold text-lg">Theme Preview</div>
+                  <div className="text-white/90 text-sm mt-1">Your profile will use these colors</div>
+                </div>
+              </div>
+
+              <Separator />
+
               {/* Category Selection */}
               <div className="space-y-3">
                 <Label className="text-base font-semibold">User Category</Label>

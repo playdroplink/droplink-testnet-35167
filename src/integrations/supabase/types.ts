@@ -406,6 +406,7 @@ export type Database = {
           description: string | null
           has_premium: boolean | null
           id: string
+          is_admin: boolean | null
           logo: string | null
           pi_donation_message: string | null
           pi_wallet_address: string | null
@@ -425,6 +426,7 @@ export type Database = {
           description?: string | null
           has_premium?: boolean | null
           id?: string
+          is_admin?: boolean | null
           logo?: string | null
           pi_donation_message?: string | null
           pi_wallet_address?: string | null
@@ -444,6 +446,7 @@ export type Database = {
           description?: string | null
           has_premium?: boolean | null
           id?: string
+          is_admin?: boolean | null
           logo?: string | null
           pi_donation_message?: string | null
           pi_wallet_address?: string | null

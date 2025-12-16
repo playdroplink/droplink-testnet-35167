@@ -39,6 +39,11 @@ const UserSearchPage = () => {
     created_at?: string;
     category?: string;
     follower_count?: number;
+    is_admin?: boolean;
+    avatar_url?: string;
+    bio?: string;
+    display_name?: string;
+    business_name?: string;
   }
   const [results, setResults] = useState<ProfileResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -143,11 +148,11 @@ const UserSearchPage = () => {
       // Apply sorting
       let sortedData = enrichedData;
       if (sortBy === "followers") {
-        sortedData = data.sort((a: any, b: any) => (b.follower_count || 0) - (a.follower_count || 0));
+        sortedData = enrichedData.sort((a: any, b: any) => (b.follower_count || 0) - (a.follower_count || 0));
       } else if (sortBy === "recent") {
-        sortedData = data.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        sortedData = enrichedData.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       } else {
-        sortedData = data.sort((a: any, b: any) => a.username.localeCompare(b.username));
+        sortedData = enrichedData.sort((a: any, b: any) => a.username.localeCompare(b.username));
       }
       setResults(sortedData);
     } else {
@@ -219,8 +224,8 @@ const UserSearchPage = () => {
         }
       } else {
         let search = supabase
-            .from("profiles")
-            .select("id, username, logo, created_at")
+          .from("profiles")
+          .select("id, username, logo, created_at")
           .ilike("username", `%${query.replace(/^@/, "")}%`);
         // Plan filter - uncomment if you have a plan column in profiles table
         // if (selectedPlan !== "all") (search as any) = (search as any).eq("plan", selectedPlan);
@@ -243,10 +248,9 @@ const UserSearchPage = () => {
         // Follower count will be available after running SQL migration
         // Sorting
         // Follower sorting - uncomment after running SQL migration
-        // if (sortBy === "followers") {
-        //   data = data.sort((a: any, b: any) => (b.follower_count || 0) - (a.follower_count || 0));
-        // } else 
-        if (sortBy === "recent") {
+        if (sortBy === "followers") {
+          data = data.sort((a: any, b: any) => (b.follower_count || 0) - (a.follower_count || 0));
+        } else if (sortBy === "recent") {
           data = data.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         } else {
           data = data.sort((a: any, b: any) => a.username.localeCompare(b.username));
@@ -420,15 +424,45 @@ const UserSearchPage = () => {
                   "angelobasit2020@gmail.com"
                 ].includes(profile.username)
               )
-              .map((profile: ProfileResult) => (
-              <Card key={profile.id} className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 p-2 sm:p-4 hover:shadow-xl transition cursor-pointer border border-sky-200 bg-white" onClick={() => { setSelectedProfile(profile); setShowModal(true); }}>
-                <img
-                  src={profile.logo || `https://api.dicebear.com/7.x/identicon/svg?seed=${profile.username}`}
-                  alt={profile.username || "User"}
-                  className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-sky-300 object-cover"
-                />
+              .map((profile: ProfileResult) => {
+                // Check if user is admin (from database column)
+                const isAdmin = profile.is_admin === true;
+                
+                return (
+              <Card 
+                key={profile.id} 
+                className={`flex flex-col sm:flex-row items-center gap-2 sm:gap-4 p-2 sm:p-4 hover:shadow-xl transition cursor-pointer bg-white ${
+                  isAdmin ? 'border-2 border-yellow-500 shadow-lg shadow-yellow-200/50' : 'border border-sky-200'
+                }`}
+                onClick={() => { setSelectedProfile(profile); setShowModal(true); }}
+              >
+                <div className="relative">
+                  <img
+                    src={profile.logo || `https://api.dicebear.com/7.x/identicon/svg?seed=${profile.username}`}
+                    alt={profile.username || "User"}
+                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover ${
+                      isAdmin ? 'border-3 border-yellow-500 ring-2 ring-yellow-300' : 'border-2 border-sky-300'
+                    }`}
+                  />
+                  {isAdmin && (
+                    <div className="absolute -top-1 -right-1 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full p-1 shadow-lg">
+                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
                 <div className="flex-1 min-w-0 w-full">
-                  <div className="font-semibold text-lg text-sky-700">{highlightText("@" + (profile.username || ""))}</div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className={`font-semibold text-lg ${isAdmin ? 'text-yellow-600' : 'text-sky-700'}`}>
+                      {highlightText("@" + (profile.username || ""))}
+                    </div>
+                    {isAdmin && (
+                      <span className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
+                        VIP
+                      </span>
+                    )}
+                  </div>
                   <div className="flex gap-2 mt-1 text-xs flex-wrap">
                     <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{profile.follower_count || 0} followers</span>
                     {/* Category badge - uncomment after running add-followers-and-views.sql migration */}
@@ -460,7 +494,8 @@ const UserSearchPage = () => {
                   </Button>
                 </div>
               </Card>
-            ))}
+            );
+              })}
           </div>
         )}
       </Card>
