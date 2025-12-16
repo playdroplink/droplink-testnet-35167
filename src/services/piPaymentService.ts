@@ -168,8 +168,11 @@ export class PiPaymentService {
     try {
       console.log('[PI PAYMENT] 📡 Sending approval request to server...');
       
-      // Option 1: Call your Supabase Edge Function
-      const response = await fetch('/api/pi/approve-payment', {
+      // Get Supabase URL from environment or config
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://oeisqfvwqutfmdjcrfyh.supabase.co';
+      
+      // Call Supabase Edge Function
+      const response = await fetch(`${supabaseUrl}/functions/v1/pi-payment-approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -179,7 +182,8 @@ export class PiPaymentService {
       });
       
       if (!response.ok) {
-        throw new Error(`Approval failed: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(`Approval failed: ${errorData.error || response.statusText}`);
       }
       
       const result = await response.json();
@@ -230,8 +234,11 @@ export class PiPaymentService {
     try {
       console.log('[PI PAYMENT] 📡 Sending completion request to server...');
       
-      // Option 1: Call your Supabase Edge Function
-      const response = await fetch('/api/pi/complete-payment', {
+      // Get Supabase URL from environment or config
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://oeisqfvwqutfmdjcrfyh.supabase.co';
+      
+      // Call Supabase Edge Function
+      const response = await fetch(`${supabaseUrl}/functions/v1/pi-payment-complete`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -241,13 +248,14 @@ export class PiPaymentService {
       });
       
       if (!response.ok) {
-        throw new Error(`Completion failed: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(`Completion failed: ${errorData.error || response.statusText}`);
       }
       
       const result = await response.json();
       
       // CRITICAL: Only mark as complete if transaction verified
-      if (!result.verified) {
+      if (!result.success) {
         console.error('[PI PAYMENT] ⚠️ Transaction not verified on blockchain!');
         return false;
       }

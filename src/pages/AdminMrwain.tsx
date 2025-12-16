@@ -98,12 +98,14 @@ const AdminMrwain = () => {
       
       // Create or update profile
       if (!existingProfile) {
-        // Generate username from email
+        // Generate username from email or user metadata
+        const metadataUsername = user.user_metadata?.username;
         const emailUsername = user.email?.split('@')[0] || `user_${user.id.substring(0, 8)}`;
-        const sanitizedUsername = emailUsername.toLowerCase().replace(/[^a-z0-9_]/g, '_').substring(0, 30);
-        const business_name = user.user_metadata?.full_name || user.email || `User ${user.id.substring(0, 8)}`;
+        const rawUsername = metadataUsername || emailUsername;
+        const sanitizedUsername = rawUsername.toLowerCase().replace(/[^a-z0-9_]/g, '_').substring(0, 30);
+        const business_name = user.user_metadata?.full_name || sanitizedUsername || `User ${user.id.substring(0, 8)}`;
         
-        console.log('[Admin Profile] Creating profile for:', user.email);
+        console.log('[Admin Profile] Creating profile for:', user.email, 'with username:', sanitizedUsername);
         
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
@@ -187,9 +189,17 @@ const AdminMrwain = () => {
       return;
     }
 
-    if (!email.includes("@")) {
-      toast.error("Please enter a valid email address");
-      return;
+    // Convert @username to email format if needed
+    let authEmail = email;
+    if (email.startsWith('@')) {
+      // Remove @ and add domain
+      const username = email.substring(1);
+      authEmail = `${username}@droplink.space`;
+      console.log('[Admin Auth] Converting @username to email:', authEmail);
+    } else if (!email.includes('@')) {
+      // If no @ at all, assume it's a username
+      authEmail = `${email}@droplink.space`;
+      console.log('[Admin Auth] Converting username to email:', authEmail);
     }
 
     if (!isLogin && password.length < 6) {
@@ -202,9 +212,9 @@ const AdminMrwain = () => {
     try {
       if (isLogin) {
         // Sign In
-        console.log('[Admin Auth] Attempting sign in for:', email);
+        console.log('[Admin Auth] Attempting sign in for:', authEmail);
         const { data, error } = await supabase.auth.signInWithPassword({
-          email,
+          email: authEmail,
           password,
         });
         
@@ -229,15 +239,20 @@ const AdminMrwain = () => {
         setCurrentUser(data.user);
       } else {
         // Sign Up
-        console.log('[Admin Auth] Attempting sign up for:', email);
+        console.log('[Admin Auth] Attempting sign up for:', authEmail);
+        
+        // Extract username for profile creation
+        const username = authEmail.split('@')[0];
+        
         const { data, error } = await supabase.auth.signUp({
-          email,
+          email: authEmail,
           password,
           options: {
             data: {
               auth_method: 'email',
               created_from: 'admin_panel',
               signup_timestamp: new Date().toISOString(),
+              username: username,
             },
             emailRedirectTo: `${window.location.origin}/admin-mrwain`
           }
@@ -837,13 +852,13 @@ const AdminMrwain = () => {
           {/* Email Authentication Form */}
           <form onSubmit={handleAuth} className="space-y-4">
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Username or Email</Label>
               <div className="relative mt-1">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="email"
-                  type="email"
-                  placeholder="admin@example.com"
+                  type="text"
+                  placeholder="@username or email@example.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   className="pl-10"
@@ -851,6 +866,9 @@ const AdminMrwain = () => {
                   autoFocus
                 />
               </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Enter your @username (from Store URL) or email address
+              </p>
             </div>
             <div>
               <Label htmlFor="password">Password</Label>

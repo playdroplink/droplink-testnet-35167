@@ -28,6 +28,8 @@ BEGIN
     SET following_count = following_count + 1 
     WHERE id = NEW.follower_profile_id;
     
+    RETURN NEW;
+    
   ELSIF TG_OP = 'DELETE' THEN
     -- Decrement follower count
     UPDATE public.profiles 
@@ -38,9 +40,11 @@ BEGIN
     UPDATE public.profiles 
     SET following_count = GREATEST(following_count - 1, 0)
     WHERE id = OLD.follower_profile_id;
+    
+    RETURN OLD;
   END IF;
   
-  RETURN NEW;
+  RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 

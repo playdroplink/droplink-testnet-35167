@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
+import { Check, Gift } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { usePi } from "@/contexts/PiContext";
 import { useRealPiPayment } from "@/hooks/useRealPiPayment";
 import { validateMainnetConfig } from "@/config/pi-config";
+import { GiftCardModal } from "@/components/GiftCardModal";
 
 // Helper: Drop available only when mainnet validated
 const isDropAvailable = validateMainnetConfig();
@@ -112,6 +113,7 @@ const Subscription = () => {
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<any>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [showGiftCardModal, setShowGiftCardModal] = useState(false);
   const navigate = useNavigate();
   const { piUser, signIn, loading: piLoading } = usePi() as any;
   const { processPayment, isProcessing, paymentProgress } = useRealPiPayment();
@@ -146,6 +148,73 @@ const Subscription = () => {
     };
     fetchData();
   }, [piUser]);
+
+  // Mock payment for testing (DEV MODE ONLY)
+  const handleMockPayment = async (planName: string, price: number) => {
+    if (!profileId) {
+      toast.error('Profile not loaded. Please refresh.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      toast.loading('Processing mock payment...', { id: 'mock-payment' });
+      
+      // Simulate payment delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Calculate subscription dates
+      const startDate = new Date();
+      const endDate = new Date(startDate);
+      
+      if (isYearly) {
+        endDate.setFullYear(endDate.getFullYear() + 1);
+      } else {
+        endDate.setMonth(endDate.getMonth() + 1);
+      }
+      
+      // Save subscription to database
+      const { error: subError } = await supabase
+        .from('subscriptions')
+        .upsert({
+          profile_id: profileId,
+          plan_type: planName.toLowerCase(),
+          status: 'active',
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString(),
+          pi_amount: price,
+          billing_period: isYearly ? 'yearly' : 'monthly',
+          auto_renew: true,
+        }, {
+          onConflict: 'profile_id'
+        });
+      
+      if (subError) {
+        console.error('[MOCK PAYMENT] Database error:', subError);
+        toast.error('Failed to activate subscription', { id: 'mock-payment' });
+      } else {
+        toast.success(`🎉 Mock payment successful! ${planName} plan activated`, { 
+          id: 'mock-payment',
+          description: 'This was a test payment - no real Pi was charged'
+        });
+        
+        setCurrentPlan(planName);
+        setSubscription({
+          plan_type: planName.toLowerCase(),
+          status: 'active',
+          end_date: endDate.toISOString()
+        });
+        
+        // Redirect after delay
+        setTimeout(() => navigate('/'), 2000);
+      }
+    } catch (error: any) {
+      console.error('[MOCK PAYMENT] Error:', error);
+      toast.error('Mock payment failed', { id: 'mock-payment' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubscribe = async (planName: string, price: number) => {
     if (!piUser) {
@@ -272,10 +341,189 @@ const Subscription = () => {
     }
   };
 
+  const handleGiftCardPurchase = async (planType: string, billingPeriod: string, price: number, recipientEmail?: string, message?: string) => {
+    if (!piUser) {
+      toast.error('Please sign in with Pi Network first');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `⚠️ REAL Pi PAYMENT\n\n` +
+      `You are about to pay ${price} Pi for a ${planType} ${billingPeriod} gift card.\n\n` +
+      `This is a REAL Pi Network mainnet transaction. Actual Pi coins will be deducted from your wallet.\n\n` +
+      `Do you want to proceed?`
+    );
+
+    if (!confirmed) {
+      toast.info('Purchase cancelled');
+      return;
+    }
+
+    try {
+      const toastId = toast.loading('Processing gift card purchase...');
+
+      // Process payment
+      const result = await processPayment({
+        id: `giftcard-${planType}-${Date.now()}`,
+        name: `DropLink Gift Card - ${planType} (${billingPeriod})`,
+        type: 'subscription',
+        price: price,
+        description: `Gift card for ${planType} ${billingPeriod} subscription`,
+        metadata: {
+          isGiftCard: 'true',
+          giftCardPlan: planType,
+          giftCardPeriod: billingPeriod,
+          recipientEmail: recipientEmail || '',
+          message: message || '',
+          username: piUser.username,
+          profileId: profileId || '',
+        }
+      });
+
+      if (result.success) {
+        // Generate gift card code
+        const { data: codeData, error: codeError } = await supabase
+          .rpc('generate_gift_card_code');
+
+        if (codeError) throw codeError;
+        const code = codeData as string;
+
+        // Insert gift card
+        const { error: insertError } = await supabase
+          .from('gift_cards')
+          .insert({
+            code,
+            plan_type: planType,
+            billing_period: billingPeriod,
+            pi_amount: price,
+            purchased_by_profile_id: profileId,
+            recipient_email: recipientEmail || null,
+            message: message || null,
+            status: 'active'
+          });
+
+        if (insertError) throw insertError;
+
+        toast.dismiss(toastId);
+        toast.success('🎄 Gift card purchased successfully! 🎁');
+        
+        // Send email if recipient provided
+        if (recipientEmail) {
+          try {
+            await supabase.functions.invoke('send-gift-card-email', {
+              body: {
+                recipientEmail,
+                code,
+                planType,
+                billingPeriod,
+                message: message || '',
+                senderProfileId: profileId
+              }
+            });
+            toast.success('📧 Gift card email sent to recipient!', {
+              description: `${recipientEmail} will receive their Christmas gift!`
+            });
+          } catch (emailError) {
+            console.error('Email send error:', emailError);
+            toast.info('Gift card created! Share the code manually.', {
+              description: 'Email delivery is pending - code: ' + code
+            });
+          }
+        }
+      } else {
+        toast.dismiss(toastId);
+        toast.error('Payment failed', { description: result.error || 'Please try again' });
+      }
+    } catch (error: any) {
+      console.error('[GIFT CARD] Purchase error:', error);
+      toast.error(error.message || 'Failed to purchase gift card');
+    }
+  };
+
+  const handleGiftCardRedeem = async (code: string) => {
+    if (!profileId) {
+      toast.error('Please sign in to redeem gift cards');
+      return;
+    }
+
+    try {
+      const { data: giftCard, error: fetchError } = await supabase
+        .from('gift_cards')
+        .select('*')
+        .eq('code', code.toUpperCase())
+        .single();
+
+      if (fetchError) throw new Error('Invalid gift card code');
+
+      if (giftCard.status !== 'active') {
+        throw new Error(`This gift card has been ${giftCard.status}`);
+      }
+
+      if (new Date(giftCard.expires_at) < new Date()) {
+        throw new Error('This gift card has expired');
+      }
+
+      // Mark as redeemed
+      const { error: updateError } = await supabase
+        .from('gift_cards')
+        .update({
+          status: 'redeemed',
+          redeemed_by_profile_id: profileId,
+          redeemed_at: new Date().toISOString()
+        })
+        .eq('code', code.toUpperCase());
+
+      if (updateError) throw updateError;
+
+      // Create subscription
+      const startDate = new Date();
+      const endDate = new Date(startDate);
+
+      if (giftCard.billing_period === 'yearly') {
+        endDate.setFullYear(endDate.getFullYear() + 1);
+      } else {
+        endDate.setMonth(endDate.getMonth() + 1);
+      }
+
+      const { error: subError } = await supabase
+        .from('subscriptions')
+        .upsert({
+          profile_id: profileId,
+          plan_type: giftCard.plan_type,
+          status: 'active',
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString(),
+          pi_amount: 0, // Gift card - no payment
+          billing_period: giftCard.billing_period,
+          auto_renew: false,
+        });
+
+      if (subError) throw subError;
+
+      toast.success(`🎉 Gift card redeemed! ${giftCard.plan_type} plan activated!`);
+      setShowGiftCardModal(false);
+
+      // Reload subscription data
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (error: any) {
+      console.error('[GIFT CARD] Redemption error:', error);
+      throw error;
+    }
+  };
+
   return (
     <div className="container mx-auto py-12">
-      <div className="mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <Button variant="outline" onClick={() => navigate('/')}> ← Back to Dashboard</Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="gap-2 border-pink-500 text-pink-600 hover:bg-pink-50"
+          onClick={() => setShowGiftCardModal(true)}
+        >
+          <Gift className="w-4 h-4" />
+          Gift Cards
+        </Button>
       </div>
       {/* Pi Auth Sign In Button */}
       {!piUser && (
@@ -336,6 +584,18 @@ const Subscription = () => {
                     {isCurrent ? '✓ Current Plan' : (loading || isProcessing) ? `⏳ ${paymentProgress || 'Processing...'}` : plan.name === 'Free' ? 'Activate Free Plan' : `Subscribe with Pi`}
                   </Button>
 
+                  {/* Mock Payment Button (For Testing) */}
+                  {plan.name !== 'Free' && !isCurrent && (
+                    <Button 
+                      className="w-full mb-2 bg-green-600 hover:bg-green-700 text-white" 
+                      variant="default" 
+                      disabled={loading || isProcessing}
+                      onClick={() => handleMockPayment(plan.name, price)}
+                    >
+                      🧪 Mock Payment (Test Only)
+                    </Button>
+                  )}
+
                   {plan.name !== 'Free' && (
                     <div className="flex flex-col gap-2">
                       <div className="flex items-center mb-1"><span className="text-sm font-medium text-gray-500">Pay with Drop</span></div>
@@ -358,6 +618,14 @@ const Subscription = () => {
           <p>Questions? Contact support@droplink.space</p>
         </div>
       </div>
+
+      <GiftCardModal
+        open={showGiftCardModal}
+        onOpenChange={setShowGiftCardModal}
+        onPurchase={handleGiftCardPurchase}
+        onRedeem={handleGiftCardRedeem}
+        profileId={profileId || undefined}
+      />
     </div>
   );
 };

@@ -278,3 +278,20 @@ All colors MUST be HSL.
     }
   }
 }
+
+/* Christmas snowflake animation for gift cards */
+@keyframes fall {
+  0% {
+    top: -10%;
+    opacity: 0.7;
+  }
+  100% {
+    top: 110%;
+    opacity: 0;
+  }
+}
+
+.animate-fall {
+  animation: fall linear infinite;
+  animation-duration: 10s;
+}

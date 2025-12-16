@@ -1325,6 +1325,7 @@ const Dashboard = () => {
           <div className="flex items-center gap-1 sm:gap-2 lg:gap-3">
                         {/* Inbox Button (Desktop) */}
                         <Button
+                          type="button"
                           onClick={() => navigate("/inbox")}
                           size="sm"
                           className="hidden md:inline-flex gap-2 bg-sky-400 text-white hover:bg-sky-500 border-none"
@@ -1334,6 +1335,7 @@ const Dashboard = () => {
                         </Button>
             {isMobile && (
               <Button
+                type="button"
                 onClick={() => setShowPreview(!showPreview)}
                 size="sm"
                 className="h-9 w-9 mr-0.5 sm:mr-1 bg-sky-400 text-white hover:bg-sky-500 border-none p-0"
@@ -1343,6 +1345,7 @@ const Dashboard = () => {
             )}
             {/* Christmas Theme Toggle Button */}
             <Button
+              type="button"
               onClick={() => setEnableChristmasTheme(!enableChristmasTheme)}
               size="sm"
               variant="outline"
@@ -1356,6 +1359,7 @@ const Dashboard = () => {
             </Button>
             {/* Add Plan button to header for both mobile and desktop */}
             <Button
+              type="button"
               variant="outline"
               size={isMobile ? "icon" : "sm"}
               className="ml-0.5 sm:ml-1 border-sky-400 text-sky-600 hover:bg-sky-50 h-9 sm:h-10 w-9 sm:w-auto px-0 sm:px-3"
@@ -1381,6 +1385,7 @@ const Dashboard = () => {
                                         {/* Plan Button in Drawer */}
                   <div className="space-y-2">
                                           <Button
+                                            type="button"
                                             onClick={() => { setShowPlanModal(true); }}
                                             size="sm"
                                             className="w-full justify-center gap-2 h-10 sm:h-12 bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-300 border text-xs sm:text-sm"
@@ -1434,17 +1439,17 @@ const Dashboard = () => {
                     <div className="space-y-2">
                       <h3 className="font-medium text-sm text-muted-foreground px-2">Profile & Share</h3>
                       <div className="grid grid-cols-2 gap-2">
-                                                <Button onClick={() => navigate("/inbox")}
+                                                <Button type="button" onClick={() => navigate("/inbox")}
                                                   size="sm"
                                                   className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
                                                   <Mail className="w-4 h-4" />
                                                   <span>Inbox</span>
                                                 </Button>
-                        <Button onClick={handleShowQRCode} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
+                        <Button type="button" onClick={handleShowQRCode} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
                           <QrCode className="w-4 h-4" />
                           <span>QR Code</span>
                         </Button>
-                        <Button onClick={handleCopyLink} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
+                        <Button type="button" onClick={handleCopyLink} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
                           <Share2 className="w-4 h-4" />
                           <span>Share</span>
                         </Button>
@@ -1455,23 +1460,23 @@ const Dashboard = () => {
                     <div className="space-y-2">
                       <h3 className="font-medium text-sm text-muted-foreground px-2">Navigation</h3>
                       <div className="grid grid-cols-2 gap-2">
-                        <Button onClick={() => navigate("/followers")} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
+                        <Button type="button" onClick={() => navigate("/followers")} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
                           <Users className="w-4 h-4" />
                           <span className="hidden sm:inline">Followers</span>
                         </Button>
-                        <Button onClick={() => navigate("/wallet")} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
+                        <Button type="button" onClick={() => navigate("/wallet")} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
                           <Wallet className="w-4 h-4" />
                           <span className="hidden sm:inline">Wallet</span>
                         </Button>
-                        <Button onClick={() => navigate("/profile")} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
+                        <Button type="button" onClick={() => navigate("/profile")} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
                           <User className="w-4 h-4" />
                           <span className="hidden sm:inline">Profile</span>
                         </Button>
-                        <Button onClick={() => navigate("/domain")} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
+                        <Button type="button" onClick={() => navigate("/domain")} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
                           <Globe className="w-4 h-4" />
                           <span className="hidden sm:inline">Domain</span>
                         </Button>
-                        <Button onClick={() => navigate("/search-users")} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-blue-600 text-white hover:bg-blue-700 border-none text-xs sm:text-sm">
+                        <Button type="button" onClick={() => navigate("/search-users")} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-blue-600 text-white hover:bg-blue-700 border-none text-xs sm:text-sm">
                           <Users className="w-4 h-4" />
                           <span className="hidden sm:inline">User Search</span>
                         </Button>
@@ -1483,6 +1488,7 @@ const Dashboard = () => {
                       <h3 className="font-medium text-sm text-muted-foreground px-2">Settings</h3>
                       <div className="space-y-2">
                         <Button
+                          type="button"
                           onClick={() => setShowPreview(!showPreview)}
                           size="sm"
                           className="w-full justify-center gap-2 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm"
@@ -1498,6 +1504,7 @@ const Dashboard = () => {
                       <div className="space-y-2">
                         <h3 className="font-medium text-sm text-muted-foreground px-2">Pi Network</h3>
                         <Button 
+                          type="button"
                           onClick={() => navigate("/auth")} 
                           size="sm"
                           className="w-full justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none"
@@ -1512,7 +1519,7 @@ const Dashboard = () => {
                     <div className="space-y-2">
                       <h3 className="font-medium text-sm text-muted-foreground px-2">Support & Help</h3>
                       <div className="grid grid-cols-2 gap-2">
-                        <Button onClick={() => navigate("/ai-support")} size="sm" className="inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
+                        <Button type="button" onClick={() => navigate("/ai-support")} size="sm" className="inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
                           <Bot className="w-4 h-4" />
                           AI Support
                         </Button>
@@ -1538,7 +1545,7 @@ const Dashboard = () => {
 
                     {/* Account Section */}
                     <div className="space-y-2 pt-2 border-t border-border">
-                      <Button onClick={handleLogout} size="sm" className="w-full inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
+                      <Button type="button" onClick={handleLogout} size="sm" className="w-full inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
                         <LogOut className="w-4 h-4" />
                         Sign Out
                       </Button>
@@ -1548,15 +1555,16 @@ const Dashboard = () => {
               </Drawer>
             ) : (
               <>
-                <Button onClick={handleShowQRCode} size="sm" className="hidden sm:inline-flex gap-2 bg-sky-400 text-white hover:bg-sky-500 border-none">
+                <Button type="button" onClick={handleShowQRCode} size="sm" className="hidden sm:inline-flex gap-2 bg-sky-400 text-white hover:bg-sky-500 border-none">
                   <QrCode className="w-4 h-4" />
                   QR Code
                 </Button>
-                <Button onClick={handleCopyLink} size="sm" className="hidden sm:inline-flex gap-2 bg-sky-400 text-white hover:bg-sky-500 border-none">
+                <Button type="button" onClick={handleCopyLink} size="sm" className="hidden sm:inline-flex gap-2 bg-sky-400 text-white hover:bg-sky-500 border-none">
                   <Share2 className="w-4 h-4" />
                   Share
                 </Button>
                 <Button 
+                  type="button"
                   onClick={() => navigate("/followers")} 
                   size="sm" 
                   className="hidden md:inline-flex gap-2 bg-sky-400 text-white hover:bg-sky-500 border-none"
@@ -1565,6 +1573,7 @@ const Dashboard = () => {
                   Followers
                 </Button>
                 <Button 
+                  type="button"
                   onClick={() => navigate("/wallet")} 
                   size="sm" 
                   className="hidden md:inline-flex gap-2 bg-sky-400 text-white hover:bg-sky-500 border-none"
@@ -1573,6 +1582,7 @@ const Dashboard = () => {
                   Wallet
                 </Button>
                 <Button 
+                  type="button"
                   onClick={() => navigate("/subscription")} 
                   size="sm" 
                   className="hidden md:inline-flex bg-sky-400 text-white hover:bg-sky-500 border-none"
@@ -1580,6 +1590,7 @@ const Dashboard = () => {
                   Upgrade
                 </Button>
                 <Button
+                  type="button"
                   onClick={() => setShowAboutModal(true)}
                   size="sm"
                   className="hidden lg:inline-flex gap-2 bg-sky-400 text-white hover:bg-sky-500 border-none"
@@ -1588,19 +1599,21 @@ const Dashboard = () => {
                   About
                 </Button>
                 <Button
+                  type="button"
                   onClick={() => setShowPreview(!showPreview)} 
                   size="sm"
                   className="lg:hidden inline-flex bg-sky-400 text-white hover:bg-sky-500 border-none"
                 >
                   {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </Button>
-                <Button onClick={handleLogout} size="sm" className="inline-flex items-center justify-center gap-2 bg-sky-400 h-9 rounded-md px-3 text-white hover:text-red-500 hover:bg-sky-500">
+                <Button type="button" onClick={handleLogout} size="sm" className="inline-flex items-center justify-center gap-2 bg-sky-400 h-9 rounded-md px-3 text-white hover:text-red-500 hover:bg-sky-500">
                   <LogOut className="w-4 h-4" />
                 </Button>
                 
                 {/* Pi Auth Button for Email Users */}
                 {hasSupabaseSession && !isAuthenticated && (
                   <Button 
+                    type="button"
                     onClick={() => navigate("/auth")} 
                     size="sm"
                     className="gap-2 inline-flex bg-sky-400 text-white hover:bg-sky-500 border-none"
