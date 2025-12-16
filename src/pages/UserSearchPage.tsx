@@ -38,6 +38,7 @@ const UserSearchPage = () => {
     logo?: string;
     created_at?: string;
     category?: string;
+    follower_count?: number;
   }
   const [results, setResults] = useState<ProfileResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -130,8 +131,17 @@ const UserSearchPage = () => {
     
     const { data, error } = await query;
     if (!error && data) {
+      // Manually fetch follower counts for each profile
+      let enrichedData = await Promise.all(data.map(async (profile: any) => {
+        const { count } = await supabase
+          .from('followers')
+          .select('id', { count: 'exact', head: true })
+          .eq('following_profile_id', profile.id);
+        return { ...profile, follower_count: count || 0 };
+      }));
+      
       // Apply sorting
-      let sortedData = data;
+      let sortedData = enrichedData;
       if (sortBy === "followers") {
         sortedData = data.sort((a: any, b: any) => (b.follower_count || 0) - (a.follower_count || 0));
       } else if (sortBy === "recent") {
@@ -219,6 +229,17 @@ const UserSearchPage = () => {
         let result = await search;
         if (result.error) throw result.error;
         data = result.data;
+        
+        // Manually fetch follower counts for each profile
+        if (data && data.length > 0) {
+          data = await Promise.all(data.map(async (profile: any) => {
+            const { count } = await supabase
+              .from('followers')
+              .select('id', { count: 'exact', head: true })
+              .eq('following_profile_id', profile.id);
+            return { ...profile, follower_count: count || 0 };
+          }));
+        }
         // Follower count will be available after running SQL migration
         // Sorting
         // Follower sorting - uncomment after running SQL migration
@@ -409,7 +430,7 @@ const UserSearchPage = () => {
                 <div className="flex-1 min-w-0 w-full">
                   <div className="font-semibold text-lg text-sky-700">{highlightText("@" + (profile.username || ""))}</div>
                   <div className="flex gap-2 mt-1 text-xs flex-wrap">
-                    <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">0 followers</span>
+                    <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{profile.follower_count || 0} followers</span>
                     {/* Category badge - uncomment after running add-followers-and-views.sql migration */}
                     {/* {profile.category && profile.category !== 'other' && (
                       <span className="bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">
@@ -459,7 +480,7 @@ const UserSearchPage = () => {
               />
               <div className="font-semibold text-lg text-sky-700">@{selectedProfile.username || ""}</div>
               <div className="flex gap-2 mt-1 text-xs">
-                <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">0 followers</span>
+                <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{selectedProfile.follower_count || 0} followers</span>
               </div>
 
               <Button className="w-full bg-sky-500 hover:bg-sky-600 text-white" onClick={() => { setShowModal(false); navigate(`/@${selectedProfile.username}`); }}>View Full Profile</Button>

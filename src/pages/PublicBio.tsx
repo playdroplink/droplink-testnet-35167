@@ -292,24 +292,40 @@ const PublicBio = () => {
 
     try {
       if (isFollowing) {
-        await supabase
+        const { error } = await supabase
           .from("followers")
           .delete()
           .eq("follower_profile_id", currentUserProfileId)
           .eq("following_profile_id", profileId);
         
+        if (error) throw error;
+        
         setIsFollowing(false);
+        setFollowerCount(prev => Math.max(0, prev - 1));
         toast.success("Unfollowed");
       } else {
-        await supabase
+        const { error } = await supabase
           .from("followers")
           .insert({
             follower_profile_id: currentUserProfileId,
             following_profile_id: profileId,
           });
         
+        if (error) throw error;
+        
         setIsFollowing(true);
+        setFollowerCount(prev => prev + 1);
         toast.success("Following!");
+      }
+      
+      // Refresh the follower count to sync with database
+      const { count } = await supabase
+        .from('followers')
+        .select('id', { count: 'exact', head: true })
+        .eq('following_profile_id', profileId);
+      
+      if (count !== null) {
+        setFollowerCount(count);
       }
     } catch (error) {
       console.error("Follow error:", error);
