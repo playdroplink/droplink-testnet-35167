@@ -1905,6 +1905,52 @@ const Dashboard = () => {
                 </div>
               </div>
 
+              {/* User Category - UNCOMMENT AFTER RUNNING add-followers-and-views.sql */}
+              {/* <div className="mb-6">
+                <Label htmlFor="category" className="mb-2 sm:mb-3 block text-sm">Profile Category</Label>
+                <select
+                  id="category"
+                  value={(profile as any).category || 'other'}
+                  onChange={async (e) => {
+                    const newCategory = e.target.value;
+                    const newProfile = { ...profile, category: newCategory } as any;
+                    setProfile(newProfile);
+                    
+                    if (profileId) {
+                      try {
+                        const { error } = await supabase
+                          .from('profiles')
+                          .update({ category: newCategory })
+                          .eq('id', profileId);
+                        
+                        if (error) {
+                          toast.error('Failed to update category');
+                        } else {
+                          toast.success('Category updated!');
+                        }
+                      } catch (error) {
+                        toast.error('Failed to update category');
+                      }
+                    }
+                  }}
+                  className="w-full h-10 sm:h-11 px-3 rounded-lg bg-input-bg border border-border text-sm"
+                >
+                  <option value="content_creator">🎥 Content Creator</option>
+                  <option value="business">💼 Business</option>
+                  <option value="gamer">🎮 Gamer</option>
+                  <option value="developer">💻 Developer</option>
+                  <option value="artist">🎨 Artist</option>
+                  <option value="musician">🎵 Musician</option>
+                  <option value="educator">📚 Educator</option>
+                  <option value="influencer">⭐ Influencer</option>
+                  <option value="entrepreneur">🚀 Entrepreneur</option>
+                  <option value="other">📋 Other</option>
+                </select>
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  Choose what best describes you to help others find your profile in search
+                </p>
+              </div> */}
+
               {/* YouTube Video URL - Premium/Pro only */}
               <PlanGate minPlan="premium" featureName="YouTube Video">
                 <div className="mb-6">
@@ -2657,6 +2703,16 @@ const Dashboard = () => {
             <h3 className="text-xs sm:text-sm md:text-base font-medium text-muted-foreground">Live Preview</h3>
             <Button variant="ghost" size="sm" onClick={handleCopyLink} className="text-xs sm:text-sm h-8 sm:h-9">
               Copy link
+            </Button>
+          </div>
+          <div className="w-full px-3 sm:px-4 md:px-6 mb-3">
+            <Button 
+              onClick={() => navigate('/search-users')} 
+              className="w-full bg-sky-500 hover:bg-sky-600 text-white"
+              size="sm"
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Search Droplink Profiles
             </Button>
           </div>
           <div className="flex-1 flex items-center justify-center w-full overflow-hidden px-2 sm:px-3 md:px-4 py-2 sm:py-3">

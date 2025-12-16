@@ -1,15 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Mail, Lock, User, Shield, LogOut } from "lucide-react";
+import { Loader2, Mail, Lock, User, Shield, LogOut, Upload, Image as ImageIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import droplinkLogo from "@/assets/droplink-logo.png";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { uploadProfileLogo, uploadAvatar, uploadBackground, deleteFile, STORAGE_BUCKETS } from "@/lib/supabase-storage";
 
 const AdminMrwain = () => {
   const navigate = useNavigate();
@@ -18,6 +19,13 @@ const AdminMrwain = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingBackground, setUploadingBackground] = useState(false);
+  const [profileData, setProfileData] = useState<any>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const backgroundInputRef = useRef<HTMLInputElement>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   // Check if user is already logged in
@@ -36,14 +44,40 @@ const AdminMrwain = () => {
     checkAuth();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setCurrentUser(session?.user || null);
+      
+      // Load profile data when user is authenticated
+      if (session?.user) {
+        await loadProfileData(session.user.id);
+      }
     });
 
     return () => {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Load user profile data including uploaded images
+  const loadProfileData = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('[Admin] Error loading profile:', error);
+        return;
+      }
+
+      setProfileData(data);
+      console.log('[Admin] Profile data loaded:', data);
+    } catch (error) {
+      console.error('[Admin] Unexpected error loading profile:', error);
+    }
+  };
 
   const ensureProfileExists = async (user: any) => {
     try {
@@ -59,26 +93,84 @@ const AdminMrwain = () => {
         return;
       }
 
-      // Create profile if it doesn't exist
+      // Determine auth method from user metadata
+      const authMethod = user.app_metadata?.provider === 'google' ? 'google' : 'email';
+      
+      // Create or update profile
       if (!existingProfile) {
-        const username = user.email?.split('@')[0] || `user_${user.id.substring(0, 8)}`;
-        const business_name = user.email || `User ${user.id.substring(0, 8)}`;
+        // Generate username from email
+        const emailUsername = user.email?.split('@')[0] || `user_${user.id.substring(0, 8)}`;
+        const sanitizedUsername = emailUsername.toLowerCase().replace(/[^a-z0-9_]/g, '_').substring(0, 30);
+        const business_name = user.user_metadata?.full_name || user.email || `User ${user.id.substring(0, 8)}`;
         
-        const { error: insertError } = await supabase
+        console.log('[Admin Profile] Creating profile for:', user.email);
+        
+        const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
           .insert({
             id: user.id,
             user_id: user.id,
-            username: username,
+            username: sanitizedUsername,
             business_name: business_name,
+            description: `Admin user - ${authMethod} authenticated`,
+            has_premium: false,
+            show_share_button: true,
+            social_links: {},
+            theme_settings: {},
             created_at: new Date().toISOString(),
-          });
+            updated_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
 
         if (insertError) {
           console.error("Error creating profile:", insertError);
           toast.error("Failed to create user profile");
         } else {
+          console.log('[Admin Profile] Profile created successfully:', newProfile);
           toast.success("Profile created successfully!");
+          
+          // Initialize user wallet
+          const { error: walletError } = await supabase
+            .from('user_wallets')
+            .insert({
+              profile_id: user.id,
+              drop_tokens: 0,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+
+          if (walletError) {
+            console.error("Wallet creation error:", walletError);
+          } else {
+            console.log('[Admin Profile] Wallet initialized');
+          }
+        }
+      } else {
+        // Update existing profile with latest data if needed
+        console.log('[Admin Profile] Profile exists, ensuring data is current');
+        
+        const updates: any = {
+          updated_at: new Date().toISOString(),
+        };
+
+        // Update if business_name is missing
+        if (!existingProfile.business_name) {
+          updates.business_name = user.user_metadata?.full_name || user.email || existingProfile.username;
+        }
+
+        // Only update if there are changes
+        if (Object.keys(updates).length > 1) {
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update(updates)
+            .eq('id', user.id);
+
+          if (updateError) {
+            console.error("Error updating profile:", updateError);
+          } else {
+            console.log('[Admin Profile] Profile updated with latest data');
+          }
         }
       }
     } catch (error) {
@@ -110,12 +202,14 @@ const AdminMrwain = () => {
     try {
       if (isLogin) {
         // Sign In
+        console.log('[Admin Auth] Attempting sign in for:', email);
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         
         if (error) {
+          console.error('[Admin Auth] Sign in error:', error);
           if (error.message.includes("Invalid login credentials")) {
             toast.error("Invalid email or password");
           } else {
@@ -124,7 +218,9 @@ const AdminMrwain = () => {
           return;
         }
 
-        // Create profile if it doesn't exist
+        console.log('[Admin Auth] Sign in successful');
+        
+        // Ensure profile exists and is up to date
         if (data.user) {
           await ensureProfileExists(data.user);
         }
@@ -133,18 +229,22 @@ const AdminMrwain = () => {
         setCurrentUser(data.user);
       } else {
         // Sign Up
+        console.log('[Admin Auth] Attempting sign up for:', email);
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
-              auth_method: 'email'
+              auth_method: 'email',
+              created_from: 'admin_panel',
+              signup_timestamp: new Date().toISOString(),
             },
             emailRedirectTo: `${window.location.origin}/admin-mrwain`
           }
         });
 
         if (error) {
+          console.error('[Admin Auth] Sign up error:', error);
           if (error.message.includes("already registered")) {
             toast.error("This email is already registered. Please sign in instead.");
             setIsLogin(true);
@@ -154,20 +254,31 @@ const AdminMrwain = () => {
           return;
         }
 
+        console.log('[Admin Auth] Sign up successful');
+
         if (data.user) {
+          // Create complete user profile with all data
           await ensureProfileExists(data.user);
+          
+          // Save additional user metadata to localStorage for quick access
+          localStorage.setItem('admin_user_email', email);
+          localStorage.setItem('admin_user_id', data.user.id);
+          localStorage.setItem('admin_signup_date', new Date().toISOString());
           
           // Check if email confirmation is required
           if (data.user.identities && data.user.identities.length === 0) {
             toast.success("Please check your email to confirm your account!");
+            console.log('[Admin Auth] Email confirmation required');
           } else {
-            toast.success("Account created successfully!");
+            toast.success("Account created successfully! All data saved.");
             setCurrentUser(data.user);
+            await loadProfileData(data.user.id);
+            console.log('[Admin Auth] Account fully created and data saved');
           }
         }
       }
     } catch (error: any) {
-      console.error("Auth error:", error);
+      console.error("[Admin Auth] Unexpected error:", error);
       toast.error(error.message || "Authentication failed");
     } finally {
       setLoading(false);
@@ -180,9 +291,11 @@ const AdminMrwain = () => {
       if (error) throw error;
       
       setCurrentUser(null);
+      setProfileData(null);
       setEmail("");
       setPassword("");
       toast.success("Signed out successfully");
+      console.log("[Admin Auth] Signed out successfully");
     } catch (error: any) {
       console.error("Sign out error:", error);
       toast.error(error.message || "Failed to sign out");
@@ -191,17 +304,161 @@ const AdminMrwain = () => {
 
   const handleGoogleSignIn = async () => {
     try {
+      console.log('[Admin Auth] Initiating Google OAuth');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/admin-mrwain`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         }
       });
 
       if (error) throw error;
+      
+      console.log('[Admin Auth] Google OAuth initiated successfully');
+      toast.info("Redirecting to Google...");
     } catch (error: any) {
-      console.error("Google sign in error:", error);
+      console.error("[Admin Auth] Google sign in error:", error);
       toast.error(error.message || "Failed to sign in with Google");
+    }
+  };
+
+  // File upload handlers
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !currentUser) return;
+
+    setUploadingLogo(true);
+    try {
+      const logoUrl = await uploadProfileLogo(file, currentUser.id);
+      
+      if (logoUrl) {
+        // Update profile with new logo URL
+        const { error } = await supabase
+          .from('profiles')
+          .update({ logo: logoUrl, updated_at: new Date().toISOString() })
+          .eq('id', currentUser.id);
+
+        if (error) {
+          console.error('[Admin] Error updating logo:', error);
+          toast.error('Failed to save logo');
+        } else {
+          await loadProfileData(currentUser.id);
+          toast.success('Logo uploaded successfully!');
+        }
+      }
+    } catch (error) {
+      console.error('[Admin] Logo upload error:', error);
+      toast.error('Failed to upload logo');
+    } finally {
+      setUploadingLogo(false);
+      if (logoInputRef.current) logoInputRef.current.value = '';
+    }
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !currentUser) return;
+
+    setUploadingAvatar(true);
+    try {
+      const avatarUrl = await uploadAvatar(file, currentUser.id);
+      
+      if (avatarUrl) {
+        // Store avatar in theme_settings
+        const themeSettings = profileData?.theme_settings || {};
+        const updatedSettings = {
+          ...themeSettings,
+          avatar: avatarUrl,
+        };
+
+        const { error } = await supabase
+          .from('profiles')
+          .update({ 
+            theme_settings: updatedSettings,
+            updated_at: new Date().toISOString() 
+          })
+          .eq('id', currentUser.id);
+
+        if (error) {
+          console.error('[Admin] Error updating avatar:', error);
+          toast.error('Failed to save avatar');
+        } else {
+          await loadProfileData(currentUser.id);
+          toast.success('Avatar uploaded successfully!');
+        }
+      }
+    } catch (error) {
+      console.error('[Admin] Avatar upload error:', error);
+      toast.error('Failed to upload avatar');
+    } finally {
+      setUploadingAvatar(false);
+      if (avatarInputRef.current) avatarInputRef.current.value = '';
+    }
+  };
+
+  const handleBackgroundUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !currentUser) return;
+
+    setUploadingBackground(true);
+    try {
+      const backgroundUrl = await uploadBackground(file, currentUser.id);
+      
+      if (backgroundUrl) {
+        // Store background in theme_settings
+        const themeSettings = profileData?.theme_settings || {};
+        const updatedSettings = {
+          ...themeSettings,
+          background: backgroundUrl,
+        };
+
+        const { error } = await supabase
+          .from('profiles')
+          .update({ 
+            theme_settings: updatedSettings,
+            updated_at: new Date().toISOString() 
+          })
+          .eq('id', currentUser.id);
+
+        if (error) {
+          console.error('[Admin] Error updating background:', error);
+          toast.error('Failed to save background');
+        } else {
+          await loadProfileData(currentUser.id);
+          toast.success('Background uploaded successfully!');
+        }
+      }
+    } catch (error) {
+      console.error('[Admin] Background upload error:', error);
+      toast.error('Failed to upload background');
+    } finally {
+      setUploadingBackground(false);
+      if (backgroundInputRef.current) backgroundInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteLogo = async () => {
+    if (!currentUser || !profileData?.logo) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ logo: null, updated_at: new Date().toISOString() })
+        .eq('id', currentUser.id);
+
+      if (error) {
+        toast.error('Failed to delete logo');
+      } else {
+        await loadProfileData(currentUser.id);
+        toast.success('Logo deleted');
+      }
+    } catch (error) {
+      console.error('[Admin] Delete logo error:', error);
+      toast.error('Failed to delete logo');
     }
   };
 
@@ -264,6 +521,219 @@ const AdminMrwain = () => {
                 <div>
                   <Label className="text-muted-foreground">Created At</Label>
                   <p className="text-sm">{new Date(currentUser.created_at).toLocaleDateString()}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* File Upload Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Upload className="w-5 h-5" />
+                Upload Images & Files
+              </CardTitle>
+              <CardDescription>
+                Upload your profile logo, avatar, and background images to Supabase Storage
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Logo Upload */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Profile Logo</Label>
+                <div className="flex items-center gap-4">
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleLogoUpload}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => logoInputRef.current?.click()}
+                    disabled={uploadingLogo}
+                    className="flex-1"
+                  >
+                    {uploadingLogo ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <ImageIcon className="w-4 h-4 mr-2" />
+                        Upload Logo
+                      </>
+                    )}
+                  </Button>
+                  {profileData?.logo && (
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={handleDeleteLogo}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+                {profileData?.logo && (
+                  <div className="mt-2 p-3 border rounded-lg bg-muted/20">
+                    <img
+                      src={profileData.logo}
+                      alt="Profile Logo"
+                      className="max-h-24 object-contain"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2 break-all">
+                      {profileData.logo}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Avatar Upload */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Avatar / Profile Picture</Label>
+                <div className="flex items-center gap-4">
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="flex-1"
+                  >
+                    {uploadingAvatar ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <User className="w-4 h-4 mr-2" />
+                        Upload Avatar
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {profileData?.theme_settings?.avatar && (
+                  <div className="mt-2 p-3 border rounded-lg bg-muted/20">
+                    <img
+                      src={profileData.theme_settings.avatar}
+                      alt="Avatar"
+                      className="max-h-24 rounded-full object-cover"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2 break-all">
+                      {profileData.theme_settings.avatar}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Background Upload */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Background Image</Label>
+                <div className="flex items-center gap-4">
+                  <input
+                    ref={backgroundInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleBackgroundUpload}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => backgroundInputRef.current?.click()}
+                    disabled={uploadingBackground}
+                    className="flex-1"
+                  >
+                    {uploadingBackground ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <ImageIcon className="w-4 h-4 mr-2" />
+                        Upload Background
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {profileData?.theme_settings?.background && (
+                  <div className="mt-2 p-3 border rounded-lg bg-muted/20">
+                    <img
+                      src={profileData.theme_settings.background}
+                      alt="Background"
+                      className="max-h-32 w-full object-cover rounded"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2 break-all">
+                      {profileData.theme_settings.background}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <p className="text-xs text-blue-800 dark:text-blue-200">
+                  💡 <strong>Storage Info:</strong> All images are stored in Supabase Storage at: 
+                  <br />
+                  <code className="text-xs">https://idkjfuctyukspexmijvb.storage.supabase.co/storage/v1/s3</code>
+                  <br />
+                  Max file size: 5MB per image
+                </p>
+              </div>
+
+              <Separator />
+
+              {/* Category Selection */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">User Category</Label>
+                <p className="text-sm text-muted-foreground">Choose what best describes you to help others find your profile</p>
+                <select
+                  value={profileData?.category || 'other'}
+                  onChange={async (e) => {
+                    const newCategory = e.target.value;
+                    try {
+                      const { error } = await supabase
+                        .from('profiles')
+                        .update({ category: newCategory, updated_at: new Date().toISOString() })
+                        .eq('id', currentUser.id);
+                      
+                      if (error) {
+                        toast.error('Failed to update category');
+                      } else {
+                        await loadProfileData(currentUser.id);
+                        toast.success('Category updated!');
+                      }
+                    } catch (error) {
+                      toast.error('Failed to update category');
+                    }
+                  }}
+                  className="w-full px-3 py-2 border rounded-lg bg-background"
+                >
+                  <option value="content_creator">🎥 Content Creator</option>
+                  <option value="business">💼 Business</option>
+                  <option value="gamer">🎮 Gamer</option>
+                  <option value="developer">💻 Developer</option>
+                  <option value="artist">🎨 Artist</option>
+                  <option value="musician">🎵 Musician</option>
+                  <option value="educator">📚 Educator</option>
+                  <option value="influencer">⭐ Influencer</option>
+                  <option value="entrepreneur">🚀 Entrepreneur</option>
+                  <option value="other">📋 Other</option>
+                </select>
+                <div className="mt-2 p-2 bg-muted/50 rounded text-xs">
+                  Current: <strong>{profileData?.category ? profileData.category.replace('_', ' ').toUpperCase() : 'OTHER'}</strong>
                 </div>
               </div>
             </CardContent>

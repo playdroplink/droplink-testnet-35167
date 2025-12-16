@@ -5,8 +5,23 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { usePi } from "@/contexts/PiContext";
+import { toast } from "sonner";
 
 const plans = ["all", "free", "basic", "premium", "pro"];
+const categories = [
+  { value: "all", label: "All Categories" },
+  { value: "content_creator", label: "🎥 Content Creator" },
+  { value: "business", label: "💼 Business" },
+  { value: "gamer", label: "🎮 Gamer" },
+  { value: "developer", label: "💻 Developer" },
+  { value: "artist", label: "🎨 Artist" },
+  { value: "musician", label: "🎵 Musician" },
+  { value: "educator", label: "📚 Educator" },
+  { value: "influencer", label: "⭐ Influencer" },
+  { value: "entrepreneur", label: "🚀 Entrepreneur" },
+  { value: "other", label: "📋 Other" }
+];
 const sortOptions = [
   { value: "username", label: "Username (A-Z)" },
   { value: "followers", label: "Most Followers" },
@@ -14,23 +29,21 @@ const sortOptions = [
 ];
 
 const UserSearchPage = () => {
+  const { piUser, isAuthenticated, signIn } = usePi();
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   interface ProfileResult {
     id: string;
     username: string;
     logo?: string;
-    follower_count?: number;
     created_at?: string;
-    avatar_url?: string;
-    bio?: string;
-    display_name?: string;
-    pi_auth_username?: string;
-    pi_adnetwork?: string;
+    category?: string;
   }
   const [results, setResults] = useState<ProfileResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedPlan, setSelectedPlan] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("username");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<ProfileResult | null>(null);
@@ -38,18 +51,21 @@ const UserSearchPage = () => {
   const [showPiAuthModal, setShowPiAuthModal] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
 
-  // Placeholder for Pi Network sign-in
+  // Real Pi Network sign-in
   const signInWithPiNetwork = async () => {
     setSigningIn(true);
-    // Simulate sign-in delay
-    setTimeout(() => {
-      // Here you would integrate with Pi Network auth
-      setSigningIn(false);
+    try {
+      await signIn(['username', 'payments']);
       setShowPiAuthModal(false);
-      // Optionally, set auth token in localStorage or context
-      localStorage.setItem("pi_auth_token", "dummy_token");
-    }, 1200);
+      toast.success('Signed in with Pi Network!');
+    } catch (error) {
+      console.error('Pi auth error:', error);
+      toast.error('Failed to sign in with Pi Network');
+    } finally {
+      setSigningIn(false);
+    }
   };
+  
   const [followLoading, setFollowLoading] = useState<string | null>(null);
   const [highlight, setHighlight] = useState("");
   const [profileProducts, setProfileProducts] = useState<any[]>([]);
@@ -64,7 +80,13 @@ const UserSearchPage = () => {
       setViewAll(false);
     }
   }, [query]);
-  const navigate = useNavigate();
+
+  // Re-run search when filters change
+  useEffect(() => {
+    if (query.trim() && results.length > 0) {
+      handleSearch();
+    }
+  }, [selectedCategory, selectedPlan, sortBy]);
   // Fetch total user count and subscribe to changes
   useEffect(() => {
     let subscription: any;
@@ -92,11 +114,32 @@ const UserSearchPage = () => {
     setLoading(true);
     setViewAll(true);
     // Fetch all profile fields from Supabase (only existing columns)
-    const { data, error } = await supabase
+    let query = supabase
       .from("profiles")
       .select("id, username, logo, created_at");
+    
+    // Category filter - uncomment after running add-followers-and-views.sql migration
+    // if (selectedCategory !== "all") {
+    //   query = query.eq("category", selectedCategory);
+    // }
+    
+    // Plan filter - uncomment if you have a plan column in profiles table
+    // if (selectedPlan !== "all") {
+    //   query = query.eq("plan", selectedPlan);
+    // }
+    
+    const { data, error } = await query;
     if (!error && data) {
-      setResults(data);
+      // Apply sorting
+      let sortedData = data;
+      if (sortBy === "followers") {
+        sortedData = data.sort((a: any, b: any) => (b.follower_count || 0) - (a.follower_count || 0));
+      } else if (sortBy === "recent") {
+        sortedData = data.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      } else {
+        sortedData = data.sort((a: any, b: any) => a.username.localeCompare(b.username));
+      }
+      setResults(sortedData);
     } else {
       setResults([]);
       setError(error?.message || "Failed to fetch profiles");
@@ -133,7 +176,7 @@ const UserSearchPage = () => {
             if (json.id) {
               const { data: supaProfile, error: supaError } = await supabase
                 .from("profiles")
-                  .select("id, username, follower_count, created_at, avatar_url, bio, display_name, plan, logo, business_name, pi_auth_username, pi_adnetwork")
+                  .select("id, username, created_at, logo, business_name")
                 .eq("id", json.id)
                 .maybeSingle();
               if (!supaError && supaProfile) fullProfile = supaProfile;
@@ -158,7 +201,7 @@ const UserSearchPage = () => {
               .from("followers")
               .select("*", { count: "exact", head: true })
               .eq("following_profile_id", profile.id);
-            if (!countError) profile.follower_count = count || 0;
+            // Follower count will be available after running SQL migration
           }
           data = [profile];
         } else {
@@ -167,29 +210,22 @@ const UserSearchPage = () => {
       } else {
         let search = supabase
             .from("profiles")
-            .select("id, username, logo, follower_count, created_at, avatar_url, bio, display_name, pi_auth_username, pi_adnetwork")
+            .select("id, username, logo, created_at")
           .ilike("username", `%${query.replace(/^@/, "")}%`);
-        if (selectedPlan !== "all") (search as any) = (search as any).eq("plan", selectedPlan);
+        // Plan filter - uncomment if you have a plan column in profiles table
+        // if (selectedPlan !== "all") (search as any) = (search as any).eq("plan", selectedPlan);
+        // Category filter - uncomment after running add-followers-and-views.sql migration
+        // if (selectedCategory !== "all") (search as any) = (search as any).eq("category", selectedCategory);
         let result = await search;
         if (result.error) throw result.error;
         data = result.data;
-        // Fetch follower count for each profile if not present
-        if (Array.isArray(data)) {
-          data = await Promise.all(data.map(async (profile: ProfileResult) => {
-            if (profile.id && (profile.follower_count === undefined || profile.follower_count === null)) {
-              const { count, error: countError } = await supabase
-                .from("followers")
-                .select("*", { count: "exact", head: true })
-                .eq("following_profile_id", profile.id);
-              if (!countError) profile.follower_count = count || 0;
-            }
-            return profile;
-          }));
-        }
+        // Follower count will be available after running SQL migration
         // Sorting
-        if (sortBy === "followers") {
-          data = data.sort((a: any, b: any) => (b.follower_count || 0) - (a.follower_count || 0));
-        } else if (sortBy === "recent") {
+        // Follower sorting - uncomment after running SQL migration
+        // if (sortBy === "followers") {
+        //   data = data.sort((a: any, b: any) => (b.follower_count || 0) - (a.follower_count || 0));
+        // } else 
+        if (sortBy === "recent") {
           data = data.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         } else {
           data = data.sort((a: any, b: any) => a.username.localeCompare(b.username));
@@ -207,10 +243,9 @@ const UserSearchPage = () => {
     }
   };
 
-  // Add Pi Auth check (pseudo, replace with your real auth logic)
+  // Check Pi Auth status
   const isPiAuthenticated = () => {
-    // Example: check for a token in localStorage or context
-    return Boolean(localStorage.getItem("pi_auth_token"));
+    return isAuthenticated && piUser !== null;
   };
 
   const handleFollow = async (profile: any) => {
@@ -221,27 +256,30 @@ const UserSearchPage = () => {
     setFollowLoading(profile.id);
     // Save follow relationship to Supabase
     try {
-      // Get current user id (assuming it's stored in localStorage or context)
-      const currentUserId = localStorage.getItem("pi_user_id");
-      if (!currentUserId) throw new Error("User not authenticated");
+      // Get current user id from Pi context
+      if (!piUser?.uid) {
+        throw new Error("User not authenticated");
+      }
+      
       // Insert into followers table: follower_profile_id (current user), following_profile_id (profile.id)
       const { error } = await supabase
         .from("followers")
-        .insert([
-          {
-            follower_profile_id: currentUserId,
-            following_profile_id: profile.id,
-          },
-        ]);
+        .insert([{
+          follower_profile_id: piUser.uid,
+          following_profile_id: profile.id,
+        }]);
+      
       if (error) throw error;
-    } catch (err) {
-      // Optionally handle error (show message, etc)
-    }
-    setTimeout(() => {
-      setFollowLoading(null);
+      
       setFollowedUsername(profile.username);
       setShowFollowedModal(true);
-    }, 800);
+      toast.success(`Following @${profile.username}!`);
+    } catch (err: any) {
+      console.error('Follow error:', err);
+      toast.error(err.message || 'Failed to follow user');
+    } finally {
+      setFollowLoading(null);
+    }
   };
 
   const highlightText = (text: string) => {
@@ -301,13 +339,23 @@ const UserSearchPage = () => {
           <Button type="submit" className="bg-sky-500 hover:bg-sky-600 text-white font-semibold">Search</Button>
         </form>
         <div className="flex flex-col sm:flex-row flex-wrap gap-2 mb-4 w-full">
-          <select
+          {/* Plan filter - uncomment when you have a plan column */}
+          {/* <select
             className="border rounded px-2 py-1 text-sm w-full sm:w-auto"
             value={selectedPlan}
             onChange={e => setSelectedPlan(e.target.value)}
           >
             {plans.map(plan => (
               <option key={plan} value={plan}>{plan.charAt(0).toUpperCase() + plan.slice(1)}</option>
+            ))}
+          </select> */}
+          <select
+            className="border rounded px-2 py-1 text-sm w-full sm:w-auto"
+            value={selectedCategory}
+            onChange={e => setSelectedCategory(e.target.value)}
+          >
+            {categories.map(cat => (
+              <option key={cat.value} value={cat.value}>{cat.label}</option>
             ))}
           </select>
           <select
@@ -354,24 +402,22 @@ const UserSearchPage = () => {
               .map((profile: ProfileResult) => (
               <Card key={profile.id} className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 p-2 sm:p-4 hover:shadow-xl transition cursor-pointer border border-sky-200 bg-white" onClick={() => { setSelectedProfile(profile); setShowModal(true); }}>
                 <img
-                  src={profile.logo || profile.avatar_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${profile.username}`}
+                  src={profile.logo || `https://api.dicebear.com/7.x/identicon/svg?seed=${profile.username}`}
                   alt={profile.username || "User"}
                   className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-sky-300 object-cover"
                 />
                 <div className="flex-1 min-w-0 w-full">
                   <div className="font-semibold text-lg text-sky-700">{highlightText("@" + (profile.username || ""))}</div>
-                  <div className="flex gap-2 mt-1 text-xs">
-                    <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{profile.follower_count ?? 0} followers</span>
+                  <div className="flex gap-2 mt-1 text-xs flex-wrap">
+                    <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">0 followers</span>
+                    {/* Category badge - uncomment after running add-followers-and-views.sql migration */}
+                    {/* {profile.category && profile.category !== 'other' && (
+                      <span className="bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">
+                        {categories.find(c => c.value === profile.category)?.label || profile.category}
+                      </span>
+                    )} */}
                   </div>
-                  {profile.bio && (
-                    <div className="text-xs text-gray-600 mt-1">{profile.bio}</div>
-                  )}
-                  {profile.pi_auth_username && (
-                    <div className="text-xs text-sky-700 mt-1">Pi Auth Username: <span className="font-semibold">{profile.pi_auth_username}</span></div>
-                  )}
-                  {profile.pi_adnetwork && (
-                    <div className="text-xs text-sky-700 mt-1">Pi AdNetwork: <span className="font-semibold">{profile.pi_adnetwork}</span></div>
-                  )}
+
                 </div>
                 <div className="flex gap-2 mt-2 sm:mt-0">
                   <Button
@@ -407,23 +453,15 @@ const UserSearchPage = () => {
           {selectedProfile && (
             <div className="flex flex-col items-center gap-3">
               <img
-                src={selectedProfile.logo || selectedProfile.avatar_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${selectedProfile.username}`}
+                src={selectedProfile.logo || `https://api.dicebear.com/7.x/identicon/svg?seed=${selectedProfile.username}`}
                 alt={selectedProfile.username || "User"}
                 className="w-20 h-20 rounded-full border-2 border-sky-300 object-cover"
               />
               <div className="font-semibold text-lg text-sky-700">@{selectedProfile.username || ""}</div>
               <div className="flex gap-2 mt-1 text-xs">
-                <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{selectedProfile.follower_count ?? 0} followers</span>
+                <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">0 followers</span>
               </div>
-              {selectedProfile.bio && (
-                <div className="text-xs text-gray-600 mt-1">{selectedProfile.bio}</div>
-              )}
-              {selectedProfile.pi_auth_username && (
-                <div className="text-xs text-sky-700 mt-1">Pi Auth Username: <span className="font-semibold">{selectedProfile.pi_auth_username}</span></div>
-              )}
-              {selectedProfile.pi_adnetwork && (
-                <div className="text-xs text-sky-700 mt-1">Pi AdNetwork: <span className="font-semibold">{selectedProfile.pi_adnetwork}</span></div>
-              )}
+
               <Button className="w-full bg-sky-500 hover:bg-sky-600 text-white" onClick={() => { setShowModal(false); navigate(`/@${selectedProfile.username}`); }}>View Full Profile</Button>
 
               {/* Products Section */}
