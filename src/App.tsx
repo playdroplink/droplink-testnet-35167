@@ -29,6 +29,7 @@ import VotingPage from "./pages/VotingPage";
 import Home from "./pages/Home";
 import SplashScreen from "./components/SplashScreen";
 import InboxPage from "./pages/Inbox";
+import AdminMrwain from "./pages/AdminMrwain";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const App = () => {
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/domain" element={<CustomDomain />} />
+            <Route path="/admin-mrwain" element={<AdminMrwain />} />
             {/* <Route path="/debug" element={<ProfileDebug />} /> */}
             <Route path="/pay/:linkId" element={<PaymentPage />} />
             <Route path="/search-users" element={<UserSearchPage />} />
