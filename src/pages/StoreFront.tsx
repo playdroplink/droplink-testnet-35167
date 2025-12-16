@@ -260,7 +260,7 @@ const StoreFront: React.FC = () => {
                         bgColor="#fff"
                       />
                       <img
-                        src="/droplink-logo.png"
+                        src="https://i.ibb.co/1fdJky1d/Gemini-Generated-Image-ar8t52ar8t52ar8t.png"
                         alt="Droplink Logo"
                         className="absolute left-1/2 top-1/2 w-16 h-16 -translate-x-1/2 -translate-y-1/2 z-10 shadow-lg border-2 border-white bg-white rounded-lg"
                         style={{ pointerEvents: 'none' }}

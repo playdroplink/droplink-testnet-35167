@@ -11,28 +11,63 @@ interface QRCodeDialogProps {
 }
 
 export const QRCodeDialog = ({ open, onOpenChange, url, username }: QRCodeDialogProps) => {
-  const downloadQRCode = () => {
+  const downloadQRCode = async () => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const size = 512;
+    canvas.width = size;
+    canvas.height = size;
+
+    // Draw white background
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, size, size);
+
+    // Get QR code SVG
     const svg = document.getElementById('qr-code-svg');
     if (!svg) return;
 
     const svgData = new XMLSerializer().serializeToString(svg);
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
+    const qrImg = new Image();
 
-    canvas.width = 512;
-    canvas.height = 512;
+    qrImg.onload = async () => {
+      // Draw QR code
+      ctx.drawImage(qrImg, 0, 0, size, size);
 
-    img.onload = () => {
-      ctx?.drawImage(img, 0, 0);
-      const pngFile = canvas.toDataURL('image/png');
-      const downloadLink = document.createElement('a');
-      downloadLink.download = `${username}-qr-code.png`;
-      downloadLink.href = pngFile;
-      downloadLink.click();
+      // Load and draw logo in center
+      const logoImg = new Image();
+      logoImg.crossOrigin = 'anonymous';
+      
+      logoImg.onload = () => {
+        const logoSize = 80; // Logo size in pixels
+        const logoX = (size - logoSize) / 2;
+        const logoY = (size - logoSize) / 2;
+
+        // Draw white background for logo
+        ctx.fillStyle = 'white';
+        ctx.fillRect(logoX - 4, logoY - 4, logoSize + 8, logoSize + 8);
+
+        // Draw border
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(logoX - 2, logoY - 2, logoSize + 4, logoSize + 4);
+
+        // Draw logo
+        ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
+
+        // Download the final image
+        const pngFile = canvas.toDataURL('image/png');
+        const downloadLink = document.createElement('a');
+        downloadLink.download = `${username}-qr-code.png`;
+        downloadLink.href = pngFile;
+        downloadLink.click();
+      };
+
+      logoImg.src = 'https://i.ibb.co/1fdJky1d/Gemini-Generated-Image-ar8t52ar8t52ar8t.png';
     };
 
-    img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+    qrImg.src = 'data:image/svg+xml;base64,' + btoa(svgData);
   };
 
   return (
@@ -50,12 +85,12 @@ export const QRCodeDialog = ({ open, onOpenChange, url, username }: QRCodeDialog
               level="H"
               includeMargin={true}
             />
-              <img
-                src="/droplink-logo.png"
-                alt="Droplink Logo"
-                className="absolute left-1/2 top-1/2 w-16 h-16 -translate-x-1/2 -translate-y-1/2 shadow-lg border-2 border-white"
-                style={{ pointerEvents: 'none', background: 'white', borderRadius: '0.5rem' }}
-              />
+            <img
+              src="https://i.ibb.co/1fdJky1d/Gemini-Generated-Image-ar8t52ar8t52ar8t.png"
+              alt="Droplink Logo"
+              className="absolute left-1/2 top-1/2 w-16 h-16 -translate-x-1/2 -translate-y-1/2 shadow-lg border-2 border-white rounded-lg"
+              style={{ pointerEvents: 'none', background: 'white' }}
+            />
           </div>
           <p className="text-sm text-muted-foreground text-center">
             Scan this QR code to visit your store

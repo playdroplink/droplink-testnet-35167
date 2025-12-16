@@ -113,8 +113,14 @@ export const ShareStore = ({ username, businessName, followersCount = 0 }: Share
                 <DialogTitle>Store QR Code</DialogTitle>
               </DialogHeader>
               <div className="flex flex-col items-center space-y-4">
-                <div className="p-4 bg-white rounded-lg">
+                <div className="p-4 bg-white rounded-lg relative">
                   <QRCodeSVG value={storeUrl} size={200} />
+                  <img
+                    src="https://i.ibb.co/1fdJky1d/Gemini-Generated-Image-ar8t52ar8t52ar8t.png"
+                    alt="Droplink Logo"
+                    className="absolute left-1/2 top-1/2 w-12 h-12 -translate-x-1/2 -translate-y-1/2 rounded-lg"
+                    style={{ pointerEvents: 'none', background: 'white' }}
+                  />
                 </div>
                 <p className="text-sm text-muted-foreground text-center">
                   Scan to visit {businessName}

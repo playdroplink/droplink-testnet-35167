@@ -1135,7 +1135,7 @@ const PublicBio = () => {
                         <div className="relative w-[96px] h-[96px]">
                           <QRCodeSVG value={profile.piWalletAddress} size={96} bgColor="#fff" fgColor="#2563eb" />
                           <img
-                            src="/droplink-logo.png"
+                            src="https://i.ibb.co/1fdJky1d/Gemini-Generated-Image-ar8t52ar8t52ar8t.png"
                             alt="Droplink Logo"
                             className="absolute left-1/2 top-1/2 w-8 h-8 -translate-x-1/2 -translate-y-1/2 z-10 shadow-lg border-2 border-white bg-white rounded-lg"
                             style={{ pointerEvents: 'none' }}
@@ -1330,8 +1330,14 @@ const PublicBio = () => {
           </DialogHeader>
           <div className="space-y-4">
             {selectedWallet?.type === 'crypto' && (
-              <div className="flex justify-center p-4 bg-white rounded-lg">
+              <div className="flex justify-center p-4 bg-white rounded-lg relative">
                 <QRCodeSVG value={selectedWallet.value} size={200} />
+                <img
+                  src="https://i.ibb.co/1fdJky1d/Gemini-Generated-Image-ar8t52ar8t52ar8t.png"
+                  alt="Droplink Logo"
+                  className="absolute left-1/2 top-1/2 w-12 h-12 -translate-x-1/2 -translate-y-1/2 rounded-lg"
+                  style={{ pointerEvents: 'none', background: 'white' }}
+                />
               </div>
             )}
             <div className="space-y-2">
@@ -1372,7 +1378,7 @@ const PublicBio = () => {
                 bgColor="#fff"
               />
               <img
-                src="/droplink-logo.png"
+                src="https://i.ibb.co/1fdJky1d/Gemini-Generated-Image-ar8t52ar8t52ar8t.png"
                 alt="Droplink Logo"
                 className="absolute left-1/2 top-1/2 w-12 h-12 -translate-x-1/2 -translate-y-1/2 z-10 shadow-lg border-2 border-white bg-white rounded-lg"
                 style={{ pointerEvents: 'none' }}
@@ -1435,7 +1441,7 @@ const PublicBio = () => {
                     fgColor="#1e40af"
                   />
                   <img
-                    src="/droplink-logo.png"
+                    src="https://i.ibb.co/1fdJky1d/Gemini-Generated-Image-ar8t52ar8t52ar8t.png"
                     alt="Droplink Logo"
                     className="absolute left-1/2 top-1/2 w-16 h-16 -translate-x-1/2 -translate-y-1/2 z-10 shadow-lg border-2 border-white bg-white rounded-lg"
                     style={{ pointerEvents: 'none' }}
