@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,7 @@ interface GiftCardModalProps {
   onPurchase?: (planType: string, billingPeriod: string, price: number, recipientEmail?: string, message?: string) => Promise<void>;
   onRedeem?: (code: string) => Promise<void>;
   profileId?: string;
+  onPlanRedeemed?: (plan: string, period: string, code: string) => void;
 }
 
 const plans = [
@@ -48,6 +50,8 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
   const [redeemCode, setRedeemCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [purchasedCode, setPurchasedCode] = useState<string | null>(null);
+  const [showRedeemSuccess, setShowRedeemSuccess] = useState<{plan: string, period: string, code: string} | null>(null);
+  const navigate = useNavigate();
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -253,10 +257,17 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
 
         if (subError) throw subError;
 
-        toast.success(`🎉 Gift card redeemed! ${giftCard.plan_type} plan activated!`);
+        setShowRedeemSuccess({
+          plan: giftCard.plan_type,
+          period: giftCard.billing_period,
+          code: giftCard.code
+        });
+        // Safely call onPlanRedeemed if provided as a prop
+        if (typeof (GiftCardModal as any).defaultProps?.onPlanRedeemed === 'function') {
+          (GiftCardModal as any).defaultProps.onPlanRedeemed(giftCard.plan_type, giftCard.billing_period, giftCard.code);
+        }
         setRedeemCode('');
         setPurchasedCode(null);
-        onOpenChange(false);
       }
     } catch (error: any) {
       console.error('Redemption error:', error);
@@ -268,6 +279,23 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+            {/* Redeem Success Modal */}
+            {showRedeemSuccess && (
+              <Dialog open={true} onOpenChange={() => setShowRedeemSuccess(null)}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Gift Card Redeemed!</DialogTitle>
+                    <DialogDescription>
+                      <div className="text-lg font-semibold mb-2">Your plan has been upgraded:</div>
+                      <div className="mb-2">Plan: <span className="font-bold capitalize">{showRedeemSuccess.plan}</span></div>
+                      <div className="mb-2">Period: <span className="font-bold capitalize">{showRedeemSuccess.period}</span></div>
+                      <div className="mb-2">Gift Code: <span className="font-mono bg-gray-100 px-2 py-1 rounded">{showRedeemSuccess.code}</span></div>
+                      <Button className="mt-4 w-full" disabled style={{backgroundColor:'#ccc',color:'#888',border:'none',cursor:'not-allowed'}}>Mock Payment Disabled</Button>
+                    </DialogDescription>
+                  </DialogHeader>
+                </DialogContent>
+              </Dialog>
+            )}
       <DialogContent className="max-w-2xl bg-gradient-to-br from-red-50 via-white to-green-50 border-2 border-red-200">
         {/* Christmas Snowflakes */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">

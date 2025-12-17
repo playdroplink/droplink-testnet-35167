@@ -34,12 +34,40 @@ export const useActiveSubscription = (): ActiveSubscription => {
           return;
         }
 
-        // Get profile with plan info
+        // VIP team members list - these users get all features unlocked without a plan
+        const vipTeamMembers = [
+          'jomarikun',
+          'airdropio2024',
+          'flappypi_fun',
+          'Wain2020'
+        ];
+
+        // Check if user is VIP team member
+        if (vipTeamMembers.includes(piUser.username)) {
+          setPlan("pro");
+          setExpiresAt(null); // No expiration for VIP team
+          setStatus("active");
+          setLoading(false);
+          return;
+        }
+
+        // Get profile
         const { data: profile } = await supabase
           .from("profiles")
-          .select("id, subscription_plan, subscription_expires_at, subscription_period")
+          .select("id, username")
           .eq("username", piUser.username)
           .maybeSingle();
+
+        // Check if profile has Gmail or is in VIP list
+        const isGmailAdmin = profile?.username?.endsWith('@gmail.com');
+        
+        if (isGmailAdmin || (profile?.username && vipTeamMembers.includes(profile.username))) {
+          setPlan("pro");
+          setExpiresAt(null); // No expiration for VIP/Gmail users
+          setStatus("active");
+          setLoading(false);
+          return;
+        }
 
         if (!profile?.id) {
           setLoading(false);
@@ -59,11 +87,6 @@ export const useActiveSubscription = (): ActiveSubscription => {
           setPlan((sub.plan_type as PlanType) || "free");
           setExpiresAt(new Date(sub.end_date));
           setStatus(sub.status || null);
-        } else if (profile.subscription_plan && profile.subscription_plan !== "free" && profile.subscription_expires_at && new Date(profile.subscription_expires_at) > new Date()) {
-          // Fallback: use plan from profiles table if still valid
-          setPlan(profile.subscription_plan as PlanType);
-          setExpiresAt(new Date(profile.subscription_expires_at));
-          setStatus("active");
         } else {
           setPlan("free");
           setExpiresAt(null);

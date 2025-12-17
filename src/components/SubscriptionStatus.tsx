@@ -16,12 +16,42 @@ import {
 import { usePi } from '@/contexts/PiContext';
 import { useNavigate } from 'react-router-dom';
 import { useActiveSubscription } from '@/hooks/useActiveSubscription';
+import { useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 const SubscriptionStatus: React.FC = () => {
   const { isAuthenticated, piUser, signIn } = usePi();
   const navigate = useNavigate();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const { subscription, isLoading, isActive } = useActiveSubscription();
+  const [lastGiftCode, setLastGiftCode] = useState<string | null>(null);
+  const [isGiftCard, setIsGiftCard] = useState(false);
+
+  useEffect(() => {
+    const fetchGiftCard = async () => {
+      if (!subscription?.profile_id || !subscription?.plan_type || !subscription?.start_date) return;
+      // Find a gift card redeemed by this user for this plan, recently
+      const { data, error } = await supabase
+        .from('gift_cards')
+        .select('code, redeemed_at, plan_type, billing_period')
+        .eq('redeemed_by_profile_id', subscription.profile_id)
+        .eq('plan_type', subscription.plan_type)
+        .eq('billing_period', subscription.billing_period)
+        .order('redeemed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data && data.code) {
+        setLastGiftCode(data.code);
+        setIsGiftCard(true);
+      } else {
+        setLastGiftCode(null);
+        setIsGiftCard(false);
+      }
+    };
+    if (subscription && subscription.plan_type !== 'free') {
+      fetchGiftCard();
+    }
+  }, [subscription]);
 
   const handlePiAuth = async () => {
     setIsSigningIn(true);
@@ -219,6 +249,12 @@ const SubscriptionStatus: React.FC = () => {
 
         {/* Subscription Details */}
         <div className="space-y-3">
+          {isGiftCard && lastGiftCode && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-green-700">Active via Gift Card:</span>
+              <span className="font-mono bg-gray-100 px-2 py-1 rounded text-green-800">{lastGiftCode}</span>
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Current Plan:</span>
             <span className="font-semibold">{planInfo.name}</span>

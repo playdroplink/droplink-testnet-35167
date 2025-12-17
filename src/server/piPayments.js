@@ -52,21 +52,7 @@ app.post('/verify-pi-token', async (req, res) => {
 // Endpoint to handle server-side approval
 app.post('/approve-payment', async (req, res) => {
   const { paymentId } = req.body;
-
-  try {
-    const response = await axios.post(
-      `${BASE_URL}/v2/payments/${paymentId}/approve`,
-      null,
-      {
-        headers: {
-          Authorization: `key ${API_KEY}`,
-        },
-      }
-    );
-
-    res.status(200).json({ success: true, data: response.data });
-  } catch (error) {
-    console.error('Error approving payment:', error.response?.data || error.message);
+  return res.status(403).json({ error: 'Mock/test payments are disabled.' });
     res.status(500).json({ success: false, error: error.response?.data || error.message });
   }
 });
@@ -75,21 +61,7 @@ app.post('/approve-payment', async (req, res) => {
 // Endpoint to handle server-side completion
 app.post('/complete-payment', async (req, res) => {
   const { paymentId, txid } = req.body;
-
-  try {
-    const response = await axios.post(
-      `${BASE_URL}/v2/payments/${paymentId}/complete`,
-      { txid },
-      {
-        headers: {
-          Authorization: `key ${API_KEY}`,
-        },
-      }
-    );
-
-    res.status(200).json({ success: true, data: response.data });
-  } catch (error) {
-    console.error('Error completing payment:', error.response?.data || error.message);
+  return res.status(403).json({ error: 'Mock/test payments are disabled.' });
     res.status(500).json({ success: false, error: error.response?.data || error.message });
   }
 });

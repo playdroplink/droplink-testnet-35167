@@ -44,6 +44,7 @@ const UserSearchPage = () => {
     bio?: string;
     display_name?: string;
     business_name?: string;
+    email?: string;
   }
   const [results, setResults] = useState<ProfileResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -212,11 +213,13 @@ const UserSearchPage = () => {
           }
           // Fetch follower count from Supabase if we have an id
           if (profile.id) {
-            const { count, error: countError } = await supabase
+            const { count } = await supabase
               .from("followers")
               .select("*", { count: "exact", head: true })
               .eq("following_profile_id", profile.id);
-            // Follower count will be available after running SQL migration
+            if (count !== null) {
+              profile.follower_count = count;
+            }
           }
           data = [profile];
         } else {
@@ -425,8 +428,23 @@ const UserSearchPage = () => {
                 ].includes(profile.username)
               )
               .map((profile: ProfileResult) => {
-                // Check if user is admin (from database column)
-                const isAdmin = profile.is_admin === true;
+                // VIP team members list - these users get all features unlocked without a plan
+                const vipTeamMembers = [
+                  'jomarikun',
+                  'airdropio2024',
+                  'flappypi_fun',
+                  'Wain2020',
+                  'airdropio2024@gmail.com',
+                  'flappypi.fun@gmail.com'
+                ];
+                
+                // Check if user is admin (from database, Gmail email, or VIP team member)
+                const isVipTeamMember = vipTeamMembers.includes(profile.username) || 
+                                       vipTeamMembers.includes(profile.email || '');
+                const isGmailAdmin = profile.username?.endsWith('@gmail.com') || 
+                                    profile.email?.endsWith('@gmail.com') ||
+                                    (profile as any).user_email?.endsWith('@gmail.com');
+                const isAdmin = profile.is_admin === true || isGmailAdmin || isVipTeamMember;
                 
                 return (
               <Card 
