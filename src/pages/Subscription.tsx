@@ -514,7 +514,7 @@ const Subscription = () => {
       }, 500);
     } catch (error: any) {
       console.error('[GIFT CARD] Redemption error:', error);
-      throw error;
+      toast.error(error.message || 'Failed to redeem gift card');
     }
   };
 
