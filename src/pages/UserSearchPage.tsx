@@ -282,23 +282,20 @@ const UserSearchPage = () => {
       return;
     }
     setFollowLoading(profile.id);
-    // Save follow relationship to Supabase
     try {
       // Get current user id from Pi context
-      if (!piUser?.uid) {
-        throw new Error("User not authenticated");
+      const followerId = piUser?.uid;
+      const followingId = profile.id;
+      if (!followerId || !followingId) {
+        throw new Error("Invalid follow: missing user id");
       }
-      
-      // Insert into followers table: follower_profile_id (current user), following_profile_id (profile.id)
       const { error } = await supabase
         .from("followers")
         .insert([{
-          follower_profile_id: piUser.uid,
-          following_profile_id: profile.id,
+          follower_profile_id: followerId,
+          following_profile_id: followingId,
         }]);
-      
       if (error) throw error;
-      
       setFollowedUsername(profile.username);
       setShowFollowedModal(true);
       toast.success(`Following @${profile.username}!`);

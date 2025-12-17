@@ -65,12 +65,10 @@ export const FollowersSection = ({ profileId, currentUserProfileId }: FollowersS
   };
 
   const handleFollow = async () => {
-    if (!currentUserProfileId) {
-      toast.error("Please login to follow");
-      navigate("/");
+    if (!currentUserProfileId || !profileId) {
+      toast.error("Invalid follow: missing user id");
       return;
     }
-
     setLoading(true);
     try {
       if (isFollowing) {
@@ -80,7 +78,6 @@ export const FollowersSection = ({ profileId, currentUserProfileId }: FollowersS
           .delete()
           .eq("follower_profile_id", currentUserProfileId)
           .eq("following_profile_id", profileId);
-
         if (error) throw error;
         setIsFollowing(false);
         setFollowersCount((prev) => Math.max(0, prev - 1));
@@ -93,24 +90,20 @@ export const FollowersSection = ({ profileId, currentUserProfileId }: FollowersS
             follower_profile_id: currentUserProfileId,
             following_profile_id: profileId,
           });
-
         if (error) throw error;
         setIsFollowing(true);
         setFollowersCount((prev) => prev + 1);
         toast.success("Following successfully");
       }
-      
       // Refresh counts from database to ensure sync
       const { count: followers } = await supabase
         .from("followers")
         .select("*", { count: "exact", head: true })
         .eq("following_profile_id", profileId);
-
       const { count: following } = await supabase
         .from("followers")
         .select("*", { count: "exact", head: true })
         .eq("follower_profile_id", profileId);
-
       setFollowersCount(followers || 0);
       setFollowingCount(following || 0);
     } catch (error) {

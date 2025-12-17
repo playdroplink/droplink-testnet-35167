@@ -120,8 +120,10 @@ const Followers = () => {
   };
 
   const handleFollowUser = async (targetProfileId: string) => {
-    if (!currentProfileId) return;
-    
+    if (!currentProfileId || !targetProfileId) {
+      toast.error("Invalid follow: missing user id");
+      return;
+    }
     try {
       const { error } = await supabase
         .from("followers")
@@ -129,7 +131,6 @@ const Followers = () => {
           follower_profile_id: currentProfileId,
           following_profile_id: targetProfileId,
         });
-
       if (error) throw error;
       toast.success("Started following!");
       loadFollowData(); // Refresh data

@@ -269,27 +269,17 @@ const PublicBio = () => {
 
   const handleFollow = async () => {
     if (!currentUserProfileId || !profileId) {
-      // Show sign-in prompt for Pi Browser users
-      if (typeof window !== 'undefined' && window.Pi && !isPiAuthenticated) {
-        toast("Please sign in to follow", {
-          description: "Click the 'Sign in with Pi' button to continue",
-          action: {
-            label: "Sign In",
-            onClick: handlePiSignIn
-          },
-          duration: 5000
-        });
-      } else {
-        toast.error("Please sign in to follow");
-      }
+      toast.error("Please sign in to follow");
       return;
     }
-
     if (currentUserProfileId === profileId) {
       toast.error("You cannot follow yourself");
       return;
     }
-
+    if (!currentUserProfileId || !profileId) {
+      toast.error("Invalid follow: missing user id");
+      return;
+    }
     try {
       if (isFollowing) {
         const { error } = await supabase
@@ -297,9 +287,7 @@ const PublicBio = () => {
           .delete()
           .eq("follower_profile_id", currentUserProfileId)
           .eq("following_profile_id", profileId);
-        
         if (error) throw error;
-        
         setIsFollowing(false);
         setFollowerCount(prev => Math.max(0, prev - 1));
         toast.success("Unfollowed");
@@ -310,9 +298,7 @@ const PublicBio = () => {
             follower_profile_id: currentUserProfileId,
             following_profile_id: profileId,
           });
-        
         if (error) throw error;
-        
         setIsFollowing(true);
         setFollowerCount(prev => prev + 1);
         toast.success("Following!");
