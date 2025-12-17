@@ -584,17 +584,7 @@ const Subscription = () => {
                     {isCurrent ? '✓ Current Plan' : (loading || isProcessing) ? `⏳ ${paymentProgress || 'Processing...'}` : plan.name === 'Free' ? 'Activate Free Plan' : `Subscribe with Pi`}
                   </Button>
 
-                  {/* Mock Payment Button (For Testing) */}
-                  {plan.name !== 'Free' && !isCurrent && (
-                    <Button 
-                      className="w-full mb-2 bg-green-600 hover:bg-green-700 text-white" 
-                      variant="default" 
-                      disabled={loading || isProcessing}
-                      onClick={() => handleMockPayment(plan.name, price)}
-                    >
-                      🧪 Mock Payment (Test Only)
-                    </Button>
-                  )}
+
 
                   {plan.name !== 'Free' && (
                     <div className="flex flex-col gap-2">

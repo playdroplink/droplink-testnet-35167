@@ -516,14 +516,6 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
                   {loading ? '🎅 Processing...' : `🎄 Purchase Gift Card for ${price} Pi 🎁`}
                 </Button>
 
-                <Button
-                  type="button"
-                  onClick={handleMockPurchase}
-                  disabled={loading}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold"
-                >
-                  {loading ? '🧪 Processing...' : '🧪 Mock Purchase (Test Only)'}
-                </Button>
               </>
             )}
           </TabsContent>
