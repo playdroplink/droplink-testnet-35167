@@ -500,11 +500,18 @@ const Subscription = () => {
 
       if (subError) throw subError;
 
-      toast.success(`🎉 Gift card redeemed! ${giftCard.plan_type} plan activated!`);
+      // Show modal with plan info
       setShowGiftCardModal(false);
-
-      // Reload subscription data
-      setTimeout(() => window.location.reload(), 1500);
+      setTimeout(() => {
+        window.localStorage.setItem('droplink-gift-redeemed', JSON.stringify({
+          plan: giftCard.plan_type,
+          code: code.toUpperCase(),
+          period: giftCard.billing_period
+        }));
+        window.dispatchEvent(new Event('droplink-gift-redeemed'));
+        toast.success(`🎉 Gift card redeemed! ${giftCard.plan_type} plan activated!`);
+        window.location.reload();
+      }, 500);
     } catch (error: any) {
       console.error('[GIFT CARD] Redemption error:', error);
       throw error;

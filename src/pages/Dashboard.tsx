@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -2774,4 +2774,57 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+// (imports already handled at top)
+
+const GiftRedeemModal = () => {
+  const [open, setOpen] = useState(false);
+  const [plan, setPlan] = useState("");
+  const [code, setCode] = useState("");
+  const [period, setPeriod] = useState("");
+
+  useEffect(() => {
+    const checkGift = () => {
+      const data = window.localStorage.getItem('droplink-gift-redeemed');
+      if (data) {
+        const { plan, code, period } = JSON.parse(data);
+        setPlan(plan);
+        setCode(code);
+        setPeriod(period);
+        setOpen(true);
+      }
+    };
+    checkGift();
+    window.addEventListener('droplink-gift-redeemed', checkGift);
+    return () => window.removeEventListener('droplink-gift-redeemed', checkGift);
+  }, []);
+
+  const handleClose = () => {
+    setOpen(false);
+    window.localStorage.removeItem('droplink-gift-redeemed');
+  };
+
+  if (!open) return null;
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent>
+        <DialogTitle>Gift Plan Activated!</DialogTitle>
+        <DialogDescription>
+          <div className="mb-2">You have redeemed a <b>{plan}</b> plan ({period}) with code <span className="font-mono">{code}</span>.</div>
+          <div className="mb-2">Your dashboard features are now unlocked based on this plan.</div>
+        </DialogDescription>
+        <DialogFooter>
+          <button onClick={handleClose} className="bg-sky-400 text-white px-4 py-2 rounded hover:bg-sky-500">OK</button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const DashboardWithGiftModal = () => {
+  return <>
+    <GiftRedeemModal />
+    <Dashboard />
+  </>;
+};
+
+export default DashboardWithGiftModal;
