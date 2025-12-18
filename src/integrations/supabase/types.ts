@@ -170,6 +170,72 @@ export type Database = {
           },
         ]
       }
+      gift_cards: {
+        Row: {
+          billing_period: string
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          message: string | null
+          pi_amount: number
+          plan_type: string
+          purchased_by_profile_id: string | null
+          recipient_email: string | null
+          redeemed_at: string | null
+          redeemed_by_profile_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          billing_period: string
+          code: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          message?: string | null
+          pi_amount?: number
+          plan_type: string
+          purchased_by_profile_id?: string | null
+          recipient_email?: string | null
+          redeemed_at?: string | null
+          redeemed_by_profile_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          billing_period?: string
+          code?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          message?: string | null
+          pi_amount?: number
+          plan_type?: string
+          purchased_by_profile_id?: string | null
+          recipient_email?: string | null
+          redeemed_at?: string | null
+          redeemed_by_profile_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_cards_purchased_by_profile_id_fkey"
+            columns: ["purchased_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_cards_redeemed_by_profile_id_fkey"
+            columns: ["redeemed_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gift_transactions: {
         Row: {
           created_at: string
@@ -475,6 +541,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_gift_card_code: { Args: never; Returns: string }
       get_active_subscription: {
         Args: { p_profile_id: string }
         Returns: {
