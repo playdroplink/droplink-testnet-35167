@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,8 +16,14 @@ import {
 import { usePi } from '@/contexts/PiContext';
 import { useNavigate } from 'react-router-dom';
 import { useActiveSubscription } from '@/hooks/useActiveSubscription';
-import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+
+interface GiftCardInfo {
+  code: string;
+  redeemed_at: string;
+  plan_type: string;
+  billing_period: string;
+}
 
 const SubscriptionStatus: React.FC = () => {
   const { isAuthenticated, piUser, signIn } = usePi();
@@ -30,20 +36,27 @@ const SubscriptionStatus: React.FC = () => {
   useEffect(() => {
     const fetchGiftCard = async () => {
       if (!subscription?.profile_id || !subscription?.plan_type || !subscription?.start_date) return;
-      // Find a gift card redeemed by this user for this plan, recently
-      const { data, error } = await supabase
-        .from('gift_cards')
-        .select('code, redeemed_at, plan_type, billing_period')
-        .eq('redeemed_by_profile_id', subscription.profile_id)
-        .eq('plan_type', subscription.plan_type)
-        .eq('billing_period', subscription.billing_period)
-        .order('redeemed_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (data && data.code) {
-        setLastGiftCode(data.code);
-        setIsGiftCard(true);
-      } else {
+      try {
+        // Find a gift card redeemed by this user for this plan, recently
+        const { data, error } = await (supabase
+          .from('gift_cards' as any)
+          .select('code, redeemed_at, plan_type, billing_period')
+          .eq('redeemed_by_profile_id', subscription.profile_id)
+          .eq('plan_type', subscription.plan_type)
+          .eq('billing_period', subscription.billing_period)
+          .order('redeemed_at', { ascending: false })
+          .limit(1)
+          .maybeSingle() as any);
+        
+        if (data && (data as GiftCardInfo).code) {
+          setLastGiftCode((data as GiftCardInfo).code);
+          setIsGiftCard(true);
+        } else {
+          setLastGiftCode(null);
+          setIsGiftCard(false);
+        }
+      } catch (err) {
+        console.error('Error fetching gift card:', err);
         setLastGiftCode(null);
         setIsGiftCard(false);
       }
