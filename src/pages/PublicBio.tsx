@@ -1274,8 +1274,10 @@ const PublicBio = () => {
           <div className="mt-8">
             {/* Use the Pi payment + message form */}
             <PublicBioMessageForm 
-              receiverUsername={profile.username} 
-              senderUsername={piUser?.username || ''} 
+              receiverUsername={profile.username}
+              receiverProfileId={profileId || ''}
+              senderUsername={piUser?.username || ''}
+              senderProfileId={currentUserProfileId || undefined}
             />
           </div>
         )}

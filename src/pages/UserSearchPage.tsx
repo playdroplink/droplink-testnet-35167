@@ -283,18 +283,44 @@ const UserSearchPage = () => {
     }
     setFollowLoading(profile.id);
     try {
-      // Get current user id from Pi context
-      const followerId = piUser?.uid;
+      // Get current user's profile ID from username
+      const { data: currentProfile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", piUser?.username)
+        .maybeSingle();
+      
+      const followerId = currentProfile?.id;
       const followingId = profile.id;
+      
       if (!followerId || !followingId) {
-        throw new Error("Invalid follow: missing user id");
+        throw new Error("Invalid follow: missing user profile. Please ensure your profile is created.");
       }
+      
+      if (followerId === followingId) {
+        toast.error("You cannot follow yourself");
+        return;
+      }
+      
+      // Check if already following
+      const { data: existing } = await supabase
+        .from("followers")
+        .select("id")
+        .eq("follower_profile_id", followerId)
+        .eq("following_profile_id", followingId)
+        .maybeSingle();
+      
+      if (existing) {
+        toast.info(`Already following @${profile.username}`);
+        return;
+      }
+      
       const { error } = await supabase
         .from("followers")
-        .insert([{
+        .insert({
           follower_profile_id: followerId,
           following_profile_id: followingId,
-        }]);
+        });
       if (error) throw error;
       setFollowedUsername(profile.username);
       setShowFollowedModal(true);
