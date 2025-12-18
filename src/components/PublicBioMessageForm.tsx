@@ -1,43 +1,140 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usePi } from '@/contexts/PiContext';
-import { MessageSquare, AlertCircle, Send } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { MessageSquare, AlertCircle, Send, Image, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface PublicBioMessageFormProps {
   receiverUsername: string;
+  receiverProfileId: string;
   senderUsername?: string;
+  senderProfileId?: string;
 }
 
-export default function PublicBioMessageForm({ receiverUsername, senderUsername }: PublicBioMessageFormProps) {
+interface Message {
+  id: string;
+  sender_profile_id: string;
+  receiver_profile_id: string;
+  content: string;
+  image_url?: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export default function PublicBioMessageForm({ 
+  receiverUsername, 
+  receiverProfileId,
+  senderUsername,
+  senderProfileId 
+}: PublicBioMessageFormProps) {
   const { isAuthenticated, piUser } = usePi();
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image must be less than 5MB');
+        return;
+      }
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `messages/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('message-images')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        return null;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('message-images')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Image upload failed:', error);
+      return null;
+    }
+  };
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!message.trim()) {
-      toast.error('Message cannot be empty');
+    if (!message.trim() && !imageFile) {
+      toast.error('Please enter a message or attach an image');
       return;
     }
 
-    if (!isAuthenticated) {
-      toast.error('Please sign in with Pi Network to send messages');
+    if (!receiverProfileId) {
+      toast.error('Cannot send message - recipient profile not found');
       return;
     }
 
     setSending(true);
     try {
-      // Simulate sending (no messages table exists)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      let imageUrl: string | null = null;
+      
+      // Upload image if selected
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile);
+        if (!imageUrl && imageFile) {
+          toast.error('Failed to upload image, but message will be sent');
+        }
+      }
+
+      // Insert message into database using type assertion
+      const { error } = await (supabase
+        .from('messages' as any)
+        .insert({
+          sender_profile_id: senderProfileId || null,
+          receiver_profile_id: receiverProfileId,
+          content: message.trim() || (imageUrl ? '[Image]' : ''),
+          image_url: imageUrl,
+          is_read: false
+        }) as any);
+
+      if (error) {
+        console.error('Message insert error:', error);
+        throw error;
+      }
+
       toast.success('Message sent successfully!');
       setMessage('');
-    } catch (err) {
-      toast.error('Failed to send message. Please try again.');
+      removeImage();
+    } catch (err: any) {
+      console.error('Send message error:', err);
+      toast.error(err.message || 'Failed to send message. Please try again.');
     } finally {
       setSending(false);
     }
@@ -81,10 +178,53 @@ export default function PublicBioMessageForm({ receiverUsername, senderUsername 
             rows={3}
             className="resize-none"
           />
-          <Button type="submit" disabled={sending || !message.trim()} className="w-full">
-            <Send className="h-4 w-4 mr-2" />
-            {sending ? 'Sending...' : 'Send Message'}
-          </Button>
+          
+          {/* Image preview */}
+          {imagePreview && (
+            <div className="relative inline-block">
+              <img 
+                src={imagePreview} 
+                alt="Preview" 
+                className="max-h-32 rounded-lg border"
+              />
+              <Button
+                type="button"
+                size="icon"
+                variant="destructive"
+                className="absolute -top-2 -right-2 h-6 w-6"
+                onClick={removeImage}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              className="hidden"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={sending}
+            >
+              <Image className="h-4 w-4" />
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={sending || (!message.trim() && !imageFile)} 
+              className="flex-1"
+            >
+              <Send className="h-4 w-4 mr-2" />
+              {sending ? 'Sending...' : 'Send Message'}
+            </Button>
+          </div>
         </form>
       </CardContent>
     </Card>
