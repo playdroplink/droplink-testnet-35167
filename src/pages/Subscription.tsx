@@ -343,7 +343,16 @@ const Subscription = () => {
 
   const handleGiftCardPurchase = async (planType: string, billingPeriod: string, price: number, recipientEmail?: string, message?: string) => {
     if (!piUser) {
-      toast.error('Please sign in with Pi Network first');
+      toast.error('🔒 Pi Network Authentication Required', {
+        description: 'Please sign in with Pi Network to purchase gift cards'
+      });
+      return;
+    }
+
+    if (!profileId) {
+      toast.error('🔒 Profile Required', {
+        description: 'Please complete your profile setup first'
+      });
       return;
     }
 
@@ -385,7 +394,11 @@ const Subscription = () => {
         const { data: codeData, error: codeError } = await supabase
           .rpc('generate_gift_card_code');
 
-        if (codeError) throw codeError;
+        if (codeError) {
+          console.error('[GIFT CARD] Code generation error:', codeError);
+          throw new Error('Failed to generate gift card code');
+        }
+        
         const code = codeData as string;
 
         // Insert gift card
@@ -402,10 +415,15 @@ const Subscription = () => {
             status: 'active'
           });
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('[GIFT CARD] Insert error:', insertError);
+          throw new Error('Failed to save gift card');
+        }
 
         toast.dismiss(toastId);
-        toast.success('🎄 Gift card purchased successfully! 🎁');
+        toast.success('🎄 Gift card purchased successfully! 🎁', {
+          description: 'Share the code with your recipient'
+        });
         
         // Send email if recipient provided
         if (recipientEmail) {
@@ -432,35 +450,67 @@ const Subscription = () => {
         }
       } else {
         toast.dismiss(toastId);
-        toast.error('Payment failed', { description: result.error || 'Please try again' });
+        const errorMsg = result.error || 'Payment was not completed';
+        toast.error('💳 Payment Failed', { 
+          description: errorMsg.includes('cancelled') ? 'Payment was cancelled by user' : errorMsg
+        });
       }
     } catch (error: any) {
       console.error('[GIFT CARD] Purchase error:', error);
-      toast.error(error.message || 'Failed to purchase gift card');
+      toast.error('❌ Gift Card Purchase Failed', {
+        description: error.message || 'An unexpected error occurred'
+      });
     }
   };
 
   const handleGiftCardRedeem = async (code: string) => {
     if (!profileId) {
-      toast.error('Please sign in to redeem gift cards');
+      toast.error('🔒 Please sign in to redeem gift cards', {
+        description: 'You must be signed in to activate a gift card'
+      });
+      return;
+    }
+
+    if (!code || code.trim().length === 0) {
+      toast.error('Invalid gift card code', {
+        description: 'Please enter a valid gift card code'
+      });
       return;
     }
 
     try {
+      const toastId = toast.loading('🎁 Redeeming gift card...');
+      
       const { data: giftCard, error: fetchError } = await supabase
         .from('gift_cards')
         .select('*')
         .eq('code', code.toUpperCase())
         .single();
 
-      if (fetchError) throw new Error('Invalid gift card code');
-
-      if (giftCard.status !== 'active') {
-        throw new Error(`This gift card has been ${giftCard.status}`);
+      if (fetchError || !giftCard) {
+        toast.dismiss(toastId);
+        toast.error('❌ Invalid Gift Card Code', {
+          description: 'This code does not exist or has been mistyped'
+        });
+        return;
       }
 
-      if (new Date(giftCard.expires_at) < new Date()) {
-        throw new Error('This gift card has expired');
+      if (giftCard.status !== 'active') {
+        toast.dismiss(toastId);
+        toast.error(`Gift Card Already ${giftCard.status}`, {
+          description: giftCard.status === 'redeemed' 
+            ? 'This gift card has already been used' 
+            : 'This gift card is no longer valid'
+        });
+        return;
+      }
+
+      if (giftCard.expires_at && new Date(giftCard.expires_at) < new Date()) {
+        toast.dismiss(toastId);
+        toast.error('Gift Card Expired', {
+          description: `This gift card expired on ${new Date(giftCard.expires_at).toLocaleDateString()}`
+        });
+        return;
       }
 
       // Mark as redeemed
@@ -473,7 +523,14 @@ const Subscription = () => {
         })
         .eq('code', code.toUpperCase());
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('[GIFT CARD] Update error:', updateError);
+        toast.dismiss(toastId);
+        toast.error('Failed to redeem gift card', {
+          description: 'Please try again or contact support'
+        });
+        return;
+      }
 
       // Create subscription
       const startDate = new Date();
@@ -498,23 +555,30 @@ const Subscription = () => {
           auto_renew: false,
         });
 
-      if (subError) throw subError;
+      if (subError) {
+        console.error('[GIFT CARD] Subscription error:', subError);
+        toast.dismiss(toastId);
+        toast.error('Failed to activate subscription', {
+          description: 'Please contact support with your gift code'
+        });
+        return;
+      }
 
-      // Show modal with plan info
+      // Show success and reload
+      toast.dismiss(toastId);
+      toast.success('🎉 Gift Card Redeemed!', {
+        description: `${giftCard.plan_type} plan activated successfully!`
+      });
+      
       setShowGiftCardModal(false);
       setTimeout(() => {
-        window.localStorage.setItem('droplink-gift-redeemed', JSON.stringify({
-          plan: giftCard.plan_type,
-          code: code.toUpperCase(),
-          period: giftCard.billing_period
-        }));
-        window.dispatchEvent(new Event('droplink-gift-redeemed'));
-        toast.success(`🎉 Gift card redeemed! ${giftCard.plan_type} plan activated!`);
         window.location.reload();
       }, 500);
     } catch (error: any) {
       console.error('[GIFT CARD] Redemption error:', error);
-      toast.error(error.message || 'Failed to redeem gift card');
+      toast.error('❌ Gift Card Redemption Failed', {
+        description: error.message || 'An unexpected error occurred. Please try again.'
+      });
     }
   };
 

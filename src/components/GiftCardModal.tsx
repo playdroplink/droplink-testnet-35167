@@ -86,65 +86,11 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
   const selectedPlanData = plans.find(p => p.id === selectedPlan);
   const price = selectedPlanData ? (billingPeriod === 'yearly' ? selectedPlanData.yearlyPrice : selectedPlanData.monthlyPrice) : 0;
 
-  const handleMockPurchase = async () => {
-    setLoading(true);
-    try {
-      // Use test profile ID if not signed in
-      const testProfileId = profileId || '00000000-0000-0000-0000-000000000000';
-      
-      // Generate gift card code client-side
-      const code = generateGiftCardCode();
-
-      // Insert gift card using type assertion
-      const { error: insertError } = await (supabase
-        .from('gift_cards' as any)
-        .insert({
-          code,
-          plan_type: selectedPlan,
-          billing_period: billingPeriod,
-          pi_amount: price,
-          purchased_by_profile_id: testProfileId,
-          recipient_email: recipientEmail || null,
-          message: message || null,
-          status: 'active'
-        }) as any);
-
-      if (insertError) throw insertError;
-
-      setPurchasedCode(code);
-      
-      // Send email if recipient email provided
-      if (recipientEmail) {
-        try {
-          await supabase.functions.invoke('send-gift-card-email', {
-            body: {
-              recipientEmail,
-              code,
-              planType: selectedPlan,
-              billingPeriod,
-              message: message || '',
-              senderProfileId: testProfileId
-            }
-          });
-          toast.success('🎄 Gift card purchased (Mock) and email sent! 🎁');
-        } catch (emailError) {
-          console.error('Email send error:', emailError);
-          toast.success('Gift card purchased (Mock)! (Email delivery pending)');
-        }
-      } else {
-        toast.success('🧪 Gift card created successfully (Test Mode)! 🎁');
-      }
-    } catch (error: any) {
-      console.error('Purchase error:', error);
-      toast.error(error.message || 'Failed to purchase gift card');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handlePurchase = async () => {
     if (!profileId) {
-      toast.error('Please sign in to purchase gift cards');
+      toast.error('🔒 Please sign in with Pi Network', {
+        description: 'You must be signed in to purchase gift cards'
+      });
       return;
     }
 
@@ -210,7 +156,14 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
 
   const handleRedeem = async () => {
     if (!redeemCode.trim()) {
-      toast.error('Please enter a gift card code');
+      toast.error('🎁 Please enter a gift card code');
+      return;
+    }
+
+    if (!profileId) {
+      toast.error('🔒 Please sign in to redeem gift cards', {
+        description: 'You must be signed in to redeem gift cards'
+      });
       return;
     }
 
@@ -297,25 +250,45 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-            {/* Redeem Success Modal */}
-            {showRedeemSuccess && (
-              <Dialog open={true} onOpenChange={() => setShowRedeemSuccess(null)}>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Gift Card Redeemed!</DialogTitle>
-                    <DialogDescription>
-                      <div className="text-lg font-semibold mb-2">Your plan has been upgraded:</div>
-                      <div className="mb-2">Plan: <span className="font-bold capitalize">{showRedeemSuccess.plan}</span></div>
-                      <div className="mb-2">Period: <span className="font-bold capitalize">{showRedeemSuccess.period}</span></div>
-                      <div className="mb-2">Gift Code: <span className="font-mono bg-gray-100 px-2 py-1 rounded">{showRedeemSuccess.code}</span></div>
-                      <Button className="mt-4 w-full" onClick={() => setShowRedeemSuccess(null)}>Done</Button>
-                    </DialogDescription>
-                  </DialogHeader>
-                </DialogContent>
-              </Dialog>
-            )}
-      <DialogContent className="max-w-2xl bg-gradient-to-br from-red-50 via-white to-green-50 border-2 border-red-200">
+    <>
+      {/* Redeem Success Modal */}
+      {showRedeemSuccess && (
+        <Dialog open={true} onOpenChange={() => setShowRedeemSuccess(null)}>
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto mx-4">
+            <DialogHeader>
+              <DialogTitle className="text-2xl text-center">🎉 Gift Card Redeemed! 🎉</DialogTitle>
+              <DialogDescription>
+                <div className="space-y-4 mt-4">
+                  <div className="bg-gradient-to-r from-green-100 to-red-100 p-4 rounded-lg border-2 border-green-300">
+                    <div className="text-lg font-semibold mb-3 text-center text-green-800">Your plan has been upgraded!</div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Plan:</span>
+                        <span className="font-bold capitalize text-green-700">{showRedeemSuccess.plan}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Period:</span>
+                        <span className="font-bold capitalize text-green-700">{showRedeemSuccess.period}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Gift Code:</span>
+                        <span className="font-mono bg-white px-2 py-1 rounded text-sm">{showRedeemSuccess.code}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Button className="w-full bg-gradient-to-r from-green-500 to-red-500" onClick={() => {
+                    setShowRedeemSuccess(null);
+                    onOpenChange(false);
+                  }}>Done</Button>
+                </div>
+              </DialogDescription>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      <Dialog open={open && !showRedeemSuccess} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-red-50 via-white to-green-50 border-2 border-red-200 mx-4">
         {/* Christmas Snowflakes */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {[...Array(15)].map((_, i) => (
@@ -524,23 +497,18 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
                   </p>
                 </div>
 
-                <div className="flex gap-3">
-                  <Button
-                    onClick={handleMockPurchase}
-                    disabled={loading}
-                    variant="outline"
-                    className="flex-1 border-2 border-green-500 text-green-700 hover:bg-green-50"
-                  >
-                    {loading ? '⏳ Processing...' : '🧪 Test Purchase'}
-                  </Button>
-                  <Button
-                    onClick={handlePurchase}
-                    disabled={loading || !profileId}
-                    className="flex-1 bg-gradient-to-r from-red-500 to-green-600 hover:from-red-600 hover:to-green-700 text-white font-bold text-lg shadow-lg"
-                  >
-                    {loading ? '⏳ Processing...' : '🎄 Purchase with Pi 🎁'}
-                  </Button>
-                </div>
+                <Button
+                  onClick={handlePurchase}
+                  disabled={loading || !profileId}
+                  className="w-full bg-gradient-to-r from-red-500 to-green-600 hover:from-red-600 hover:to-green-700 text-white font-bold text-lg shadow-lg"
+                >
+                  {loading ? '⏳ Processing...' : '🎄 Purchase with Pi 🎁'}
+                </Button>
+                {!profileId && (
+                  <p className="text-sm text-center text-red-600 mt-2">
+                    Please sign in with Pi Network to purchase gift cards
+                  </p>
+                )}
               </>
             )}
           </TabsContent>
@@ -592,5 +560,6 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
         </Tabs>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
