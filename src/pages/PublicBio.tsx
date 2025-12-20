@@ -207,7 +207,7 @@ const PublicBio = () => {
         const { data: followers, count: followerCount } = await supabase
           .from('followers')
           .select('id', { count: 'exact' })
-          .eq('following_profile_id', profileData.id);
+          .eq('following_id', profileData.id);
         
         setFollowerCount(followerCount || 0);
         
@@ -231,8 +231,8 @@ const PublicBio = () => {
     const { data } = await supabase
       .from("followers")
       .select("id")
-      .eq("follower_profile_id", currentUserProfileId)
-      .eq("following_profile_id", profileId)
+      .eq("follower_id", currentUserProfileId)
+      .eq("following_id", profileId)
       .maybeSingle();
     
     setIsFollowing(!!data);
@@ -276,17 +276,13 @@ const PublicBio = () => {
       toast.error("You cannot follow yourself");
       return;
     }
-    if (!currentUserProfileId || !profileId) {
-      toast.error("Invalid follow: missing user id");
-      return;
-    }
     try {
       if (isFollowing) {
         const { error } = await supabase
           .from("followers")
           .delete()
-          .eq("follower_profile_id", currentUserProfileId)
-          .eq("following_profile_id", profileId);
+          .eq("follower_id", currentUserProfileId)
+          .eq("following_id", profileId);
         if (error) throw error;
         setIsFollowing(false);
         setFollowerCount(prev => Math.max(0, prev - 1));
@@ -295,8 +291,8 @@ const PublicBio = () => {
         const { error } = await supabase
           .from("followers")
           .insert({
-            follower_profile_id: currentUserProfileId,
-            following_profile_id: profileId,
+            follower_id: currentUserProfileId,
+            following_id: profileId,
           });
         if (error) throw error;
         setIsFollowing(true);
@@ -308,7 +304,7 @@ const PublicBio = () => {
       const { count } = await supabase
         .from('followers')
         .select('id', { count: 'exact', head: true })
-        .eq('following_profile_id', profileId);
+        .eq('following_id', profileId);
       
       if (count !== null) {
         setFollowerCount(count);

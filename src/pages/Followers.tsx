@@ -58,12 +58,12 @@ const Followers = () => {
       setCurrentUsername(profile.username);
 
       // Load followers
-      const { data: followersData, error: followersError } = await supabase
+      const followersQuery: any = supabase
         .from("followers")
         .select(`
           id,
           created_at,
-          follower_profile:profiles!followers_follower_profile_id_fkey (
+          follower_profile:profiles!followers_follower_id_fkey (
             id,
             username,
             business_name,
@@ -71,18 +71,20 @@ const Followers = () => {
             description
           )
         `)
-        .eq("following_profile_id", profile.id);
+        .eq("following_id", profile.id);
+      
+      const { data: followersData, error: followersError } = await followersQuery;
 
       if (followersError) throw followersError;
       setFollowers(followersData as any || []);
 
       // Load following
-      const { data: followingData, error: followingError } = await supabase
+      const followingQuery: any = supabase
         .from("followers")
         .select(`
           id,
           created_at,
-          following_profile:profiles!followers_following_profile_id_fkey (
+          following_profile:profiles!followers_following_id_fkey (
             id,
             username,
             business_name,
@@ -90,7 +92,9 @@ const Followers = () => {
             description
           )
         `)
-        .eq("follower_profile_id", profile.id);
+        .eq("follower_id", profile.id);
+      
+      const { data: followingData, error: followingError } = await followingQuery;
 
       if (followingError) throw followingError;
       setFollowing(followingData as any || []);
@@ -128,9 +132,9 @@ const Followers = () => {
       const { error } = await supabase
         .from("followers")
         .insert({
-          follower_profile_id: currentProfileId,
-          following_profile_id: targetProfileId,
-        });
+          follower_id: currentProfileId,
+          following_id: targetProfileId,
+        } as any);
       if (error) throw error;
       toast.success("Started following!");
       loadFollowData(); // Refresh data

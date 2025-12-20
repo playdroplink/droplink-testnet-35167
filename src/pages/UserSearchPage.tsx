@@ -139,10 +139,10 @@ const UserSearchPage = () => {
     if (!error && data) {
       // Manually fetch follower counts for each profile
       let enrichedData = await Promise.all(data.map(async (profile: any) => {
-        const { count } = await supabase
-          .from('followers')
+        const { count } = await (supabase
+          .from('followers' as any)
           .select('id', { count: 'exact', head: true })
-          .eq('following_profile_id', profile.id);
+          .eq('following_profile_id', profile.id)) as any;
         return { ...profile, follower_count: count || 0 };
       }));
       
@@ -213,10 +213,10 @@ const UserSearchPage = () => {
           }
           // Fetch follower count from Supabase if we have an id
           if (profile.id) {
-            const { count } = await supabase
-              .from("followers")
+            const { count } = await (supabase
+              .from("followers" as any)
               .select("*", { count: "exact", head: true })
-              .eq("following_profile_id", profile.id);
+                .eq("following_id", profile.id)) as any;
             if (count !== null) {
               profile.follower_count = count;
             }
@@ -241,10 +241,10 @@ const UserSearchPage = () => {
         // Manually fetch follower counts for each profile
         if (data && data.length > 0) {
           data = await Promise.all(data.map(async (profile: any) => {
-            const { count } = await supabase
-              .from('followers')
+            const { count } = await (supabase
+              .from('followers' as any)
               .select('id', { count: 'exact', head: true })
-              .eq('following_profile_id', profile.id);
+              .eq('following_id', profile.id)) as any;
             return { ...profile, follower_count: count || 0 };
           }));
         }
@@ -284,17 +284,26 @@ const UserSearchPage = () => {
     setFollowLoading(profile.id);
     try {
       // Get current user's profile ID from username
-      const { data: currentProfile } = await supabase
+      const { data: currentProfile, error: profileError } = await supabase
         .from("profiles")
         .select("id")
         .eq("username", piUser?.username)
         .maybeSingle();
       
+      if (profileError) {
+        console.error('Profile fetch error:', profileError);
+        throw new Error("Failed to fetch your profile. Please try again.");
+      }
+      
       const followerId = currentProfile?.id;
       const followingId = profile.id;
       
-      if (!followerId || !followingId) {
-        throw new Error("Invalid follow: missing user profile. Please ensure your profile is created.");
+      if (!followerId) {
+        throw new Error("Your profile was not found. Please ensure you're signed in.");
+      }
+      
+      if (!followingId) {
+        throw new Error("Target profile not found.");
       }
       
       if (followerId === followingId) {
@@ -303,25 +312,30 @@ const UserSearchPage = () => {
       }
       
       // Check if already following
-      const { data: existing } = await supabase
-        .from("followers")
+      const { data: existing } = await (supabase
+        .from("followers" as any)
         .select("id")
-        .eq("follower_profile_id", followerId)
-        .eq("following_profile_id", followingId)
-        .maybeSingle();
+        .eq("follower_id", followerId)
+        .eq("following_id", followingId)
+        .maybeSingle()) as any;
       
       if (existing) {
         toast.info(`Already following @${profile.username}`);
         return;
       }
       
-      const { error } = await supabase
-        .from("followers")
+      const { error } = await (supabase
+        .from("followers" as any)
         .insert({
-          follower_profile_id: followerId,
-          following_profile_id: followingId,
-        });
-      if (error) throw error;
+          follower_id: followerId,
+          following_id: followingId,
+        })) as any;
+        
+      if (error) {
+        console.error('Insert error:', error);
+        throw new Error(error.message || 'Failed to follow user');
+      }
+      
       setFollowedUsername(profile.username);
       setShowFollowedModal(true);
       toast.success(`Following @${profile.username}!`);
@@ -331,6 +345,15 @@ const UserSearchPage = () => {
     } finally {
       setFollowLoading(null);
     }
+  };
+
+  const handleViewProfile = (profile: ProfileResult) => {
+    if (!isPiAuthenticated()) {
+      setShowPiAuthModal(true);
+      return;
+    }
+    setShowModal(false);
+    navigate(`/@${profile.username}`);
   };
 
   const highlightText = (text: string) => {
@@ -520,7 +543,7 @@ const UserSearchPage = () => {
                     size="sm"
                     className="bg-sky-400 hover:bg-sky-500 text-white min-w-[60px] sm:min-w-[72px]"
                     style={{height: 32, minWidth: 60}}
-                    onClick={e => { e.stopPropagation(); setSelectedProfile(profile); setShowModal(true); }}
+                    onClick={e => { e.stopPropagation(); handleViewProfile(profile); }}
                   >
                     View
                   </Button>
@@ -559,7 +582,7 @@ const UserSearchPage = () => {
                 <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{selectedProfile.follower_count || 0} followers</span>
               </div>
 
-              <Button className="w-full bg-sky-500 hover:bg-sky-600 text-white" onClick={() => { setShowModal(false); navigate(`/@${selectedProfile.username}`); }}>View Full Profile</Button>
+              <Button className="w-full bg-sky-500 hover:bg-sky-600 text-white" onClick={() => handleViewProfile(selectedProfile)}>View Full Profile</Button>
 
               {/* Products Section */}
               {profileProducts.length > 0 && (
