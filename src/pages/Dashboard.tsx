@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -398,13 +398,42 @@ const Dashboard = () => {
     }
   });
 
-  // Update auto-save data when profile changes (debounced)
+  // Track profile changes and trigger auto-save (with safeguards against infinite loops)
+  const lastProfileRef = useRef<string>('');
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   useEffect(() => {
+    // Only trigger auto-save if:
+    // 1. Profile ID exists
+    // 2. Not currently loading initial data
+    // 3. Profile has actually changed (compare JSON strings)
     if (profileId && !loading) {
-      console.log('📤 Profile changed, triggering auto-save in 3s...');
-      autoSave.updateData(profile);
+      const currentProfile = JSON.stringify(profile);
+      
+      // Check if profile has meaningfully changed
+      if (currentProfile !== lastProfileRef.current && lastProfileRef.current !== '') {
+        // Clear any existing timeout
+        if (saveTimeoutRef.current) {
+          clearTimeout(saveTimeoutRef.current);
+        }
+        
+        // Set new timeout for auto-save
+        saveTimeoutRef.current = setTimeout(() => {
+          autoSave.updateData(profile);
+        }, 3000); // 3 second debounce
+      }
+      
+      // Update last profile reference
+      lastProfileRef.current = currentProfile;
     }
-  }, [profile, profileId, loading, autoSave]);
+    
+    // Cleanup on unmount
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [profile, profileId, loading]); // Safe dependencies - won't cause infinite loop due to ref check
 
   // Helper function to save profile immediately (for critical changes)
   const saveProfileNow = async (updatedProfile?: any) => {
@@ -1439,17 +1468,17 @@ const Dashboard = () => {
                     <div className="space-y-2">
                       <h3 className="font-medium text-sm text-muted-foreground px-2">Profile & Share</h3>
                       <div className="grid grid-cols-2 gap-2">
-                                                <Button type="button" onClick={() => navigate("/inbox")}
-                                                  size="sm"
-                                                  className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
-                                                  <Mail className="w-4 h-4" />
-                                                  <span>Inbox</span>
-                                                </Button>
-                        <Button type="button" onClick={handleShowQRCode} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
+                        <Button type="button" onClick={() => navigate("/inbox")}
+                          size="sm"
+                          className="inline-flex justify-center gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-sm">
+                          <Mail className="w-4 h-4" />
+                          <span>Inbox</span>
+                        </Button>
+                        <Button type="button" onClick={handleShowQRCode} size="sm" className="inline-flex justify-center gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-sm">
                           <QrCode className="w-4 h-4" />
                           <span>QR Code</span>
                         </Button>
-                        <Button type="button" onClick={handleCopyLink} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
+                        <Button type="button" onClick={handleCopyLink} size="sm" className="inline-flex justify-center gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-sm col-span-2">
                           <Share2 className="w-4 h-4" />
                           <span>Share</span>
                         </Button>
@@ -1460,25 +1489,25 @@ const Dashboard = () => {
                     <div className="space-y-2">
                       <h3 className="font-medium text-sm text-muted-foreground px-2">Navigation</h3>
                       <div className="grid grid-cols-2 gap-2">
-                        <Button type="button" onClick={() => navigate("/followers")} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
+                        <Button type="button" onClick={() => navigate("/followers")} size="sm" className="inline-flex justify-center gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-sm">
                           <Users className="w-4 h-4" />
-                          <span className="hidden sm:inline">Followers</span>
+                          <span>Followers</span>
                         </Button>
-                        <Button type="button" onClick={() => navigate("/wallet")} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
+                        <Button type="button" onClick={() => navigate("/wallet")} size="sm" className="inline-flex justify-center gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-sm">
                           <Wallet className="w-4 h-4" />
-                          <span className="hidden sm:inline">Wallet</span>
+                          <span>Wallet</span>
                         </Button>
-                        <Button type="button" onClick={() => navigate("/profile")} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
+                        <Button type="button" onClick={() => navigate("/profile")} size="sm" className="inline-flex justify-center gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-sm">
                           <User className="w-4 h-4" />
-                          <span className="hidden sm:inline">Profile</span>
+                          <span>Profile</span>
                         </Button>
-                        <Button type="button" onClick={() => navigate("/domain")} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
+                        <Button type="button" onClick={() => navigate("/domain")} size="sm" className="inline-flex justify-center gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-sm">
                           <Globe className="w-4 h-4" />
-                          <span className="hidden sm:inline">Domain</span>
+                          <span>Domain</span>
                         </Button>
-                        <Button type="button" onClick={() => navigate("/search-users")} size="sm" className="inline-flex justify-center gap-1 h-10 sm:h-12 bg-blue-600 text-white hover:bg-blue-700 border-none text-xs sm:text-sm">
+                        <Button type="button" onClick={() => navigate("/search-users")} size="sm" className="inline-flex justify-center gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-sm col-span-2">
                           <Users className="w-4 h-4" />
-                          <span className="hidden sm:inline">User Search</span>
+                          <span>User Search</span>
                         </Button>
                       </div>
                     </div>
