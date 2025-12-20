@@ -19,6 +19,7 @@ import PublicBioMessageForm from "@/components/PublicBioMessageForm";
 import { BackgroundMusicPlayer } from "@/components/BackgroundMusicPlayer";
 import { PiAdBanner } from "@/components/PiAdBanner";
 import PiAdsBanner from "@/components/PiAdsBanner";
+import PiAdNetwork from "@/components/PiAdNetwork";
 import type { UserPreferences } from "@/contexts/UserPreferencesContext";
 import {
   Twitter,
@@ -752,6 +753,9 @@ const PublicBio = () => {
         {showPiAds && (
           <div className="mb-6">
             <PiAdsBanner />
+            <div className="mt-4">
+              <PiAdNetwork />
+            </div>
           </div>
         )}
         
@@ -1179,9 +1183,9 @@ const PublicBio = () => {
                       <Button
                         variant="outline"
                         className="text-blue-600 border-blue-400 hover:bg-blue-50 mt-2"
-                        onClick={() => navigate('/dashboard?tab=payments')}
+                        onClick={() => navigate('/dashboard')}
                       >
-                        Manage Pi Payments in Dashboard
+                        Go to Dashboard
                       </Button>
                     </div>
                     {/* Example instructions for sending DROP tokens */}
