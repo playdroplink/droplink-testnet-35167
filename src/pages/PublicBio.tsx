@@ -204,10 +204,11 @@ const PublicBio = () => {
         await loadUserPreferences(profileData.user_id);
         
         // Load follower count
-        const { data: followers, count: followerCount } = await supabase
+        const followerQuery: any = (supabase as any)
           .from('followers')
           .select('id', { count: 'exact' })
           .eq('following_id', profileData.id);
+        const { data: followers, count: followerCount } = await followerQuery as any;
         
         setFollowerCount(followerCount || 0);
         
@@ -228,12 +229,13 @@ const PublicBio = () => {
   const checkFollowStatus = async () => {
     if (!currentUserProfileId || !profileId) return;
     
-    const { data } = await supabase
+    const query: any = (supabase as any)
       .from("followers")
       .select("id")
       .eq("follower_id", currentUserProfileId)
       .eq("following_id", profileId)
       .maybeSingle();
+    const { data } = await query as any;
     
     setIsFollowing(!!data);
   };
@@ -278,22 +280,24 @@ const PublicBio = () => {
     }
     try {
       if (isFollowing) {
-        const { error } = await supabase
+        const deleteQuery: any = (supabase as any)
           .from("followers")
           .delete()
           .eq("follower_id", currentUserProfileId)
           .eq("following_id", profileId);
+        const { error } = await deleteQuery as any;
         if (error) throw error;
         setIsFollowing(false);
         setFollowerCount(prev => Math.max(0, prev - 1));
         toast.success("Unfollowed");
       } else {
-        const { error } = await supabase
+        const insertQuery: any = (supabase as any)
           .from("followers")
           .insert({
             follower_id: currentUserProfileId,
             following_id: profileId,
-          });
+          } as any);
+        const { error } = await insertQuery as any;
         if (error) throw error;
         setIsFollowing(true);
         setFollowerCount(prev => prev + 1);
@@ -301,10 +305,11 @@ const PublicBio = () => {
       }
       
       // Refresh the follower count to sync with database
-      const { count } = await supabase
+      const countQuery: any = (supabase as any)
         .from('followers')
         .select('id', { count: 'exact', head: true })
         .eq('following_id', profileId);
+      const { count } = await countQuery as any;
       
       if (count !== null) {
         setFollowerCount(count);

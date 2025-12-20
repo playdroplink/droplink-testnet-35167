@@ -11,7 +11,8 @@ import {
   CheckCircle, 
   ArrowRight,
   Pi,
-  Shield
+  Shield,
+  ArrowLeft
 } from 'lucide-react';
 import { usePi } from '@/contexts/PiContext';
 import { useNavigate } from 'react-router-dom';
@@ -168,60 +169,86 @@ const SubscriptionStatus: React.FC = () => {
 
   if (!isAuthenticated) {
     return (
-      <Card className="border-amber-200 bg-amber-50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-amber-800">
-            <Shield className="h-5 w-5" />
-            Pi Network Authentication Required
-          </CardTitle>
-          <CardDescription className="text-amber-700">
-            Sign in with Pi Network to access subscription management and payments
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Alert>
-              <Pi className="h-4 w-4" />
-              <AlertDescription>
-                Connect your Pi Network account to:
-                <ul className="mt-2 ml-4 list-disc text-sm">
-                  <li>Manage your subscription plans</li>
-                  <li>Process payments with Pi cryptocurrency</li>
-                  <li>Access premium features</li>
-                  <li>Sync your profile data</li>
-                </ul>
-              </AlertDescription>
-            </Alert>
-            
-            <Button 
-              onClick={handlePiAuth}
-              disabled={isSigningIn}
-              className="w-full"
-              size="lg"
-            >
-              <Pi className="h-5 w-5 mr-2" />
-              {isSigningIn ? 'Connecting to Pi Network...' : 'Sign in with Pi Network'}
-            </Button>
-            
-            <p className="text-xs text-center text-amber-600">
-              Secure authentication using Pi Network's official SDK
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="min-h-screen bg-gradient-to-br from-sky-100 to-blue-200 pb-20">
+        <div className="max-w-2xl mx-auto p-4">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate('/')}
+            className="mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Dashboard
+          </Button>
+          
+          <Card className="border-amber-200 bg-amber-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-amber-800">
+                <Shield className="h-5 w-5" />
+                Pi Network Authentication Required
+              </CardTitle>
+              <CardDescription className="text-amber-700">
+                Sign in with Pi Network to access subscription management and payments
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <Alert>
+                  <Pi className="h-4 w-4" />
+                  <AlertDescription>
+                    Connect your Pi Network account to:
+                    <ul className="mt-2 ml-4 list-disc text-sm">
+                      <li>Manage your subscription plans</li>
+                      <li>Process payments with Pi cryptocurrency</li>
+                      <li>Access premium features</li>
+                      <li>Sync your profile data</li>
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+                
+                <Button 
+                  onClick={handlePiAuth}
+                  disabled={isSigningIn}
+                  className="w-full"
+                  size="lg"
+                >
+                  <Pi className="h-5 w-5 mr-2" />
+                  {isSigningIn ? 'Connecting to Pi Network...' : 'Sign in with Pi Network'}
+                </Button>
+                
+                <p className="text-xs text-center text-amber-600">
+                  Secure authentication using Pi Network's official SDK
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     );
   }
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center">
-            <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
-            <span className="ml-2">Loading subscription status...</span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="min-h-screen bg-gradient-to-br from-sky-100 to-blue-200 pb-20">
+        <div className="max-w-2xl mx-auto p-4">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate('/dashboard')}
+            className="mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Dashboard
+          </Button>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-center">
+                <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
+                <span className="ml-2">Loading subscription status...</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     );
   }
 
@@ -231,24 +258,36 @@ const SubscriptionStatus: React.FC = () => {
   const isExpired = daysLeft !== null && daysLeft <= 0;
 
   return (
-    <Card className={`bg-white shadow-md border border-gray-200 ${planInfo.color} transition-all duration-200`}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Crown className="h-5 w-5" />
-            Subscription Status
-          </CardTitle>
-          <Badge 
-            variant={isActive ? "default" : "secondary"}
-            className={isActive ? "bg-green-100 text-green-800" : ""}
-          >
-            {planInfo.name}
-          </Badge>
-        </div>
-        <CardDescription>
-          Manage your DropLink subscription and billing
-        </CardDescription>
-      </CardHeader>
+    <div className="min-h-screen bg-gradient-to-br from-sky-100 to-blue-200 pb-20">
+      <div className="max-w-2xl mx-auto p-4">
+        {/* Back Button */}
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/dashboard')}
+          className="mb-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Dashboard
+        </Button>
+        
+        <Card className={`bg-white shadow-md border border-gray-200 ${planInfo.color} transition-all duration-200`}>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Crown className="h-5 w-5" />
+                Subscription Status
+              </CardTitle>
+              <Badge 
+                variant={isActive ? "default" : "secondary"}
+                className={isActive ? "bg-green-100 text-green-800" : ""}
+              >
+                {planInfo.name}
+              </Badge>
+            </div>
+            <CardDescription>
+              Manage your DropLink subscription and billing
+            </CardDescription>
+          </CardHeader>
       
       <CardContent className="space-y-4">
         {/* User Info */}
@@ -389,6 +428,8 @@ const SubscriptionStatus: React.FC = () => {
         )}
       </CardContent>
     </Card>
+      </div>
+    </div>
   );
 };
 

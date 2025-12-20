@@ -58,7 +58,7 @@ const Followers = () => {
       setCurrentUsername(profile.username);
 
       // Load followers
-      const followersQuery: any = supabase
+      const followersQuery: any = (supabase as any)
         .from("followers")
         .select(`
           id,
@@ -73,13 +73,13 @@ const Followers = () => {
         `)
         .eq("following_id", profile.id);
       
-      const { data: followersData, error: followersError } = await followersQuery;
+      const { data: followersData, error: followersError } = (await followersQuery) as any;
 
       if (followersError) throw followersError;
       setFollowers(followersData as any || []);
 
       // Load following
-      const followingQuery: any = supabase
+      const followingQuery: any = (supabase as any)
         .from("followers")
         .select(`
           id,
@@ -94,7 +94,7 @@ const Followers = () => {
         `)
         .eq("follower_id", profile.id);
       
-      const { data: followingData, error: followingError } = await followingQuery;
+      const { data: followingData, error: followingError } = (await followingQuery) as any;
 
       if (followingError) throw followingError;
       setFollowing(followingData as any || []);
