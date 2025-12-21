@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import { usePublicSubscription } from "@/hooks/usePublicSubscription";
 import { useParams, useNavigate } from "react-router-dom";
-// ...existing code...
-
-// The following useEffect should be placed inside the PublicBio component definition, not at the top level.
 import { supabase } from "@/integrations/supabase/client";
 import { usePi } from "@/contexts/PiContext";
 import { QRCodeSVG } from "qrcode.react";
@@ -150,32 +147,47 @@ const PublicBio = () => {
   }, [profile, currentUserProfileId, profileId, navigate]);
 
   const loadCurrentUserProfile = async () => {
-    // Check for Supabase session (Gmail users)
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      
-      if (profile) {
-        setCurrentUserProfileId(profile.id);
-        return;
+    try {
+      // Check for Supabase session (Gmail users)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
+        if (error) {
+          console.error('[PROFILE] Error fetching profile for Gmail user:', error);
+        } else if (profile) {
+          console.log('[PROFILE] Gmail user profile loaded:', profile.id);
+          setCurrentUserProfileId(profile.id);
+          return;
+        }
       }
-    }
 
-    // Check for Pi-authenticated users (no Supabase session)
-    if (isPiAuthenticated && piUser?.username) {
-      const { data: piProfile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("username", piUser.username)
-        .maybeSingle();
-      
-      if (piProfile) {
-        setCurrentUserProfileId(piProfile.id);
+      // Check for Pi-authenticated users (no Supabase session)
+      if (isPiAuthenticated && piUser?.username) {
+        console.log('[PROFILE] Loading Pi user profile for:', piUser.username);
+        const { data: piProfile, error } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("username", piUser.username)
+          .maybeSingle();
+        
+        if (error) {
+          console.error('[PROFILE] Error fetching Pi profile:', error);
+        } else if (piProfile) {
+          console.log('[PROFILE] Pi user profile loaded:', piProfile.id);
+          setCurrentUserProfileId(piProfile.id);
+        } else {
+          console.warn('[PROFILE] No profile found for Pi user:', piUser.username);
+        }
+      } else {
+        console.log('[PROFILE] No authenticated user found');
       }
+    } catch (error) {
+      console.error('[PROFILE] Error in loadCurrentUserProfile:', error);
     }
   };
 
@@ -208,7 +220,7 @@ const PublicBio = () => {
         const followerQuery: any = (supabase as any)
           .from('followers')
           .select('id', { count: 'exact' })
-          .eq('following_id', profileData.id);
+          .eq('following_profile_id', profileData.id);
         const { data: followers, count: followerCount } = await followerQuery as any;
         
         setFollowerCount(followerCount || 0);
@@ -233,8 +245,8 @@ const PublicBio = () => {
     const query: any = (supabase as any)
       .from("followers")
       .select("id")
-      .eq("follower_id", currentUserProfileId)
-      .eq("following_id", profileId)
+      .eq("follower_profile_id", currentUserProfileId)
+      .eq("following_profile_id", profileId)
       .maybeSingle();
     const { data } = await query as any;
     
@@ -271,8 +283,17 @@ const PublicBio = () => {
   };
 
   const handleFollow = async () => {
+    console.log('[FOLLOW] Attempting follow action:', {
+      currentUserProfileId,
+      profileId,
+      isFollowing,
+      piUser: piUser?.username,
+      isPiAuthenticated
+    });
+
     if (!currentUserProfileId || !profileId) {
-      toast.error("Please sign in to follow");
+      console.error('[FOLLOW] Missing IDs:', { currentUserProfileId, profileId });
+      toast.error("Please sign in with Pi Network to follow");
       return;
     }
     if (currentUserProfileId === profileId) {
@@ -281,25 +302,33 @@ const PublicBio = () => {
     }
     try {
       if (isFollowing) {
+        console.log('[FOLLOW] Unfollowing...');
         const deleteQuery: any = (supabase as any)
           .from("followers")
           .delete()
-          .eq("follower_id", currentUserProfileId)
-          .eq("following_id", profileId);
+          .eq("follower_profile_id", currentUserProfileId)
+          .eq("following_profile_id", profileId);
         const { error } = await deleteQuery as any;
-        if (error) throw error;
+        if (error) {
+          console.error('[FOLLOW] Delete error:', error);
+          throw error;
+        }
         setIsFollowing(false);
         setFollowerCount(prev => Math.max(0, prev - 1));
         toast.success("Unfollowed");
       } else {
+        console.log('[FOLLOW] Following...');
         const insertQuery: any = (supabase as any)
           .from("followers")
           .insert({
-            follower_id: currentUserProfileId,
-            following_id: profileId,
+            follower_profile_id: currentUserProfileId,
+            following_profile_id: profileId,
           } as any);
         const { error } = await insertQuery as any;
-        if (error) throw error;
+        if (error) {
+          console.error('[FOLLOW] Insert error:', error);
+          throw error;
+        }
         setIsFollowing(true);
         setFollowerCount(prev => prev + 1);
         toast.success("Following!");
@@ -309,15 +338,16 @@ const PublicBio = () => {
       const countQuery: any = (supabase as any)
         .from('followers')
         .select('id', { count: 'exact', head: true })
-        .eq('following_id', profileId);
+        .eq('following_profile_id', profileId);
       const { count } = await countQuery as any;
       
       if (count !== null) {
         setFollowerCount(count);
       }
-    } catch (error) {
-      console.error("Follow error:", error);
-      toast.error("Failed to update follow status");
+    } catch (error: any) {
+      console.error("[FOLLOW] Follow error:", error);
+      const errorMsg = error?.message || error?.error_description || 'Failed to update follow status';
+      toast.error(errorMsg);
     }
   };
 

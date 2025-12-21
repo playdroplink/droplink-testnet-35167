@@ -65,24 +65,45 @@ export const FollowersSection = ({ profileId, currentUserProfileId }: FollowersS
   };
 
   const handleFollow = async () => {
+    console.log('[FOLLOWERS SECTION] Follow action:', {
+      currentUserProfileId,
+      profileId,
+      isFollowing
+    });
+    
     if (!currentUserProfileId || !profileId) {
-      toast.error("Invalid follow: missing user id");
+      console.error('[FOLLOWERS SECTION] Missing IDs:', { currentUserProfileId, profileId });
+      toast.error("Please sign in to follow");
       return;
     }
+    
+    if (currentUserProfileId === profileId) {
+      toast.error("You cannot follow yourself");
+      return;
+    }
+    
     setLoading(true);
     try {
       if (isFollowing) {
+        console.log('[FOLLOWERS SECTION] Unfollowing...');
         // Unfollow
         const { error } = await supabase
           .from("followers")
           .delete()
           .eq("follower_profile_id", currentUserProfileId)
           .eq("following_profile_id", profileId);
-        if (error) throw error;
+        
+        if (error) {
+          console.error('[FOLLOWERS SECTION] Unfollow error:', error);
+          throw error;
+        }
+        
+        console.log('[FOLLOWERS SECTION] Unfollow successful');
         setIsFollowing(false);
         setFollowersCount((prev) => Math.max(0, prev - 1));
         toast.success("Unfollowed successfully");
       } else {
+        console.log('[FOLLOWERS SECTION] Following...');
         // Follow
         const { error } = await supabase
           .from("followers")
@@ -90,7 +111,13 @@ export const FollowersSection = ({ profileId, currentUserProfileId }: FollowersS
             follower_profile_id: currentUserProfileId,
             following_profile_id: profileId,
           });
-        if (error) throw error;
+        
+        if (error) {
+          console.error('[FOLLOWERS SECTION] Follow error:', error);
+          throw error;
+        }
+        
+        console.log('[FOLLOWERS SECTION] Follow successful');
         setIsFollowing(true);
         setFollowersCount((prev) => prev + 1);
         toast.success("Following successfully");
@@ -106,9 +133,10 @@ export const FollowersSection = ({ profileId, currentUserProfileId }: FollowersS
         .eq("follower_profile_id", profileId);
       setFollowersCount(followers || 0);
       setFollowingCount(following || 0);
-    } catch (error) {
-      console.error("Follow error:", error);
-      toast.error("Failed to update follow status");
+    } catch (error: any) {
+      console.error("[FOLLOWERS SECTION] Follow error:", error);
+      const errorMsg = error?.message || error?.error_description || 'Failed to update follow status';
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

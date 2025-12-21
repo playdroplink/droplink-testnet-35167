@@ -63,7 +63,7 @@ const Followers = () => {
         .select(`
           id,
           created_at,
-          follower_profile:profiles!followers_follower_id_fkey (
+          follower_profile:profiles!followers_follower_profile_id_fkey (
             id,
             username,
             business_name,
@@ -71,7 +71,7 @@ const Followers = () => {
             description
           )
         `)
-        .eq("following_id", profile.id);
+        .eq("following_profile_id", profile.id);
       
       const { data: followersData, error: followersError } = (await followersQuery) as any;
 
@@ -84,7 +84,7 @@ const Followers = () => {
         .select(`
           id,
           created_at,
-          following_profile:profiles!followers_following_id_fkey (
+          following_profile:profiles!followers_following_profile_id_fkey (
             id,
             username,
             business_name,
@@ -92,7 +92,7 @@ const Followers = () => {
             description
           )
         `)
-        .eq("follower_id", profile.id);
+        .eq("follower_profile_id", profile.id);
       
       const { data: followingData, error: followingError } = (await followingQuery) as any;
 
@@ -107,40 +107,78 @@ const Followers = () => {
   };
 
   const handleUnfollow = async (followId: string) => {
+    console.log('[FOLLOWERS PAGE] Unfollow:', { followId });
+    
     try {
       const { error } = await supabase
         .from("followers")
         .delete()
         .eq("id", followId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[FOLLOWERS PAGE] Unfollow error:', error);
+        throw error;
+      }
 
+      console.log('[FOLLOWERS PAGE] Unfollow successful');
       setFollowing((prev) => prev.filter((f) => f.id !== followId));
       toast.success("Unfollowed successfully");
-    } catch (error) {
-      console.error("Error unfollowing:", error);
-      toast.error("Failed to unfollow");
+    } catch (error: any) {
+      console.error("[FOLLOWERS PAGE] Error unfollowing:", error);
+      const errorMsg = error?.message || error?.error_description || 'Failed to unfollow';
+      toast.error(errorMsg);
     }
   };
 
   const handleFollowUser = async (targetProfileId: string) => {
+    console.log('[FOLLOWERS PAGE] Follow user:', { currentProfileId, targetProfileId });
+    
     if (!currentProfileId || !targetProfileId) {
-      toast.error("Invalid follow: missing user id");
+      console.error('[FOLLOWERS PAGE] Missing IDs:', { currentProfileId, targetProfileId });
+      toast.error("Please sign in to follow users");
       return;
     }
+    
+    if (currentProfileId === targetProfileId) {
+      toast.error("You cannot follow yourself");
+      return;
+    }
+    
     try {
+      // Check if already following
+      const { data: existing } = await supabase
+        .from("followers")
+        .select("id")
+        .eq("follower_profile_id", currentProfileId)
+        .eq("following_profile_id", targetProfileId)
+        .maybeSingle();
+      
+      if (existing) {
+        console.log('[FOLLOWERS PAGE] Already following');
+        toast.info("Already following this user");
+        return;
+      }
+      
+      console.log('[FOLLOWERS PAGE] Inserting follow record...');
       const { error } = await supabase
         .from("followers")
         .insert({
-          follower_id: currentProfileId,
-          following_id: targetProfileId,
+          follower_profile_id: currentProfileId,
+          following_profile_id: targetProfileId,
         } as any);
-      if (error) throw error;
+      
+      if (error) {
+        console.error('[FOLLOWERS PAGE] Insert error:', error);
+        throw error;
+      }
+      
+      console.log('[FOLLOWERS PAGE] Follow successful');
       toast.success("Started following!");
       loadFollowData(); // Refresh data
-    } catch (error) {
-      console.error("Follow error:", error);
-      toast.error("Failed to follow user");
+    } catch (error: any) {
+      console.error("[FOLLOWERS PAGE] Follow error:", error);
+      const errorMsg = error?.message || error?.error_description || 'Failed to follow user';
+      toast.error(errorMsg);
     }
   };
 

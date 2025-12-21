@@ -201,11 +201,18 @@ serve(async (req) => {
   } catch (error) {
     const totalTime = Date.now() - startTime;
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : '';
     console.error('[COMPLETE] ❌ FAILED in', totalTime, 'ms:', errorMsg);
+    console.error('[COMPLETE] Stack trace:', errorStack);
     
     return new Response(
-      JSON.stringify({ success: false, error: errorMsg }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      JSON.stringify({ 
+        success: false, 
+        error: errorMsg,
+        details: 'Payment completion failed. Please ensure PI_API_KEY is configured correctly in Supabase Edge Functions.',
+        timestamp: new Date().toISOString()
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });

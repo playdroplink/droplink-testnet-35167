@@ -221,11 +221,20 @@ export class RealPiPaymentService {
 
       if (error) {
         console.error('[PAYMENT] ❌ Approval error:', error);
-        throw new Error(error.message || 'Approval failed');
+        const errorMsg = error.message || 'Approval failed';
+        const details = (data as any)?.details || '';
+        throw new Error(`${errorMsg}${details ? ' - ' + details : ''}`);
+      }
+
+      if (!data || data.success !== true) {
+        console.error('[PAYMENT] ❌ Approval failed:', data);
+        const errorMsg = (data as any)?.error || 'Approval failed';
+        const details = (data as any)?.details || 'Edge Function returned unsuccessful response';
+        throw new Error(`${errorMsg} - ${details}`);
       }
 
       console.log('[PAYMENT] Approval response:', data);
-      return data?.success === true;
+      return true;
       
     } catch (error) {
       console.error('[PAYMENT] ❌ Approval request failed:', error);
@@ -247,11 +256,20 @@ export class RealPiPaymentService {
 
       if (error) {
         console.error('[PAYMENT] ❌ Completion error:', error);
-        throw new Error(error.message || 'Completion failed');
+        const errorMsg = error.message || 'Completion failed';
+        const details = (data as any)?.details || '';
+        throw new Error(`${errorMsg}${details ? ' - ' + details : ''}`);
+      }
+
+      if (!data || data.success !== true) {
+        console.error('[PAYMENT] ❌ Completion failed:', data);
+        const errorMsg = (data as any)?.error || 'Completion failed';
+        const details = (data as any)?.details || 'Edge Function returned unsuccessful response';
+        throw new Error(`${errorMsg} - ${details}`);
       }
 
       console.log('[PAYMENT] Completion response:', data);
-      return data?.success === true;
+      return true;
       
     } catch (error) {
       console.error('[PAYMENT] ❌ Completion request failed:', error);

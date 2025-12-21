@@ -216,7 +216,7 @@ const UserSearchPage = () => {
             const { count } = await (supabase
               .from("followers" as any)
               .select("*", { count: "exact", head: true })
-                .eq("following_id", profile.id)) as any;
+                .eq("following_profile_id", profile.id)) as any;
             if (count !== null) {
               profile.follower_count = count;
             }
@@ -244,7 +244,7 @@ const UserSearchPage = () => {
             const { count } = await (supabase
               .from('followers' as any)
               .select('id', { count: 'exact', head: true })
-              .eq('following_id', profile.id)) as any;
+              .eq('following_profile_id', profile.id)) as any;
             return { ...profile, follower_count: count || 0 };
           }));
         }
@@ -315,8 +315,8 @@ const UserSearchPage = () => {
       const { data: existing } = await (supabase
         .from("followers" as any)
         .select("id")
-        .eq("follower_id", followerId)
-        .eq("following_id", followingId)
+        .eq("follower_profile_id", followerId)
+        .eq("following_profile_id", followingId)
         .maybeSingle()) as any;
       
       if (existing) {
@@ -327,8 +327,8 @@ const UserSearchPage = () => {
       const { error } = await (supabase
         .from("followers" as any)
         .insert({
-          follower_id: followerId,
-          following_id: followingId,
+          follower_profile_id: followerId,
+          following_profile_id: followingId,
         })) as any;
         
       if (error) {

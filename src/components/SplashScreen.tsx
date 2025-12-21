@@ -234,6 +234,16 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
             >
               {enableChristmasTheme && '🎄 '}Need help? Contact us at support@droplinkspace{enableChristmasTheme && ' 🎄'}
             </motion.p>
+            
+            {/* Copyright */}
+            <motion.p
+              className={`mt-4 text-xs ${enableChristmasTheme ? 'text-white/70 font-medium' : 'text-white/50'}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.9, duration: 0.5 }}
+            >
+              © {new Date().getFullYear()} MRWAIN ORGANIZATION. All rights reserved.
+            </motion.p>
           </motion.div>
         </motion.div>
       )}
