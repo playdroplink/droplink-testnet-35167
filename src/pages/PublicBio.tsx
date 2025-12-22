@@ -79,6 +79,7 @@ const PublicBio = () => {
   const [showGiftDialog, setShowGiftDialog] = useState(false);
   const [showPiWalletTip, setShowPiWalletTip] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [piAdsOpen, setPiAdsOpen] = useState(false);
   const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
   const [followerCount, setFollowerCount] = useState(0);
   const [visitCount, setVisitCount] = useState(0);
@@ -782,10 +783,35 @@ const PublicBio = () => {
         {/* Pi AdNetwork logic based on creator's plan */}
         {showPiAds && (
           <div className="mb-6">
-            <PiAdsBanner />
-            <div className="mt-4">
-              <PiAdNetwork />
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-white text-sm font-semibold">Pi Ad Network</div>
+              {piAdsOpen ? (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="bg-white/90 text-sky-700 hover:bg-white"
+                  onClick={() => setPiAdsOpen(false)}
+                >
+                  Hide Ads
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  className="bg-sky-500 hover:bg-sky-600 text-white"
+                  onClick={() => setPiAdsOpen(true)}
+                >
+                  View Ads
+                </Button>
+              )}
             </div>
+            {piAdsOpen && (
+              <div className="mt-4">
+                <PiAdsBanner />
+                <div className="mt-4">
+                  <PiAdNetwork />
+                </div>
+              </div>
+            )}
           </div>
         )}
         

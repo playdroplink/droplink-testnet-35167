@@ -88,12 +88,46 @@ const PiAdNetwork: React.FC = () => {
   }, [piUser]);
 
   // Show debug info if ads are not enabled
-  if (!adConfig.enabled || !(window as any).Pi || !isAuthenticated || !piUser) {
+  if (!adConfig.enabled) {
     return (
-      <div style={{ color: '#fff', padding: 16, background: '#38bdf8', border: '1px solid #0ea5e9', borderRadius: 8 }}>
-        <strong style={{ color: '#fff' }}>Pi Ad Network not available:</strong>
-        <div>{adDebug || 'Unknown reason.'}</div>
-      </div>
+      <Card>
+        <CardContent className="p-6">
+          <Alert>
+            <AlertDescription>
+              Pi Ad Network integration is currently disabled.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // If Pi SDK or Pi user data is missing, keep UI visible but disable actions
+  if (!(window as any).Pi || !piUser) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <PlayCircle className="h-5 w-5" />
+            Pi Ad Network
+            <Badge variant="secondary">{PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet'}</Badge>
+          </CardTitle>
+          <CardDescription>
+            Watch ads and earn DROP tokens on Pi Network
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Alert>
+            <AlertDescription>
+              {adDebug || 'Pi Browser is required to load ads.'}
+            </AlertDescription>
+          </Alert>
+          <Button className="w-full" size="lg" disabled>
+            <PlayCircle className="h-5 w-5 mr-2" />
+            Watch Ad (Pi Browser required)
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -150,20 +184,6 @@ const PiAdNetwork: React.FC = () => {
       setAdProgress(0);
     }
   };
-
-  if (!adConfig.enabled) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <Alert>
-            <AlertDescription>
-              Pi Ad Network integration is currently disabled.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
-    );
-  }
 
   if (!isAuthenticated) {
     return (
