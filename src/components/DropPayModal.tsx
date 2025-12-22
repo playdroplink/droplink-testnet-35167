@@ -30,17 +30,17 @@ export const DropPayModal = ({ children }: DropPayModalProps) => {
       description: "Accept Pi cryptocurrency payments directly with a beautiful, easy-to-use modal interface"
     },
     {
-      icon: <Zap className="w-5 h-5 text-yellow-500" />,
+      icon: <Zap className="w-5 h-5 text-sky-500" />,
       title: "Instant Integration",
       description: "Add the DropPay modal to your website in minutes with simple code integration"
     },
     {
-      icon: <Shield className="w-5 h-5 text-green-500" />,
+      icon: <Shield className="w-5 h-5 text-sky-500" />,
       title: "Secure Transactions",
       description: "All payments are secured by Pi Network's blockchain technology"
     },
     {
-      icon: <Smartphone className="w-5 h-5 text-purple-500" />,
+      icon: <Smartphone className="w-5 h-5 text-sky-500" />,
       title: "Mobile Optimized",
       description: "Beautiful responsive design works perfectly on all devices and screen sizes"
     }
@@ -132,7 +132,7 @@ export const DropPayModal = ({ children }: DropPayModalProps) => {
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {features.map((feature, index) => (
                   <li key={index} className="flex items-center gap-2 text-sm">
-                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <CheckCircle className="w-4 h-4 text-sky-500 flex-shrink-0" />
                     <span className="break-words">{feature}</span>
                   </li>
                 ))}
@@ -147,10 +147,10 @@ export const DropPayModal = ({ children }: DropPayModalProps) => {
               How It Works
             </h3>
             <div className="space-y-3">
-              <Card className="border-l-4 border-l-green-500">
+              <Card className="border-l-4 border-l-sky-500">
                 <CardContent className="pt-4">
                   <div className="flex items-start gap-3">
-                    <Badge variant="outline" className="flex-shrink-0 bg-green-50 text-green-700 border-green-300">
+                    <Badge variant="outline" className="flex-shrink-0 bg-sky-50 text-sky-700 border-sky-300">
                       1
                     </Badge>
                     <div className="min-w-0">
@@ -161,10 +161,10 @@ export const DropPayModal = ({ children }: DropPayModalProps) => {
                 </CardContent>
               </Card>
 
-              <Card className="border-l-4 border-l-blue-500">
+              <Card className="border-l-4 border-l-sky-500">
                 <CardContent className="pt-4">
                   <div className="flex items-start gap-3">
-                    <Badge variant="outline" className="flex-shrink-0 bg-blue-50 text-blue-700 border-blue-300">
+                    <Badge variant="outline" className="flex-shrink-0 bg-sky-50 text-sky-700 border-sky-300">
                       2
                     </Badge>
                     <div className="min-w-0">
@@ -175,10 +175,10 @@ export const DropPayModal = ({ children }: DropPayModalProps) => {
                 </CardContent>
               </Card>
 
-              <Card className="border-l-4 border-l-purple-500">
+              <Card className="border-l-4 border-l-sky-500">
                 <CardContent className="pt-4">
                   <div className="flex items-start gap-3">
-                    <Badge variant="outline" className="flex-shrink-0 bg-purple-50 text-purple-700 border-purple-300">
+                    <Badge variant="outline" className="flex-shrink-0 bg-sky-50 text-sky-700 border-sky-300">
                       3
                     </Badge>
                     <div className="min-w-0">
@@ -192,7 +192,7 @@ export const DropPayModal = ({ children }: DropPayModalProps) => {
           </div>
 
           {/* Live Demo */}
-          <Card className="bg-gradient-to-r from-sky-500 to-blue-600 text-white border-0">
+          <Card className="bg-gradient-to-r from-sky-500 to-sky-600 text-white border-0">
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center gap-4">
                 <div className="flex items-center gap-2">
@@ -231,16 +231,16 @@ export const DropPayModal = ({ children }: DropPayModalProps) => {
                 or application. The demo showcases the complete payment flow, UI components, and user experience.
               </p>
               <div className="flex flex-wrap gap-2">
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-300">
                   React/TypeScript
                 </Badge>
-                <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300">
+                <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-300">
                   Pi Network SDK
                 </Badge>
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
+                <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-300">
                   Responsive Design
                 </Badge>
-                <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-300">
+                <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-300">
                   QR Code Support
                 </Badge>
               </div>
