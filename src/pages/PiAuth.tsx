@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePi } from "@/contexts/PiContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, Moon, Sun } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,7 @@ import { LicenseModal } from "@/components/LicenseModal";
 import { MerchantConfigModal } from "@/components/MerchantConfigModal";
 import { PiDomainModal } from "@/components/PiDomainModal";
 import { DropPayModal } from "@/components/DropPayModal";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import droplinkLogo from "@/assets/droplink-logo.png";
 
 const PiAuth = () => {
@@ -31,6 +32,7 @@ const PiAuth = () => {
     });
   const navigate = useNavigate();
   const { isAuthenticated, loading, signIn, piUser } = usePi();
+  const { preferences, updatePreference } = useUserPreferences();
 
 
   // Pi Auth Debug State
@@ -226,16 +228,43 @@ const PiAuth = () => {
           </div>
         )}
         <CardHeader className="text-center">
-          {/* Theme Toggle Switch */}
-          <div className="flex items-center justify-center gap-2 mb-4 pb-3 border-b">
-            <Label htmlFor="christmas-toggle" className="text-sm font-medium">
-              {enableChristmasTheme ? '🎄 Christmas Mode 🎄' : 'Standard Mode'}
-            </Label>
-            <Switch
-              id="christmas-toggle"
-              checked={enableChristmasTheme}
-              onCheckedChange={setEnableChristmasTheme}
-            />
+          {/* Theme Toggle Switches */}
+          <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b">
+            {/* Christmas Theme Toggle */}
+            <div className="flex items-center gap-2">
+              <Label htmlFor="christmas-toggle" className="text-xs sm:text-sm font-medium whitespace-nowrap">
+                {enableChristmasTheme ? '🎄' : '❄️'}
+              </Label>
+              <Switch
+                id="christmas-toggle"
+                checked={enableChristmasTheme}
+                onCheckedChange={setEnableChristmasTheme}
+              />
+            </div>
+            
+            {/* Light/Dark Mode Toggle */}
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                onClick={() => {
+                  const newTheme = preferences.theme_mode === 'dark' ? 'light' : 'dark';
+                  updatePreference('theme_mode', newTheme);
+                }}
+                size="sm"
+                variant="outline"
+                title={preferences.theme_mode === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                className="h-8 px-3 border-none bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700"
+              >
+                {preferences.theme_mode === 'dark' ? (
+                  <Sun className="w-4 h-4 text-yellow-500" />
+                ) : (
+                  <Moon className="w-4 h-4 text-slate-600" />
+                )}
+                <span className="ml-1.5 text-xs font-medium">
+                  {preferences.theme_mode === 'dark' ? 'Light' : 'Dark'}
+                </span>
+              </Button>
+            </div>
           </div>
 
           <div className="flex justify-center mb-4">
