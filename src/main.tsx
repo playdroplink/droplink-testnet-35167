@@ -28,16 +28,6 @@ function isPiBrowser() {
 
 // Production: No mock Pi object. Only real Pi SDK should be used.
 
-
-// Set theme from localStorage or default to light
-const theme = localStorage.getItem('theme');
-if (theme === 'dark') {
-  document.documentElement.classList.add('dark');
-} else {
-  document.documentElement.classList.remove('dark');
-  localStorage.setItem('theme', 'light');
-}
-
 // Run Pi environment validation before rendering to avoid silent white screens in Pi Browser
 (async () => {
 

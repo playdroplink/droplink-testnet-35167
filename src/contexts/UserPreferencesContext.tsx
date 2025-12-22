@@ -139,6 +139,32 @@ export const UserPreferencesProvider = ({ children }: { children: ReactNode }) =
     }
   }, [preferences, loading]);
 
+  // Apply theme to HTML element
+  useEffect(() => {
+    const root = document.documentElement;
+    const theme = preferences.theme_mode;
+    
+    const applyTheme = (isDark: boolean) => {
+      root.classList.remove('light', 'dark');
+      root.classList.add(isDark ? 'dark' : 'light');
+    };
+    
+    if (theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      applyTheme(mediaQuery.matches);
+      
+      // Listen for system theme changes
+      const handleChange = (e: MediaQueryListEvent) => {
+        applyTheme(e.matches);
+      };
+      
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    } else {
+      applyTheme(theme === 'dark');
+    }
+  }, [preferences.theme_mode]);
+
   const loadPreferences = () => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);

@@ -79,6 +79,8 @@ import {
   Crown,
   Store,
   Mail,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { 
   FaTwitter, 
@@ -198,7 +200,7 @@ const Dashboard = () => {
   // Helper: is plan expired?
   const isPlanExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
   
-  const { preferences, updateNestedPreference } = useUserPreferences();
+  const { preferences, updateNestedPreference, updatePreference } = useUserPreferences();
   
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
@@ -1386,6 +1388,28 @@ const Dashboard = () => {
               <span className="text-lg">{enableChristmasTheme ? '🎄' : '❄️'}</span>
               <span className="hidden sm:inline ml-1.5 text-xs sm:text-sm font-medium">
                 {enableChristmasTheme ? 'Christmas' : 'Standard'}
+              </span>
+            </Button>
+            {/* Light/Dark Mode Toggle Button */}
+            <Button
+              type="button"
+              onClick={() => {
+                const newTheme = preferences.theme_mode === 'dark' ? 'light' : 'dark';
+                updateNestedPreference('dashboard_layout', 'activeTab', preferences.dashboard_layout.activeTab);
+                updatePreference('theme_mode', newTheme);
+              }}
+              size="sm"
+              variant="outline"
+              title={preferences.theme_mode === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              className="h-9 w-9 sm:w-auto px-0 sm:px-3 border-none bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700"
+            >
+              {preferences.theme_mode === 'dark' ? (
+                <Sun className="w-4 h-4 text-yellow-500" />
+              ) : (
+                <Moon className="w-4 h-4 text-slate-600" />
+              )}
+              <span className="hidden sm:inline ml-1.5 text-xs sm:text-sm font-medium">
+                {preferences.theme_mode === 'dark' ? 'Light' : 'Dark'}
               </span>
             </Button>
             {/* Add Plan button to header for both mobile and desktop */}
