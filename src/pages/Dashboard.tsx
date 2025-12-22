@@ -1719,6 +1719,10 @@ const Dashboard = () => {
                   <Store className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                   <span className="hidden sm:inline">Merchant</span>
                 </TabsTrigger>
+                <TabsTrigger value="droppay" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
+                  <Wallet className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="hidden sm:inline">DropPay</span>
+                </TabsTrigger>
                 <TabsTrigger value="preferences" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
                   <User className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                   <span className="hidden sm:inline">Settings</span>
@@ -1738,6 +1742,25 @@ const Dashboard = () => {
                                   </a>
                                   <div className="mt-6 text-sm text-gray-500">
                                     <strong>Coming soon:</strong> Advanced storefronts, marketplace discovery, Pi Network integration, smart contracts, analytics, and more!
+                                  </div>
+                                </div>
+                              </TabsContent>
+
+                              {/* DropPay Tab */}
+                              <TabsContent value="droppay" className="pb-6 sm:pb-8">
+                                <div className="max-w-lg mx-auto mt-12 sm:mt-20 p-4 sm:p-8 bg-white rounded-lg sm:rounded-xl shadow border text-center">
+                                  <Wallet className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-sky-500 mb-4" />
+                                  <h2 className="text-2xl sm:text-3xl font-bold mb-2">DropPay: Seamless Pi Payment Modal</h2>
+                                  <p className="text-base sm:text-lg text-gray-700 mb-2">
+                                    DropPay provides a beautiful, ready-to-use payment modal interface for accepting Pi and Drop cryptocurrency payments. Integrate seamless checkout experiences with QR codes, real-time verification, and a polished UI that matches modern web standards.
+                                  </p>
+                                  <a href="https://droppaypro.lovable.app/" target="_blank" rel="noopener noreferrer">
+                                    <button className="mt-4 px-6 py-2 bg-sky-500 text-white rounded-lg font-semibold shadow hover:bg-sky-600 transition">
+                                      View Live Demo
+                                    </button>
+                                  </a>
+                                  <div className="mt-6 text-sm text-gray-500">
+                                    <strong>Features:</strong> Payment modal UI, Pi & Drop support, QR code payments, real-time verification, customizable branding, transaction tracking, and developer-friendly API!
                                   </div>
                                 </div>
                               </TabsContent>

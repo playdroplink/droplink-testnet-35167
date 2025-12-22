@@ -18,6 +18,7 @@ import { PI_CONFIG } from '@/config/pi-config';
 import { LicenseModal } from "@/components/LicenseModal";
 import { MerchantConfigModal } from "@/components/MerchantConfigModal";
 import { PiDomainModal } from "@/components/PiDomainModal";
+import { DropPayModal } from "@/components/DropPayModal";
 import droplinkLogo from "@/assets/droplink-logo.png";
 
 const PiAuth = () => {
@@ -363,6 +364,10 @@ const PiAuth = () => {
               <PiDomainModal>
                 <button className="text-primary hover:underline cursor-pointer">.pi Domains</button>
               </PiDomainModal>
+              <span className="text-muted-foreground">•</span>
+              <DropPayModal>
+                <button className="text-primary hover:underline cursor-pointer">DropPay</button>
+              </DropPayModal>
             </div>
             <div className="flex flex-wrap justify-center gap-2 text-xs">
               <a href="/terms" className="text-primary hover:underline">Terms</a>
