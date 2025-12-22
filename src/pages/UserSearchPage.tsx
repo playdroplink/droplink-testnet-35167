@@ -543,7 +543,11 @@ const UserSearchPage = () => {
                     size="sm"
                     className="bg-sky-400 hover:bg-sky-500 text-white min-w-[60px] sm:min-w-[72px]"
                     style={{height: 32, minWidth: 60}}
-                    onClick={e => { e.stopPropagation(); handleViewProfile(profile); }}
+                    onClick={e => {
+                      e.stopPropagation();
+                      setSelectedProfile(profile);
+                      setShowModal(true);
+                    }}
                   >
                     View
                   </Button>
