@@ -29,7 +29,7 @@ const sortOptions = [
 ];
 
 const UserSearchPage = () => {
-  const { piUser, isAuthenticated, signIn } = usePi();
+  const { piUser, isAuthenticated, signIn, showRewardedAd } = usePi();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   interface ProfileResult {
@@ -80,6 +80,14 @@ const UserSearchPage = () => {
   const [followedUsername, setFollowedUsername] = useState<string | null>(null);
   const [userCount, setUserCount] = useState<number | null>(null);
   const [viewAll, setViewAll] = useState(false); // Only declare once
+  
+  // Friends modal state
+  const [showFriendsModal, setShowFriendsModal] = useState(false);
+  const [friendsLoading, setFriendsLoading] = useState(false);
+  const [followers, setFollowers] = useState<any[]>([]);
+  const [following, setFollowing] = useState<any[]>([]);
+  const [currentUserProfileId, setCurrentUserProfileId] = useState<string | null>(null);
+  const [friendsTab, setFriendsTab] = useState<"followers" | "following">("followers");
 
   // Reset viewAll if query changes and is not empty
   useEffect(() => {
@@ -347,13 +355,94 @@ const UserSearchPage = () => {
     }
   };
 
-  const handleViewProfile = (profile: ProfileResult) => {
+  const handleViewProfile = async (profile: ProfileResult) => {
     if (!isPiAuthenticated()) {
       setShowPiAuthModal(true);
       return;
     }
+
+    // Show rewarded ad before navigating to profile
+    const adWatched = await showRewardedAd();
+    if (!adWatched) {
+      toast.error("Ad network not available. Please try again.");
+      return;
+    }
+
     setShowModal(false);
     navigate(`/@${profile.username}`);
+  };
+
+  const handleOpenFriends = async () => {
+    if (!isPiAuthenticated()) {
+      setShowPiAuthModal(true);
+      return;
+    }
+
+    setShowFriendsModal(true);
+    loadFriendsData();
+  };
+
+  const loadFriendsData = async () => {
+    setFriendsLoading(true);
+    try {
+      if (!piUser?.username) {
+        toast.error("Unable to load friends: user not found");
+        return;
+      }
+
+      // Get current user's profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", piUser.username)
+        .single();
+
+      if (!profile) {
+        toast.error("Profile not found");
+        return;
+      }
+
+      setCurrentUserProfileId(profile.id);
+
+      // Load followers
+      const { data: followersData } = await (supabase as any)
+        .from("followers")
+        .select(`
+          id,
+          created_at,
+          follower_profile:profiles!followers_follower_profile_id_fkey (
+            id,
+            username,
+            business_name,
+            logo
+          )
+        `)
+        .eq("following_profile_id", profile.id);
+
+      setFollowers(followersData || []);
+
+      // Load following
+      const { data: followingData } = await (supabase as any)
+        .from("followers")
+        .select(`
+          id,
+          created_at,
+          following_profile:profiles!followers_following_profile_id_fkey (
+            id,
+            username,
+            business_name,
+            logo
+          )
+        `)
+        .eq("follower_profile_id", profile.id);
+
+      setFollowing(followingData || []);
+    } catch (error) {
+      console.error("Error loading friends:", error);
+      toast.error("Failed to load friends");
+    } finally {
+      setFriendsLoading(false);
+    }
   };
 
   const highlightText = (text: string) => {
@@ -391,14 +480,23 @@ const UserSearchPage = () => {
               {userCount !== null ? `${userCount} Droplink Users` : 'Loading user count...'}
             </div>
           )}
-          <Button
-            size="sm"
-            className="bg-sky-500 hover:bg-sky-600 text-white"
-            onClick={handleViewAll}
-            disabled={loading || viewAll}
-          >
-            View All
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white"
+              onClick={handleOpenFriends}
+            >
+              Friends
+            </Button>
+            <Button
+              size="sm"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white"
+              onClick={handleViewAll}
+              disabled={loading || viewAll}
+            >
+              View All
+            </Button>
+          </div>
         </div>
         <h1 className="text-xl sm:text-2xl font-bold mb-4 text-sky-700 text-center">Search Droplink Profiles</h1>
         <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2 mb-4 w-full">
@@ -410,7 +508,7 @@ const UserSearchPage = () => {
             onChange={e => setQuery(e.target.value)}
             autoFocus
           />
-          <Button type="submit" className="bg-sky-500 hover:bg-sky-600 text-white font-semibold">Search</Button>
+          <Button type="submit" className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold">Search</Button>
         </form>
         <div className="flex flex-col sm:flex-row flex-wrap gap-2 mb-4 w-full">
           {/* Plan filter - uncomment when you have a plan column */}
@@ -476,12 +574,11 @@ const UserSearchPage = () => {
               .map((profile: ProfileResult) => {
                 // VIP team members list - these users get all features unlocked without a plan
                 const vipTeamMembers = [
-                  'jomarikun',
-                  'airdropio2024',
-                  'flappypi_fun',
+                  'droplink',
+                  'droppay',
+                  'flappypi',
                   'Wain2020',
-                  'airdropio2024@gmail.com',
-                  'flappypi.fun@gmail.com'
+                  'dropstore'
                 ];
                 
                 // Check if user is admin (from database, Gmail email, or VIP team member)
@@ -641,6 +738,109 @@ const UserSearchPage = () => {
         <div className="py-4 text-center">
           <p className="mb-2">You have followed <span className="font-semibold text-sky-600">@{followedUsername}</span>!</p>
           <Button className="w-full bg-sky-500 hover:bg-sky-600 text-white" onClick={() => setShowFollowedModal(false)}>
+            Close
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    {/* Friends Modal */}
+    <Dialog open={showFriendsModal} onOpenChange={setShowFriendsModal}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Your Friends Network</DialogTitle>
+        </DialogHeader>
+        {friendsLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-gray-500">Loading friends...</div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Followers Tab */}
+            <div>
+              <h3 className="font-semibold text-sky-700 mb-2 flex items-center gap-2">
+                <span>👤 Followers ({followers.length})</span>
+              </h3>
+              {followers.length === 0 ? (
+                <div className="text-gray-400 text-sm">No followers yet</div>
+              ) : (
+                <div className="space-y-2 max-h-[250px] overflow-y-auto">
+                  {followers.map((item: any) => (
+                    <div key={item.id} className="flex items-center justify-between p-2 bg-sky-50 rounded border border-sky-200">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <img
+                          src={item.follower_profile?.logo || `https://api.dicebear.com/7.x/identicon/svg?seed=${item.follower_profile?.username}`}
+                          alt={item.follower_profile?.username}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                        <div className="min-w-0">
+                          <div className="font-medium text-sky-800 truncate">@{item.follower_profile?.username}</div>
+                          {item.follower_profile?.business_name && (
+                            <div className="text-xs text-gray-600 truncate">{item.follower_profile.business_name}</div>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-sky-600 hover:bg-sky-100"
+                        onClick={() => {
+                          navigate(`/@${item.follower_profile?.username}`);
+                          setShowFriendsModal(false);
+                        }}
+                      >
+                        View
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Following Tab */}
+            <div className="border-t pt-4">
+              <h3 className="font-semibold text-sky-700 mb-2 flex items-center gap-2">
+                <span>⭐ Following ({following.length})</span>
+              </h3>
+              {following.length === 0 ? (
+                <div className="text-gray-400 text-sm">Not following anyone yet</div>
+              ) : (
+                <div className="space-y-2 max-h-[250px] overflow-y-auto">
+                  {following.map((item: any) => (
+                    <div key={item.id} className="flex items-center justify-between p-2 bg-emerald-50 rounded border border-emerald-200">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <img
+                          src={item.following_profile?.logo || `https://api.dicebear.com/7.x/identicon/svg?seed=${item.following_profile?.username}`}
+                          alt={item.following_profile?.username}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                        <div className="min-w-0">
+                          <div className="font-medium text-emerald-800 truncate">@{item.following_profile?.username}</div>
+                          {item.following_profile?.business_name && (
+                            <div className="text-xs text-gray-600 truncate">{item.following_profile.business_name}</div>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-emerald-600 hover:bg-emerald-100"
+                        onClick={() => {
+                          navigate(`/@${item.following_profile?.username}`);
+                          setShowFriendsModal(false);
+                        }}
+                      >
+                        View
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        <div className="flex gap-2 justify-end">
+          <Button variant="outline" onClick={() => setShowFriendsModal(false)}>
             Close
           </Button>
         </div>
