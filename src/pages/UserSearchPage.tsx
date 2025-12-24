@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { usePi } from "@/contexts/PiContext";
 import { toast } from "sonner";
+import { NotificationsBell } from "@/components/NotificationsBell";
 
 const plans = ["all", "free", "basic", "premium", "pro"];
 const categories = [
@@ -500,7 +501,7 @@ const UserSearchPage = () => {
               {userCount !== null ? `${userCount} Droplink Users` : 'Loading user count...'}
             </div>
           )}
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <Button
               size="sm"
               className="bg-sky-500 hover:bg-sky-600 text-white"
@@ -516,6 +517,8 @@ const UserSearchPage = () => {
             >
               View All
             </Button>
+            {/* Notifications bell */}
+            <NotificationsBell profileId={currentUserProfileId} />
           </div>
         </div>
         {/* Active Filters Badges */}
