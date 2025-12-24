@@ -483,14 +483,14 @@ const UserSearchPage = () => {
           <div className="flex gap-2">
             <Button
               size="sm"
-              className="bg-emerald-500 hover:bg-emerald-600 text-white"
+              className="bg-sky-500 hover:bg-sky-600 text-white"
               onClick={handleOpenFriends}
             >
               Friends
             </Button>
             <Button
               size="sm"
-              className="bg-emerald-500 hover:bg-emerald-600 text-white"
+              className="bg-sky-500 hover:bg-sky-600 text-white"
               onClick={handleViewAll}
               disabled={loading || viewAll}
             >
@@ -508,7 +508,7 @@ const UserSearchPage = () => {
             onChange={e => setQuery(e.target.value)}
             autoFocus
           />
-          <Button type="submit" className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold">Search</Button>
+          <Button type="submit" className="bg-sky-500 hover:bg-sky-600 text-white font-semibold">Search</Button>
         </form>
         <div className="flex flex-col sm:flex-row flex-wrap gap-2 mb-4 w-full">
           {/* Plan filter - uncomment when you have a plan column */}
