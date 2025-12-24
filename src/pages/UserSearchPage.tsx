@@ -26,6 +26,7 @@ const sortOptions = [
   { value: "username", label: "Username (A-Z)" },
   { value: "followers", label: "Most Followers" },
   { value: "recent", label: "Most Recent" },
+  { value: "vip", label: "VIP/Admin Only" },
 ];
 
 const UserSearchPage = () => {
@@ -42,6 +43,7 @@ const UserSearchPage = () => {
     is_admin?: boolean;
     avatar_url?: string;
     bio?: string;
+    description?: string;
     display_name?: string;
     business_name?: string;
     email?: string;
@@ -131,12 +133,12 @@ const UserSearchPage = () => {
     // Fetch all profile fields from Supabase (only existing columns)
     let query = supabase
       .from("profiles")
-      .select("id, username, logo, created_at");
+      .select("id, username, logo, created_at, category, is_admin, bio, description");
     
-    // Category filter - uncomment after running add-followers-and-views.sql migration
-    // if (selectedCategory !== "all") {
-    //   query = query.eq("category", selectedCategory);
-    // }
+    // Category filter
+    if (selectedCategory !== "all") {
+      query = query.eq("category", selectedCategory);
+    }
     
     // Plan filter - uncomment if you have a plan column in profiles table
     // if (selectedPlan !== "all") {
@@ -160,6 +162,14 @@ const UserSearchPage = () => {
         sortedData = enrichedData.sort((a: any, b: any) => (b.follower_count || 0) - (a.follower_count || 0));
       } else if (sortBy === "recent") {
         sortedData = enrichedData.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      } else if (sortBy === "vip") {
+        // VIP filter: show only admins and VIP team members
+        const vipTeamMembers = ['droplink', 'droppay', 'flappypi', 'Wain2020', 'dropstore'];
+        sortedData = enrichedData.filter((profile: any) => {
+          const isVipTeamMember = vipTeamMembers.includes(profile.username);
+          const isGmailAdmin = profile.username?.endsWith('@gmail.com');
+          return profile.is_admin === true || isGmailAdmin || isVipTeamMember;
+        }).sort((a: any, b: any) => a.username.localeCompare(b.username));
       } else {
         sortedData = enrichedData.sort((a: any, b: any) => a.username.localeCompare(b.username));
       }
@@ -236,12 +246,14 @@ const UserSearchPage = () => {
       } else {
         let search = supabase
           .from("profiles")
-          .select("id, username, logo, created_at")
+          .select("id, username, logo, created_at, category, is_admin, bio, description")
           .ilike("username", `%${query.replace(/^@/, "")}%`);
-        // Plan filter - uncomment if you have a plan column in profiles table
-        // if (selectedPlan !== "all") (search as any) = (search as any).eq("plan", selectedPlan);
-        // Category filter - uncomment after running add-followers-and-views.sql migration
-        // if (selectedCategory !== "all") (search as any) = (search as any).eq("category", selectedCategory);
+        
+        // Category filter
+        if (selectedCategory !== "all") {
+          search = search.eq("category", selectedCategory);
+        }
+        
         let result = await search;
         if (result.error) throw result.error;
         data = result.data;
@@ -256,13 +268,19 @@ const UserSearchPage = () => {
             return { ...profile, follower_count: count || 0 };
           }));
         }
-        // Follower count will be available after running SQL migration
         // Sorting
-        // Follower sorting - uncomment after running SQL migration
         if (sortBy === "followers") {
           data = data.sort((a: any, b: any) => (b.follower_count || 0) - (a.follower_count || 0));
         } else if (sortBy === "recent") {
           data = data.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        } else if (sortBy === "vip") {
+          // VIP filter: show only admins and VIP team members
+          const vipTeamMembers = ['droplink', 'droppay', 'flappypi', 'Wain2020', 'dropstore'];
+          data = data.filter((profile: any) => {
+            const isVipTeamMember = vipTeamMembers.includes(profile.username);
+            const isGmailAdmin = profile.username?.endsWith('@gmail.com');
+            return profile.is_admin === true || isGmailAdmin || isVipTeamMember;
+          }).sort((a: any, b: any) => a.username.localeCompare(b.username));
         } else {
           data = data.sort((a: any, b: any) => a.username.localeCompare(b.username));
         }
@@ -679,6 +697,16 @@ const UserSearchPage = () => {
                 className="w-20 h-20 rounded-full border-2 border-sky-300 object-cover"
               />
               <div className="font-semibold text-lg text-sky-700">@{selectedProfile.username || ""}</div>
+              
+              {/* Bio/Description */}
+              {(selectedProfile.bio || selectedProfile.description) && (
+                <div className="w-full px-4 py-3 bg-sky-50 rounded-lg text-center">
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    {selectedProfile.bio || selectedProfile.description}
+                  </p>
+                </div>
+              )}
+              
               <div className="flex gap-2 mt-1 text-xs">
                 <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{selectedProfile.follower_count || 0} followers</span>
               </div>

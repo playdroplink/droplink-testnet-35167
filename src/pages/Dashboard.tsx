@@ -1996,8 +1996,8 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* User Category - UNCOMMENT AFTER RUNNING add-followers-and-views.sql */}
-              {/* <div className="mb-6">
+              {/* User Category */}
+              <div className="mb-6">
                 <Label htmlFor="category" className="mb-2 sm:mb-3 block text-sm">Profile Category</Label>
                 <select
                   id="category"
@@ -2040,7 +2040,7 @@ const Dashboard = () => {
                 <p className="text-xs text-muted-foreground mt-1.5">
                   Choose what best describes you to help others find your profile in search
                 </p>
-              </div> */}
+              </div>
 
               {/* YouTube Video URL - Premium/Pro only */}
               <PlanGate minPlan="premium" featureName="YouTube Video">
