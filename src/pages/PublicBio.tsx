@@ -60,8 +60,9 @@ const PublicBio = () => {
   // Strip @ prefix if present (for @username URLs)
   const username = rawUsername?.startsWith('@') ? rawUsername.substring(1) : rawUsername;
   const navigate = useNavigate();
-  const { piUser, isAuthenticated: isPiAuthenticated, signOut } = usePi();
+  const { piUser, isAuthenticated: isPiAuthenticated, signOut, showRewardedAd } = usePi();
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [adShownOnLoad, setAdShownOnLoad] = useState(false);
   // Subscription for viewed profile (must be after username is defined)
   const { plan, expiresAt, loading: subLoading } = usePublicSubscription(username ? String(username) : "");
   const isPlanExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
@@ -115,6 +116,21 @@ const PublicBio = () => {
     }
   }, [username, profileId, currentUserProfileId, isFollowing]);
 
+  // Show rewarded ad when viewing public bio directly
+  useEffect(() => {
+    if (isPiAuthenticated && !adShownOnLoad && profile) {
+      setAdShownOnLoad(true);
+      // Show ad asynchronously without blocking page load
+      const showAd = async () => {
+        const adWatched = await showRewardedAd();
+        if (adWatched) {
+          console.log('Ad shown when viewing public bio');
+        }
+      };
+      // Delay ad slightly to let page render
+      setTimeout(showAd, 1000);
+    }
+  }, [isPiAuthenticated, profile, adShownOnLoad, showRewardedAd]);
 
   useEffect(() => {
     loadProfile();
