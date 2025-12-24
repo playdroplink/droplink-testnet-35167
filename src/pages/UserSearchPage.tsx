@@ -98,9 +98,11 @@ const UserSearchPage = () => {
     }
   }, [query]);
 
-  // Re-run search when filters change
+  // Re-run results when filters change: apply to View All or Search automatically
   useEffect(() => {
-    if (query.trim() && results.length > 0) {
+    if (viewAll) {
+      handleViewAll();
+    } else if (query.trim()) {
       handleSearch();
     }
   }, [selectedCategory, selectedPlan, sortBy]);
@@ -133,7 +135,7 @@ const UserSearchPage = () => {
     // Fetch all profile fields from Supabase (only existing columns)
     let query = supabase
       .from("profiles")
-      .select("id, username, logo, created_at, category, is_admin, bio, description");
+      .select("id, username, logo, created_at, category, is_admin, bio, description") as any;
     
     // Category filter
     if (selectedCategory !== "all") {
@@ -247,7 +249,7 @@ const UserSearchPage = () => {
         let search = supabase
           .from("profiles")
           .select("id, username, logo, created_at, category, is_admin, bio, description")
-          .ilike("username", `%${query.replace(/^@/, "")}%`);
+          .ilike("username", `%${query.replace(/^@/, "")}%`) as any;
         
         // Category filter
         if (selectedCategory !== "all") {
@@ -516,6 +518,21 @@ const UserSearchPage = () => {
             </Button>
           </div>
         </div>
+        {/* Active Filters Badges */}
+        <div className="w-full -mt-2 mb-4">
+          <div className="text-xs text-gray-600">Active filters:</div>
+          <div className="flex flex-wrap gap-2 mt-1 items-center">
+            <span className="px-2 py-1 bg-sky-100 text-sky-700 rounded-full text-xs">
+              Category: {categories.find(c => c.value === selectedCategory)?.label || "All Categories"}
+            </span>
+            <span className="px-2 py-1 bg-sky-100 text-sky-700 rounded-full text-xs">
+              Sort: {sortOptions.find(s => s.value === sortBy)?.label}
+            </span>
+            <Button size="sm" variant="outline" className="text-xs" onClick={() => { setSelectedCategory("all"); setSortBy("username"); }}>
+              Clear
+            </Button>
+          </div>
+        </div>
         <h1 className="text-xl sm:text-2xl font-bold mb-4 text-sky-700 text-center">Search Droplink Profiles</h1>
         <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2 mb-4 w-full">
           <Input
@@ -523,7 +540,15 @@ const UserSearchPage = () => {
             className="flex-1"
             placeholder="Search by @username"
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={e => {
+              const value = e.target.value;
+              // Auto-prepend @ if not present
+              if (value && !value.startsWith('@')) {
+                setQuery('@' + value);
+              } else {
+                setQuery(value);
+              }
+            }}
             autoFocus
           />
           <Button type="submit" className="bg-sky-500 hover:bg-sky-600 text-white font-semibold">Search</Button>
