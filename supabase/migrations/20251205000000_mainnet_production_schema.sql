@@ -111,110 +111,133 @@ CREATE INDEX IF NOT EXISTS idx_pi_ad_interactions_created_at ON public.pi_ad_int
 -- Add missing columns to user_sessions table if it exists
 DO $$ 
 BEGIN
-    -- Add session_id column if not exists
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
+    -- Check if user_sessions table exists first
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables 
         WHERE table_schema = 'public' 
-        AND table_name = 'user_sessions' 
-        AND column_name = 'session_id'
+        AND table_name = 'user_sessions'
     ) THEN
-        ALTER TABLE public.user_sessions ADD COLUMN session_id TEXT;
-    END IF;
+        -- Add session_id column if not exists
+        IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_schema = 'public' 
+            AND table_name = 'user_sessions' 
+            AND column_name = 'session_id'
+        ) THEN
+            ALTER TABLE public.user_sessions ADD COLUMN session_id TEXT;
+        END IF;
 
-    -- Add auth_method column if not exists
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_schema = 'public' 
-        AND table_name = 'user_sessions' 
-        AND column_name = 'auth_method'
-    ) THEN
-        ALTER TABLE public.user_sessions ADD COLUMN auth_method TEXT;
-    END IF;
+        -- Add auth_method column if not exists
+        IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_schema = 'public' 
+            AND table_name = 'user_sessions' 
+            AND column_name = 'auth_method'
+        ) THEN
+            ALTER TABLE public.user_sessions ADD COLUMN auth_method TEXT;
+        END IF;
 
-    -- Add pi_access_token column if not exists
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_schema = 'public' 
-        AND table_name = 'user_sessions' 
-        AND column_name = 'pi_access_token'
-    ) THEN
-        ALTER TABLE public.user_sessions ADD COLUMN pi_access_token TEXT;
-    END IF;
+        -- Add pi_access_token column if not exists
+        IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_schema = 'public' 
+            AND table_name = 'user_sessions' 
+            AND column_name = 'pi_access_token'
+        ) THEN
+            ALTER TABLE public.user_sessions ADD COLUMN pi_access_token TEXT;
+        END IF;
 
-    -- Add pi_user_id column if not exists
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_schema = 'public' 
-        AND table_name = 'user_sessions' 
-        AND column_name = 'pi_user_id'
-    ) THEN
-        ALTER TABLE public.user_sessions ADD COLUMN pi_user_id TEXT;
-    END IF;
+        -- Add pi_user_id column if not exists
+        IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_schema = 'public' 
+            AND table_name = 'user_sessions' 
+            AND column_name = 'pi_user_id'
+        ) THEN
+            ALTER TABLE public.user_sessions ADD COLUMN pi_user_id TEXT;
+        END IF;
 
-    -- Add pi_username column if not exists
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_schema = 'public' 
-        AND table_name = 'user_sessions' 
-        AND column_name = 'pi_username'
-    ) THEN
-        ALTER TABLE public.user_sessions ADD COLUMN pi_username TEXT;
-    END IF;
+        -- Add pi_username column if not exists
+        IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_schema = 'public' 
+            AND table_name = 'user_sessions' 
+            AND column_name = 'pi_username'
+        ) THEN
+            ALTER TABLE public.user_sessions ADD COLUMN pi_username TEXT;
+        END IF;
 
-    -- Add pi_wallet_address column if not exists
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_schema = 'public' 
-        AND table_name = 'user_sessions' 
-        AND column_name = 'pi_wallet_address'
-    ) THEN
-        ALTER TABLE public.user_sessions ADD COLUMN pi_wallet_address TEXT;
-    END IF;
+        -- Add pi_wallet_address column if not exists
+        IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_schema = 'public' 
+            AND table_name = 'user_sessions' 
+            AND column_name = 'pi_wallet_address'
+        ) THEN
+            ALTER TABLE public.user_sessions ADD COLUMN pi_wallet_address TEXT;
+        END IF;
 
-    -- Add environment column if not exists
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_schema = 'public' 
-        AND table_name = 'user_sessions' 
-        AND column_name = 'environment'
-    ) THEN
-        ALTER TABLE public.user_sessions ADD COLUMN environment TEXT DEFAULT 'mainnet';
+        -- Add environment column if not exists
+        IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_schema = 'public' 
+            AND table_name = 'user_sessions' 
+            AND column_name = 'environment'
+        ) THEN
+            ALTER TABLE public.user_sessions ADD COLUMN environment TEXT DEFAULT 'mainnet';
+        END IF;
     END IF;
 END $$;
 
 -- Add constraints if table exists
 DO $$
 BEGIN
-    -- Add check constraint for auth_method if not exists
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint 
-        WHERE conname = 'user_sessions_auth_method_check'
+    -- Check if user_sessions table exists first
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'user_sessions'
     ) THEN
-        ALTER TABLE public.user_sessions 
-        ADD CONSTRAINT user_sessions_auth_method_check 
-        CHECK (auth_method IN ('pi_network', 'email', 'google'));
-    END IF;
+        -- Add check constraint for auth_method if not exists
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint 
+            WHERE conname = 'user_sessions_auth_method_check'
+        ) THEN
+            ALTER TABLE public.user_sessions 
+            ADD CONSTRAINT user_sessions_auth_method_check 
+            CHECK (auth_method IN ('pi_network', 'email', 'google'));
+        END IF;
 
-    -- Add check constraint for environment if not exists
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint 
-        WHERE conname = 'user_sessions_environment_check'
-    ) THEN
-        ALTER TABLE public.user_sessions 
-        ADD CONSTRAINT user_sessions_environment_check 
-        CHECK (environment IN ('mainnet', 'testnet'));
+        -- Add check constraint for environment if not exists
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint 
+            WHERE conname = 'user_sessions_environment_check'
+        ) THEN
+            ALTER TABLE public.user_sessions 
+            ADD CONSTRAINT user_sessions_environment_check 
+            CHECK (environment IN ('mainnet', 'testnet'));
+        END IF;
     END IF;
 EXCEPTION
     WHEN duplicate_object THEN
         NULL; -- Constraint already exists, ignore
 END $$;
 
--- Create indexes for sessions (IF NOT EXISTS will skip if they exist)
-CREATE INDEX IF NOT EXISTS idx_user_sessions_profile_id ON public.user_sessions(profile_id);
-CREATE INDEX IF NOT EXISTS idx_user_sessions_session_id ON public.user_sessions(session_id);
-CREATE INDEX IF NOT EXISTS idx_user_sessions_pi_user_id ON public.user_sessions(pi_user_id);
-CREATE INDEX IF NOT EXISTS idx_user_sessions_is_active ON public.user_sessions(is_active);
-CREATE INDEX IF NOT EXISTS idx_user_sessions_last_active ON public.user_sessions(last_active DESC);
+-- Create indexes for sessions only if table exists
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'user_sessions'
+    ) THEN
+        CREATE INDEX IF NOT EXISTS idx_user_sessions_profile_id ON public.user_sessions(profile_id);
+        CREATE INDEX IF NOT EXISTS idx_user_sessions_session_id ON public.user_sessions(session_id);
+        CREATE INDEX IF NOT EXISTS idx_user_sessions_pi_user_id ON public.user_sessions(pi_user_id);
+        CREATE INDEX IF NOT EXISTS idx_user_sessions_is_active ON public.user_sessions(is_active);
+        CREATE INDEX IF NOT EXISTS idx_user_sessions_last_active ON public.user_sessions(last_active DESC);
+    END IF;
+END $$;
 
 -- =======================
 -- WALLET TOKENS TABLE

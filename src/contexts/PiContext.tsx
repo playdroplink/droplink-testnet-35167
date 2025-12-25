@@ -267,15 +267,22 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           try {
             const features = await window.Pi.nativeFeaturesList();
             const adSupported = features.includes('ad_network');
-            setAdNetworkSupported(adSupported);
-            console.log('[PI DEBUG] 🎯 Ad Network Support:', adSupported);
+            console.log('[PI DEBUG] 🎯 Ad Network Support (via nativeFeaturesList):', adSupported);
             console.log('[PI DEBUG] 📋 Available features:', features);
             
-            // Fallback: If nativeFeaturesList doesn't show ad_network, check if Pi.Ads exists
-            if (!adSupported && (window as any).Pi?.Ads) {
-              console.log('[PI DEBUG] ⚠️ Ad Network API exists despite nativeFeaturesList');
-              setAdNetworkSupported(true);
+            // Fallback checks for ad network availability
+            let hasAdAPI = adSupported;
+            if (!hasAdAPI && (window as any).Pi?.Ads) {
+              console.log('[PI DEBUG] ✅ Ad Network API (Pi.Ads) exists despite nativeFeaturesList');
+              hasAdAPI = true;
             }
+            if (!hasAdAPI && (window as any).Pi?.showRewardedAd) {
+              console.log('[PI DEBUG] ✅ Ad Network API (Pi.showRewardedAd) exists despite nativeFeaturesList');
+              hasAdAPI = true;
+            }
+            
+            setAdNetworkSupported(hasAdAPI);
+            console.log('[PI DEBUG] 🎯 Final Ad Network Support:', hasAdAPI);
           } catch (err) {
             console.warn('[PI DEBUG] ⚠️ Failed to check native features:', err);
             // Fallback: Check if Pi.Ads API exists
@@ -1295,8 +1302,16 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const showRewardedAd = async (): Promise<boolean> => {
-    if ((!window.Pi && !(window as any).Pi) || !adNetworkSupported) {
-      toast("Ad Network not supported on this Pi Browser version.", {
+    // Check if Pi SDK is available and has ad API (with fallbacks)
+    const hasPiSDK = !!(window.Pi || (window as any).Pi);
+    const hasAdAPI = hasPiSDK && (
+      ((window as any).Pi?.Ads?.showAd) || 
+      ((window as any).Pi?.showRewardedAd)
+    );
+
+    if (!hasPiSDK || !hasAdAPI) {
+      console.warn('[AD] Pi SDK or Ad API not available', { hasPiSDK, hasAdAPI, adNetworkSupported });
+      toast("Ad Network not available. Please try again.", {
         description: "Ads Not Supported",
         duration: 5000,
       });
@@ -1315,15 +1330,24 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       // Show the ad via Pi SDK (supporting both Ads.showAd and direct showRewardedAd)
       let response: any = null;
       try {
+        console.log('[AD] Attempting to show rewarded ad...', { 
+          hasAdsAPI: !!(window as any).Pi?.Ads?.showAd,
+          hasShowRewardedAd: !!(window as any).Pi?.showRewardedAd
+        });
+
         if ((window as any).Pi && (window as any).Pi.Ads && (window as any).Pi.Ads.showAd) {
+          console.log('[AD] Using Pi.Ads.showAd()');
           response = await (window as any).Pi.Ads.showAd('rewarded');
         } else if ((window as any).Pi && (window as any).Pi.showRewardedAd) {
+          console.log('[AD] Using Pi.showRewardedAd()');
           response = await (window as any).Pi.showRewardedAd();
         } else {
-          throw new Error('Ad API not available');
+          throw new Error('No ad API available');
         }
+        console.log('[AD] Ad response:', response);
       } catch (adErr) {
-        console.error('Ad show error:', adErr);
+        console.error('[AD] Error showing ad:', adErr);
+        console.error('[AD] Error message:', adErr instanceof Error ? adErr.message : String(adErr));
         toast("Failed to show rewarded ad.", { description: "Ad Error", duration: 5000 });
         return false;
       }

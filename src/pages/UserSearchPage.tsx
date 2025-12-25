@@ -383,10 +383,15 @@ const UserSearchPage = () => {
     }
 
     // Show rewarded ad before navigating to profile
-    const adWatched = await showRewardedAd();
-    if (!adWatched) {
-      toast.error("Ad network not available. Please try again.");
-      return;
+    try {
+      const adWatched = await showRewardedAd();
+      if (!adWatched) {
+        console.warn('Ad not shown, but allowing profile navigation anyway');
+        // Allow navigation even if ad fails - don't block UX
+      }
+    } catch (err) {
+      console.error('Error showing ad:', err);
+      // Don't block profile navigation if ad fails
     }
 
     setShowModal(false);
@@ -807,8 +812,14 @@ const UserSearchPage = () => {
           <DialogTitle>Your Friends Network</DialogTitle>
         </DialogHeader>
         {friendsLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="text-gray-500">Loading friends...</div>
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="mb-4">
+              <div className="relative w-12 h-12">
+                <div className="absolute inset-0 bg-gradient-to-r from-sky-400 to-sky-600 rounded-full opacity-75 animate-spin"></div>
+                <div className="absolute inset-1 bg-white rounded-full"></div>
+              </div>
+            </div>
+            <div className="text-gray-500 text-sm font-medium">Loading friends...</div>
           </div>
         ) : (
           <div className="space-y-4">

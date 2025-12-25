@@ -1,4 +1,4 @@
--- User Profile Table (already exists, shown for reference)
+-- User Profile Table
 CREATE TABLE IF NOT EXISTS profiles (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   username text,
@@ -58,8 +58,8 @@ CREATE TABLE IF NOT EXISTS payments (
 CREATE TABLE IF NOT EXISTS subscriptions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id text REFERENCES profiles(pi_user_id),
-  plan text NOT NULL, -- e.g. 'free', 'pro', 'premium'
-  status text NOT NULL, -- e.g. 'active', 'expired', 'cancelled', 'pending'
+  plan text NOT NULL,
+  status text NOT NULL,
   start_date timestamptz DEFAULT now(),
   end_date timestamptz,
   payment_id uuid REFERENCES payments(id),

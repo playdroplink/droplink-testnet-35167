@@ -12,7 +12,11 @@
     "preview": "vite preview",
     "deploy:mainnet": "node mainnet-deploy.cjs && npm run build:mainnet",
     "verify:mainnet": "node mainnet-deploy.cjs",
-    "validate:production": "node validate-production.cjs"
+    "validate:production": "node validate-production.cjs",
+    "supabase:login": "npx supabase login",
+    "supabase:link": "npx supabase link --project-ref idkjfuctyukspexmijvb",
+    "supabase:push": "npx supabase db push",
+    "supabase:verify": "npx supabase db remote commit"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
