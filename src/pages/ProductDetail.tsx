@@ -63,7 +63,7 @@ const ProductDetail: React.FC = () => {
       const { data: ownerData, error: ownerError } = await supabase
         .from("profiles")
         .select("username, business_name")
-        .eq("id", prod.profile_id)
+        .eq("id", (prod as any).profile_id)
         .maybeSingle();
 
       if (ownerError) {
@@ -80,7 +80,7 @@ const ProductDetail: React.FC = () => {
         if (userProfile) setProfileId(userProfile.id);
       }
 
-      setProduct(prod as Product);
+      setProduct(prod as unknown as Product);
       setOwner(ownerData as Owner | null);
       setLoading(false);
     };

@@ -2859,6 +2859,16 @@ const Dashboard = () => {
               Search Droplink Profiles
             </Button>
           </div>
+          <div className="w-full px-3 sm:px-4 md:px-6 mb-3">
+            <Button 
+              onClick={() => navigate('/merchant-products')} 
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white"
+              size="sm"
+            >
+              <Store className="w-4 h-4 mr-2" />
+              Sell Digital Products
+            </Button>
+          </div>
           <div className="flex-1 flex items-center justify-center w-full overflow-hidden px-2 sm:px-3 md:px-4 py-2 sm:py-3">
             <PhonePreview profile={profile} />
           </div>

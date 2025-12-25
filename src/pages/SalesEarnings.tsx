@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { DollarSign, TrendingUp, Download, Wallet, Eye } from "lucide-react";
+import { DollarSign, TrendingUp, Download, Wallet, Eye, Moon, Sun } from "lucide-react";
 
 interface Sale {
   id: string;
@@ -27,7 +27,7 @@ interface Product {
 }
 
 const SalesEarnings: React.FC = () => {
-  const { piUser } = usePi();
+  const { piUser, isAuthenticated, signIn, loading: piLoading } = usePi();
   const [profileId, setProfileId] = useState<string | null>(null);
   const [sales, setSales] = useState<Sale[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -36,6 +36,23 @@ const SalesEarnings: React.FC = () => {
   const [withdrawalAmount, setWithdrawalAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('droplink-dark-mode');
+    return saved ? JSON.parse(saved) : true;
+  });
+
+  const handlePiAuth = async () => {
+    try {
+      await signIn(["username", "payments", "wallet_address"]);
+    } catch (error) {
+      console.error("Pi authentication failed:", error);
+      toast.error("Failed to authenticate with Pi Network");
+    }
+  };
+
+  useEffect(() => {
+    localStorage.setItem('droplink-dark-mode', JSON.stringify(isDarkMode));
+  }, [isDarkMode]);
 
   useEffect(() => {
     const fetchProfileId = async () => {
@@ -67,7 +84,7 @@ const SalesEarnings: React.FC = () => {
     try {
       // Fetch payment transactions (product sales)
       const { data: transactions, error: txError } = await supabase
-        .from("payment_transactions")
+        .from("payment_transactions" as any)
         .select("*")
         .eq("profile_id", profileId)
         .eq("status", "completed")
@@ -77,7 +94,7 @@ const SalesEarnings: React.FC = () => {
 
       // Fetch subscription transactions (subscription sales)
       const { data: subscriptions, error: subError } = await supabase
-        .from("subscription_transactions")
+        .from("subscription_transactions" as any)
         .select("*")
         .eq("profile_id", profileId)
         .order("created_at", { ascending: false });
@@ -91,7 +108,7 @@ const SalesEarnings: React.FC = () => {
 
       // Process product sales
       if (transactions) {
-        for (const tx of transactions) {
+        for (const tx of transactions as any[]) {
           const amount = parseFloat(tx.amount || "0");
           totalRevenue += amount;
 
@@ -127,7 +144,7 @@ const SalesEarnings: React.FC = () => {
 
       // Process subscription sales
       if (subscriptions) {
-        for (const sub of subscriptions) {
+        for (const sub of subscriptions as any[]) {
           const amount = parseFloat(sub.amount || "0");
           totalRevenue += amount;
 
@@ -186,7 +203,7 @@ const SalesEarnings: React.FC = () => {
     setLoading(true);
     try {
       // Create withdrawal record
-      const { error } = await supabase.from("withdrawals").insert({
+      const { error } = await supabase.from("withdrawals" as any).insert({
         profile_id: profileId,
         amount: withdrawalAmount,
         status: "pending",
@@ -207,24 +224,59 @@ const SalesEarnings: React.FC = () => {
     }
   };
 
+  // Show authentication required if not authenticated
+  if (!isAuthenticated || !piUser) {
+    return (
+      <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-br from-slate-900 to-slate-800' : 'bg-gradient-to-br from-slate-50 to-sky-50'} flex items-center justify-center p-6`}>
+        <Card className={`max-w-md w-full ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+          <CardHeader>
+            <CardTitle className={`text-center ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Authentication Required</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className={`text-center ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+              Please sign in with Pi Network to access your sales and earnings dashboard.
+            </p>
+            <Button 
+              onClick={handlePiAuth} 
+              disabled={piLoading}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              {piLoading ? "Connecting..." : "Sign in with Pi Network"}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-6">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-br from-slate-900 to-slate-800' : 'bg-gradient-to-br from-slate-50 to-sky-50'} p-6`}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Sales & Earnings</h1>
-          <p className="text-slate-400">Track your revenue and manage withdrawals</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'} mb-2`}>Sales & Earnings</h1>
+            <p className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>Track your revenue and manage withdrawals</p>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            className={isDarkMode ? 'border-slate-600 hover:bg-slate-700' : 'border-slate-300 hover:bg-slate-100'}
+          >
+            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+          </Button>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {/* Total Earnings */}
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className={isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-400 text-sm mb-1">Total Earnings</p>
-                  <p className="text-3xl font-bold text-green-400">{totalEarnings.toFixed(2)} π</p>
+                  <p className={`${isDarkMode ? 'text-slate-400' : 'text-slate-600'} text-sm mb-1`}>Total Earnings</p>
+                  <p className={`text-3xl font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>{totalEarnings.toFixed(2)} π</p>
                 </div>
                 <div className="bg-green-500/20 p-3 rounded-lg">
                   <DollarSign className="text-green-400" size={28} />
@@ -234,12 +286,12 @@ const SalesEarnings: React.FC = () => {
           </Card>
 
           {/* Total Sales */}
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className={isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-400 text-sm mb-1">Total Transactions</p>
-                  <p className="text-3xl font-bold text-blue-400">{totalSales}</p>
+                  <p className={`${isDarkMode ? 'text-slate-400' : 'text-slate-600'} text-sm mb-1`}>Total Transactions</p>
+                  <p className={`text-3xl font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>{totalSales}</p>
                 </div>
                 <div className="bg-blue-500/20 p-3 rounded-lg">
                   <TrendingUp className="text-blue-400" size={28} />
@@ -249,12 +301,12 @@ const SalesEarnings: React.FC = () => {
           </Card>
 
           {/* Average Sale */}
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className={isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-400 text-sm mb-1">Average Sale</p>
-                  <p className="text-3xl font-bold text-purple-400">
+                  <p className={`${isDarkMode ? 'text-slate-400' : 'text-slate-600'} text-sm mb-1`}>Average Sale</p>
+                  <p className={`text-3xl font-bold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>
                     {totalSales > 0 ? (totalEarnings / totalSales).toFixed(2) : "0"} π
                   </p>
                 </div>
@@ -267,9 +319,9 @@ const SalesEarnings: React.FC = () => {
         </div>
 
         {/* Withdrawal Section */}
-        <Card className="mb-8 bg-slate-800 border-slate-700">
+        <Card className={`mb-8 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
+            <CardTitle className={`${isDarkMode ? 'text-white' : 'text-slate-900'} flex items-center gap-2`}>
               <Download size={20} />
               Request Withdrawal
             </CardTitle>
@@ -277,7 +329,7 @@ const SalesEarnings: React.FC = () => {
           <CardContent>
             <form onSubmit={handleWithdrawal} className="space-y-4">
               <div>
-                <p className="text-slate-400 text-sm mb-2">Available Balance: {totalEarnings.toFixed(2)} π</p>
+                <p className={`${isDarkMode ? 'text-slate-400' : 'text-slate-600'} text-sm mb-2`}>Available Balance: {totalEarnings.toFixed(2)} π</p>
                 <Input
                   type="number"
                   placeholder="Enter withdrawal amount"
@@ -286,7 +338,7 @@ const SalesEarnings: React.FC = () => {
                   step="0.01"
                   min="0"
                   max={totalEarnings}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                  className={isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-400' : 'bg-slate-100 border-slate-300 text-slate-900 placeholder:text-slate-500'}
                 />
               </div>
               <Button 
@@ -304,41 +356,41 @@ const SalesEarnings: React.FC = () => {
         {/* Products Performance */}
         <div className="mb-8">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-white mb-2">Products Performance</h2>
+            <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'} mb-2`}>Products Performance</h2>
             <div className="h-1 w-16 bg-blue-600 rounded"></div>
           </div>
 
           {loading ? (
-            <div className="text-center py-8 text-slate-400">Loading performance data...</div>
+            <div className={`text-center py-8 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Loading performance data...</div>
           ) : products.length === 0 ? (
-            <Card className="bg-slate-800 border-slate-700">
+            <Card className={isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}>
               <CardContent className="py-12 text-center">
-                <p className="text-slate-400">No sales data yet. Create products and start selling!</p>
+                <p className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>No sales data yet. Create products and start selling!</p>
               </CardContent>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {products.map((product) => (
-                <Card key={product.id} className="bg-slate-800 border-slate-700 hover:border-blue-500 transition-colors">
+                <Card key={product.id} className={`${isDarkMode ? 'bg-slate-800 border-slate-700 hover:border-blue-500' : 'bg-white border-slate-200 hover:border-blue-400'} transition-colors`}>
                   <CardContent className="pt-6">
-                    <h3 className="text-lg font-bold text-white mb-4 truncate">{product.title}</h3>
+                    <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'} mb-4 truncate`}>{product.title}</h3>
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-400 text-sm">Sales</span>
-                        <span className="text-white font-semibold">{product.sale_count}</span>
+                        <span className={`${isDarkMode ? 'text-slate-400' : 'text-slate-600'} text-sm`}>Sales</span>
+                        <span className={`${isDarkMode ? 'text-white' : 'text-slate-900'} font-semibold`}>{product.sale_count}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-400 text-sm">Revenue</span>
-                        <span className="text-green-400 font-semibold">{product.revenue.toFixed(2)} π</span>
+                        <span className={`${isDarkMode ? 'text-slate-400' : 'text-slate-600'} text-sm`}>Revenue</span>
+                        <span className={`${isDarkMode ? 'text-green-400' : 'text-green-600'} font-semibold`}>{product.revenue.toFixed(2)} π</span>
                       </div>
                       <div className="pt-3 border-t border-slate-700">
-                        <div className="w-full bg-slate-700 rounded-full h-2">
+                        <div className={`w-full ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'} rounded-full h-2`}>
                           <div 
                             className="bg-green-500 h-2 rounded-full" 
                             style={{ width: `${Math.min((product.revenue / totalEarnings) * 100, 100)}%` }}
                           ></div>
                         </div>
-                        <p className="text-slate-400 text-xs mt-2">
+                        <p className={`${isDarkMode ? 'text-slate-400' : 'text-slate-600'} text-xs mt-2`}>
                           {totalEarnings > 0 ? ((product.revenue / totalEarnings) * 100).toFixed(1) : 0}% of total
                         </p>
                       </div>
@@ -353,47 +405,47 @@ const SalesEarnings: React.FC = () => {
         {/* Sales History */}
         <div>
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-white mb-2">Sales History</h2>
+            <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'} mb-2`}>Sales History</h2>
             <div className="h-1 w-16 bg-blue-600 rounded"></div>
           </div>
 
           {loading ? (
-            <div className="text-center py-8 text-slate-400">Loading sales history...</div>
+            <div className={`text-center py-8 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Loading sales history...</div>
           ) : sales.length === 0 ? (
-            <Card className="bg-slate-800 border-slate-700">
+            <Card className={isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}>
               <CardContent className="py-12 text-center">
-                <p className="text-slate-400">No sales yet. Start selling to see transactions here!</p>
+                <p className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>No sales yet. Start selling to see transactions here!</p>
               </CardContent>
             </Card>
           ) : (
-            <Card className="bg-slate-800 border-slate-700 overflow-hidden">
+            <Card className={`${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} overflow-hidden`}>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-700 border-b border-slate-600">
+                  <thead className={`${isDarkMode ? 'bg-slate-700 border-b border-slate-600' : 'bg-slate-100 border-b border-slate-300'}`}>
                     <tr>
-                      <th className="text-left p-4 text-slate-300 font-semibold">Product</th>
-                      <th className="text-left p-4 text-slate-300 font-semibold">Buyer</th>
-                      <th className="text-left p-4 text-slate-300 font-semibold">Amount</th>
-                      <th className="text-left p-4 text-slate-300 font-semibold">Method</th>
-                      <th className="text-left p-4 text-slate-300 font-semibold">Date</th>
+                      <th className={`text-left p-4 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'} font-semibold`}>Product</th>
+                      <th className={`text-left p-4 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'} font-semibold`}>Buyer</th>
+                      <th className={`text-left p-4 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'} font-semibold`}>Amount</th>
+                      <th className={`text-left p-4 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'} font-semibold`}>Method</th>
+                      <th className={`text-left p-4 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'} font-semibold`}>Date</th>
                     </tr>
                   </thead>
                   <tbody>
                     {sales.map((sale, idx) => (
-                      <tr key={sale.id} className={idx % 2 === 0 ? "bg-slate-700/30" : ""}>
-                        <td className="p-4 text-slate-200">{sale.product_title}</td>
-                        <td className="p-4 text-slate-200">{sale.buyer_name}</td>
-                        <td className="p-4 text-green-400 font-semibold">{sale.amount} {sale.currency}</td>
+                      <tr key={sale.id} className={idx % 2 === 0 ? (isDarkMode ? 'bg-slate-700/30' : 'bg-slate-50') : ''}>
+                        <td className={`p-4 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{sale.product_title}</td>
+                        <td className={`p-4 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{sale.buyer_name}</td>
+                        <td className={`p-4 ${isDarkMode ? 'text-green-400' : 'text-green-600'} font-semibold`}>{sale.amount} {sale.currency}</td>
                         <td className="p-4">
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                             sale.payment_method === "pi" 
-                              ? "bg-blue-500/20 text-blue-300" 
-                              : "bg-purple-500/20 text-purple-300"
+                              ? (isDarkMode ? "bg-blue-500/20 text-blue-300" : "bg-blue-100 text-blue-700")
+                              : (isDarkMode ? "bg-purple-500/20 text-purple-300" : "bg-purple-100 text-purple-700")
                           }`}>
                             {sale.payment_method === "pi" ? "Pi Network" : "DropPay"}
                           </span>
                         </td>
-                        <td className="p-4 text-slate-400 text-xs">
+                        <td className={`p-4 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} text-xs`}>
                           {new Date(sale.created_at).toLocaleDateString()} {new Date(sale.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </td>
                       </tr>

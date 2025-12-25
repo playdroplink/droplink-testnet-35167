@@ -51,7 +51,7 @@ const Purchases: React.FC = () => {
     setLoading(true);
     setError(null);
     const { data, error } = await supabase
-      .from("payment_transactions")
+      .from("payment_transactions" as any)
       .select("id, transaction_id, payment_id, amount, status, memo, pi_metadata, confirmed_at, created_at")
       .eq("profile_id", profileId)
       .order("created_at", { ascending: false });
@@ -59,7 +59,7 @@ const Purchases: React.FC = () => {
       setError(error.message);
       toast.error("Failed to load purchases");
     } else {
-      setRows(data || []);
+      setRows((data as any) || []);
     }
     setLoading(false);
   };

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
-import { Eye, Trash2, Edit2, TrendingUp } from "lucide-react";
+import { Eye, Trash2, Edit2, TrendingUp, Moon, Sun } from "lucide-react";
 
 interface Product {
   id: string;
@@ -17,12 +17,29 @@ interface Product {
 }
 
 const MerchantProductManager: React.FC = () => {
-  const { piUser } = usePi();
+  const { piUser, isAuthenticated, signIn, loading: piLoading } = usePi();
   const [products, setProducts] = useState<Product[]>([]);
   const [form, setForm] = useState({ title: "", price: "", description: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('droplink-dark-mode');
+    return saved ? JSON.parse(saved) : true;
+  });
+
+  const handlePiAuth = async () => {
+    try {
+      await signIn(["username", "payments", "wallet_address"]);
+    } catch (error) {
+      console.error("Pi authentication failed:", error);
+      toast.error("Failed to authenticate with Pi Network");
+    }
+  };
+
+  useEffect(() => {
+    localStorage.setItem('droplink-dark-mode', JSON.stringify(isDarkMode));
+  }, [isDarkMode]);
 
   useEffect(() => {
     const fetchProfileId = async () => {
@@ -112,27 +129,62 @@ const MerchantProductManager: React.FC = () => {
     setLoading(false);
   };
 
+  // Show authentication required if not authenticated
+  if (!isAuthenticated || !piUser) {
+    return (
+      <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-br from-slate-900 to-slate-800' : 'bg-gradient-to-br from-slate-50 to-sky-50'} flex items-center justify-center p-6`}>
+        <Card className={`max-w-md w-full ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+          <CardHeader>
+            <CardTitle className={`text-center ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Authentication Required</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className={`text-center ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+              Please sign in with Pi Network to access your product dashboard.
+            </p>
+            <Button 
+              onClick={handlePiAuth} 
+              disabled={piLoading}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              {piLoading ? "Connecting..." : "Sign in with Pi Network"}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-6">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-br from-slate-900 to-slate-800' : 'bg-gradient-to-br from-slate-50 to-sky-50'} p-6`}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Product Dashboard</h1>
-            <p className="text-slate-400">Create and manage your digital products</p>
+            <h1 className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'} mb-2`}>Product Dashboard</h1>
+            <p className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>Create and manage your digital products</p>
           </div>
-          <Link to="/sales-earnings">
-            <Button className="bg-green-600 hover:bg-green-700 flex items-center gap-2">
-              <TrendingUp size={18} />
-              View Sales & Earnings
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className={isDarkMode ? 'border-slate-600 hover:bg-slate-700' : 'border-slate-300 hover:bg-slate-100'}
+            >
+              {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
             </Button>
-          </Link>
+            <Link to="/sales-earnings">
+              <Button className="bg-green-600 hover:bg-green-700 flex items-center gap-2">
+                <TrendingUp size={18} />
+                View Sales & Earnings
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Add Product Form */}
-        <Card className="mb-8 bg-slate-800 border-slate-700">
+        <Card className={`mb-8 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
           <CardHeader>
-            <CardTitle className="text-white">Add New Product</CardTitle>
+            <CardTitle className={isDarkMode ? 'text-white' : 'text-slate-900'}>Add New Product</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleAddProduct} className="space-y-4">
@@ -143,7 +195,7 @@ const MerchantProductManager: React.FC = () => {
                 value={form.title}
                 onChange={handleChange}
                 required
-                className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                className={isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-400' : 'bg-slate-100 border-slate-300 text-slate-900 placeholder:text-slate-500'}
               />
               <Input
                 type="text"
@@ -152,14 +204,14 @@ const MerchantProductManager: React.FC = () => {
                 value={form.price}
                 onChange={handleChange}
                 required
-                className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                className={isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-400' : 'bg-slate-100 border-slate-300 text-slate-900 placeholder:text-slate-500'}
               />
               <Textarea
                 name="description"
                 placeholder="Product Description"
                 value={form.description}
                 onChange={handleChange}
-                className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                className={isDarkMode ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-400' : 'bg-slate-100 border-slate-300 text-slate-900 placeholder:text-slate-500'}
               />
               <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}>
                 {loading ? "Adding..." : "Add Product"}
@@ -172,36 +224,36 @@ const MerchantProductManager: React.FC = () => {
         {/* Products Dashboard */}
         <div>
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-white mb-2">Your Products ({products.length})</h2>
+            <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'} mb-2`}>Your Products ({products.length})</h2>
             <div className="h-1 w-16 bg-blue-600 rounded"></div>
           </div>
 
           {loading && products.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-slate-400">Loading products...</p>
+              <p className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>Loading products...</p>
             </div>
           ) : products.length === 0 ? (
-            <Card className="bg-slate-800 border-slate-700">
+            <Card className={isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}>
               <CardContent className="py-12 text-center">
-                <p className="text-slate-400">No products added yet. Create your first product above!</p>
+                <p className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>No products added yet. Create your first product above!</p>
               </CardContent>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {products.map((product) => (
-                <Card key={product.id} className="bg-slate-800 border-slate-700 hover:border-blue-500 transition-colors">
+                <Card key={product.id} className={`${isDarkMode ? 'bg-slate-800 border-slate-700 hover:border-blue-500' : 'bg-white border-slate-200 hover:border-blue-400'} transition-colors`}>
                   <CardHeader>
-                    <CardTitle className="text-white text-lg truncate">{product.title}</CardTitle>
+                    <CardTitle className={`${isDarkMode ? 'text-white' : 'text-slate-900'} text-lg truncate`}>{product.title}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
-                      <p className="text-slate-400 text-sm mb-1">Price</p>
-                      <p className="text-2xl font-bold text-blue-400">{product.price} π</p>
+                      <p className={`${isDarkMode ? 'text-slate-400' : 'text-slate-600'} text-sm mb-1`}>Price</p>
+                      <p className={`text-2xl font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>{product.price} π</p>
                     </div>
                     {product.description && (
                       <div>
-                        <p className="text-slate-400 text-sm mb-1">Description</p>
-                        <p className="text-slate-300 text-sm line-clamp-2">{product.description}</p>
+                        <p className={`${isDarkMode ? 'text-slate-400' : 'text-slate-600'} text-sm mb-1`}>Description</p>
+                        <p className={`${isDarkMode ? 'text-slate-300' : 'text-slate-700'} text-sm line-clamp-2`}>{product.description}</p>
                       </div>
                     )}
                     <div className="flex gap-2 pt-4">
@@ -212,7 +264,7 @@ const MerchantProductManager: React.FC = () => {
                         </Button>
                       </Link>
                       <Button 
-                        className="flex-1 bg-slate-700 hover:bg-slate-600 flex items-center justify-center gap-2"
+                        className={`flex-1 ${isDarkMode ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-300 hover:bg-slate-400'} flex items-center justify-center gap-2`}
                         disabled={loading}
                       >
                         <Edit2 size={16} />
