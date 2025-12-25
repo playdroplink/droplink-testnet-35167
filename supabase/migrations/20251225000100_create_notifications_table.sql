@@ -44,7 +44,7 @@ CREATE POLICY "Users can view their own notifications" ON public.notifications
         EXISTS (
             SELECT 1 FROM public.profiles 
             WHERE profiles.id = notifications.profile_id 
-            AND (profiles.user_id = auth.uid()::text OR profiles.pi_user_id = auth.uid()::text)
+            AND profiles.user_id = auth.uid()
         )
     );
 
@@ -53,7 +53,7 @@ CREATE POLICY "Users can insert their own notifications" ON public.notifications
         EXISTS (
             SELECT 1 FROM public.profiles 
             WHERE profiles.id = notifications.profile_id 
-            AND (profiles.user_id = auth.uid()::text OR profiles.pi_user_id = auth.uid()::text)
+            AND profiles.user_id = auth.uid()
         )
     );
 
@@ -62,7 +62,7 @@ CREATE POLICY "Users can update their own notifications" ON public.notifications
         EXISTS (
             SELECT 1 FROM public.profiles 
             WHERE profiles.id = notifications.profile_id 
-            AND (profiles.user_id = auth.uid()::text OR profiles.pi_user_id = auth.uid()::text)
+            AND profiles.user_id = auth.uid()
         )
     );
 
