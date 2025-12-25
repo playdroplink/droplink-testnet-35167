@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
+import { Eye, Trash2, Edit2, TrendingUp } from "lucide-react";
 
 interface Product {
   id: string;
@@ -95,63 +97,142 @@ const MerchantProductManager: React.FC = () => {
     setLoading(false);
   };
 
+  const handleDeleteProduct = async (productId: string) => {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+    
+    setLoading(true);
+    const { error } = await supabase.from("products").delete().eq("id", productId);
+    
+    if (error) {
+      toast.error("Failed to delete product");
+    } else {
+      toast.success("Product deleted successfully!");
+      fetchProducts();
+    }
+    setLoading(false);
+  };
+
   return (
-    <div className="max-w-2xl mx-auto mt-10 p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Manage Products</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleAddProduct} className="space-y-4 mb-8">
-            <Input
-              type="text"
-              name="title"
-              placeholder="Product Title"
-              value={form.title}
-              onChange={handleChange}
-              required
-            />
-            <Input
-              type="text"
-              name="price"
-              placeholder="Price (in Pi)"
-              value={form.price}
-              onChange={handleChange}
-              required
-            />
-            <Textarea
-              name="description"
-              placeholder="Product Description"
-              value={form.description}
-              onChange={handleChange}
-            />
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Adding..." : "Add Product"}
-            </Button>
-          </form>
-          
-          {error && <div className="text-destructive mb-2">{error}</div>}
-          
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8 flex items-center justify-between">
           <div>
-            <h3 className="text-xl font-semibold mb-4">Product List</h3>
-            {loading ? (
-              <p className="text-muted-foreground">Loading...</p>
-            ) : products.length === 0 ? (
-              <p className="text-muted-foreground">No products added yet.</p>
-            ) : (
-              <ul className="space-y-2">
-                {products.map((product) => (
-                  <li key={product.id} className="border p-3 rounded flex flex-col">
-                    <span className="font-bold">{product.title}</span>
-                    <span>Price: {product.price} Pi</span>
-                    <span className="text-sm text-muted-foreground">{product.description}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <h1 className="text-4xl font-bold text-white mb-2">Product Dashboard</h1>
+            <p className="text-slate-400">Create and manage your digital products</p>
           </div>
-        </CardContent>
-      </Card>
+          <Link to="/sales-earnings">
+            <Button className="bg-green-600 hover:bg-green-700 flex items-center gap-2">
+              <TrendingUp size={18} />
+              View Sales & Earnings
+            </Button>
+          </Link>
+        </div>
+
+        {/* Add Product Form */}
+        <Card className="mb-8 bg-slate-800 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white">Add New Product</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleAddProduct} className="space-y-4">
+              <Input
+                type="text"
+                name="title"
+                placeholder="Product Title"
+                value={form.title}
+                onChange={handleChange}
+                required
+                className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+              />
+              <Input
+                type="text"
+                name="price"
+                placeholder="Price (in Pi)"
+                value={form.price}
+                onChange={handleChange}
+                required
+                className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+              />
+              <Textarea
+                name="description"
+                placeholder="Product Description"
+                value={form.description}
+                onChange={handleChange}
+                className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+              />
+              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}>
+                {loading ? "Adding..." : "Add Product"}
+              </Button>
+            </form>
+            {error && <div className="text-red-400 mt-2">{error}</div>}
+          </CardContent>
+        </Card>
+
+        {/* Products Dashboard */}
+        <div>
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-white mb-2">Your Products ({products.length})</h2>
+            <div className="h-1 w-16 bg-blue-600 rounded"></div>
+          </div>
+
+          {loading && products.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-slate-400">Loading products...</p>
+            </div>
+          ) : products.length === 0 ? (
+            <Card className="bg-slate-800 border-slate-700">
+              <CardContent className="py-12 text-center">
+                <p className="text-slate-400">No products added yet. Create your first product above!</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {products.map((product) => (
+                <Card key={product.id} className="bg-slate-800 border-slate-700 hover:border-blue-500 transition-colors">
+                  <CardHeader>
+                    <CardTitle className="text-white text-lg truncate">{product.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <p className="text-slate-400 text-sm mb-1">Price</p>
+                      <p className="text-2xl font-bold text-blue-400">{product.price} π</p>
+                    </div>
+                    {product.description && (
+                      <div>
+                        <p className="text-slate-400 text-sm mb-1">Description</p>
+                        <p className="text-slate-300 text-sm line-clamp-2">{product.description}</p>
+                      </div>
+                    )}
+                    <div className="flex gap-2 pt-4">
+                      <Link to={`/product/${product.id}`} className="flex-1">
+                        <Button className="w-full bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2">
+                          <Eye size={16} />
+                          View
+                        </Button>
+                      </Link>
+                      <Button 
+                        className="flex-1 bg-slate-700 hover:bg-slate-600 flex items-center justify-center gap-2"
+                        disabled={loading}
+                      >
+                        <Edit2 size={16} />
+                        Edit
+                      </Button>
+                      <Button 
+                        className="flex-1 bg-red-600 hover:bg-red-700 flex items-center justify-center gap-2"
+                        onClick={() => handleDeleteProduct(product.id)}
+                        disabled={loading}
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,5 +1,10 @@
 -- Account Deletion and Multiple Account Management Functions
 -- Add these functions to your Supabase database
+-- NOTE: delete_user_account_completely will:
+--   1. Delete all user data from the database
+--   2. Reset subscription plans to free (all subscription records are deleted)
+--   3. Allow user to create a new account with the same Pi Network username
+--   4. New account will start fresh with default settings and free plan
 
 -- Function to completely delete a user account and all associated data
 CREATE OR REPLACE FUNCTION delete_user_account_completely(user_id_to_delete uuid)
@@ -72,7 +77,7 @@ BEGIN
     GET DIAGNOSTICS affected_rows = ROW_COUNT;
     total_deleted := total_deleted + affected_rows;
     
-    -- 11. Delete subscriptions (by profile_id)
+    -- 11. Delete subscriptions (by profile_id) - This resets all plans to free
     DELETE FROM subscriptions WHERE profile_id = user_id_to_delete;
     GET DIAGNOSTICS affected_rows = ROW_COUNT;
     total_deleted := total_deleted + affected_rows;

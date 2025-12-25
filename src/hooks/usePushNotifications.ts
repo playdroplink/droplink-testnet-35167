@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   isPushNotificationSupported,
   checkNotificationPermission,
@@ -43,11 +43,41 @@ export const usePushNotifications = (
   const [error, setError] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [isPiBrowser] = useState(() => isPiBrowserEnv());
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
   // Check current permission
   useEffect(() => {
     const permission = checkNotificationPermission();
     setHasPermission(permission === 'granted');
+  }, []);
+
+  // Play a short tone for new follow notifications
+  const playFollowSound = useCallback(() => {
+    try {
+      const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+
+      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+        audioCtxRef.current = new AudioCtx();
+      }
+
+      const ctx = audioCtxRef.current;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.value = 880; // Pleasant alert tone
+      gain.gain.value = 0.08; // Keep volume low
+
+      osc.connect(gain).connect(ctx.destination);
+
+      const now = ctx.currentTime;
+      osc.start(now);
+      osc.stop(now + 0.18);
+      gain.gain.setTargetAtTime(0.0001, now + 0.12, 0.08);
+    } catch (err) {
+      console.warn('[Hook] Follow sound failed:', err);
+    }
   }, []);
 
   // Request permission
@@ -193,6 +223,9 @@ export const usePushNotifications = (
             console.log('[Hook] Real-time notification update:', payload);
             if (payload.eventType === 'INSERT') {
               setNotifications(prev => [payload.new, ...prev]);
+              if ((payload.new as any)?.type === 'follow') {
+                playFollowSound();
+              }
             } else if (payload.eventType === 'UPDATE') {
               setNotifications(prev =>
                 prev.map(n => n.id === payload.new.id ? payload.new : n)
@@ -203,10 +236,13 @@ export const usePushNotifications = (
         .subscribe();
 
       return () => {
+        if (audioCtxRef.current) {
+          audioCtxRef.current.close().catch(() => undefined);
+        }
         supabase.removeChannel(channel);
       };
     }
-  }, [profileId, refreshNotificationsHandler]);
+  }, [playFollowSound, profileId, refreshNotificationsHandler]);
 
   return {
     isSupported,

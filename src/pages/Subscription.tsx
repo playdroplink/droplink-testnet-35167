@@ -11,6 +11,7 @@ import { usePi } from "@/contexts/PiContext";
 import { useRealPiPayment } from "@/hooks/useRealPiPayment";
 import { validateMainnetConfig } from "@/config/pi-config";
 import { GiftCardModal } from "@/components/GiftCardModal";
+import { createDroppayPaymentViaApi } from "@/lib/droppay";
 
 // Helper: Drop available only when mainnet validated
 const isDropAvailable = validateMainnetConfig();
@@ -114,6 +115,9 @@ const Subscription = () => {
   const [subscription, setSubscription] = useState<any>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [showGiftCardModal, setShowGiftCardModal] = useState(false);
+  const [dropLoading, setDropLoading] = useState(false);
+  const piConfigured = !!import.meta.env.VITE_PI_API_KEY;
+  const dropConfigured = !!import.meta.env.VITE_DROPPAY_API_KEY;
   const navigate = useNavigate();
   const { piUser, signIn, loading: piLoading } = usePi() as any;
   const { processPayment, isProcessing, paymentProgress } = useRealPiPayment();
@@ -338,6 +342,56 @@ const Subscription = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSubscribeWithDropPay = async (planName: string, price: number) => {
+    if (!piUser || !profileId) {
+      toast.error('Please sign in with Pi Network first');
+      return;
+    }
+
+    if (!isDropAvailable) {
+      toast.error('DropPay is not available in this environment');
+      return;
+    }
+
+    setDropLoading(true);
+    const toastId = toast.loading('Creating DropPay checkout...');
+    try {
+      const periodValue = isYearly ? 'yearly' : 'monthly';
+      const resp = await createDroppayPaymentViaApi({
+        amount: price,
+        currency: 'PI',
+        description: `${planName} ${isYearly ? 'Yearly' : 'Monthly'} Subscription`,
+        metadata: {
+          profile_id: profileId,
+          plan: planName.toLowerCase(),
+          period: periodValue,
+          payment_type: 'subscription',
+        },
+      });
+
+      if (!resp.success) {
+        toast.dismiss(toastId);
+        toast.error(resp.error || 'Failed to create DropPay session');
+        return;
+      }
+
+      const p: any = resp.payment;
+      const checkoutUrl = p?.checkout_url || p?.url || p?.payment_url || p?.payment?.checkout_url;
+      toast.dismiss(toastId);
+      if (checkoutUrl) {
+        toast.success('Redirecting to DropPay checkout...');
+        window.location.href = checkoutUrl;
+      } else {
+        toast.error('Missing checkout URL from DropPay response');
+      }
+    } catch (err: any) {
+      toast.dismiss(toastId);
+      toast.error(err?.message || 'DropPay initiation failed');
+    } finally {
+      setDropLoading(false);
     }
   };
 
@@ -613,6 +667,10 @@ const Subscription = () => {
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold mb-2">Choose Your Plan</h1>
           <p className="text-lg text-muted-foreground mb-2">Unlock more features and remove ads with a paid plan.</p>
+          <div className="mt-3 flex flex-col gap-2 items-center text-sm">
+            <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">Pi Payments: {piConfigured ? 'Online' : 'Not configured'}</span>
+            <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">DropPay: {dropConfigured ? 'Online' : 'Not configured'}</span>
+          </div>
           <div className="mt-4 p-4 bg-sky-400 border-2 border-sky-600 rounded-lg max-w-2xl mx-auto">
             <p className="text-sm font-semibold text-white mb-1">⚠️ REAL Pi Network Payments</p>
             <p className="text-xs text-white">All prices are in Pi (π) - Real Pi Network cryptocurrency. These are MAINNET transactions, not test payments. You will be charged actual Pi coins from your Pi wallet.</p>
@@ -655,12 +713,17 @@ const Subscription = () => {
                     {isCurrent ? '✓ Current Plan' : (loading || isProcessing) ? `⏳ ${paymentProgress || 'Processing...'}` : plan.name === 'Free' ? 'Activate Free Plan' : `Subscribe with Pi`}
                   </Button>
 
-
-
                   {plan.name !== 'Free' && (
                     <div className="flex flex-col gap-2">
-                      <div className="flex items-center mb-1"><span className="text-sm font-medium text-gray-500">Pay with Drop</span></div>
-                      <Button className="w-full bg-gray-400 text-gray-700 border-gray-400 hover:bg-gray-400 hover:text-gray-700" variant="default" disabled>{isDropAvailable ? 'Pay with Drop (Coming Soon)' : 'Drop Coming Soon (Mainnet Only)'}</Button>
+                      <div className="flex items-center mb-1"><span className="text-sm font-medium text-gray-500">Pay with DropPay</span></div>
+                      <Button
+                        className="w-full"
+                        variant="secondary"
+                        disabled={!isDropAvailable || isCurrent || dropLoading}
+                        onClick={() => handleSubscribeWithDropPay(plan.name, price)}
+                      >
+                        {isDropAvailable ? (dropLoading ? 'Initializing...' : 'Subscribe with DropPay') : 'DropPay unavailable'}
+                      </Button>
                     </div>
                   )}
 

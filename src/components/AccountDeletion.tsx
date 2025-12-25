@@ -147,7 +147,7 @@ export const AccountDeletion: React.FC<AccountDeletionProps> = ({
             <li>• Payment links and transaction history</li>
             <li>• Analytics data and usage statistics</li>
             <li>• Custom links and domain settings</li>
-            <li>• All subscriptions and plan data</li>
+            <li>• <strong>All subscriptions and plan data (reset to FREE plan)</strong></li>
             <li>• Pi Network wallet connections</li>
             <li>• User preferences and customizations</li>
           </ul>
@@ -156,11 +156,21 @@ export const AccountDeletion: React.FC<AccountDeletionProps> = ({
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
           <div className="flex items-center gap-2 text-blue-700 mb-2">
             <RefreshCw className="h-4 w-4" />
-            <span className="font-semibold">After Deletion</span>
+            <span className="font-semibold">After Deletion & Fresh Start</span>
           </div>
-          <p className="text-sm text-blue-600">
+          <p className="text-sm text-blue-600 mb-2">
             You can create a new account anytime using your Pi Network username. 
-            Your new account will start fresh with default settings and no subscription.
+            Your new account will start completely fresh with:
+          </p>
+          <ul className="space-y-1 text-sm text-blue-600 ml-4">
+            <li>• <strong>FREE plan by default</strong> (no active subscription)</li>
+            <li>• Default settings and preferences</li>
+            <li>• No previous data or history</li>
+            <li>• Clean slate for a new beginning</li>
+          </ul>
+          <p className="text-sm text-blue-600 mt-2">
+            <strong>Note:</strong> Deleting your account permanently removes all subscriptions. 
+            If you had a paid plan, it will not carry over to your new account.
           </p>
         </div>
 
@@ -190,7 +200,8 @@ export const AccountDeletion: React.FC<AccountDeletionProps> = ({
               <Alert className="border-red-200 bg-red-50">
                 <Shield className="h-4 w-4 text-red-600" />
                 <AlertDescription className="text-red-700">
-                  All your data, subscriptions, and settings will be permanently lost.
+                  All your data, subscriptions (reset to FREE plan), and settings will be permanently lost. 
+                  You can create a new account later, but it will start fresh with no subscription.
                 </AlertDescription>
               </Alert>
 

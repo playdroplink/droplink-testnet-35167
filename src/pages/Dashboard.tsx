@@ -37,6 +37,7 @@ import VotingSystem from "@/components/VotingSystem";
 import { ProfileData } from "@/types/profile";
 import LinkManager from "@/components/LinkManager";
 import { PiAuthTest } from "@/components/PiAuthTest";
+import { AccountDeletion } from "@/components/AccountDeletion";
 import {
   Drawer,
   DrawerClose,
@@ -2009,16 +2010,21 @@ const Dashboard = () => {
                     
                     if (profileId) {
                       try {
-                        const { error } = await supabase
-                          .from('profiles')
-                          .update({ category: newCategory })
-                          .eq('id', profileId);
+                        // Category update removed - field doesn't exist in profiles table
+                        // If needed, add category column to profiles table first
                         
-                        if (error) {
-                          toast.error('Failed to update category');
-                        } else {
-                          toast.success('Category updated!');
-                        }
+                        // const { error } = await supabase
+                        //   .from('profiles')
+                        //   .update({ category: newCategory })
+                        //   .eq('id', profileId);
+                        
+                        // if (error) {
+                        //   toast.error('Failed to update category');
+                        // } else {
+                        //   toast.success('Category updated!');
+                        // }
+                        
+                        toast.info('Category feature is disabled');
                       } catch (error) {
                         toast.error('Failed to update category');
                       }
@@ -2778,6 +2784,53 @@ const Dashboard = () => {
               {/* User Preferences Tab */}
               <TabsContent value="preferences" className="pb-8">
                 <UserPreferencesManager />
+                
+                {/* Account Deletion Section */}
+                <div className="mt-8">
+                  <AccountDeletion 
+                    currentUser={piUser || { id: profileId }}
+                    onAccountDeleted={() => {
+                      // Handle post-deletion cleanup
+                      setProfile({
+                        id: "",
+                        username: "",
+                        storeUrl: "",
+                        businessName: "",
+                        description: "",
+                        logo: "",
+                        email: "",
+                        youtubeVideoUrl: "",
+                        backgroundMusicUrl: "",
+                        piDonationMessage: "",
+                        piWalletAddress: "",
+                        showShareButton: true,
+                        hasPremium: false,
+                        socialLinks: [
+                          { type: "twitter", url: "" },
+                          { type: "instagram", url: "" },
+                          { type: "youtube", url: "" },
+                          { type: "tiktok", url: "" },
+                          { type: "facebook", url: "" },
+                          { type: "linkedin", url: "" },
+                          { type: "twitch", url: "" },
+                          { type: "website", url: "" },
+                        ],
+                        theme: {
+                          primaryColor: "#38bdf8",
+                          backgroundColor: "#000000",
+                          backgroundType: "color",
+                          backgroundGif: "",
+                          backgroundVideo: "",
+                          iconStyle: "rounded",
+                          buttonStyle: "filled",
+                        },
+                        customLinks: [],
+                        paymentLinks: [],
+                        products: [],
+                      });
+                    }}
+                  />
+                </div>
               </TabsContent>
 
               {/* Pi Data content removed for production */}

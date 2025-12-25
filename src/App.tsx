@@ -30,6 +30,9 @@ import Home from "./pages/Home";
 import SplashScreen from "./components/SplashScreen";
 import InboxPage from "./pages/Inbox";
 import AdminMrwain from "./pages/AdminMrwain";
+import Purchases from "./pages/Purchases";
+import ProductDetail from "./pages/ProductDetail";
+import SalesEarnings from "./pages/SalesEarnings";
 
 const queryClient = new QueryClient();
 
@@ -91,6 +94,9 @@ const App = () => {
             <Route path="/store/:merchantId" element={<MerchantStorePreview />} />
             <Route path="/storefront/:storeId" element={<StoreFront />} />
             <Route path="/inbox" element={<InboxPage />} />
+            <Route path="/purchases" element={<Purchases />} />
+            <Route path="/sales-earnings" element={<SalesEarnings />} />
+            <Route path="/product/:productId" element={<ProductDetail />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

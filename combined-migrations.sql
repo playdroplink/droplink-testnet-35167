@@ -37,7 +37,7 @@ SET row_security = off;
 -- Name: get_active_subscription(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.get_active_subscription(p_profile_id uuid) RETURNS TABLE(plan_type text, billing_period text, end_date timestamp with time zone, status text)
+CREATE OR REPLACE FUNCTION public.get_active_subscription(p_profile_id uuid) RETURNS TABLE(plan_type text, billing_period text, end_date timestamp with time zone, status text)
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
@@ -63,7 +63,7 @@ $$;
 -- Name: handle_new_profile_wallet(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.handle_new_profile_wallet() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.handle_new_profile_wallet() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
@@ -79,7 +79,7 @@ $$;
 -- Name: handle_updated_at(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.handle_updated_at() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.handle_updated_at() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
@@ -94,7 +94,7 @@ $$;
 -- Name: update_updated_at_column(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.update_updated_at_column() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.update_updated_at_column() RETURNS trigger
     LANGUAGE plpgsql
     SET search_path TO 'public'
     AS $$
@@ -111,7 +111,7 @@ SET default_table_access_method = heap;
 -- Name: ai_chat_messages; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.ai_chat_messages (
+CREATE TABLE IF NOT EXISTS public.ai_chat_messages (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     profile_id uuid NOT NULL,
     session_id text NOT NULL,
@@ -280,8 +280,15 @@ CREATE TABLE public.user_wallets (
 -- Name: ai_chat_messages ai_chat_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.ai_chat_messages
-    ADD CONSTRAINT ai_chat_messages_pkey PRIMARY KEY (id);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'ai_chat_messages_pkey'
+    ) THEN
+        ALTER TABLE ONLY public.ai_chat_messages
+            ADD CONSTRAINT ai_chat_messages_pkey PRIMARY KEY (id);
+    END IF;
+END $$;
 
 
 --
@@ -504,8 +511,15 @@ CREATE TRIGGER update_user_wallets_updated_at BEFORE UPDATE ON public.user_walle
 -- Name: ai_chat_messages ai_chat_messages_profile_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.ai_chat_messages
-    ADD CONSTRAINT ai_chat_messages_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'ai_chat_messages_profile_id_fkey'
+    ) THEN
+        ALTER TABLE ONLY public.ai_chat_messages
+            ADD CONSTRAINT ai_chat_messages_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+    END IF;
+END $$;
 
 
 --
@@ -607,14 +621,28 @@ CREATE POLICY "Anyone can insert analytics" ON public.analytics FOR INSERT WITH 
 -- Name: ai_chat_messages Anyone can insert chat messages; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Anyone can insert chat messages" ON public.ai_chat_messages FOR INSERT WITH CHECK (true);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE policyname = 'Anyone can insert chat messages' AND tablename = 'ai_chat_messages'
+    ) THEN
+        CREATE POLICY "Anyone can insert chat messages" ON public.ai_chat_messages FOR INSERT WITH CHECK (true);
+    END IF;
+END $$;
 
 
 --
 -- Name: ai_chat_messages Anyone can view AI chat messages; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Anyone can view AI chat messages" ON public.ai_chat_messages FOR SELECT USING (true);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE policyname = 'Anyone can view AI chat messages' AND tablename = 'ai_chat_messages'
+    ) THEN
+        CREATE POLICY "Anyone can view AI chat messages" ON public.ai_chat_messages FOR SELECT USING (true);
+    END IF;
+END $$;
 
 
 --
@@ -3427,7 +3455,7 @@ GRANT EXECUTE ON FUNCTION sync_user_payment_links TO authenticated;
 CREATE OR REPLACE FUNCTION verify_droplink_setup()
 RETURNS TABLE (
     table_name TEXT,
-    exists BOOLEAN,
+    table_exists BOOLEAN,
     row_count BIGINT,
     status TEXT
 ) AS $$
@@ -3437,7 +3465,7 @@ BEGIN
     WITH table_checks AS (
         SELECT 
             t.table_name::TEXT,
-            true as exists,
+            true as table_exists,
             COALESCE(
                 (SELECT count(*) FROM information_schema.tables 
                  WHERE table_schema = 'public' AND table_name = t.table_name), 
