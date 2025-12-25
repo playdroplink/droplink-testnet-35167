@@ -5,12 +5,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
   try {
-    const baseUrl = process.env.DROPPAY_BASE_URL || 'https://droppay-v2.lovable.app/api/v1';
-    const apiKey = process.env.DROPPAY_API_KEY;
-    const authScheme = process.env.DROPPAY_AUTH_SCHEME || 'Key';
+    // Read DropPay configuration from server-side env
+    // Fallback to VITE_* variants if present to ease migration
+    const baseUrl =
+      process.env.DROPPAY_BASE_URL ||
+      process.env.VITE_DROPPAY_BASE_URL ||
+      'https://droppay-v2.lovable.app/api/v1';
+    const apiKey = process.env.DROPPAY_API_KEY || process.env.VITE_DROPPAY_API_KEY;
+    const authScheme = process.env.DROPPAY_AUTH_SCHEME || process.env.VITE_DROPPAY_AUTH_SCHEME || 'Key';
 
     if (!apiKey) {
-      return res.status(500).json({ error: 'Server configuration error: DROPPAY_API_KEY missing' });
+      return res.status(500).json({
+        error: 'Server configuration error: DROPPAY_API_KEY missing',
+      });
     }
 
     const { amount, currency, description, metadata } = req.body || {};
