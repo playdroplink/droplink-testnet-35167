@@ -43,7 +43,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch {
       data = { ok: true, raw: text };
     }
-    return res.status(200).json({ success: true, payment: data });
+    // Normalize checkout URL for client
+    const checkoutUrl =
+      data?.checkout_url ||
+      data?.url ||
+      data?.payment_url ||
+      data?.payment?.checkout_url ||
+      data?.links?.checkout ||
+      data?.redirect_url ||
+      undefined;
+
+    // Ensure the payment object contains a standard field
+    const payment = { ...data };
+    if (checkoutUrl && !payment.checkout_url) {
+      payment.checkout_url = checkoutUrl;
+    }
+
+    return res.status(200).json({ success: true, payment });
   } catch (e: any) {
     const msg = e?.message || 'Unknown error';
     return res.status(400).json({ error: msg });
