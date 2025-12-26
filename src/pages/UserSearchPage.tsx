@@ -365,20 +365,6 @@ const UserSearchPage = () => {
         throw new Error(error.message || 'Failed to follow user');
       }
       
-      // Create notification for the followed user
-      try {
-        await (supabase as any).from('notifications').insert({
-          profile_id: followingId,
-          type: 'follow',
-          title: 'New Follower',
-          message: `@${piUser?.username || 'Someone'} started following you`,
-          data: { follower_profile_id: followerId },
-          read: false
-        });
-      } catch (notifError) {
-        console.warn('[FOLLOW] Notification creation failed:', notifError);
-      }
-      
       setFollowedUsername(profile.username);
       setShowFollowedModal(true);
       toast.success(`Following @${profile.username}!`);
