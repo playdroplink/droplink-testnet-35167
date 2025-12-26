@@ -346,6 +346,21 @@ const PublicBio = () => {
           console.error('[FOLLOW] Insert error:', error);
           throw error;
         }
+        
+        // Create notification for the followed user
+        try {
+          await (supabase as any).from('notifications').insert({
+            profile_id: profileId,
+            type: 'follow',
+            title: 'New Follower',
+            message: `@${piUser?.username || 'Someone'} started following you`,
+            data: { follower_profile_id: currentUserProfileId },
+            read: false
+          });
+        } catch (notifError) {
+          console.warn('[FOLLOW] Notification creation failed:', notifError);
+        }
+        
         setIsFollowing(true);
         setFollowerCount(prev => prev + 1);
         toast.success("Following!");

@@ -38,7 +38,7 @@ export const VirtualCard = ({
           className="absolute inset-0 backface-hidden rounded-2xl shadow-2xl p-6 flex flex-col justify-between overflow-hidden"
           style={{
             backgroundColor: frontColor,
-            color: accentColor, // Sky blue text for all
+            color: textColor,
             backfaceVisibility: "hidden",
           }}
         >
@@ -50,7 +50,7 @@ export const VirtualCard = ({
                 DROPLINK
               </span>
             </div>
-            <div className="text-xs opacity-70">VIRTUAL CARD</div>
+            <div className="text-xs opacity-70" style={{ color: textColor }}>VIRTUAL CARD</div>
           </div>
 
           {/* QR Code Center */}
@@ -80,12 +80,12 @@ export const VirtualCard = ({
           {/* Username Footer */}
           <div className="flex items-end justify-between">
             <div>
-              <div className="text-xs opacity-70 mb-1" style={{ color: accentColor }}>MERCHANT</div>
-              <div className="text-lg font-bold tracking-wide" style={{ color: accentColor }}>@{username}</div>
+              <div className="text-xs opacity-70 mb-1" style={{ color: textColor }}>MERCHANT</div>
+              <div className="text-lg font-bold tracking-wide" style={{ color: textColor }}>@{username}</div>
             </div>
             <div className="text-right">
-              <div className="text-xs opacity-70 mb-1" style={{ color: accentColor }}>NETWORK</div>
-              <div className="text-sm font-semibold" style={{ color: accentColor }}>
+              <div className="text-xs opacity-70 mb-1" style={{ color: textColor }}>NETWORK</div>
+              <div className="text-sm font-semibold" style={{ color: textColor }}>
                 Pi Network
               </div>
             </div>

@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function CardGenerator() {
   const { toast } = useToast();
@@ -30,19 +31,27 @@ export default function CardGenerator() {
 
   // Card customization state - default colors: Sky Blue theme
   const [frontColor, setFrontColor] = useState(
-    profile?.theme_settings?.backgroundColor || "#2bbdee"
+    profile?.card_front_color || "#2bbdee"
   );
-  const [backColor, setBackColor] = useState("#2bbdee");
-  const [textColor, setTextColor] = useState("#000000");
+  const [backColor, setBackColor] = useState(
+    profile?.card_back_color || "#2bbdee"
+  );
+  const [textColor, setTextColor] = useState(
+    profile?.card_text_color || "#000000"
+  );
   const [accentColor, setAccentColor] = useState(
-    profile?.theme_settings?.primaryColor || "#fafafa"
+    profile?.card_accent_color || "#fafafa"
   );
   const [shareableLink, setShareableLink] = useState("");
   const [showShareLink, setShowShareLink] = useState(false);
   const [viewCardOnly, setViewCardOnly] = useState(false);
+  const [isCapturingCard, setIsCapturingCard] = useState(false);
   
   // Detect Pi Browser
   const isPiBrowser = navigator.userAgent.includes("PiBrowser") || window.location.hostname.includes("pi.app");
+  
+  // Check if user has Pro plan (30 Pi subscription)
+  const hasProPlan = profile?.subscription_status === 'active' || profile?.is_pro === true;
 
   // Preset color themes
   const presets = [
@@ -90,11 +99,82 @@ export default function CardGenerator() {
     },
   ];
 
+  const saveCardColors = async () => {
+    if (!profile?.id) {
+      toast({
+        title: "Not Logged In",
+        description: "Please log in to save card customization.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      const cardDesignData = {
+        version: "1.0",
+        printReady: true,
+        mirrored: true,
+        colors: {
+          front: frontColor,
+          back: backColor,
+          text: textColor,
+          accent: accentColor,
+        },
+        savedAt: new Date().toISOString(),
+      };
+
+      console.log('Saving card colors for profile:', profile.id);
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          card_front_color: frontColor,
+          card_back_color: backColor,
+          card_text_color: textColor,
+          card_accent_color: accentColor,
+          card_design_data: cardDesignData,
+        } as any)
+        .eq('id', profile.id)
+        .select();
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      console.log('Saved successfully:', data);
+
+      toast({
+        title: "Saved!",
+        description: "Card design saved with front and back (mirrored for printing).",
+      });
+    } catch (error) {
+      console.error('Error saving card colors:', error);
+      toast({
+        title: "Save Failed",
+        description: error instanceof Error ? error.message : "Could not save card colors. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const applyPreset = (preset: typeof presets[0]) => {
+    if (!hasProPlan) {
+      toast({
+        title: "Pro Plan Required",
+        description: "Subscribe to 30 Pi Pro plan to customize card colors.",
+        variant: "destructive",
+      });
+      return;
+    }
     setFrontColor(preset.front);
     setBackColor(preset.back);
     setTextColor(preset.text);
     setAccentColor(preset.accent);
+    
+    // Save to database
+    setTimeout(() => saveCardColors(), 500);
+    
     toast({
       title: "Theme Applied",
       description: `${preset.name} theme has been applied to your card.`,
@@ -112,34 +192,179 @@ export default function CardGenerator() {
     });
   };
 
-  const handlePrint = () => {
-    window.print();
-    toast({
-      title: "Printing...",
-      description: "Your card is being prepared for printing.",
-    });
+  const handlePrint = async () => {
+    if (!cardRef.current) return;
+
+    try {
+      setIsCapturingCard(true);
+
+      // Capture front side (current state)
+      const frontCanvas = await html2canvas(cardRef.current, {
+        scale: 3,
+        backgroundColor: null,
+        logging: false,
+      });
+
+      // Get the card flip element
+      const cardContainer = cardRef.current.querySelector('[style*="transform-style"]') as HTMLElement;
+      
+      // Toggle the flip by clicking the card container
+      if (cardContainer) {
+        cardContainer.click();
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait longer for animation
+      }
+
+      // Capture back side (after flip)
+      const backCanvas = await html2canvas(cardRef.current, {
+        scale: 3,
+        backgroundColor: null,
+        logging: false,
+      });
+
+      // Create combined image with front (left) and mirrored back (right)
+      const combinedCanvas = document.createElement('canvas');
+      const ctx = combinedCanvas.getContext('2d');
+      if (!ctx) throw new Error('Could not get canvas context');
+
+      // Set canvas size for both cards side by side
+      combinedCanvas.width = frontCanvas.width * 2 + 20; // Add 20px gap
+      combinedCanvas.height = frontCanvas.height;
+
+      // Draw front card on left
+      ctx.drawImage(frontCanvas, 0, 0);
+
+      // Draw back card on right (mirrored)
+      ctx.save();
+      ctx.translate(frontCanvas.width * 2 + 20, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(backCanvas, 0, 0);
+      ctx.restore();
+
+      // Create printable image
+      const printWindow = window.open('', 'PRINT', 'height=600,width=800');
+      if (printWindow) {
+        const imgData = combinedCanvas.toDataURL('image/png');
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Print Droplink Card</title>
+              <style>
+                body { margin: 0; padding: 10px; font-family: Arial, sans-serif; }
+                img { max-width: 100%; height: auto; display: block; margin: 10px 0; }
+                p { margin: 5px 0; font-size: 14px; }
+                .instructions { font-size: 12px; color: #666; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 10px; }
+                @media print {
+                  body { margin: 0; padding: 0; }
+                  img { margin: 0; page-break-after: avoid; }
+                }
+              </style>
+            </head>
+            <body onload="window.print();window.close();">
+              <p><strong>FRONT (Left) | BACK Mirrored (Right)</strong></p>
+              <img src="${imgData}" />
+              <div class="instructions">
+                <p><strong>Print Instructions:</strong></p>
+                <ul style="margin: 5px 0; padding-left: 20px;">
+                  <li>Print on cardstock (300gsm recommended)</li>
+                  <li>Use duplex printing with "Flip on Short Edge"</li>
+                  <li>Back side is mirrored for correct text orientation when flipped</li>
+                </ul>
+              </div>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }
+
+      // Flip back to front
+      if (cardContainer) {
+        cardContainer.click();
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      setIsCapturingCard(false);
+
+      toast({
+        title: "Printing...",
+        description: "Front and mirrored back ready to print.",
+      });
+    } catch (error) {
+      setIsCapturingCard(false);
+      console.error('Print error:', error);
+      toast({
+        title: "Print Failed",
+        description: "Could not prepare card for printing. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDownloadPNG = async () => {
     if (!cardRef.current) return;
 
     try {
-      const canvas = await html2canvas(cardRef.current, {
+      setIsCapturingCard(true);
+      
+      // Capture front side
+      const frontCanvas = await html2canvas(cardRef.current, {
         scale: 3,
         backgroundColor: null,
         logging: false,
       });
 
+      // Get the card flip element and flip it
+      const cardContainer = cardRef.current.querySelector('[style*="transform-style"]') as HTMLElement;
+      if (cardContainer) {
+        cardContainer.click();
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      // Capture back side after flip
+      const backCanvas = await html2canvas(cardRef.current, {
+        scale: 3,
+        backgroundColor: null,
+        logging: false,
+      });
+
+      // Create combined image with front (left) and mirrored back (right)
+      const combinedCanvas = document.createElement('canvas');
+      const ctx = combinedCanvas.getContext('2d');
+      if (!ctx) throw new Error('Could not get canvas context');
+
+      // Set canvas size for both cards side by side
+      combinedCanvas.width = frontCanvas.width * 2 + 20;
+      combinedCanvas.height = frontCanvas.height;
+
+      // Draw front card on left
+      ctx.drawImage(frontCanvas, 0, 0);
+
+      // Draw back card on right (mirrored)
+      ctx.save();
+      ctx.translate(frontCanvas.width * 2 + 20, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(backCanvas, 0, 0);
+      ctx.restore();
+
+      // Download combined image
       const link = document.createElement("a");
-      link.download = `droplink-card-${username}.png`;
-      link.href = canvas.toDataURL("image/png");
+      link.download = `droplink-card-${username}-front-and-back.png`;
+      link.href = combinedCanvas.toDataURL("image/png");
       link.click();
+
+      // Flip back to front
+      if (cardContainer) {
+        cardContainer.click();
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      setIsCapturingCard(false);
 
       toast({
         title: "Downloaded!",
-        description: "Your card has been saved as PNG.",
+        description: "PNG with front and mirrored back ready to print.",
       });
     } catch (error) {
+      setIsCapturingCard(false);
       toast({
         title: "Download Failed",
         description: "Could not download card. Please try again.",
@@ -152,28 +377,75 @@ export default function CardGenerator() {
     if (!cardRef.current) return;
 
     try {
-      const canvas = await html2canvas(cardRef.current, {
+      setIsCapturingCard(true);
+
+      // Capture front side
+      const frontCanvas = await html2canvas(cardRef.current, {
         scale: 3,
         backgroundColor: null,
         logging: false,
       });
 
-      // Standard credit card size: 85.6mm x 53.98mm
+      // Get the card flip element and flip it
+      const cardContainer = cardRef.current.querySelector('[style*="transform-style"]') as HTMLElement;
+      if (cardContainer) {
+        cardContainer.click();
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      // Capture back side after flip
+      const backCanvas = await html2canvas(cardRef.current, {
+        scale: 3,
+        backgroundColor: null,
+        logging: false,
+      });
+
+      // Create PDF with both sides
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "mm",
         format: [85.6, 53.98],
       });
 
-      const imgData = canvas.toDataURL("image/png");
-      pdf.addImage(imgData, "PNG", 0, 0, 85.6, 53.98);
-      pdf.save(`droplink-card-${username}.pdf`);
+      // Add front side (Page 1)
+      const frontImgData = frontCanvas.toDataURL("image/png");
+      pdf.addImage(frontImgData, "PNG", 0, 0, 85.6, 53.98);
+
+      // Add back side (Page 2) - mirrored for duplex printing
+      pdf.addPage([85.6, 53.98], "landscape");
+      
+      // Create mirrored back canvas
+      const mirroredCanvas = document.createElement('canvas');
+      mirroredCanvas.width = backCanvas.width;
+      mirroredCanvas.height = backCanvas.height;
+      const ctx = mirroredCanvas.getContext('2d');
+      if (ctx) {
+        ctx.save();
+        ctx.translate(mirroredCanvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(backCanvas, 0, 0);
+        ctx.restore();
+      }
+      
+      const backImgData = mirroredCanvas.toDataURL("image/png");
+      pdf.addImage(backImgData, "PNG", 0, 0, 85.6, 53.98);
+      
+      pdf.save(`droplink-card-${username}-print-ready.pdf`);
+
+      // Flip back to front
+      if (cardContainer) {
+        cardContainer.click();
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      setIsCapturingCard(false);
 
       toast({
         title: "Downloaded!",
-        description: "Your card has been saved as PDF.",
+        description: "Print-ready PDF with front (page 1) and mirrored back (page 2).",
       });
     } catch (error) {
+      setIsCapturingCard(false);
       toast({
         title: "Download Failed",
         description: "Could not download card. Please try again.",
@@ -354,29 +626,66 @@ export default function CardGenerator() {
                 <li>✓ Standard credit card size (85.6 × 53.98 mm)</li>
                 <li>✓ QR code links to your store: @{username}</li>
                 <li>✓ High-quality print ready</li>
-                <li>✓ Download as PNG or PDF</li>
+                <li>✓ Front & back saved automatically</li>
+                <li>✓ Back side mirrored for duplex printing</li>
+                <li>✓ Download as PNG or PDF (2 pages)</li>
                 <li>✓ Click card to see both sides</li>
                 {isPiBrowser && (
                   <li className="text-amber-600 font-semibold">⚠️ Use share link for downloads</li>
                 )}
               </ul>
             </Card>
+
+            {/* Printing Instructions */}
+            <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border-2 border-green-200 dark:border-green-800 no-print">
+              <h3 className="font-semibold mb-2">🖨️ Print Instructions</h3>
+              <ul className="text-xs space-y-1 text-muted-foreground">
+                <li><strong>PDF:</strong> 2 pages - Page 1 (Front), Page 2 (Back - mirrored)</li>
+                <li><strong>PNG:</strong> Both sides side-by-side (back mirrored)</li>
+                <li><strong>Duplex Printing:</strong> Select "Flip on Short Edge"</li>
+                <li><strong>Paper:</strong> Use thick cardstock (300gsm)</li>
+                <li><strong>Note:</strong> Back is auto-mirrored so text reads correctly when flipped</li>
+              </ul>
+            </Card>
           </div>
 
           {/* Customization Panel */}
           <div className="space-y-6 no-print">
+            {/* Pro Plan Notice */}
+            {!hasProPlan && (
+              <Alert className="bg-sky-50 dark:bg-sky-950 border-sky-200 dark:border-sky-800">
+                <AlertCircle className="h-4 w-4 text-sky-600" />
+                <AlertDescription className="text-sm">
+                  <strong>Customization Locked:</strong> Subscribe to the <strong>30 Pi Pro plan</strong> to customize card colors and themes. Default sky blue theme is active.
+                </AlertDescription>
+              </Alert>
+            )}
+            
             {/* Color Customization */}
             <Card className="p-6 bg-white dark:bg-gray-800">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Customize Colors</h2>
-                <Button
-                  onClick={resetColors}
-                  variant="ghost"
-                  size="sm"
-                >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Reset
-                </Button>
+                <div className="flex gap-2">
+                  {hasProPlan && (
+                    <Button
+                      onClick={saveCardColors}
+                      variant="default"
+                      size="sm"
+                      className="bg-sky-500 hover:bg-sky-600"
+                    >
+                      Save Colors
+                    </Button>
+                  )}
+                  <Button
+                    onClick={resetColors}
+                    variant="ghost"
+                    size="sm"
+                    disabled={!hasProPlan}
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Reset
+                  </Button>
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -387,15 +696,17 @@ export default function CardGenerator() {
                       id="frontColor"
                       type="color"
                       value={frontColor}
-                      onChange={(e) => setFrontColor(e.target.value)}
+                      onChange={(e) => hasProPlan && setFrontColor(e.target.value)}
                       className="w-20 h-10 cursor-pointer"
+                      disabled={!hasProPlan}
                     />
                     <Input
                       type="text"
                       value={frontColor}
-                      onChange={(e) => setFrontColor(e.target.value)}
+                      onChange={(e) => hasProPlan && setFrontColor(e.target.value)}
                       placeholder="#1a1a2e"
                       className="flex-1"
+                      disabled={!hasProPlan}
                     />
                   </div>
                 </div>
@@ -407,15 +718,17 @@ export default function CardGenerator() {
                       id="backColor"
                       type="color"
                       value={backColor}
-                      onChange={(e) => setBackColor(e.target.value)}
+                      onChange={(e) => hasProPlan && setBackColor(e.target.value)}
                       className="w-20 h-10 cursor-pointer"
+                      disabled={!hasProPlan}
                     />
                     <Input
                       type="text"
                       value={backColor}
-                      onChange={(e) => setBackColor(e.target.value)}
+                      onChange={(e) => hasProPlan && setBackColor(e.target.value)}
                       placeholder="#16213e"
                       className="flex-1"
+                      disabled={!hasProPlan}
                     />
                   </div>
                 </div>
@@ -427,15 +740,17 @@ export default function CardGenerator() {
                       id="textColor"
                       type="color"
                       value={textColor}
-                      onChange={(e) => setTextColor(e.target.value)}
+                      onChange={(e) => hasProPlan && setTextColor(e.target.value)}
                       className="w-20 h-10 cursor-pointer"
+                      disabled={!hasProPlan}
                     />
                     <Input
                       type="text"
                       value={textColor}
-                      onChange={(e) => setTextColor(e.target.value)}
+                      onChange={(e) => hasProPlan && setTextColor(e.target.value)}
                       placeholder="#ffffff"
                       className="flex-1"
+                      disabled={!hasProPlan}
                     />
                   </div>
                 </div>
@@ -447,15 +762,17 @@ export default function CardGenerator() {
                       id="accentColor"
                       type="color"
                       value={accentColor}
-                      onChange={(e) => setAccentColor(e.target.value)}
+                      onChange={(e) => hasProPlan && setAccentColor(e.target.value)}
                       className="w-20 h-10 cursor-pointer"
+                      disabled={!hasProPlan}
                     />
                     <Input
                       type="text"
                       value={accentColor}
-                      onChange={(e) => setAccentColor(e.target.value)}
+                      onChange={(e) => hasProPlan && setAccentColor(e.target.value)}
                       placeholder="#87ceeb"
                       className="flex-1"
+                      disabled={!hasProPlan}
                     />
                   </div>
                 </div>
@@ -472,6 +789,7 @@ export default function CardGenerator() {
                     onClick={() => applyPreset(preset)}
                     variant="outline"
                     className="h-auto py-4 flex flex-col items-center gap-2"
+                    disabled={!hasProPlan}
                   >
                     <div className="flex gap-1">
                       <div
