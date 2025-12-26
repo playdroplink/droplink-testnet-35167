@@ -300,7 +300,8 @@ const PublicBio = () => {
   };
 
   const handleFollow = async () => {
-    console.log('[FOLLOW] Attempting follow action:', {
+
+    console.log('[FOLLOW][DEBUG] Attempting follow action:', {
       currentUserProfileId,
       profileId,
       isFollowing,
@@ -309,7 +310,7 @@ const PublicBio = () => {
     });
 
     if (!currentUserProfileId || !profileId) {
-      console.error('[FOLLOW] Missing IDs:', { currentUserProfileId, profileId });
+      console.error('[FOLLOW][DEBUG] Missing IDs:', { currentUserProfileId, profileId });
       toast.error("Please sign in with Pi Network to follow");
       return;
     }
@@ -319,51 +320,51 @@ const PublicBio = () => {
     }
     try {
       if (isFollowing) {
-        console.log('[FOLLOW] Unfollowing...');
+        console.log('[FOLLOW][DEBUG] Unfollowing...');
         const deleteQuery: any = (supabase as any)
           .from("followers")
           .delete()
           .eq("follower_profile_id", currentUserProfileId)
           .eq("following_profile_id", profileId);
+        console.log('[FOLLOW][DEBUG] Delete query:', deleteQuery);
         const { error } = await deleteQuery as any;
         if (error) {
-          console.error('[FOLLOW] Delete error:', error);
+          console.error('[FOLLOW][DEBUG] Delete error:', error);
           throw error;
         }
         setIsFollowing(false);
         setFollowerCount(prev => Math.max(0, prev - 1));
         // Suppress unfollow toast on public bio
       } else {
-        console.log('[FOLLOW] Following...');
+        console.log('[FOLLOW][DEBUG] Following...');
         const insertQuery: any = (supabase as any)
           .from("followers")
           .insert({
             follower_profile_id: currentUserProfileId,
             following_profile_id: profileId,
           } as any);
+        console.log('[FOLLOW][DEBUG] Insert query:', insertQuery);
         const { error } = await insertQuery as any;
         if (error) {
-          console.error('[FOLLOW] Insert error:', error);
+          console.error('[FOLLOW][DEBUG] Insert error:', error);
           throw error;
         }
-        
         setIsFollowing(true);
         setFollowerCount(prev => prev + 1);
         // Suppress follow toast on public bio
       }
-      
       // Refresh the follower count to sync with database
       const countQuery: any = (supabase as any)
         .from('followers')
         .select('id', { count: 'exact', head: true })
         .eq('following_profile_id', profileId);
+      console.log('[FOLLOW][DEBUG] Count query:', countQuery);
       const { count } = await countQuery as any;
-      
       if (count !== null) {
         setFollowerCount(count);
       }
     } catch (error: any) {
-      console.error("[FOLLOW] Follow error:", error);
+      console.error("[FOLLOW][DEBUG] Follow error:", error);
       const errorMsg = error?.message || error?.error_description || 'Failed to update follow status';
       toast.error(errorMsg);
     }

@@ -1,49 +1,23 @@
 -- ========================================
--- DISABLE FOLLOW NOTIFICATIONS TRIGGER
+-- DISABLE FOLLOW NOTIFICATIONS TRIGGER (MINIMAL)
 -- ========================================
 -- This removes the trigger that causes "payload column does not exist" error
 -- Run this in your Supabase SQL Editor
 
--- Step 1: Drop the trigger that creates notifications on follow
+-- Drop ALL notification-related triggers
 DROP TRIGGER IF EXISTS trg_followers_insert_notification ON public.followers CASCADE;
-
--- Step 2: Drop the trigger that creates notifications on messages
 DROP TRIGGER IF EXISTS trg_messages_insert_notification ON public.messages CASCADE;
+DROP TRIGGER IF EXISTS trg_follow_notification ON public.followers CASCADE;
+DROP TRIGGER IF EXISTS trg_message_notification ON public.messages CASCADE;
 
--- Step 3: Drop the notification functions
+-- Drop ALL notification-related functions
 DROP FUNCTION IF EXISTS public.fn_notify_followers() CASCADE;
 DROP FUNCTION IF EXISTS public.fn_notify_messages() CASCADE;
+DROP FUNCTION IF EXISTS public.notify_on_follow() CASCADE;
+DROP FUNCTION IF EXISTS public.notify_on_message() CASCADE;
+DROP FUNCTION IF EXISTS public.create_follow_notification() CASCADE;
+DROP FUNCTION IF EXISTS public.create_message_notification() CASCADE;
 
--- Step 4: Verify triggers are removed
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.triggers 
-        WHERE trigger_name = 'trg_followers_insert_notification'
-    ) THEN
-        RAISE NOTICE '✅ SUCCESS: Follow notification trigger removed';
-    ELSE
-        RAISE NOTICE '❌ WARNING: Follow notification trigger still exists';
-    END IF;
-    
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.triggers 
-        WHERE trigger_name = 'trg_messages_insert_notification'
-    ) THEN
-        RAISE NOTICE '✅ SUCCESS: Message notification trigger removed';
-    ELSE
-        RAISE NOTICE '❌ WARNING: Message notification trigger still exists';
-    END IF;
-END $$;
+-- You may add more DROP TRIGGER or DROP FUNCTION statements here if you find more with a different name.
 
--- Step 5: Show all remaining triggers (for verification)
-SELECT 
-    trigger_name, 
-    event_object_table,
-    action_timing,
-    event_manipulation
-FROM information_schema.triggers 
-WHERE trigger_schema = 'public'
-ORDER BY event_object_table, trigger_name;
-
-RAISE NOTICE '✅ Notification triggers disabled. Follow functionality will now work without notifications.';
+-- After running this, try following again. If you still get the error, run the trigger/function listing queries I provided earlier and share the results for a precise fix.
