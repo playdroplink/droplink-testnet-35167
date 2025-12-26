@@ -1427,26 +1427,26 @@ const Dashboard = () => {
             {isMobile ? (
               <Drawer>
                 <DrawerTrigger asChild>
-                  <Button size="sm" className="h-9 w-9 sm:h-10 sm:w-auto sm:px-3 bg-sky-400 text-white hover:bg-sky-500 border-none ml-0.5 sm:ml-1 p-0 sm:p-auto">
+                  <Button size="sm" className="h-9 w-9 sm:h-10 sm:w-auto sm:px-3 bg-sky-400 text-white hover:bg-sky-500 border-none ml-0.5 sm:ml-1 p-0 sm:p-auto z-50">
                     <Menu className="w-4 h-4" />
                     <span className="hidden sm:inline ml-1.5 text-xs sm:text-sm">Menu</span>
                   </Button>
                 </DrawerTrigger>
-                <DrawerContent className="bg-background border-t border-border">
-                  <DrawerHeader>
-                    <DrawerTitle className="text-lg font-semibold">DropLink Menu</DrawerTitle>
-                    <DrawerDescription>Quick actions and settings</DrawerDescription>
+                <DrawerContent className="bg-background border-t border-border fixed bottom-0 left-0 right-0 max-h-[90vh] z-50">
+                  <DrawerHeader className="border-b pb-3">
+                    <DrawerTitle className="text-base sm:text-lg font-semibold">DropLink Menu</DrawerTitle>
+                    <DrawerDescription className="text-xs sm:text-sm">Quick actions and settings</DrawerDescription>
                   </DrawerHeader>
-                  <div className="p-4 space-y-3 max-h-[70vh] overflow-y-auto">
+                  <div className="p-3 sm:p-4 space-y-3 max-h-[calc(90vh-100px)] overflow-y-auto w-full">
                                         {/* Plan Button in Drawer */}
                   <div className="space-y-2">
                                           <Button
                                             type="button"
                                             onClick={() => { setShowPlanModal(true); }}
                                             size="sm"
-                                            className="w-full justify-center gap-2 h-10 sm:h-12 bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-300 border text-xs sm:text-sm"
+                                            className="w-full justify-center gap-1 sm:gap-2 h-10 sm:h-12 bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-300 border text-xs sm:text-sm"
                                           >
-                                            <Crown className="w-4 h-4" />
+                                            <Crown className="w-3 sm:w-4 h-3 sm:h-4" />
                                             <span>My Plan / Renew</span>
                                           </Button>
                                         </div>
@@ -1514,26 +1514,26 @@ const Dashboard = () => {
 
                     {/* Navigation Section */}
                     <div className="space-y-2">
-                      <h3 className="font-medium text-sm text-muted-foreground px-2">Navigation</h3>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button type="button" onClick={() => navigate("/followers")} size="sm" className="inline-flex justify-center gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-sm">
-                          <Users className="w-4 h-4" />
+                      <h3 className="font-medium text-xs sm:text-sm text-muted-foreground px-2">Navigation</h3>
+                      <div className="grid grid-cols-2 gap-1 sm:gap-2">
+                        <Button type="button" onClick={() => navigate("/followers")} size="sm" className="inline-flex justify-center gap-1 sm:gap-2 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
+                          <Users className="w-3 sm:w-4 h-3 sm:h-4" />
                           <span>Followers</span>
                         </Button>
-                        <Button type="button" onClick={() => navigate("/wallet")} size="sm" className="inline-flex justify-center gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-sm">
-                          <Wallet className="w-4 h-4" />
+                        <Button type="button" onClick={() => navigate("/wallet")} size="sm" className="inline-flex justify-center gap-1 sm:gap-2 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
+                          <Wallet className="w-3 sm:w-4 h-3 sm:h-4" />
                           <span>Wallet</span>
                         </Button>
-                        <Button type="button" onClick={() => navigate("/profile")} size="sm" className="inline-flex justify-center gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-sm">
-                          <User className="w-4 h-4" />
+                        <Button type="button" onClick={() => navigate("/profile")} size="sm" className="inline-flex justify-center gap-1 sm:gap-2 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
+                          <User className="w-3 sm:w-4 h-3 sm:h-4" />
                           <span>Profile</span>
                         </Button>
-                        <Button type="button" onClick={() => navigate("/domain")} size="sm" className="inline-flex justify-center gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-sm">
-                          <Globe className="w-4 h-4" />
+                        <Button type="button" onClick={() => navigate("/domain")} size="sm" className="inline-flex justify-center gap-1 sm:gap-2 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
+                          <Globe className="w-3 sm:w-4 h-3 sm:h-4" />
                           <span>Domain</span>
                         </Button>
-                        <Button type="button" onClick={() => navigate("/search-users")} size="sm" className="inline-flex justify-center gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-sm col-span-2">
-                          <Users className="w-4 h-4" />
+                        <Button type="button" onClick={() => navigate("/search-users")} size="sm" className="inline-flex justify-center gap-1 sm:gap-2 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm col-span-2">
+                          <Users className="w-3 sm:w-4 h-3 sm:h-4" />
                           <span>User Search</span>
                         </Button>
                       </div>
@@ -2862,7 +2862,7 @@ const Dashboard = () => {
           <div className="w-full px-3 sm:px-4 md:px-6 mb-3">
             <Button 
               onClick={() => navigate('/merchant-products')} 
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white"
+              className="w-full bg-sky-500 hover:bg-sky-600 text-white"
               size="sm"
             >
               <Store className="w-4 h-4 mr-2" />

@@ -13,8 +13,8 @@ import { validateMainnetConfig } from "@/config/pi-config";
 import { GiftCardModal } from "@/components/GiftCardModal";
 import { createDroppayPaymentViaApi } from "@/lib/droppay";
 
-// Helper: Drop available only when mainnet validated
-const isDropAvailable = validateMainnetConfig();
+// Helper: DropPay available when API key is configured
+const isDropAvailable = !!import.meta.env.VITE_DROPPAY_API_KEY;
 
 interface Plan {
   name: string;
@@ -346,6 +346,8 @@ const Subscription = () => {
   };
 
   const handleSubscribeWithDropPay = async (planName: string, price: number) => {
+    console.log('[SUBSCRIPTION] Starting DropPay subscription:', { planName, price, isYearly });
+    
     if (!piUser || !profileId) {
       toast.error('Please sign in with Pi Network first');
       return;
@@ -353,6 +355,7 @@ const Subscription = () => {
 
     if (!isDropAvailable) {
       toast.error('DropPay is not available in this environment');
+      console.error('[SUBSCRIPTION] DropPay API key not configured');
       return;
     }
 
@@ -360,36 +363,81 @@ const Subscription = () => {
     const toastId = toast.loading('Creating DropPay checkout...');
     try {
       const periodValue = isYearly ? 'yearly' : 'monthly';
+      
+      const paymentMetadata = {
+        profile_id: profileId,
+        plan: planName.toLowerCase(),
+        period: periodValue,
+        payment_type: 'subscription',
+      };
+      
+      console.log('[SUBSCRIPTION] Creating DropPay payment with data:', {
+        amount: price,
+        currency: 'PI',
+        description: `${planName} ${isYearly ? 'Yearly' : 'Monthly'} Subscription`,
+        metadata: paymentMetadata
+      });
+      
       const resp = await createDroppayPaymentViaApi({
         amount: price,
         currency: 'PI',
         description: `${planName} ${isYearly ? 'Yearly' : 'Monthly'} Subscription`,
-        metadata: {
-          profile_id: profileId,
-          plan: planName.toLowerCase(),
-          period: periodValue,
-          payment_type: 'subscription',
-        },
+        metadata: paymentMetadata,
       });
+
+      console.log('[SUBSCRIPTION] DropPay API response:', resp);
 
       if (!resp.success) {
         toast.dismiss(toastId);
-        toast.error(resp.error || 'Failed to create DropPay session');
+        toast.error(resp.error || 'Failed to create DropPay session', {
+          description: 'Check browser console for details',
+          duration: 8000
+        });
+        console.error('[SUBSCRIPTION] DropPay creation failed:', resp.error);
         return;
       }
 
       const p: any = resp.payment;
-      const checkoutUrl = p?.checkout_url || p?.url || p?.payment_url || p?.payment?.checkout_url;
+      console.log('[SUBSCRIPTION] Full payment object:', JSON.stringify(p, null, 2));
+      console.log('[SUBSCRIPTION] Payment keys:', p ? Object.keys(p) : 'no payment object');
+      
+      const checkoutUrl = 
+        p?.checkout_url || 
+        p?.url || 
+        p?.payment_url || 
+        p?.payment?.checkout_url ||
+        p?.checkoutUrl ||
+        p?.payment?.url ||
+        p?.payment?.payment_url ||
+        p?.redirect_url ||
+        p?.links?.checkout;
+      
       toast.dismiss(toastId);
+      
+      console.log('[SUBSCRIPTION] Extracted checkout URL:', checkoutUrl);
+      
       if (checkoutUrl) {
         toast.success('Redirecting to DropPay checkout...');
+        console.log('[SUBSCRIPTION] Redirecting to:', checkoutUrl);
         window.location.href = checkoutUrl;
       } else {
-        toast.error('Missing checkout URL from DropPay response');
+        const errorMsg = 'Missing checkout URL from DropPay response';
+        toast.error(errorMsg, {
+          description: 'The payment gateway did not return a valid checkout URL. Please contact support.',
+          duration: 10000
+        });
+        console.error('[SUBSCRIPTION] No checkout URL found!');
+        console.error('[SUBSCRIPTION] Full response:', JSON.stringify(resp, null, 2));
+        console.error('[SUBSCRIPTION] Payment object:', JSON.stringify(p, null, 2));
+        console.error('[SUBSCRIPTION] Available keys:', p ? Object.keys(p).join(', ') : 'none');
       }
     } catch (err: any) {
       toast.dismiss(toastId);
-      toast.error(err?.message || 'DropPay initiation failed');
+      toast.error(err?.message || 'DropPay initiation failed', {
+        description: 'An unexpected error occurred. Check console for details.',
+        duration: 8000
+      });
+      console.error('[SUBSCRIPTION] DropPay error:', err);
     } finally {
       setDropLoading(false);
     }
