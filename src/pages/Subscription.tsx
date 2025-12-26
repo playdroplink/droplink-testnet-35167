@@ -421,15 +421,17 @@ const Subscription = () => {
         console.log('[SUBSCRIPTION] Redirecting to:', checkoutUrl);
         window.location.href = checkoutUrl;
       } else {
-        const errorMsg = 'Missing checkout URL from DropPay response';
+        const errorMsg = 'DropPay Service Unavailable';
         toast.error(errorMsg, {
-          description: 'The payment gateway did not return a valid checkout URL. Please contact support.',
-          duration: 10000
+          description: 'The DropPay payment service is currently not responding. Please use "Subscribe with Pi" button instead for a working payment method.',
+          duration: 15000
         });
-        console.error('[SUBSCRIPTION] No checkout URL found!');
+        console.error('[SUBSCRIPTION] ❌ DropPay service error - No checkout URL found!');
+        console.error('[SUBSCRIPTION] This usually means the DropPay API is down or misconfigured.');
         console.error('[SUBSCRIPTION] Full response:', JSON.stringify(resp, null, 2));
         console.error('[SUBSCRIPTION] Payment object:', JSON.stringify(p, null, 2));
         console.error('[SUBSCRIPTION] Available keys:', p ? Object.keys(p).join(', ') : 'none');
+        console.error('[SUBSCRIPTION] 💡 Solution: Use the "Subscribe with Pi" button instead!');
       }
     } catch (err: any) {
       toast.dismiss(toastId);
@@ -715,6 +717,27 @@ const Subscription = () => {
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold mb-2">Choose Your Plan</h1>
           <p className="text-lg text-muted-foreground mb-2">Unlock more features and remove ads with a paid plan.</p>
+          
+          {/* DropPay Service Warning */}
+          {isDropAvailable && (
+            <div className="mt-4 mb-4 p-4 bg-amber-50 border-2 border-amber-300 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 mt-0.5">
+                  <svg className="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-semibold text-amber-800 mb-1">⚠️ DropPay Service Currently Unavailable</p>
+                  <p className="text-xs text-amber-700">
+                    The "Subscribe with DropPay" option is experiencing technical issues. 
+                    <strong className="font-semibold"> Please use the "Subscribe with Pi" button instead</strong> - it's fully functional and uses the official Pi Network payment system.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="mt-3 flex flex-col gap-2 items-center text-sm">
             <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">Pi Payments: {piConfigured ? 'Online' : 'Not configured'}</span>
             <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">DropPay: {dropConfigured ? 'Online' : 'Not configured'}</span>

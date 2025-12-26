@@ -82,6 +82,11 @@ BEGIN
     GET DIAGNOSTICS affected_rows = ROW_COUNT;
     total_deleted := total_deleted + affected_rows;
     
+    -- 11a. Delete subscription_transactions (by profile_id) - Transaction history
+    DELETE FROM subscription_transactions WHERE profile_id = user_id_to_delete;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
+    
     -- 12. Delete gifts and gift_transactions (by profile_id and pi_user_id)
     DELETE FROM gift_transactions WHERE sender_id = user_id_to_delete OR recipient_id = user_id_to_delete;
     GET DIAGNOSTICS affected_rows = ROW_COUNT;
@@ -121,7 +126,33 @@ BEGIN
     GET DIAGNOSTICS affected_rows = ROW_COUNT;
     total_deleted := total_deleted + affected_rows;
     
-    -- 19. CRITICAL: Delete ALL profiles with same pi_user_id (handles multiple accounts)
+    -- 19. Delete shortened_links (by profile_id)
+    DELETE FROM shortened_links WHERE profile_id = user_id_to_delete;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
+    
+    -- 20. Delete qr_codes (by profile_id)
+    DELETE FROM qr_codes WHERE profile_id = user_id_to_delete;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
+    
+    -- 21. Delete ai_chat_conversations (by profile_id)
+    DELETE FROM ai_chat_conversations WHERE profile_id = user_id_to_delete;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
+    
+    -- 22. Delete chatbot_designs (by profile_id)
+    DELETE FROM chatbot_designs WHERE profile_id = user_id_to_delete;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
+    
+    -- 23. Delete link_thumbnails (by profile_id)
+    DELETE FROM link_thumbnails WHERE profile_id = user_id_to_delete;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
+    
+    -- 24. CRITICAL: Delete ALL profiles with same pi_user_id (handles multiple accounts)
+    -- This ensures the user is removed from search results
     DELETE FROM profiles WHERE id = user_id_to_delete OR pi_user_id = pi_user_id_value OR username = pi_username_value;
     GET DIAGNOSTICS affected_rows = ROW_COUNT;
     total_deleted := total_deleted + affected_rows;

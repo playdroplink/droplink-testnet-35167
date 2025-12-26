@@ -38,6 +38,7 @@ import { ProfileData } from "@/types/profile";
 import LinkManager from "@/components/LinkManager";
 import { PiAuthTest } from "@/components/PiAuthTest";
 import { AccountDeletion } from "@/components/AccountDeletion";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Drawer,
   DrawerClose,
@@ -1334,6 +1335,23 @@ const Dashboard = () => {
             {greeting}!
           </h2>
         )}
+        
+        {/* Card Generator Feature Notice */}
+        {displayUsername && (
+          <Alert className="mb-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border-blue-200 dark:border-blue-800">
+            <CreditCard className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-sm">
+              <strong>🎉 New Feature!</strong> Create your personalized virtual business card with QR code! 
+              <Button
+                onClick={() => navigate("/card-generator")}
+                variant="link"
+                className="h-auto p-0 ml-1 text-blue-600 font-semibold"
+              >
+                Try Card Generator →
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
       <header className={`px-2 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 shadow-sm border-b border-border relative z-10 ${isMobile ? 'bg-background' : 'glass-surface'} overflow-x-hidden`}>
         <div className="flex items-center justify-between max-w-full">
@@ -1531,6 +1549,10 @@ const Dashboard = () => {
                         <Button type="button" onClick={() => navigate("/domain")} size="sm" className="inline-flex justify-center gap-1 sm:gap-2 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
                           <Globe className="w-3 sm:w-4 h-3 sm:h-4" />
                           <span>Domain</span>
+                        </Button>
+                        <Button type="button" onClick={() => navigate("/card-generator")} size="sm" className="inline-flex justify-center gap-1 sm:gap-2 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
+                          <CreditCard className="w-3 sm:w-4 h-3 sm:h-4" />
+                          <span>My Card</span>
                         </Button>
                         <Button type="button" onClick={() => navigate("/search-users")} size="sm" className="inline-flex justify-center gap-1 sm:gap-2 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm col-span-2">
                           <Users className="w-3 sm:w-4 h-3 sm:h-4" />

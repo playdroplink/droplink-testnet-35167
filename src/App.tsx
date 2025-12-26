@@ -33,6 +33,7 @@ import AdminMrwain from "./pages/AdminMrwain";
 import Purchases from "./pages/Purchases";
 import ProductDetail from "./pages/ProductDetail";
 import SalesEarnings from "./pages/SalesEarnings";
+import CardGenerator from "./pages/CardGenerator";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const App = () => {
             <Route path="/followers" element={<Followers />} />
             <Route path="/wallet" element={<Wallet />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/card-generator" element={<CardGenerator />} />
             <Route path="/ai-support" element={<AISupport />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
