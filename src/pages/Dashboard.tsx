@@ -250,14 +250,14 @@ const Dashboard = () => {
     youtubeVideoUrl: "",
     backgroundMusicUrl: "",
     socialLinks: [
-      { type: "twitter", url: "" },
-      { type: "instagram", url: "" },
-      { type: "youtube", url: "" },
-      { type: "tiktok", url: "" },
-      { type: "facebook", url: "" },
-      { type: "linkedin", url: "" },
-      { type: "twitch", url: "" },
-      { type: "website", url: "" },
+      { type: "twitter", url: "", icon: "twitter" },
+      { type: "instagram", url: "", icon: "instagram" },
+      { type: "youtube", url: "", icon: "youtube" },
+      { type: "tiktok", url: "", icon: "tiktok" },
+      { type: "facebook", url: "", icon: "facebook" },
+      { type: "linkedin", url: "", icon: "linkedin" },
+      { type: "twitch", url: "", icon: "twitch" },
+      { type: "website", url: "", icon: "website" },
     ],
     customLinks: [],
     theme: {
@@ -682,7 +682,40 @@ const Dashboard = () => {
           .select("*")
           .eq("profile_id", profileData.id);
 
-        const socialLinks = profileData.social_links as any;
+        let socialLinks = profileData.social_links as any;
+        
+        // Ensure socialLinks is properly initialized - fix for broken social links
+        if (!Array.isArray(socialLinks) || socialLinks.length === 0) {
+          socialLinks = [
+            { type: "twitter", url: "", icon: "twitter" },
+            { type: "instagram", url: "", icon: "instagram" },
+            { type: "youtube", url: "", icon: "youtube" },
+            { type: "tiktok", url: "", icon: "tiktok" },
+            { type: "facebook", url: "", icon: "facebook" },
+            { type: "linkedin", url: "", icon: "linkedin" },
+            { type: "twitch", url: "", icon: "twitch" },
+            { type: "website", url: "", icon: "website" },
+          ];
+        } else if (Array.isArray(socialLinks)) {
+          // Ensure all expected platforms exist in the array
+          const expectedTypes = ["twitter", "instagram", "youtube", "tiktok", "facebook", "linkedin", "twitch", "website"];
+          const existingTypes = socialLinks.map(l => l.type);
+          const missingTypes = expectedTypes.filter(t => !existingTypes.includes(t));
+          
+          if (missingTypes.length > 0) {
+            // Add missing platforms
+            missingTypes.forEach(type => {
+              socialLinks.push({ type, url: "", icon: type });
+            });
+          }
+          
+          // Ensure each link has an icon property
+          socialLinks = socialLinks.map((link: any) => ({
+            ...link,
+            icon: link.icon || link.type
+          }));
+        }
+        
         const themeSettings = profileData.theme_settings as any;
         
         // Load financial data from secure endpoint (optional - won't fail if no session)
@@ -748,15 +781,15 @@ const Dashboard = () => {
           email: (profileData as any).email || supabaseUser?.email || "",
           youtubeVideoUrl: (profileData as any).youtube_video_url || "",
           backgroundMusicUrl: (profileData as any).background_music_url || "",
-          socialLinks: Array.isArray(socialLinks) ? socialLinks : [
-            { type: "twitter", url: "" },
-            { type: "instagram", url: "" },
-            { type: "youtube", url: "" },
-            { type: "tiktok", url: "" },
-            { type: "facebook", url: "" },
-            { type: "linkedin", url: "" },
-            { type: "twitch", url: "" },
-            { type: "website", url: "" },
+          socialLinks: Array.isArray(socialLinks) && socialLinks.length > 0 ? socialLinks : [
+            { type: "twitter", url: "", icon: "twitter" },
+            { type: "instagram", url: "", icon: "instagram" },
+            { type: "youtube", url: "", icon: "youtube" },
+            { type: "tiktok", url: "", icon: "tiktok" },
+            { type: "facebook", url: "", icon: "facebook" },
+            { type: "linkedin", url: "", icon: "linkedin" },
+            { type: "twitch", url: "", icon: "twitch" },
+            { type: "website", url: "", icon: "website" },
           ],
           customLinks: (themeSettings?.customLinks as any) || [],
           theme: {
@@ -1103,12 +1136,19 @@ const Dashboard = () => {
     }
     
     // Update the link (either editing existing or adding new)
-    setProfile({
+    const updatedProfile = {
       ...profile,
       socialLinks: profile.socialLinks.map(link =>
         link.type === platform ? { ...link, url: value } : link
       ),
-    });
+    };
+    
+    setProfile(updatedProfile);
+    
+    // Trigger immediate save after social link change
+    console.log('[SOCIAL LINKS] Updating platform:', platform, 'Value:', value);
+    console.log('[SOCIAL LINKS] Updated profile:', updatedProfile);
+    saveProfileNow(updatedProfile);
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2155,7 +2195,11 @@ const Dashboard = () => {
                           onChange={e => {
                             const newLinks = [...profile.socialLinks];
                             newLinks[idx].url = e.target.value;
-                            setProfile({ ...profile, socialLinks: newLinks });
+                            const updatedProfile = { ...profile, socialLinks: newLinks };
+                            setProfile(updatedProfile);
+                            // Save immediately for custom links
+                            console.log('[CUSTOM SOCIAL] Updating custom link at index', idx, 'Value:', e.target.value);
+                            saveProfileNow(updatedProfile);
                           }}
                           placeholder="Enter URL"
                           className="bg-input-bg flex-1 text-sm"
