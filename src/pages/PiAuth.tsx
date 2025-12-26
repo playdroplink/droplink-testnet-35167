@@ -21,6 +21,7 @@ import { PiDomainModal } from "@/components/PiDomainModal";
 import { DropPayModal } from "@/components/DropPayModal";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import droplinkLogo from "@/assets/droplink-logo.png";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const PiAuth = () => {
     // Notification state for non-Pi Browser
@@ -33,6 +34,7 @@ const PiAuth = () => {
   const navigate = useNavigate();
   const { isAuthenticated, loading, signIn, piUser } = usePi();
   const { preferences, updatePreference } = useUserPreferences();
+  const [showEcosystemModal, setShowEcosystemModal] = useState(false);
 
 
   // Pi Auth Debug State
@@ -353,6 +355,15 @@ const PiAuth = () => {
             </a>
           </Button>
 
+          {/* Ecosystem Overview */}
+          <Button
+            variant="outline"
+            className="w-full text-base font-semibold"
+            onClick={() => setShowEcosystemModal(true)}
+          >
+            Droplink Ecosystem
+          </Button>
+
           <div className={`space-y-2 text-sm text-muted-foreground mt-4 p-3 rounded-lg border ${enableChristmasTheme ? 'bg-sky-50 border-sky-200' : 'bg-slate-100 border-slate-300'}`}>
             <p className="flex items-center gap-2">
               <span className={enableChristmasTheme ? 'text-red-500' : 'text-sky-500'}>
@@ -415,6 +426,84 @@ const PiAuth = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Droplink Ecosystem Modal */}
+      <Dialog open={showEcosystemModal} onOpenChange={setShowEcosystemModal}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>The Droplink Ecosystem for Business & Creators</DialogTitle>
+            <DialogDescription>
+              Droplink, DropStore, and DropPay combine to move you from exposure to earnings.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 text-sm leading-relaxed">
+            <div className="space-y-2">
+              <p className="flex items-center gap-2 font-semibold">🔗 Droplink</p>
+              <p className="text-muted-foreground">
+                Droplink connects your DropStore storefront to the masses, driving traffic, visibility, and real buyers to your products through one powerful link.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="flex items-center gap-2 font-semibold">🛒 DropStore</p>
+              <p className="text-muted-foreground">Your complete storefront, designed to display and sell:</p>
+              <ul className="list-disc pl-6 space-y-1 text-muted-foreground">
+                <li>Physical products</li>
+                <li>Digital products</li>
+                <li>Online services</li>
+              </ul>
+              <p className="text-muted-foreground">All in one Pi-powered marketplace.</p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="flex items-center gap-2 font-semibold">💳 DropPay</p>
+              <p className="text-muted-foreground">Handles payments and payouts, allowing you to:</p>
+              <ul className="list-disc pl-6 space-y-1 text-muted-foreground">
+                <li>Accept Pi payments for your products</li>
+                <li>Create checkout links for everything</li>
+                <li>Embed Pi payments on your website or widgets</li>
+                <li>Automatically receive earnings from your DropStore</li>
+                <li>Manage merchant payouts seamlessly</li>
+              </ul>
+            </div>
+
+            <div className="space-y-2">
+              <p className="flex items-center gap-2 font-semibold">🔁 One Connected Ecosystem</p>
+              <p className="text-muted-foreground">These three Pi apps are fully connected, creating a complete business flow:</p>
+              <p className="font-medium">Exposure → Selling → Payment → Payout</p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="flex items-center gap-2 font-semibold">✅ Recommended Usage</p>
+              <ul className="list-disc pl-6 space-y-1 text-muted-foreground">
+                <li>Creators & Influencers → Use Droplink to grow reach</li>
+                <li>Sellers & Merchants → Use DropStore to showcase and sell</li>
+                <li>Businesses → Use DropPay for secure Pi payments & earnings</li>
+              </ul>
+            </div>
+
+            <div className="space-y-2">
+              <p className="flex items-center gap-2 font-semibold">💡 Flexible for Your Needs</p>
+              <p className="text-muted-foreground">Use one, two, or all three — depending on your business or creator goals.</p>
+            </div>
+
+            <div className="space-y-1">
+              <p className="flex items-center gap-2 font-semibold">🟢 Modal Footer / CTA</p>
+              <p className="font-semibold">Build. Sell. Get Paid. All in Pi.</p>
+            </div>
+          </div>
+
+          <DialogFooter className="flex flex-col sm:flex-row sm:justify-end sm:gap-2">
+            <Button asChild onClick={() => setShowEcosystemModal(false)}>
+              <a href="https://www.droplink.space" target="_blank" rel="noopener noreferrer">Get Started</a>
+            </Button>
+            <Button asChild variant="outline" onClick={() => setShowEcosystemModal(false)}>
+              <a href="https://www.droplink.space/help" target="_blank" rel="noopener noreferrer">Learn More</a>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
