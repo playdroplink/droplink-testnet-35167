@@ -6,10 +6,18 @@
 - **From Dashboard:** Look for the blue notice banner → Click "Try Card Generator"
 - **From Menu:** Menu → Navigation → My Card
 
-### Step 2: Customize Your Card
-- Choose colors or select a preset theme
-- Click card to see both sides
-- Your QR code automatically links to your store
+
+### Step 2: Card Design & Customization
+
+Default Card Colors:
+- **Front Color:** #2bbdee (Sky Blue)
+- **Back Color:** #2bbdee (Sky Blue)
+- **Text Color:** #000000 (Black)
+- **Accent Color (Droplink Logo):** #fafafa (White)
+
+Card customization (colors, themes) is available only for users with a **30 Pi Pro plan**.
+Click card to see both sides.
+Your QR code automatically links to your store.
 
 ### Step 3: Download or Share
 
@@ -63,12 +71,27 @@
 ✅ Pi Network badge  
 ✅ Professional layout  
 
-### Back Side:
-✅ Large Droplink logo  
-✅ Magnetic strip design  
-✅ "Powered by Pi Network"  
-✅ Your username  
-✅ Elegant branding  
+
+### Back Side (Organized):
+---
+**🔗 Droplink Logo (Top Center)**
+	- Large, clear branding for instant recognition
+
+**⬛ Magnetic Strip (Upper Section)**
+	- Classic black strip for authentic card look
+
+**👤 Username Display (Middle)**
+	- Your Pi username (@yourusername)
+
+**⚡ Powered by Pi Network (Lower Section)**
+	- Subtle badge or text for network credibility
+
+**ℹ️ Instructions/Info (Bottom)**
+	- "Scan QR code to visit store"
+	- Support/contact info (optional)
+
+**✨ Elegant, minimal branding throughout**
+---
 
 ## 📱 Pi Browser Notice
 

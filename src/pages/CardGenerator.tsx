@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { VirtualCard } from "@/components/VirtualCard";
-import { Download, Printer, RefreshCw, Palette, Share2, Link, AlertCircle } from "lucide-react";
+import { Download, Printer, RefreshCw, Palette, Share2, Link, AlertCircle, Eye, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import html2canvas from "html2canvas";
@@ -28,17 +28,18 @@ export default function CardGenerator() {
   // Store URL from user's store - use actual username for proper routing
   const storeUrl = `${window.location.origin}/store/${username}`;
 
-  // Card customization state - use profile theme colors if available
+  // Card customization state - default colors: Sky Blue theme
   const [frontColor, setFrontColor] = useState(
-    profile?.theme_settings?.backgroundColor || "#1a1a2e"
+    profile?.theme_settings?.backgroundColor || "#2bbdee"
   );
-  const [backColor, setBackColor] = useState("#16213e");
-  const [textColor, setTextColor] = useState("#ffffff");
+  const [backColor, setBackColor] = useState("#2bbdee");
+  const [textColor, setTextColor] = useState("#000000");
   const [accentColor, setAccentColor] = useState(
-    profile?.theme_settings?.primaryColor || "#87ceeb"
+    profile?.theme_settings?.primaryColor || "#fafafa"
   );
   const [shareableLink, setShareableLink] = useState("");
   const [showShareLink, setShowShareLink] = useState(false);
+  const [viewCardOnly, setViewCardOnly] = useState(false);
   
   // Detect Pi Browser
   const isPiBrowser = navigator.userAgent.includes("PiBrowser") || window.location.hostname.includes("pi.app");
@@ -213,9 +214,32 @@ export default function CardGenerator() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-8 px-4">
+      {/* View Card Only Mode */}
+      {viewCardOnly && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="relative w-full max-w-2xl">
+            <Button
+              onClick={() => setViewCardOnly(false)}
+              variant="ghost"
+              className="absolute -top-12 right-0 text-white hover:text-gray-300"
+            >
+              <X className="w-6 h-6" />
+            </Button>
+            <VirtualCard
+              username={username}
+              storeUrl={storeUrl}
+              frontColor={frontColor}
+              backColor={backColor}
+              textColor={textColor}
+              accentColor={accentColor}
+            />
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold mb-2 text-sky-500">
             Virtual Card Generator
           </h1>
           <p className="text-muted-foreground">
@@ -245,8 +269,16 @@ export default function CardGenerator() {
               {/* Action Buttons */}
               <div className="grid grid-cols-2 gap-3 mt-6 no-print">
                 <Button
+                  onClick={() => setViewCardOnly(true)}
+                  variant="outline"
+                  className="w-full col-span-2"
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  View Card Only
+                </Button>
+                <Button
                   onClick={generateShareableLink}
-                  className="w-full col-span-2 bg-amber-500 hover:bg-amber-600"
+                  className="w-full col-span-2 bg-sky-500 hover:bg-sky-600"
                 >
                   <Share2 className="w-4 h-4 mr-2" />
                   Get Download Link

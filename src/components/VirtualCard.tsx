@@ -15,10 +15,10 @@ interface VirtualCardProps {
 export const VirtualCard = ({
   username,
   storeUrl,
-  frontColor = "#1a1a2e",
-  backColor = "#16213e",
-  textColor = "#ffffff",
-  accentColor = "#87ceeb",
+  frontColor = "#2bbdee",
+  backColor = "#2bbdee",
+  textColor = "#000000",
+  accentColor = "#fafafa",
 }: VirtualCardProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -104,31 +104,36 @@ export const VirtualCard = ({
 
         {/* Back Side */}
         <Card
-          className="absolute inset-0 backface-hidden rounded-2xl shadow-2xl p-6 flex flex-col justify-between items-center overflow-hidden rotate-y-180"
+          className="absolute inset-0 backface-hidden rounded-2xl shadow-2xl p-6 flex flex-col justify-between overflow-hidden rotate-y-180"
           style={{
             backgroundColor: backColor,
-            color: accentColor, // Sky blue text for all
+            color: textColor,
             backfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
           }}
         >
-          {/* Card Info at Top - Organized */}
-          <div className="w-full flex flex-col items-center mb-4">
-            <h1 className="text-3xl font-bold mb-1 drop-shadow-lg" style={{ color: accentColor }}>Droplink</h1>
-            <p className="text-xs font-semibold opacity-80 mb-1" style={{ color: accentColor }}>droplink.space</p>
-            <div className="flex flex-col items-center gap-1 mt-1 mb-2">
-              <span className="text-xs opacity-80">@{username}</span>
-              <span className="text-xs opacity-70">Your Digital Commerce Card</span>
-            </div>
-            <div className="flex flex-col items-center gap-0.5 mb-2">
-              <span className="text-xs opacity-70">Powered by Pi Network</span>
-              <span className="text-xs opacity-70">Scan QR code to visit store</span>
+          {/* Magnetic Strip at top */}
+          <div className="absolute top-12 left-0 right-0 h-12 bg-black" />
+          
+          {/* Center Content */}
+          <div className="relative z-10 flex-1 flex flex-col items-center justify-center mt-8">
+            <h1 className="text-4xl font-bold mb-2" style={{ color: accentColor }}>Droplink</h1>
+            <p className="text-sm font-medium mb-4" style={{ color: textColor, opacity: 0.9 }}>droplink.space</p>
+            
+            <div className="text-center space-y-1 mb-6">
+              <p className="text-lg font-semibold" style={{ color: textColor }}>@{username}</p>
+              <p className="text-xs" style={{ color: textColor, opacity: 0.8 }}>Digital Commerce Card</p>
             </div>
           </div>
-          {/* Magnetic Strip */}
-          <div className="absolute top-12 left-0 right-0 h-12 bg-black opacity-80" />
+          
+          {/* Bottom Info */}
+          <div className="relative z-10 text-center space-y-1">
+            <p className="text-xs font-medium" style={{ color: textColor, opacity: 0.8 }}>Powered by Pi Network</p>
+            <p className="text-xs" style={{ color: textColor, opacity: 0.7 }}>Scan QR code to visit store</p>
+          </div>
+          
           {/* Signature Strip */}
-          <div className="absolute top-28 left-6 right-6 h-10 bg-white/90 rounded" />
+          <div className="absolute bottom-16 left-6 right-6 h-10 bg-white/20 rounded" />
           {/* Decorative Pattern */}
           <div
             className="absolute bottom-0 right-0 w-48 h-48 rounded-full blur-3xl opacity-20"
