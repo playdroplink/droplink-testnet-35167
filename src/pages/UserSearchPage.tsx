@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { usePi } from "@/contexts/PiContext";
 import { toast } from "sonner";
-import { NotificationsBell } from "@/components/NotificationsBell";
+// Notifications bell intentionally omitted on Search page to avoid noise when following
 
 const plans = ["all", "free", "basic", "premium", "pro"];
 const categories = [
@@ -349,7 +349,7 @@ const UserSearchPage = () => {
         .maybeSingle()) as any;
       
       if (existing) {
-        toast.info(`Already following @${profile.username}`);
+        // Suppress toast on search page
         return;
       }
       
@@ -367,7 +367,7 @@ const UserSearchPage = () => {
       
       setFollowedUsername(profile.username);
       setShowFollowedModal(true);
-      toast.success(`Following @${profile.username}!`);
+      // Suppress success toast on search page
     } catch (err: any) {
       console.error('Follow error:', err);
       toast.error(err.message || 'Failed to follow user');
@@ -522,8 +522,7 @@ const UserSearchPage = () => {
             >
               View All
             </Button>
-            {/* Notifications bell */}
-            <NotificationsBell profileId={currentUserProfileId} />
+            {/* Notifications hidden on search page */}
           </div>
         </div>
         {/* Active Filters Badges */}

@@ -37,20 +37,27 @@ export function useNotifications(options: {
 
   // Start realtime subscription
   useEffect(() => {
+    // Always clean up any prior channel
     if (channelRef.current) {
       try { channelRef.current.unsubscribe?.(); } catch {}
       channelRef.current = null;
     }
 
-    const pId = profileId; // prefer explicit profileId if provided
-    if (!pId && !username) return;
+    // Safety: require a concrete profileId to scope realtime events.
+    // Without a profileId filter, we'd receive EVERY insert from public tables,
+    // causing false notifications on search/public pages.
+    const pId = profileId || null;
+    if (!pId) {
+      // No subscription if we cannot safely scope by profile id
+      return;
+    }
 
-    const ch = (supabase as any).channel(`notifications-${pId || username}-${Date.now()}`);
+    const ch = (supabase as any).channel(`notifications-${pId}-${Date.now()}`);
 
     // Followers: someone followed you
     ch.on(
       "postgres_changes",
-      { event: "INSERT", schema: "public", table: "followers", filter: pId ? `following_profile_id=eq.${pId}` : undefined },
+      { event: "INSERT", schema: "public", table: "followers", filter: `following_profile_id=eq.${pId}` },
       (payload: any) => {
         push({
           type: "follow",
@@ -65,7 +72,7 @@ export function useNotifications(options: {
     // Messages: new incoming message (assuming to_profile_id)
     ch.on(
       "postgres_changes",
-      { event: "INSERT", schema: "public", table: "messages", filter: pId ? `to_profile_id=eq.${pId}` : undefined },
+      { event: "INSERT", schema: "public", table: "messages", filter: `to_profile_id=eq.${pId}` },
       (payload: any) => {
         push({
           type: "message",

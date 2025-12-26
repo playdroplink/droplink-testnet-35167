@@ -332,7 +332,7 @@ const PublicBio = () => {
         }
         setIsFollowing(false);
         setFollowerCount(prev => Math.max(0, prev - 1));
-        toast.success("Unfollowed");
+        // Suppress unfollow toast on public bio
       } else {
         console.log('[FOLLOW] Following...');
         const insertQuery: any = (supabase as any)
@@ -349,7 +349,7 @@ const PublicBio = () => {
         
         setIsFollowing(true);
         setFollowerCount(prev => prev + 1);
-        toast.success("Following!");
+        // Suppress follow toast on public bio
       }
       
       // Refresh the follower count to sync with database
@@ -487,7 +487,12 @@ const PublicBio = () => {
       // Social links: convert object to array if needed
       let socialLinksArr = [];
       if (Array.isArray(profileData.social_links)) {
-        socialLinksArr = profileData.social_links;
+        // Dashboard stores as array with "type" field; normalize to "platform" for consistency
+        socialLinksArr = profileData.social_links.map((link: any) => ({
+          platform: link.type || link.platform,
+          url: link.url,
+          icon: link.icon,
+        }));
       } else if (profileData.social_links && typeof profileData.social_links === 'object') {
         socialLinksArr = Object.entries(profileData.social_links).map(([platform, url]) => ({ platform, url }));
       }

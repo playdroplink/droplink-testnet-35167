@@ -20,8 +20,8 @@ export const NotificationsBell: React.FC<{ profileId?: string | null }> = ({ pro
     return () => clearTimeout(t);
   }, [markAllRead]);
 
-  // Don't render if no user
-  if (!piUser) return null;
+  // Don't render if no user or if we don't have a concrete profileId yet
+  if (!piUser || !profileId) return null;
 
   return (
     <div className="relative">

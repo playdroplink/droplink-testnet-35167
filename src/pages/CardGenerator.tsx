@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -10,24 +10,55 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
+import { Button as UIButton } from "@/components/ui/button";
+import { usePi } from "@/contexts/PiContext";
 
 export default function CardGenerator() {
   const { toast } = useToast();
   const cardRef = useRef<HTMLDivElement>(null);
   
-  // Get full profile data from localStorage
+  // Pi auth + profile resolution
+  const { piUser, isAuthenticated, signIn } = usePi() as any;
+
+  // Load persisted profile as a soft fallback only
   const profileData = localStorage.getItem("profile");
   const profile = profileData ? JSON.parse(profileData) : null;
-  
-  // Get user data from localStorage as fallback
-  const userData = localStorage.getItem("user");
-  const user = userData ? JSON.parse(userData) : null;
-  
-  // Use profile username or fallback to user username
-  const username = profile?.username || user?.username || "yourusername";
-  
-  // Store URL from user's store - use actual username for proper routing
-  const storeUrl = `${window.location.origin}/store/${username}`;
+
+  // Resolved username backed by Pi auth, falls back to stored profile, else placeholder
+  const [username, setUsername] = useState<string>(profile?.username || "yourusername");
+  const [profileId, setProfileId] = useState<string | null>(null);
+
+  // Resolve username from Pi auth first, then verify via Supabase profiles
+  useEffect(() => {
+    let mounted = true;
+    const resolve = async () => {
+      const piName = (piUser as any)?.username;
+      const candidate = piName || profile?.username || "yourusername";
+      if (mounted) setUsername(candidate);
+      // Try to resolve profile id so we know the account exists
+      try {
+        if (candidate && candidate !== "yourusername") {
+          const { data } = await supabase
+            .from('profiles')
+            .select('id, username')
+            .eq('username', candidate)
+            .maybeSingle();
+          if (mounted && data?.id) {
+            setProfileId(data.id);
+            if (data.username && data.username !== candidate) setUsername(data.username);
+          }
+        }
+      } catch {}
+    };
+    resolve();
+    return () => { mounted = false; };
+  }, [piUser, profile?.username]);
+
+  // Public bio URL: link QR to public bio at /@username
+  const storeUrl = useMemo(() => {
+    const name = username || "yourusername";
+    return `${window.location.origin}/@${name}`;
+  }, [username]);
 
   // Card customization state - default colors: Sky Blue theme
   const [frontColor, setFrontColor] = useState(
@@ -527,6 +558,18 @@ export default function CardGenerator() {
                 <Palette className="w-5 h-5" />
                 Card Preview
               </h2>
+              {/* Sign-in helper if not authenticated */}
+              {!isAuthenticated && (
+                <div className="mb-4">
+                  <UIButton
+                    className="bg-sky-500 hover:bg-sky-600 text-white"
+                    size="sm"
+                    onClick={() => signIn(['username'])}
+                  >
+                    Sign in with Pi to load your username
+                  </UIButton>
+                </div>
+              )}
               <div ref={cardRef} className="print-area">
                 <VirtualCard
                   username={username}
@@ -624,7 +667,7 @@ export default function CardGenerator() {
               <h3 className="font-semibold mb-2">💳 About Your Card</h3>
               <ul className="text-sm space-y-1 text-muted-foreground">
                 <li>✓ Standard credit card size (85.6 × 53.98 mm)</li>
-                <li>✓ QR code links to your store: @{username}</li>
+                <li>✓ QR code links to your public bio: @{username}</li>
                 <li>✓ High-quality print ready</li>
                 <li>✓ Front & back saved automatically</li>
                 <li>✓ Back side mirrored for duplex printing</li>
