@@ -322,7 +322,14 @@ const UserSearchPage = () => {
         .eq("username", piUser?.username)
         .maybeSingle();
 
-      if (profileError || !currentProfile?.id || !profile.id) {
+      if (profileError) {
+        console.error('Profile fetch error:', profileError);
+        setFollowLoading(null);
+        return;
+      }
+
+      if (!currentProfile?.id || !profile.id) {
+        console.warn('Missing profile IDs');
         setFollowLoading(null);
         return;
       }
@@ -341,6 +348,7 @@ const UserSearchPage = () => {
         .maybeSingle();
 
       if (existing) {
+        console.log('Already following this user');
         setFollowLoading(null);
         return;
       }
@@ -353,12 +361,16 @@ const UserSearchPage = () => {
           following_profile_id: profile.id,
         });
 
-      if (!insertError) {
-        setFollowedUsername(profile.username);
-        setShowFollowedModal(true);
+      if (insertError) {
+        console.error('Follow insert error:', insertError);
+        setFollowLoading(null);
+        return;
       }
+
+      setFollowedUsername(profile.username);
+      setShowFollowedModal(true);
     } catch (err) {
-      // Silently fail, no error notifications
+      console.error('Follow error:', err);
     } finally {
       setFollowLoading(null);
     }

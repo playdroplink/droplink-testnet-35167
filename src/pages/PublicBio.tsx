@@ -301,9 +301,11 @@ const PublicBio = () => {
 
   const handleFollow = async () => {
     if (!currentUserProfileId || !profileId) {
+      console.warn('Missing user or profile ID for follow action');
       return;
     }
     if (currentUserProfileId === profileId) {
+      console.warn('Cannot follow own profile');
       return;
     }
     try {
@@ -313,10 +315,12 @@ const PublicBio = () => {
           .delete()
           .eq("follower_profile_id", currentUserProfileId)
           .eq("following_profile_id", profileId);
-        if (!error) {
-          setIsFollowing(false);
-          setFollowerCount(prev => Math.max(0, prev - 1));
+        if (error) {
+          console.error('Unfollow error:', error);
+          return;
         }
+        setIsFollowing(false);
+        setFollowerCount(prev => Math.max(0, prev - 1));
       } else {
         const { error } = await supabase
           .from("followers")
@@ -324,13 +328,15 @@ const PublicBio = () => {
             follower_profile_id: currentUserProfileId,
             following_profile_id: profileId,
           });
-        if (!error) {
-          setIsFollowing(true);
-          setFollowerCount(prev => prev + 1);
+        if (error) {
+          console.error('Follow insert error:', error);
+          return;
         }
+        setIsFollowing(true);
+        setFollowerCount(prev => prev + 1);
       }
     } catch (error) {
-      // Silently fail, no error notifications
+      console.error('Follow error:', error);
     }
   };
 
