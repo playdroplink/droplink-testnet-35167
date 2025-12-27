@@ -320,28 +320,24 @@ const UserSearchPage = () => {
         .select("id")
         .eq("username", piUser?.username)
         .maybeSingle();
-      
+
       if (profileError) {
         console.error('Profile fetch error:', profileError);
-        throw new Error("Failed to fetch your profile. Please try again.");
-      }
-      
-      const followerId = currentProfile?.id;
-      const followingId = profile.id;
-      
-      if (!followerId) {
-        throw new Error("Your profile was not found. Please ensure you're signed in.");
-      }
-      
-      if (!followingId) {
-        throw new Error("Target profile not found.");
-      }
-      
-      if (followerId === followingId) {
-        toast.error("You cannot follow yourself");
         return;
       }
-      
+
+      const followerId = currentProfile?.id;
+      const followingId = profile.id;
+
+      if (!followerId || !followingId) {
+        return;
+      }
+
+      if (followerId === followingId) {
+        // No notification, just return
+        return;
+      }
+
       // Check if already following
       const { data: existing } = await (supabase
         .from("followers" as any)
@@ -349,30 +345,30 @@ const UserSearchPage = () => {
         .eq("follower_profile_id", followerId)
         .eq("following_profile_id", followingId)
         .maybeSingle()) as any;
-      
+
       if (existing) {
-        // Suppress toast on search page
+        // Already following, do nothing
         return;
       }
-      
+
       const { error } = await (supabase
         .from("followers" as any)
         .insert({
           follower_profile_id: followerId,
           following_profile_id: followingId,
         })) as any;
-        
+
       if (error) {
         console.error('Insert error:', error);
-        throw new Error(error.message || 'Failed to follow user');
+        return;
       }
-      
+
       setFollowedUsername(profile.username);
       setShowFollowedModal(true);
-      // Suppress success toast on search page
+      // No notification/toast
     } catch (err: any) {
       console.error('Follow error:', err);
-      toast.error(err.message || 'Failed to follow user');
+      // No notification/toast
     } finally {
       setFollowLoading(null);
     }
