@@ -702,7 +702,7 @@ const AdminMrwain = () => {
                 <p className="text-xs text-blue-800 dark:text-blue-200">
                   💡 <strong>Storage Info:</strong> All images are stored in Supabase Storage at: 
                   <br />
-                  <code className="text-xs">https://idkjfuctyukspexmijvb.storage.supabase.co/storage/v1/s3</code>
+                  <code className="text-xs">https://jzzbmoopwnvgxxirulga.storage.supabase.co/storage/v1/s3</code>
                   <br />
                   Max file size: 5MB per image
                 </p>

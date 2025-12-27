@@ -6,7 +6,7 @@ All file uploads (images, documents, etc.) now save directly to **Supabase Stora
 
 ### Storage Endpoint
 ```
-https://idkjfuctyukspexmijvb.storage.supabase.co/storage/v1/s3
+https://jzzbmoopwnvgxxirulga.storage.supabase.co/storage/v1/s3
 ```
 
 ## 🗂️ Storage Buckets Created
@@ -297,5 +297,5 @@ View storage usage in Supabase Dashboard:
 ---
 
 **Status**: ✅ Ready to use!  
-**Storage Endpoint**: `https://idkjfuctyukspexmijvb.storage.supabase.co`  
+**Storage Endpoint**: `https://jzzbmoopwnvgxxirulga.storage.supabase.co`  
 **Test Page**: `/admin-mrwain`

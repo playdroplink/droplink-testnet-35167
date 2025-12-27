@@ -74,6 +74,6 @@ console.log('Logo URL:', url);
 
 ---
 
-**Storage Endpoint**: `https://idkjfuctyukspexmijvb.storage.supabase.co`  
+**Storage Endpoint**: `https://jzzbmoopwnvgxxirulga.storage.supabase.co`  
 **Max File Size**: 5MB per image  
 **Supported**: JPEG, PNG, GIF, WebP

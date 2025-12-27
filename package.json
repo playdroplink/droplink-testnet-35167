@@ -14,7 +14,7 @@
     "verify:mainnet": "node mainnet-deploy.cjs",
     "validate:production": "node validate-production.cjs",
     "supabase:login": "npx supabase login",
-    "supabase:link": "npx supabase link --project-ref idkjfuctyukspexmijvb",
+    "supabase:link": "npx supabase link --project-ref jzzbmoopwnvgxxirulga",
     "supabase:push": "npx supabase db push",
     "supabase:verify": "npx supabase db remote commit"
   },

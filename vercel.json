@@ -81,7 +81,7 @@
     }
   ],
   "env": {
-    "VITE_SUPABASE_URL": "https://idkjfuctyukspexmijvb.supabase.co",
+    "VITE_SUPABASE_URL": "https://jzzbmoopwnvgxxirulga.supabase.co",
     "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlka2pmdWN0eXVrc3BleG1panZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0NjI0NzMsImV4cCI6MjA3OTAzODQ3M30.dIJlRYAnSgj2Ohsl6tqz_cP9Zg03HG6naYTGXoAjkDs",
     "VITE_PI_NETWORK": "mainnet",
     "VITE_PI_NETWORK_PASSPHRASE": "Pi Mainnet",
