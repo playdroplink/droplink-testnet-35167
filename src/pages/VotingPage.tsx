@@ -2,27 +2,62 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import FeatureVote from '@/components/FeatureVote';
 import VotingSystem from '@/components/VotingSystem';
-import { ArrowLeft, Vote, Lightbulb } from 'lucide-react';
+import { ArrowLeft, Vote, Lightbulb, LogIn, LogOut, User } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { usePi } from '@/contexts/PiContext';
 
 export default function VotingPage() {
   const navigate = useNavigate();
+  const { isAuthenticated, piUser, login, logout } = usePi();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate(-1)}
-            className="gap-2 mb-4"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </Button>
+          <div className="flex items-center justify-between mb-4">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate(-1)}
+              className="gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </Button>
+            
+            {/* Pi Auth Status */}
+            <div className="flex items-center gap-3">
+              {isAuthenticated && piUser ? (
+                <div className="flex items-center gap-3 px-4 py-2 bg-sky-50 border border-sky-200 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-sky-600" />
+                    <span className="font-medium text-sky-900">{piUser.username || piUser.uid}</span>
+                  </div>
+                  <Badge className="bg-green-500 hover:bg-green-600">Authenticated</Badge>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => logout()}
+                    className="gap-1"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  onClick={() => login()}
+                  className="gap-2 bg-sky-600 hover:bg-sky-700"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Sign in with Pi
+                </Button>
+              )}
+            </div>
+          </div>
           
           <div className="space-y-2">
             <h1 className="text-4xl font-bold flex items-center gap-3">

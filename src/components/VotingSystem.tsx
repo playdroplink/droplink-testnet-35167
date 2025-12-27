@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { ThumbsUp, ThumbsDown, TrendingUp, AlertCircle, Loader2 } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, TrendingUp, AlertCircle } from 'lucide-react';
 import { usePi } from '@/contexts/PiContext';
+import { toast } from 'sonner';
 
 interface Feature {
   id: string;
@@ -57,12 +58,15 @@ const SAMPLE_FEATURES: Feature[] = [
 ];
 
 const VotingSystem: React.FC = () => {
-  const { isAuthenticated } = usePi();
+  const { isAuthenticated, piUser } = usePi();
   const [features, setFeatures] = useState<Feature[]>(SAMPLE_FEATURES);
   const [userVotes, setUserVotes] = useState<Record<string, 'upvote' | 'downvote'>>({});
 
   const handleVote = (featureId: string, voteType: 'upvote' | 'downvote') => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !piUser) {
+      toast.error('Auth required', {
+        description: 'Please sign in with Pi Network to vote.'
+      });
       return;
     }
 
@@ -95,6 +99,8 @@ const VotingSystem: React.FC = () => {
       
       return { ...f, upvotes, downvotes };
     }));
+
+    toast.success(`${voteType === 'upvote' ? '👍' : '👎'} Vote recorded!`);
   };
 
   const getStatusColor = (status: string) => {

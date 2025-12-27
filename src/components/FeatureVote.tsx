@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { usePi } from '@/contexts/PiContext';
+import { supabase } from '@/integrations/supabase/client';
 import { ThumbsUp, AlertCircle } from 'lucide-react';
 
 const SAMPLE_FEATURES = [
@@ -36,18 +37,77 @@ export default function FeatureVote() {
       return;
     }
 
-    // Just show success (no database table exists for feature_votes)
-    toast.success('Vote recorded! 🎉', {
-      description: 'Thank you for your feedback!'
-    });
+    try {
+      // Get user profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('pi_user_id', piUser.uid)
+        .single();
 
-    // Reset form
-    setSelected(null);
-    setNote('');
-    setHasVoted(true);
+      if (!profile) {
+        toast.error('Profile not found', {
+          description: 'Please complete your profile setup first.'
+        });
+        return;
+      }
 
-    // Re-enable voting after 2 seconds
-    setTimeout(() => setHasVoted(false), 2000);
+      // Check if feature request exists, create if not
+      const selectedFeature = SAMPLE_FEATURES.find(f => f.key === selected);
+      let { data: featureRequest } = await supabase
+        .from('feature_requests')
+        .select('id')
+        .eq('title', selectedFeature?.title)
+        .single();
+
+      if (!featureRequest) {
+        const { data: newFeature } = await supabase
+          .from('feature_requests')
+          .insert({
+            title: selectedFeature?.title,
+            description: selectedFeature?.description,
+            category: 'feature',
+            created_by: profile.id
+          })
+          .select('id')
+          .single();
+        featureRequest = newFeature;
+      }
+
+      if (!featureRequest) {
+        throw new Error('Failed to create feature request');
+      }
+
+      // Save vote to database
+      const { error: voteError } = await supabase
+        .from('feature_votes')
+        .upsert({
+          user_id: profile.id,
+          feature_id: featureRequest.id,
+          vote_type: 'upvote'
+        }, {
+          onConflict: 'user_id,feature_id'
+        });
+
+      if (voteError) throw voteError;
+
+      toast.success('Vote recorded! 🎉', {
+        description: 'Thank you for your feedback!'
+      });
+
+      // Reset form
+      setSelected(null);
+      setNote('');
+      setHasVoted(true);
+
+      // Re-enable voting after 2 seconds
+      setTimeout(() => setHasVoted(false), 2000);
+    } catch (error) {
+      console.error('Vote error:', error);
+      toast.error('Failed to record vote', {
+        description: 'Please try again later.'
+      });
+    }
   };
 
   return (
