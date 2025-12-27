@@ -308,7 +308,8 @@ const UserSearchPage = () => {
   };
 
   const handleFollow = async (profile: any) => {
-    if (!isPiAuthenticated()) {
+    // Allow following for both Pi Auth and Gmail sign-in
+    if (!isAuthenticated || !piUser) {
       setShowPiAuthModal(true);
       return;
     }
@@ -321,54 +322,43 @@ const UserSearchPage = () => {
         .eq("username", piUser?.username)
         .maybeSingle();
 
-      if (profileError) {
-        console.error('Profile fetch error:', profileError);
+      if (profileError || !currentProfile?.id || !profile.id) {
+        setFollowLoading(null);
         return;
       }
 
-      const followerId = currentProfile?.id;
-      const followingId = profile.id;
-
-      if (!followerId || !followingId) {
-        return;
-      }
-
-      if (followerId === followingId) {
-        // No notification, just return
+      if (currentProfile.id === profile.id) {
+        setFollowLoading(null);
         return;
       }
 
       // Check if already following
-      const { data: existing } = await (supabase
-        .from("followers" as any)
+      const { data: existing } = await supabase
+        .from("followers")
         .select("id")
-        .eq("follower_profile_id", followerId)
-        .eq("following_profile_id", followingId)
-        .maybeSingle()) as any;
+        .eq("follower_profile_id", currentProfile.id)
+        .eq("following_profile_id", profile.id)
+        .maybeSingle();
 
       if (existing) {
-        // Already following, do nothing
+        setFollowLoading(null);
         return;
       }
 
-      const { error } = await (supabase
-        .from("followers" as any)
+      // Only insert into followers, do not create notifications
+      const { error: insertError } = await supabase
+        .from("followers")
         .insert({
-          follower_profile_id: followerId,
-          following_profile_id: followingId,
-        })) as any;
+          follower_profile_id: currentProfile.id,
+          following_profile_id: profile.id,
+        });
 
-      if (error) {
-        console.error('Insert error:', error);
-        return;
+      if (!insertError) {
+        setFollowedUsername(profile.username);
+        setShowFollowedModal(true);
       }
-
-      setFollowedUsername(profile.username);
-      setShowFollowedModal(true);
-      // No notification/toast
-    } catch (err: any) {
-      console.error('Follow error:', err);
-      // No notification/toast
+    } catch (err) {
+      // Silently fail, no error notifications
     } finally {
       setFollowLoading(null);
     }
