@@ -883,6 +883,8 @@ const Dashboard = () => {
                 description: "",
                 email: "", // Pi users don't have email in the basic interface
                 pi_user_id: piUser.uid,
+                // Ensure RLS passes by tying profile to current Supabase user
+                user_id: session?.user?.id || undefined,
               }, { onConflict: 'username' })
               .select()
               .single();

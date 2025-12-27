@@ -126,7 +126,7 @@ CREATE TABLE IF NOT EXISTS public.ai_chat_messages (
 -- Name: ai_support_config; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.ai_support_config (
+CREATE TABLE IF NOT EXISTS public.ai_support_config (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     profile_id uuid NOT NULL,
     enabled boolean DEFAULT false,
@@ -142,7 +142,7 @@ CREATE TABLE public.ai_support_config (
 -- Name: analytics; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.analytics (
+CREATE TABLE IF NOT EXISTS public.analytics (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     profile_id uuid NOT NULL,
     event_type text NOT NULL,
@@ -160,7 +160,7 @@ CREATE TABLE public.analytics (
 -- Name: followers; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.followers (
+CREATE TABLE IF NOT EXISTS public.followers (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     follower_profile_id uuid NOT NULL,
     following_profile_id uuid NOT NULL,
@@ -172,7 +172,7 @@ CREATE TABLE public.followers (
 -- Name: gift_transactions; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.gift_transactions (
+CREATE TABLE IF NOT EXISTS public.gift_transactions (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     sender_profile_id uuid NOT NULL,
     receiver_profile_id uuid NOT NULL,
@@ -188,7 +188,7 @@ CREATE TABLE public.gift_transactions (
 -- Name: gifts; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.gifts (
+CREATE TABLE IF NOT EXISTS public.gifts (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name text NOT NULL,
     icon text NOT NULL,
@@ -202,7 +202,7 @@ CREATE TABLE public.gifts (
 -- Name: products; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.products (
+CREATE TABLE IF NOT EXISTS public.products (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     profile_id uuid NOT NULL,
     title text NOT NULL,
@@ -219,7 +219,7 @@ CREATE TABLE public.products (
 -- Name: profiles; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     user_id uuid,
     username text NOT NULL,
@@ -244,7 +244,7 @@ CREATE TABLE public.profiles (
 -- Name: subscriptions; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.subscriptions (
+CREATE TABLE IF NOT EXISTS public.subscriptions (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     profile_id uuid NOT NULL,
     plan_type text NOT NULL,
@@ -266,7 +266,7 @@ CREATE TABLE public.subscriptions (
 -- Name: user_wallets; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.user_wallets (
+CREATE TABLE IF NOT EXISTS public.user_wallets (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     profile_id uuid NOT NULL,
     drop_tokens bigint DEFAULT 0 NOT NULL,
@@ -295,159 +295,251 @@ END $$;
 -- Name: ai_support_config ai_support_config_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.ai_support_config
-    ADD CONSTRAINT ai_support_config_pkey PRIMARY KEY (id);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'ai_support_config_pkey'
+    ) THEN
+        ALTER TABLE ONLY public.ai_support_config
+            ADD CONSTRAINT ai_support_config_pkey PRIMARY KEY (id);
+    END IF;
+END $$;
 
 
 --
 -- Name: ai_support_config ai_support_config_profile_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.ai_support_config
-    ADD CONSTRAINT ai_support_config_profile_id_key UNIQUE (profile_id);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'ai_support_config_profile_id_key'
+    ) THEN
+        ALTER TABLE ONLY public.ai_support_config
+            ADD CONSTRAINT ai_support_config_profile_id_key UNIQUE (profile_id);
+    END IF;
+END $$;
 
 
 --
 -- Name: analytics analytics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.analytics
-    ADD CONSTRAINT analytics_pkey PRIMARY KEY (id);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'analytics_pkey'
+    ) THEN
+        ALTER TABLE ONLY public.analytics
+            ADD CONSTRAINT analytics_pkey PRIMARY KEY (id);
+    END IF;
+END $$;
 
 
 --
 -- Name: followers followers_follower_profile_id_following_profile_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.followers
-    ADD CONSTRAINT followers_follower_profile_id_following_profile_id_key UNIQUE (follower_profile_id, following_profile_id);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'followers_follower_profile_id_following_profile_id_key'
+    ) THEN
+        ALTER TABLE ONLY public.followers
+            ADD CONSTRAINT followers_follower_profile_id_following_profile_id_key UNIQUE (follower_profile_id, following_profile_id);
+    END IF;
+END $$;
 
 
 --
 -- Name: followers followers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.followers
-    ADD CONSTRAINT followers_pkey PRIMARY KEY (id);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'followers_pkey'
+    ) THEN
+        ALTER TABLE ONLY public.followers
+            ADD CONSTRAINT followers_pkey PRIMARY KEY (id);
+    END IF;
+END $$;
 
 
 --
 -- Name: gift_transactions gift_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.gift_transactions
-    ADD CONSTRAINT gift_transactions_pkey PRIMARY KEY (id);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'gift_transactions_pkey'
+    ) THEN
+        ALTER TABLE ONLY public.gift_transactions
+            ADD CONSTRAINT gift_transactions_pkey PRIMARY KEY (id);
+    END IF;
+END $$;
 
 
 --
 -- Name: gifts gifts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.gifts
-    ADD CONSTRAINT gifts_pkey PRIMARY KEY (id);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'gifts_pkey'
+    ) THEN
+        ALTER TABLE ONLY public.gifts
+            ADD CONSTRAINT gifts_pkey PRIMARY KEY (id);
+    END IF;
+END $$;
 
 
 --
 -- Name: products products_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.products
-    ADD CONSTRAINT products_pkey PRIMARY KEY (id);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'products_pkey'
+    ) THEN
+        ALTER TABLE ONLY public.products
+            ADD CONSTRAINT products_pkey PRIMARY KEY (id);
+    END IF;
+END $$;
 
 
 --
 -- Name: profiles profiles_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.profiles
-    ADD CONSTRAINT profiles_pkey PRIMARY KEY (id);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'profiles_pkey'
+    ) THEN
+        ALTER TABLE ONLY public.profiles
+            ADD CONSTRAINT profiles_pkey PRIMARY KEY (id);
+    END IF;
+END $$;
 
 
 --
 -- Name: profiles profiles_username_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.profiles
-    ADD CONSTRAINT profiles_username_key UNIQUE (username);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'profiles_username_key'
+    ) THEN
+        ALTER TABLE ONLY public.profiles
+            ADD CONSTRAINT profiles_username_key UNIQUE (username);
+    END IF;
+END $$;
 
 
 --
 -- Name: subscriptions subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.subscriptions
-    ADD CONSTRAINT subscriptions_pkey PRIMARY KEY (id);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'subscriptions_pkey'
+    ) THEN
+        ALTER TABLE ONLY public.subscriptions
+            ADD CONSTRAINT subscriptions_pkey PRIMARY KEY (id);
+    END IF;
+END $$;
 
 
 --
 -- Name: user_wallets user_wallets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.user_wallets
-    ADD CONSTRAINT user_wallets_pkey PRIMARY KEY (id);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'user_wallets_pkey'
+    ) THEN
+        ALTER TABLE ONLY public.user_wallets
+            ADD CONSTRAINT user_wallets_pkey PRIMARY KEY (id);
+    END IF;
+END $$;
 
 
 --
 -- Name: user_wallets user_wallets_profile_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.user_wallets
-    ADD CONSTRAINT user_wallets_profile_id_key UNIQUE (profile_id);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'user_wallets_profile_id_key'
+    ) THEN
+        ALTER TABLE ONLY public.user_wallets
+            ADD CONSTRAINT user_wallets_profile_id_key UNIQUE (profile_id);
+    END IF;
+END $$;
 
 
 --
 -- Name: idx_analytics_created_at; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_analytics_created_at ON public.analytics USING btree (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_analytics_created_at ON public.analytics USING btree (created_at DESC);
 
 
 --
 -- Name: idx_analytics_event_type; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_analytics_event_type ON public.analytics USING btree (event_type);
+CREATE INDEX IF NOT EXISTS idx_analytics_event_type ON public.analytics USING btree (event_type);
 
 
 --
 -- Name: idx_analytics_profile_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_analytics_profile_id ON public.analytics USING btree (profile_id);
+CREATE INDEX IF NOT EXISTS idx_analytics_profile_id ON public.analytics USING btree (profile_id);
 
 
 --
 -- Name: idx_followers_follower; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_followers_follower ON public.followers USING btree (follower_profile_id);
+CREATE INDEX IF NOT EXISTS idx_followers_follower ON public.followers USING btree (follower_profile_id);
 
 
 --
 -- Name: idx_followers_following; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_followers_following ON public.followers USING btree (following_profile_id);
+CREATE INDEX IF NOT EXISTS idx_followers_following ON public.followers USING btree (following_profile_id);
 
 
 --
 -- Name: idx_products_profile_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_products_profile_id ON public.products USING btree (profile_id);
+CREATE INDEX IF NOT EXISTS idx_products_profile_id ON public.products USING btree (profile_id);
 
 
 --
 -- Name: idx_profiles_username; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_profiles_username ON public.profiles USING btree (username);
+CREATE INDEX IF NOT EXISTS idx_profiles_username ON public.profiles USING btree (username);
 
 
 --
 -- Name: profiles create_wallet_for_new_profile; Type: TRIGGER; Schema: public; Owner: -
 --
 
+DROP TRIGGER IF EXISTS create_wallet_for_new_profile ON public.profiles;
 CREATE TRIGGER create_wallet_for_new_profile AFTER INSERT ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.handle_new_profile_wallet();
 
 
@@ -455,6 +547,7 @@ CREATE TRIGGER create_wallet_for_new_profile AFTER INSERT ON public.profiles FOR
 -- Name: profiles on_profile_created_wallet; Type: TRIGGER; Schema: public; Owner: -
 --
 
+DROP TRIGGER IF EXISTS on_profile_created_wallet ON public.profiles;
 CREATE TRIGGER on_profile_created_wallet AFTER INSERT ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.handle_new_profile_wallet();
 
 
@@ -462,6 +555,7 @@ CREATE TRIGGER on_profile_created_wallet AFTER INSERT ON public.profiles FOR EAC
 -- Name: products set_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
+DROP TRIGGER IF EXISTS set_updated_at ON public.products;
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.products FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 
@@ -469,6 +563,7 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.products FOR EACH ROW EXEC
 -- Name: profiles set_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
+DROP TRIGGER IF EXISTS set_updated_at ON public.profiles;
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 
@@ -476,6 +571,7 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.profiles FOR EACH ROW EXEC
 -- Name: ai_support_config update_ai_support_config_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
+DROP TRIGGER IF EXISTS update_ai_support_config_updated_at ON public.ai_support_config;
 CREATE TRIGGER update_ai_support_config_updated_at BEFORE UPDATE ON public.ai_support_config FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 
@@ -483,6 +579,7 @@ CREATE TRIGGER update_ai_support_config_updated_at BEFORE UPDATE ON public.ai_su
 -- Name: products update_products_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
+DROP TRIGGER IF EXISTS update_products_updated_at ON public.products;
 CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON public.products FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 
@@ -490,6 +587,7 @@ CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON public.products FOR E
 -- Name: profiles update_profiles_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
 CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 
@@ -497,6 +595,7 @@ CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON public.profiles FOR E
 -- Name: subscriptions update_subscriptions_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
+DROP TRIGGER IF EXISTS update_subscriptions_updated_at ON public.subscriptions;
 CREATE TRIGGER update_subscriptions_updated_at BEFORE UPDATE ON public.subscriptions FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 
@@ -504,6 +603,7 @@ CREATE TRIGGER update_subscriptions_updated_at BEFORE UPDATE ON public.subscript
 -- Name: user_wallets update_user_wallets_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
+DROP TRIGGER IF EXISTS update_user_wallets_updated_at ON public.user_wallets;
 CREATE TRIGGER update_user_wallets_updated_at BEFORE UPDATE ON public.user_wallets FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 

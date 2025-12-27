@@ -69,13 +69,33 @@ const Wallet = () => {
       setProfileId(profile.id);
 
       // Load legacy wallet balance (for gift transactions)
-      const { data: wallet } = await supabase
+      const { data: wallet, error: walletSelectError } = await supabase
         .from("user_wallets")
         .select("drop_tokens")
         .eq("profile_id", profile.id)
-        .single();
+        .maybeSingle();
 
-      setBalance(wallet?.drop_tokens || 0);
+      if (walletSelectError) {
+        console.error("Error loading balance:", walletSelectError);
+      }
+
+      if (!wallet) {
+        // Auto-create wallet row for this profile to satisfy RLS policies
+        const { error: walletCreateError } = await supabase
+          .from("user_wallets")
+          .upsert({
+            profile_id: profile.id,
+            drop_tokens: 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "profile_id" });
+        if (walletCreateError) {
+          console.error("Failed to initialize wallet:", walletCreateError);
+        }
+        setBalance(0);
+      } else {
+        setBalance(wallet.drop_tokens || 0);
+      }
 
       // Load DROP token balance from Pi Network
       if (getDROPBalance) {

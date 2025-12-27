@@ -132,15 +132,15 @@ const AdminMrwain = () => {
           console.log('[Admin Profile] Profile created successfully:', newProfile);
           toast.success("Profile created successfully!");
           
-          // Initialize user wallet
+          // Initialize user wallet (use profile UUID, not auth user id)
           const { error: walletError } = await supabase
             .from('user_wallets')
-            .insert({
-              profile_id: user.id,
+            .upsert({
+              profile_id: newProfile!.id,
               drop_tokens: 0,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
-            });
+            }, { onConflict: 'profile_id' });
 
           if (walletError) {
             console.error("Wallet creation error:", walletError);
