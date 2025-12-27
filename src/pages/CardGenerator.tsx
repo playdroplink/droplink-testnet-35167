@@ -29,26 +29,38 @@ export default function CardGenerator() {
   const [profileId, setProfileId] = useState<string | null>(null);
 
   // Resolve username from Pi auth first, then verify via Supabase profiles
+  // and fetch full public bio data
   useEffect(() => {
     let mounted = true;
     const resolve = async () => {
       const piName = (piUser as any)?.username;
       const candidate = piName || profile?.username || "yourusername";
       if (mounted) setUsername(candidate);
-      // Try to resolve profile id so we know the account exists
+      // Try to resolve profile id and fetch full profile data
       try {
         if (candidate && candidate !== "yourusername") {
           const { data } = await supabase
             .from('profiles')
-            .select('id, username')
+            .select('*')
             .eq('username', candidate)
             .maybeSingle();
           if (mounted && data?.id) {
             setProfileId(data.id);
             if (data.username && data.username !== candidate) setUsername(data.username);
+            // Log fetched public bio data
+            console.log('[CardGenerator] Fetched public bio data for:', {
+              username: data.username,
+              business_name: data.business_name,
+              description: data.description,
+              logo: data.logo,
+              pi_wallet_address: data.pi_wallet_address,
+              social_links: data.social_links,
+            });
           }
         }
-      } catch {}
+      } catch (error) {
+        console.error('[CardGenerator] Error fetching profile:', error);
+      }
     };
     resolve();
     return () => { mounted = false; };
