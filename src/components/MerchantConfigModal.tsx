@@ -38,9 +38,9 @@ export const MerchantConfigModal = ({ children }: Props) => {
         <DialogHeader className="pr-8">
           <DialogTitle className="flex items-center gap-2 text-xl flex-wrap">
             <Store className="w-6 h-6 text-sky-500" />
-            DropStore: The Future Digital Marketplace
+            DropStore: Digital Marketplace Platform
             <Badge variant="secondary" className="bg-sky-500 text-white">
-              Coming Soon
+              Mainnet Live
             </Badge>
           </DialogTitle>
         </DialogHeader>
@@ -56,10 +56,10 @@ export const MerchantConfigModal = ({ children }: Props) => {
             </CardHeader>
             <CardContent>
               <p className="text-gray-700 leading-relaxed">
-                Droplink is evolving from a simple "link in bio" platform into a comprehensive 
+                Droplink has evolved from a simple "link in bio" platform into a comprehensive 
                 <strong> digital marketplace</strong> where businesses, artists, developers, and creators 
-                can build thriving online storefronts. We're creating the future of decentralized commerce 
-                powered by Pi Network and blockchain technology.
+                build thriving online storefronts. We're powering the future of decentralized commerce 
+                on Pi Network mainnet with blockchain technology.
               </p>
             </CardContent>
           </Card>
@@ -117,7 +117,7 @@ export const MerchantConfigModal = ({ children }: Props) => {
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Rocket className="w-5 h-5 text-sky-500" />
-              Marketplace Features Coming Soon
+              Platform Features
             </h3>
             <div className="space-y-3">
               <div className="flex gap-3 p-3 bg-gray-50 rounded-lg overflow-hidden">
@@ -156,17 +156,17 @@ export const MerchantConfigModal = ({ children }: Props) => {
                     <Heart className="w-6 h-6 text-white" />
                   </div>
                 </div>
-                <h3 className="text-lg font-semibold">Continue Supporting Dropstore</h3>
+                <h3 className="text-lg font-semibold">Join Dropstore Marketplace</h3>
                 <p className="text-gray-600 max-w-md mx-auto">
-                  Help us build the future of decentralized commerce! Your support and feedback 
-                  drive our development of these exciting marketplace features.
+                  Start selling on the live Dropstore marketplace! Build your storefront, accept Pi payments, 
+                  and reach a global audience on Pi Network mainnet.
                 </p>
                 <div className="flex gap-3 justify-center">
                   <Button 
                     className="gap-2" 
                     asChild
                   >
-                    <a href="https://www.dropshops.space/" target="_blank" rel="noopener noreferrer">
+                    <a href="https://dropshops.space/" target="_blank" rel="noopener noreferrer">
                       <Store className="w-4 h-4" />
                       Start Selling
                     </a>

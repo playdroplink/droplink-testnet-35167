@@ -21,7 +21,7 @@ app.use((req, res, next) => {
 // Droppay: create payment
 app.post('/droppay/create', async (req, res) => {
   try {
-    const baseUrl = process.env.DROPPAY_BASE_URL || 'https://droppay-v2.lovable.app/api/v1';
+    const baseUrl = process.env.DROPPAY_BASE_URL || 'https://droppay.space/api/v1';
     const apiKey = process.env.DROPPAY_API_KEY;
     const authScheme = process.env.DROPPAY_AUTH_SCHEME || 'Key';
 

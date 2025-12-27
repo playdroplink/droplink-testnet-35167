@@ -73,7 +73,7 @@ export const DropPayModal = ({ children }: DropPayModalProps) => {
             <Wallet className="w-6 h-6 text-sky-500" />
             DropPay: Pi Payment Modal
             <Badge variant="secondary" className="bg-sky-500 text-white">
-              Live Demo
+              Mainnet Live
             </Badge>
           </DialogTitle>
         </DialogHeader>
@@ -197,21 +197,21 @@ export const DropPayModal = ({ children }: DropPayModalProps) => {
               <div className="flex flex-col items-center text-center gap-4">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-6 h-6" />
-                  <h3 className="text-xl font-bold">Try Live Demo</h3>
+                  <h3 className="text-xl font-bold">Launch DropPay Platform</h3>
                 </div>
                 <p className="text-sky-50 max-w-md">
-                  Experience DropPay in action! Click below to see the interactive payment modal showcase.
+                  Access the live DropPay mainnet platform to accept Pi and Drop cryptocurrency payments.
                 </p>
                 <Button 
                   size="lg" 
                   variant="secondary"
                   className="bg-white text-sky-600 hover:bg-sky-50 font-semibold gap-2"
                   onClick={() => {
-                    window.open('https://droppaypro.lovable.app/', '_blank', 'noopener,noreferrer');
+                    window.open('https://droppay.space/', '_blank', 'noopener,noreferrer');
                   }}
                 >
                   <ExternalLink className="w-4 h-4" />
-                  View Live Demo
+                  Open DropPay Platform
                 </Button>
               </div>
             </CardContent>
@@ -228,7 +228,7 @@ export const DropPayModal = ({ children }: DropPayModalProps) => {
             <CardContent>
               <p className="text-gray-700 mb-4">
                 DropPay is built with modern web technologies and can be easily integrated into any website 
-                or application. The demo showcases the complete payment flow, UI components, and user experience.
+                or application. The platform provides a complete payment flow, UI components, and seamless user experience on Pi Network mainnet.
               </p>
               <div className="flex flex-wrap gap-2">
                 <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-300">
