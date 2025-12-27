@@ -27,9 +27,11 @@ export default function CardGenerator() {
   // Resolved username backed by Pi auth, falls back to stored profile, else placeholder
   const [username, setUsername] = useState<string>(profile?.username || "yourusername");
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false);
 
   // Resolve username from Pi auth first, then verify via Supabase profiles
-  // and fetch full public bio data
+  // and fetch full public bio data including followers
   useEffect(() => {
     let mounted = true;
     const resolve = async () => {
@@ -47,6 +49,17 @@ export default function CardGenerator() {
           if (mounted && data?.id) {
             setProfileId(data.id);
             if (data.username && data.username !== candidate) setUsername(data.username);
+            
+            // Fetch follower count
+            const { count: followerCount } = await supabase
+              .from('followers')
+              .select('id', { count: 'exact' })
+              .eq('following_profile_id', data.id);
+            
+            if (mounted && followerCount !== null) {
+              setFollowerCount(followerCount);
+            }
+
             // Log fetched public bio data
             console.log('[CardGenerator] Fetched public bio data for:', {
               username: data.username,
@@ -55,6 +68,7 @@ export default function CardGenerator() {
               logo: data.logo,
               pi_wallet_address: data.pi_wallet_address,
               social_links: data.social_links,
+              follower_count: followerCount,
             });
           }
         }
@@ -690,6 +704,42 @@ export default function CardGenerator() {
                 )}
               </ul>
             </Card>
+
+            {/* Followers Stats Card */}
+            {profileId && (
+              <Card className="p-6 bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-950 dark:to-rose-950 border-2 border-pink-200 dark:border-pink-800 no-print">
+                <h3 className="font-semibold mb-3 text-lg">👥 Your Followers</h3>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-3xl font-bold text-pink-600 dark:text-pink-400">
+                      {followerCount}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {followerCount === 1 ? 'follower' : 'followers'}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Share your public bio to gain followers
+                    </p>
+                    <Button
+                      onClick={() => {
+                        const bioUrl = storeUrl;
+                        navigator.clipboard.writeText(bioUrl);
+                        toast({
+                          title: "Copied!",
+                          description: "Public bio URL copied to clipboard",
+                        });
+                      }}
+                      size="sm"
+                      className="bg-pink-500 hover:bg-pink-600"
+                    >
+                      Copy Bio Link
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            )}
 
             {/* Printing Instructions */}
             <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border-2 border-green-200 dark:border-green-800 no-print">
