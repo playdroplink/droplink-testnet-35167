@@ -7,9 +7,9 @@ Write-Host "🚀 Supabase Environment Setup for DropLink" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Project Configuration
-$PROJECT_ID = "idkjfuctyukspexmijvb"
-$PROJECT_URL = "https://idkjfuctyukspexmijvb.supabase.co"
+# Project Configuration (loaded from .env)
+$PROJECT_ID = $null
+$PROJECT_URL = $null
 
 # Check if Supabase CLI is installed
 Write-Host "📋 Step 1: Checking Supabase CLI..." -ForegroundColor Yellow
@@ -28,8 +28,38 @@ try {
 }
 
 Write-Host ""
-Write-Host "📋 Step 2: Logging into Supabase..." -ForegroundColor Yellow
+Write-Host "📋 Step 2: Loading .env and logging in..." -ForegroundColor Yellow
 Write-Host "A browser window will open for authentication..." -ForegroundColor Gray
+
+# Load environment variables from .env
+if (Test-Path ".env") {
+    Write-Host "📋 Loading environment variables from .env..." -ForegroundColor Green
+    Get-Content .env | ForEach-Object {
+        if ($_ -match '^([^=]+)=(.*)$') {
+            $key = $matches[1].Trim()
+            $value = $matches[2].Trim()
+            # Strip surrounding quotes safely if present
+            if ($value.StartsWith('"') -and $value.EndsWith('"')) {
+                $value = $value.Substring(1, $value.Length - 2)
+            }
+            [Environment]::SetEnvironmentVariable($key, $value, 'Process')
+        }
+    }
+
+    $PROJECT_ID = $env:VITE_SUPABASE_PROJECT_ID
+    $PROJECT_URL = $env:SUPABASE_URL
+} else {
+    Write-Host "⚠️  .env file not found" -ForegroundColor Yellow
+}
+
+if (-not $PROJECT_ID) {
+    Write-Host "❌ Missing VITE_SUPABASE_PROJECT_ID in .env" -ForegroundColor Red
+    Write-Host "   Please set project ID and rerun." -ForegroundColor Yellow
+}
+if (-not $PROJECT_URL) {
+    Write-Host "❌ Missing SUPABASE_URL in .env" -ForegroundColor Red
+    Write-Host "   Please set Supabase URL and rerun." -ForegroundColor Yellow
+}
 
 try {
     & supabase login
@@ -62,8 +92,10 @@ Write-Host ""
 Write-Host "📋 Step 4: Setting up environment secrets..." -ForegroundColor Yellow
 Write-Host ""
 
-# Pi Network API Key
-$PI_API_KEY = "b00j4felp0ctc1fexe8igldsjg9u7wbqitavc15si53fr9wwra7r6oluzk4j24qz"
+# Gather secrets from environment
+$PI_API_KEY = $env:PI_API_KEY
+$SUPABASE_URL = $env:SUPABASE_URL
+$SUPABASE_SERVICE_ROLE_KEY = $env:SUPABASE_SERVICE_ROLE_KEY
 
 Write-Host "Setting PI_API_KEY..." -ForegroundColor Cyan
 try {
@@ -75,6 +107,30 @@ try {
     }
 } catch {
     Write-Host "❌ Error setting PI_API_KEY: $_" -ForegroundColor Red
+}
+
+Write-Host "Setting SUPABASE_URL..." -ForegroundColor Cyan
+try {
+    & supabase secrets set SUPABASE_URL="$SUPABASE_URL"
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "✅ SUPABASE_URL set successfully" -ForegroundColor Green
+    } else {
+        Write-Host "❌ Failed to set SUPABASE_URL" -ForegroundColor Red
+    }
+} catch {
+    Write-Host "❌ Error setting SUPABASE_URL: $_" -ForegroundColor Red
+}
+
+Write-Host "Setting SUPABASE_SERVICE_ROLE_KEY..." -ForegroundColor Cyan
+try {
+    & supabase secrets set SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_ROLE_KEY"
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "✅ SUPABASE_SERVICE_ROLE_KEY set successfully" -ForegroundColor Green
+    } else {
+        Write-Host "❌ Failed to set SUPABASE_SERVICE_ROLE_KEY" -ForegroundColor Red
+    }
+} catch {
+    Write-Host "❌ Error setting SUPABASE_SERVICE_ROLE_KEY: $_" -ForegroundColor Red
 }
 
 Write-Host ""
@@ -93,9 +149,10 @@ Write-Host "📋 Step 6: Deploying Edge Functions..." -ForegroundColor Yellow
 Write-Host ""
 
 $functions = @(
+    "pi-auth",
     "pi-payment-approve",
     "pi-payment-complete",
-    "pi-auth",
+    "subscription",
     "profile-update"
 )
 

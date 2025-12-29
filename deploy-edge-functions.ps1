@@ -37,10 +37,22 @@ Write-Host "✅ PI_API_KEY found: $($PI_API_KEY.Substring(0, 10))..." -Foregroun
 Write-Host ""
 
 # Set secrets in Supabase
-Write-Host "🔐 Setting PI_API_KEY secret in Supabase..." -ForegroundColor Cyan
+Write-Host "🔐 Setting secrets in Supabase..." -ForegroundColor Cyan
 try {
     supabase secrets set PI_API_KEY="$PI_API_KEY" 2>&1 | Out-Null
     Write-Host "✅ PI_API_KEY secret configured" -ForegroundColor Green
+    if ($env:SUPABASE_URL) {
+        supabase secrets set SUPABASE_URL="$env:SUPABASE_URL" 2>&1 | Out-Null
+        Write-Host "✅ SUPABASE_URL secret configured" -ForegroundColor Green
+    } else {
+        Write-Host "⚠️  SUPABASE_URL not found in env; skipping" -ForegroundColor Yellow
+    }
+    if ($env:SUPABASE_SERVICE_ROLE_KEY) {
+        supabase secrets set SUPABASE_SERVICE_ROLE_KEY="$env:SUPABASE_SERVICE_ROLE_KEY" 2>&1 | Out-Null
+        Write-Host "✅ SUPABASE_SERVICE_ROLE_KEY secret configured" -ForegroundColor Green
+    } else {
+        Write-Host "⚠️  SUPABASE_SERVICE_ROLE_KEY not found in env; skipping" -ForegroundColor Yellow
+    }
 } catch {
     Write-Host "⚠️  Failed to set secret (may need to link project first)" -ForegroundColor Yellow
 }
@@ -49,8 +61,10 @@ Write-Host ""
 
 # Deploy edge functions
 $functions = @(
+    "pi-auth",
     "pi-payment-approve",
     "pi-payment-complete",
+    "pi-ad-verify",
     "subscription"
 )
 
