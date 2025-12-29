@@ -5,6 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 // Simplified Pi Auth function for sign-in only
@@ -67,11 +68,9 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!supabaseUrl) {
-      throw new Error("SUPABASE_URL environment variable not set");
-    }
-    if (!supabaseKey) {
-      throw new Error("SUPABASE_SERVICE_ROLE_KEY environment variable not set");
+    if (!supabaseUrl || !supabaseKey) {
+      console.error("Supabase environment variables missing", { hasUrl: !!supabaseUrl, hasServiceKey: !!supabaseKey });
+      throw new Error("Missing Supabase configuration (SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY)");
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
