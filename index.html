@@ -154,6 +154,59 @@
     <meta name="pi-app-url" content="https://droplink.space" />
     <meta name="pi-mainnet-ready" content="true" />
 
+    <!-- Pi Environment Validation -->
+    <script>
+      (function() {
+        const VALIDATION_KEY = "7511661aac4538b1832d2c9ba117f6d972b26a54640598d3fbb9824013c7079203f65b02d125be3f418605cfb89ba0e4443e3ec997e3800eb464df0bc5410d2a";
+        const API_KEY = "6okfd8avdrj2qj9kebfoi5f9qgrzzyagopg1fqygopkfcj2yslb4ai5kkmdenx59";
+        
+        console.log('[PI VALIDATION] 🔍 Validating Pi environment...');
+        
+        // Check HTTPS
+        if (window.location.protocol !== 'https:') {
+          console.warn('[PI VALIDATION] ⚠️ Not on HTTPS - Pi Browser requires HTTPS for validation');
+        }
+        
+        // Validate manifest.json
+        fetch('/manifest.json')
+          .then(r => {
+            if (!r.ok) throw new Error('Failed to fetch manifest');
+            return r.json();
+          })
+          .then(manifest => {
+            const mApiKey = manifest.pi_app?.api_key;
+            const mValidationKey = manifest.pi_app?.validation_key;
+            
+            if (mApiKey === API_KEY && mValidationKey === VALIDATION_KEY) {
+              console.log('[PI VALIDATION] ✅ Manifest validation keys match');
+            } else {
+              console.error('[PI VALIDATION] ❌ Manifest validation mismatch');
+              console.error('  Expected API Key:', API_KEY);
+              console.error('  Manifest API Key:', mApiKey);
+              console.error('  Expected Validation Key:', VALIDATION_KEY.substring(0, 30) + '...');
+              console.error('  Manifest Validation Key:', mValidationKey?.substring(0, 30) + '...');
+            }
+          })
+          .catch(err => {
+            console.error('[PI VALIDATION] ❌ Failed to fetch manifest.json:', err.message);
+          });
+        
+        // Validate validation-key.txt
+        fetch('/validation-key.txt')
+          .then(r => r.text())
+          .then(key => {
+            if (key.trim() === VALIDATION_KEY) {
+              console.log('[PI VALIDATION] ✅ validation-key.txt matches');
+            } else {
+              console.error('[PI VALIDATION] ❌ validation-key.txt mismatch');
+            }
+          })
+          .catch(err => {
+            console.error('[PI VALIDATION] ❌ Failed to fetch validation-key.txt:', err.message);
+          });
+      })();
+    </script>
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://droplink.space" />
