@@ -47,7 +47,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     if (!r.ok) {
       console.error('[DROPPAY_CREATE] API error:', text);
-      return res.status(400).json({ error: `Droppay create failed: ${text}` });
+      // More detailed error response with actual HTTP status
+      return res.status(r.status).json({ 
+        success: false,
+        error: `Droppay API error (${r.status}): ${text.substring(0, 200)}`,
+        status: r.status 
+      });
     }
     
     let data: any;

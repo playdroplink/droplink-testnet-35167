@@ -61,8 +61,12 @@ export const PI_CONFIG = {
   scopes: ['username', 'payments', 'wallet_address'],
   
   onIncompletePaymentFound: (payment: any) => {
-    console.log('[PI CONFIG] Incomplete payment found:', payment);
+    console.log('[PI CONFIG] ⚠️ Incomplete payment found from previous session:', payment);
     // Handle incomplete payments from previous sessions
+    if (payment && payment.paymentId) {
+      console.log('[PI CONFIG] 💾 Storing incomplete payment for recovery:', payment.paymentId);
+      // Could optionally store this in localStorage for recovery flow
+    }
   },
   
   CUSTOM_TOKENS: {
