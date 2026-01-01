@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { usePi } from '@/contexts/PiContext';
-import { supabase } from '@/integrations/supabase/client';
 import { ThumbsUp, AlertCircle } from 'lucide-react';
 
 const SAMPLE_FEATURES = [
@@ -19,8 +17,12 @@ const SAMPLE_FEATURES = [
 export default function FeatureVote() {
   const { piUser } = usePi();
   const [selected, setSelected] = useState<string | null>(null);
-  const [note, setNote] = useState('');
   const [hasVoted, setHasVoted] = useState(false);
+  const [votes, setVotes] = useState<Record<string, number>>(() => {
+    // Load votes from localStorage
+    const stored = localStorage.getItem('feature_votes');
+    return stored ? JSON.parse(stored) : {};
+  });
 
   const handleVote = async () => {
     if (!piUser) {
@@ -38,58 +40,13 @@ export default function FeatureVote() {
     }
 
     try {
-      // Get user profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('pi_user_id', piUser.uid)
-        .single();
-
-      if (!profile) {
-        toast.error('Profile not found', {
-          description: 'Please complete your profile setup first.'
-        });
-        return;
-      }
-
-      // Check if feature request exists, create if not
-      const selectedFeature = SAMPLE_FEATURES.find(f => f.key === selected);
-      let { data: featureRequest } = await supabase
-        .from('feature_requests')
-        .select('id')
-        .eq('title', selectedFeature?.title)
-        .single();
-
-      if (!featureRequest) {
-        const { data: newFeature } = await supabase
-          .from('feature_requests')
-          .insert({
-            title: selectedFeature?.title,
-            description: selectedFeature?.description,
-            category: 'feature',
-            created_by: profile.id
-          })
-          .select('id')
-          .single();
-        featureRequest = newFeature;
-      }
-
-      if (!featureRequest) {
-        throw new Error('Failed to create feature request');
-      }
-
-      // Save vote to database
-      const { error: voteError } = await supabase
-        .from('feature_votes')
-        .upsert({
-          user_id: profile.id,
-          feature_id: featureRequest.id,
-          vote_type: 'upvote'
-        }, {
-          onConflict: 'user_id,feature_id'
-        });
-
-      if (voteError) throw voteError;
+      // Update local votes
+      const newVotes = { 
+        ...votes, 
+        [selected]: (votes[selected] || 0) + 1 
+      };
+      setVotes(newVotes);
+      localStorage.setItem('feature_votes', JSON.stringify(newVotes));
 
       toast.success('Vote recorded! 🎉', {
         description: 'Thank you for your feedback!'
@@ -97,7 +54,6 @@ export default function FeatureVote() {
 
       // Reset form
       setSelected(null);
-      setNote('');
       setHasVoted(true);
 
       // Re-enable voting after 2 seconds
@@ -160,6 +116,11 @@ export default function FeatureVote() {
                 <div className="font-medium text-gray-900 flex items-center gap-2">
                   <span>{f.emoji}</span>
                   {f.title}
+                  {votes[f.key] > 0 && (
+                    <span className="text-xs bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">
+                      {votes[f.key]} votes
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-gray-600 mt-0.5">{f.description}</p>
               </div>
