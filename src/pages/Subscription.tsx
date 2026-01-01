@@ -11,10 +11,6 @@ import { usePi } from "@/contexts/PiContext";
 import { useRealPiPayment } from "@/hooks/useRealPiPayment";
 import { validateMainnetConfig } from "@/config/pi-config";
 import { GiftCardModal } from "@/components/GiftCardModal";
-import { createDroppayPaymentViaApi } from "@/lib/droppay";
-
-// Helper: DropPay available when API key is configured
-const isDropAvailable = !!import.meta.env.VITE_DROPPAY_API_KEY;
 
 interface Plan {
   name: string;
@@ -99,7 +95,7 @@ const plans: Plan[] = [
       "24/7 priority support",
       "Bulk link management",
       "Export analytics data",
-      "Pi Payments integration (DropPay)",
+      "Pi Network payments integration",
       "Transaction history & management",
       "AI chat widget",
       "Multi-profile management",
@@ -115,9 +111,7 @@ const Subscription = () => {
   const [subscription, setSubscription] = useState<any>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [showGiftCardModal, setShowGiftCardModal] = useState(false);
-  const [dropLoading, setDropLoading] = useState(false);
   const piConfigured = !!import.meta.env.VITE_PI_API_KEY;
-  const dropConfigured = !!import.meta.env.VITE_DROPPAY_API_KEY;
   const navigate = useNavigate();
   const { piUser, signIn, loading: piLoading } = usePi() as any;
   const { processPayment, isProcessing, paymentProgress } = useRealPiPayment();
@@ -345,105 +339,6 @@ const Subscription = () => {
     }
   };
 
-  const handleSubscribeWithDropPay = async (planName: string, price: number) => {
-    console.log('[SUBSCRIPTION] Starting DropPay subscription:', { planName, price, isYearly });
-    
-    if (!piUser || !profileId) {
-      toast.error('Please sign in with Pi Network first');
-      return;
-    }
-
-    if (!isDropAvailable) {
-      toast.error('DropPay is not available in this environment');
-      console.error('[SUBSCRIPTION] DropPay API key not configured');
-      return;
-    }
-
-    setDropLoading(true);
-    const toastId = toast.loading('Creating DropPay checkout...');
-    try {
-      const periodValue = isYearly ? 'yearly' : 'monthly';
-      
-      const paymentMetadata = {
-        profile_id: profileId,
-        plan: planName.toLowerCase(),
-        period: periodValue,
-        payment_type: 'subscription',
-      };
-      
-      console.log('[SUBSCRIPTION] Creating DropPay payment with data:', {
-        amount: price,
-        currency: 'PI',
-        description: `${planName} ${isYearly ? 'Yearly' : 'Monthly'} Subscription`,
-        metadata: paymentMetadata
-      });
-      
-      const resp = await createDroppayPaymentViaApi({
-        amount: price,
-        currency: 'PI',
-        description: `${planName} ${isYearly ? 'Yearly' : 'Monthly'} Subscription`,
-        metadata: paymentMetadata,
-      });
-
-      console.log('[SUBSCRIPTION] DropPay API response:', resp);
-
-      if (!resp.success) {
-        toast.dismiss(toastId);
-        toast.error(resp.error || 'Failed to create DropPay session', {
-          description: 'Check browser console for details',
-          duration: 8000
-        });
-        console.error('[SUBSCRIPTION] DropPay creation failed:', resp.error);
-        return;
-      }
-
-      const p: any = resp.payment;
-      console.log('[SUBSCRIPTION] Full payment object:', JSON.stringify(p, null, 2));
-      console.log('[SUBSCRIPTION] Payment keys:', p ? Object.keys(p) : 'no payment object');
-      
-      const checkoutUrl = 
-        p?.checkout_url || 
-        p?.url || 
-        p?.payment_url || 
-        p?.payment?.checkout_url ||
-        p?.checkoutUrl ||
-        p?.payment?.url ||
-        p?.payment?.payment_url ||
-        p?.redirect_url ||
-        p?.links?.checkout;
-      
-      toast.dismiss(toastId);
-      
-      console.log('[SUBSCRIPTION] Extracted checkout URL:', checkoutUrl);
-      
-      if (checkoutUrl) {
-        toast.success('Redirecting to DropPay checkout...');
-        console.log('[SUBSCRIPTION] Redirecting to:', checkoutUrl);
-        window.location.href = checkoutUrl;
-      } else {
-        const errorMsg = 'DropPay Service Unavailable';
-        toast.error(errorMsg, {
-          description: 'The DropPay payment service is currently not responding. Please use "Subscribe with Pi" button instead for a working payment method.',
-          duration: 15000
-        });
-        console.error('[SUBSCRIPTION] ❌ DropPay service error - No checkout URL found!');
-        console.error('[SUBSCRIPTION] This usually means the DropPay API is down or misconfigured.');
-        console.error('[SUBSCRIPTION] Full response:', JSON.stringify(resp, null, 2));
-        console.error('[SUBSCRIPTION] Payment object:', JSON.stringify(p, null, 2));
-        console.error('[SUBSCRIPTION] Available keys:', p ? Object.keys(p).join(', ') : 'none');
-        console.error('[SUBSCRIPTION] 💡 Solution: Use the "Subscribe with Pi" button instead!');
-      }
-    } catch (err: any) {
-      toast.dismiss(toastId);
-      toast.error(err?.message || 'DropPay initiation failed', {
-        description: 'An unexpected error occurred. Check console for details.',
-        duration: 8000
-      });
-      console.error('[SUBSCRIPTION] DropPay error:', err);
-    } finally {
-      setDropLoading(false);
-    }
-  };
 
   const handleGiftCardPurchase = async (planType: string, billingPeriod: string, price: number, recipientEmail?: string, message?: string) => {
     if (!piUser) {
@@ -718,29 +613,8 @@ const Subscription = () => {
           <h1 className="text-4xl font-bold mb-2">Choose Your Plan</h1>
           <p className="text-lg text-muted-foreground mb-2">Unlock more features and remove ads with a paid plan.</p>
           
-          {/* DropPay Service Warning */}
-          {isDropAvailable && (
-            <div className="mt-4 mb-4 p-4 bg-amber-50 border-2 border-amber-300 rounded-lg">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 mt-0.5">
-                  <svg className="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="text-left">
-                  <p className="text-sm font-semibold text-amber-800 mb-1">⚠️ DropPay Service Currently Unavailable</p>
-                  <p className="text-xs text-amber-700">
-                    The "Subscribe with DropPay" option is experiencing technical issues. 
-                    <strong className="font-semibold"> Please use the "Subscribe with Pi" button instead</strong> - it's fully functional and uses the official Pi Network payment system.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-          
           <div className="mt-3 flex flex-col gap-2 items-center text-sm">
-            <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">Pi Payments: {piConfigured ? 'Online' : 'Not configured'}</span>
-            <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">DropPay: {dropConfigured ? 'Online' : 'Not configured'}</span>
+            <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 border border-green-200">Pi Payments: {piConfigured ? '✓ Online' : 'Not configured'}</span>
           </div>
           <div className="mt-4 p-4 bg-sky-400 border-2 border-sky-600 rounded-lg max-w-2xl mx-auto">
             <p className="text-sm font-semibold text-white mb-1">⚠️ REAL Pi Network Payments</p>
@@ -784,19 +658,6 @@ const Subscription = () => {
                     {isCurrent ? '✓ Current Plan' : (loading || isProcessing) ? `⏳ ${paymentProgress || 'Processing...'}` : plan.name === 'Free' ? 'Activate Free Plan' : `Subscribe with Pi`}
                   </Button>
 
-                  {plan.name !== 'Free' && (
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center mb-1"><span className="text-sm font-medium text-gray-500">Pay with DropPay</span></div>
-                      <Button
-                        className="w-full"
-                        variant="secondary"
-                        disabled={!isDropAvailable || isCurrent || dropLoading}
-                        onClick={() => handleSubscribeWithDropPay(plan.name, price)}
-                      >
-                        {isDropAvailable ? (dropLoading ? 'Initializing...' : 'Subscribe with DropPay') : 'DropPay unavailable'}
-                      </Button>
-                    </div>
-                  )}
 
                   {subscription && isCurrent && subscription.end_date && (
                     <p className="text-xs text-center mt-2 text-muted-foreground">Renews on {new Date(subscription.end_date).toLocaleDateString()}</p>
