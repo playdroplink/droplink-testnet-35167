@@ -11,7 +11,7 @@ import { usePi } from '@/contexts/PiContext';
 
 export default function VotingPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, piUser, login, logout } = usePi();
+  const { isAuthenticated, piUser, signIn, signOut } = usePi();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-8 px-4">
@@ -40,7 +40,7 @@ export default function VotingPage() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => logout()}
+                    onClick={() => signOut()}
                     className="gap-1"
                   >
                     <LogOut className="w-4 h-4" />
@@ -49,7 +49,7 @@ export default function VotingPage() {
                 </div>
               ) : (
                 <Button
-                  onClick={() => login()}
+                  onClick={() => signIn()}
                   className="gap-2 bg-sky-600 hover:bg-sky-700"
                 >
                   <LogIn className="w-4 h-4" />
