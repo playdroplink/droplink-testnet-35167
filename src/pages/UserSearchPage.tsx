@@ -53,7 +53,7 @@ const UserSearchPage = () => {
   }
   const [results, setResults] = useState<ProfileResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string>("");
   const [selectedPlan, setSelectedPlan] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("username");
@@ -94,6 +94,11 @@ const UserSearchPage = () => {
   const [currentUserProfileId, setCurrentUserProfileId] = useState<string | null>(null);
   const [friendsTab, setFriendsTab] = useState<"followers" | "following">("followers");
 
+  // Clear error on mount
+  useEffect(() => {
+    setError("");
+  }, []);
+
   // Reset viewAll if query changes and is not empty
   useEffect(() => {
     if (query.trim() !== "") {
@@ -133,6 +138,7 @@ const UserSearchPage = () => {
 
   // Fetch all users when 'View All' is clicked
   const handleViewAll = async () => {
+    setError("");
     setLoading(true);
     setViewAll(true);
     // Fetch all profile fields from Supabase (only existing columns)
@@ -195,9 +201,9 @@ const UserSearchPage = () => {
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!query.trim()) return;
+    setError(""); // Clear any previous errors first
     setViewAll(false); // Reset viewAll when searching
     setLoading(true);
-    setError("");
     setResults([]);
     setHighlight(query.replace(/^@/, ""));
     try {
