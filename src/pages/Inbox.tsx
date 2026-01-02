@@ -1,12 +1,12 @@
 import { usePi } from "@/contexts/PiContext";
-import InboxMessages from "../components/InboxMessages";
+import InboxConversations from "@/components/InboxConversations";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function InboxPage() {
-  const { piUser } = usePi();
-  const receiverUsername = piUser?.username || "";
+  const { piUser, isAuthenticated } = usePi();
   const navigate = useNavigate();
   
   return (
@@ -20,7 +20,17 @@ export default function InboxPage() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
-        <InboxMessages receiverUsername={receiverUsername} />
+
+        {!isAuthenticated && (
+          <Alert className="mb-4">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Sign in with Pi Network to view your messages and start conversations.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        <InboxConversations />
       </div>
     </div>
   );

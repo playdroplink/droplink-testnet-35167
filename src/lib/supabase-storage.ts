@@ -15,6 +15,7 @@ export const STORAGE_BUCKETS = {
   AVATARS: 'avatars',
   THUMBNAILS: 'thumbnails',
   BACKGROUNDS: 'backgrounds',
+  MESSAGE_IMAGES: 'message-images',
 } as const;
 
 // Maximum file sizes (in bytes)
@@ -367,4 +368,15 @@ export async function compressImage(
       };
     };
   });
+}
+
+/**
+ * Upload message image/attachment
+ * @param file - Image file
+ * @returns Public URL of uploaded message image
+ */
+export async function uploadMessageImage(file: File): Promise<string | null> {
+  const timestamp = Date.now();
+  const result = await uploadImage(file, STORAGE_BUCKETS.MESSAGE_IMAGES, `messages/${timestamp}`);
+  return result?.url || null;
 }

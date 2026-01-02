@@ -29,6 +29,7 @@ import VotingPage from "./pages/VotingPage";
 import Home from "./pages/Home";
 import SplashScreen from "./components/SplashScreen";
 import InboxPage from "./pages/Inbox";
+import Chat from "./pages/Chat";
 import AdminMrwain from "./pages/AdminMrwain";
 import Purchases from "./pages/Purchases";
 import ProductDetail from "./pages/ProductDetail";
@@ -96,6 +97,7 @@ const App = () => {
             <Route path="/store/:merchantId" element={<MerchantStorePreview />} />
             <Route path="/storefront/:storeId" element={<StoreFront />} />
             <Route path="/inbox" element={<InboxPage />} />
+            <Route path="/chat/:username" element={<Chat />} />
             <Route path="/purchases" element={<Purchases />} />
             <Route path="/sales-earnings" element={<SalesEarnings />} />
             <Route path="/product/:productId" element={<ProductDetail />} />

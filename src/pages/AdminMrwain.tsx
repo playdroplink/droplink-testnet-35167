@@ -81,14 +81,13 @@ const AdminMrwain = () => {
 
   const ensureProfileExists = async (user: any) => {
     try {
-      // Check if profile exists
-      const { data: existingProfile, error: fetchError } = await supabase
+      // Find profile by user_id (the trigger creates profiles with random IDs)
+      const { data: existingProfiles, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
-        .single();
+        .eq('user_id', user.id);
 
-      if (fetchError && fetchError.code !== 'PGRST116') {
+      if (fetchError) {
         console.error("Error checking profile:", fetchError);
         return;
       }
@@ -96,53 +95,75 @@ const AdminMrwain = () => {
       // Determine auth method from user metadata
       const authMethod = user.app_metadata?.provider === 'google' ? 'google' : 'email';
       
-      // Create or update profile
-      if (!existingProfile) {
-        // Generate username from email or user metadata
-        const metadataUsername = user.user_metadata?.username;
-        const emailUsername = user.email?.split('@')[0] || `user_${user.id.substring(0, 8)}`;
-        const rawUsername = metadataUsername || emailUsername;
-        let sanitizedUsername = rawUsername.toLowerCase().replace(/[^a-z0-9_]/g, '_').substring(0, 30);
+      // Generate username from email or user metadata
+      const metadataUsername = user.user_metadata?.username;
+      const emailUsername = user.email?.split('@')[0] || `user_${user.id.substring(0, 8)}`;
+      const rawUsername = metadataUsername || emailUsername;
+      let sanitizedUsername = rawUsername.toLowerCase().replace(/[^a-z0-9_]/g, '_').substring(0, 30);
+      
+      // Ensure username is unique by appending timestamp if needed
+      const baseUsername = sanitizedUsername;
+      let attempts = 0;
+      let usernameExists = true;
+      
+      while (usernameExists && attempts < 5) {
+        const { data: existingUsername } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', sanitizedUsername)
+          .limit(1);
         
-        // Ensure username is unique by appending timestamp if needed
-        const baseUsername = sanitizedUsername;
-        let attempts = 0;
-        let usernameExists = true;
-        
-        while (usernameExists && attempts < 5) {
-          const { data: existingUsername } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('username', sanitizedUsername)
-            .limit(1);
-          
-          if (!existingUsername || existingUsername.length === 0) {
-            usernameExists = false;
-          } else {
-            // Username taken, append number
-            sanitizedUsername = `${baseUsername}_${Date.now().toString().slice(-4)}`;
-            attempts++;
-          }
+        if (!existingUsername || existingUsername.length === 0) {
+          usernameExists = false;
+        } else {
+          // Username taken, append number
+          sanitizedUsername = `${baseUsername}_${Date.now().toString().slice(-4)}`;
+          attempts++;
         }
+      }
+      
+      const business_name = user.user_metadata?.full_name || sanitizedUsername || `User ${user.id.substring(0, 8)}`;
+      
+      if (existingProfiles && existingProfiles.length > 0) {
+        // Update existing profile with latest data
+        const existingProfile = existingProfiles[0];
+        console.log('[Admin Profile] Profile exists, updating with latest data');
         
-        const business_name = user.user_metadata?.full_name || sanitizedUsername || `User ${user.id.substring(0, 8)}`;
-        
+        const updates: any = {
+          username: sanitizedUsername,
+          business_name: business_name,
+          email: user.email || '',
+          description: existingProfile.description || `Admin user - ${authMethod} authenticated`,
+        };
+
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update(updates)
+          .eq('user_id', user.id);
+
+        if (updateError) {
+          console.error("Error updating profile:", updateError);
+          toast.error(`Failed to update profile: ${updateError.message}`);
+        } else {
+          console.log('[Admin Profile] Profile updated successfully');
+          toast.success("Profile updated successfully!");
+        }
+      } else {
+        // No profile exists (trigger may not have run yet), create one
         console.log('[Admin Profile] Creating profile for:', user.email, 'with username:', sanitizedUsername);
         
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
           .insert({
-            id: user.id,
             user_id: user.id,
             username: sanitizedUsername,
+            email: user.email || '',
             business_name: business_name,
             description: `Admin user - ${authMethod} authenticated`,
             has_premium: false,
             show_share_button: true,
             social_links: {},
             theme_settings: {},
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
           })
           .select()
           .single();
@@ -165,46 +186,20 @@ const AdminMrwain = () => {
           console.log('[Admin Profile] Profile created successfully:', newProfile);
           toast.success("Profile created successfully!");
           
-          // Initialize user wallet (use profile UUID, not auth user id)
-          const { error: walletError } = await supabase
-            .from('user_wallets')
-            .upsert({
-              profile_id: newProfile!.id,
-              drop_tokens: 0,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            }, { onConflict: 'profile_id' });
+          // Initialize user wallet (use profile UUID)
+          if (newProfile) {
+            const { error: walletError } = await supabase
+              .from('user_wallets')
+              .upsert({
+                profile_id: newProfile.id,
+                drop_tokens: 0,
+              }, { onConflict: 'profile_id' });
 
-          if (walletError) {
-            console.error("Wallet creation error:", walletError);
-          } else {
-            console.log('[Admin Profile] Wallet initialized');
-          }
-        }
-      } else {
-        // Update existing profile with latest data if needed
-        console.log('[Admin Profile] Profile exists, ensuring data is current');
-        
-        const updates: any = {
-          updated_at: new Date().toISOString(),
-        };
-
-        // Update if business_name is missing
-        if (!existingProfile.business_name) {
-          updates.business_name = user.user_metadata?.full_name || user.email || existingProfile.username;
-        }
-
-        // Only update if there are changes
-        if (Object.keys(updates).length > 1) {
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update(updates)
-            .eq('id', user.id);
-
-          if (updateError) {
-            console.error("Error updating profile:", updateError);
-          } else {
-            console.log('[Admin Profile] Profile updated with latest data');
+            if (walletError) {
+              console.error("Wallet creation error:", walletError);
+            } else {
+              console.log('[Admin Profile] Wallet initialized');
+            }
           }
         }
       }
