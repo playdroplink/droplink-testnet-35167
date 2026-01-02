@@ -1,7 +1,6 @@
 {
   "buildCommand": "bun run build",
   "installCommand": "bun install",
-  "nodeVersion": "22.x",
   "framework": "vite",
   "outputDirectory": "dist",
   "devCommand": "npm run dev",
