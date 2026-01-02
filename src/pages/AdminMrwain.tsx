@@ -102,7 +102,29 @@ const AdminMrwain = () => {
         const metadataUsername = user.user_metadata?.username;
         const emailUsername = user.email?.split('@')[0] || `user_${user.id.substring(0, 8)}`;
         const rawUsername = metadataUsername || emailUsername;
-        const sanitizedUsername = rawUsername.toLowerCase().replace(/[^a-z0-9_]/g, '_').substring(0, 30);
+        let sanitizedUsername = rawUsername.toLowerCase().replace(/[^a-z0-9_]/g, '_').substring(0, 30);
+        
+        // Ensure username is unique by appending timestamp if needed
+        const baseUsername = sanitizedUsername;
+        let attempts = 0;
+        let usernameExists = true;
+        
+        while (usernameExists && attempts < 5) {
+          const { data: existingUsername } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('username', sanitizedUsername)
+            .limit(1);
+          
+          if (!existingUsername || existingUsername.length === 0) {
+            usernameExists = false;
+          } else {
+            // Username taken, append number
+            sanitizedUsername = `${baseUsername}_${Date.now().toString().slice(-4)}`;
+            attempts++;
+          }
+        }
+        
         const business_name = user.user_metadata?.full_name || sanitizedUsername || `User ${user.id.substring(0, 8)}`;
         
         console.log('[Admin Profile] Creating profile for:', user.email, 'with username:', sanitizedUsername);
@@ -127,7 +149,18 @@ const AdminMrwain = () => {
 
         if (insertError) {
           console.error("Error creating profile:", insertError);
-          toast.error("Failed to create user profile");
+          console.error("Insert error details:", {
+            message: insertError.message,
+            code: insertError.code,
+            details: (insertError as any).details
+          });
+          
+          // Show more specific error message
+          if (insertError.message.includes('duplicate') || insertError.message.includes('unique')) {
+            toast.error("Username already taken. Please try another.");
+          } else {
+            toast.error(`Failed to create user profile: ${insertError.message}`);
+          }
         } else {
           console.log('[Admin Profile] Profile created successfully:', newProfile);
           toast.success("Profile created successfully!");
@@ -189,17 +222,21 @@ const AdminMrwain = () => {
       return;
     }
 
-    // Convert @username to email format if needed
-    let authEmail = email;
-    if (email.startsWith('@')) {
-      // Remove @ and add domain
-      const username = email.substring(1);
+    // Handle email/username conversion
+    let authEmail = email.trim();
+    
+    // If it looks like an email, keep it as-is (includes Gmail, Outlook, etc.)
+    if (authEmail.includes('@')) {
+      console.log('[Admin Auth] Using email address:', authEmail);
+    } else if (authEmail.startsWith('@')) {
+      // Remove @ and add droplink domain
+      const username = authEmail.substring(1);
       authEmail = `${username}@droplink.space`;
       console.log('[Admin Auth] Converting @username to email:', authEmail);
-    } else if (!email.includes('@')) {
-      // If no @ at all, assume it's a username
-      authEmail = `${email}@droplink.space`;
-      console.log('[Admin Auth] Converting username to email:', authEmail);
+    } else {
+      // Assume it's a username - try both droplink.space and original formats
+      // First try as-is in case it was registered with custom domain
+      console.log('[Admin Auth] Attempting with original input:', authEmail);
     }
 
     if (!isLogin && password.length < 6) {
