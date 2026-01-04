@@ -1,9 +1,14 @@
+// Pi Payment Approve Edge Function - MAINNET
+// This function handles Phase I of the Pi Network 3-phase payment flow
 // @ts-ignore: Deno global is available at runtime in Supabase Edge Functions
 declare const Deno: any;
 // @ts-ignore - Deno runtime types (available at runtime)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // @ts-ignore - ESM module (available at runtime)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// Pi Network MAINNET API endpoint - DO NOT use sandbox
+const PI_API_BASE_URL = "https://api.minepi.com";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -66,9 +71,10 @@ serve(async (req) => {
       );
     }
 
-    // Step 1: Get payment details from Pi API
-    console.log('[APPROVAL] 📡 Fetching payment details from Pi API...');
-    const getPaymentResponse = await fetch(`https://api.minepi.com/v2/payments/${paymentId}`, {
+    // Step 1: Get payment details from Pi API (MAINNET)
+    console.log('[APPROVAL] 📡 Fetching payment details from Pi MAINNET API...');
+    console.log('[APPROVAL] Network: MAINNET (sandbox=false)');
+    const getPaymentResponse = await fetch(`${PI_API_BASE_URL}/v2/payments/${paymentId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Key ${PI_API_KEY}`,
@@ -142,9 +148,9 @@ serve(async (req) => {
       console.warn('[APPROVAL] Idempotency record error:', err);
     }
 
-    // Step 2: Approve the payment with Pi API
-    console.log('[APPROVAL] 📡 Approving payment with Pi API...');
-    const approveResponse = await fetch(`https://api.minepi.com/v2/payments/${paymentId}/approve`, {
+    // Step 2: Approve the payment with Pi MAINNET API
+    console.log('[APPROVAL] 📡 Approving payment with Pi MAINNET API...');
+    const approveResponse = await fetch(`${PI_API_BASE_URL}/v2/payments/${paymentId}/approve`, {
       method: 'POST',
       headers: {
         'Authorization': `Key ${PI_API_KEY}`,

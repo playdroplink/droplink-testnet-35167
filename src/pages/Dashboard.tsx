@@ -2548,6 +2548,54 @@ const Dashboard = () => {
             <PlanGate minPlan="premium" featureName="Theme Customization">
               <div className="border-t pt-6">
                 <h2 className="text-lg font-semibold mb-4 sm:mb-6">Theme Customization</h2>
+                
+                {/* Quick Template Picker */}
+                <div className="mb-6">
+                  <Label className="mb-3 block text-sm">Quick Templates (Linktree-style)</Label>
+                  <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                    {[
+                      { id: 'midnight', name: 'Midnight', primary: '#3b82f6', bg: '#0f0f23' },
+                      { id: 'sunset', name: 'Sunset', primary: '#ff6b6b', bg: '#2d1b1b' },
+                      { id: 'forest', name: 'Forest', primary: '#22c55e', bg: '#0a1f0a' },
+                      { id: 'minimal', name: 'Minimal', primary: '#111827', bg: '#ffffff' },
+                      { id: 'neon', name: 'Neon', primary: '#a855f7', bg: '#0f0f0f' },
+                      { id: 'ocean', name: 'Ocean', primary: '#3b82f6', bg: '#0c1929' },
+                      { id: 'rose', name: 'Rose', primary: '#be7c4d', bg: '#1a1412' },
+                      { id: 'arctic', name: 'Arctic', primary: '#0ea5e9', bg: '#0c1929' },
+                    ].map((template) => (
+                      <button
+                        key={template.id}
+                        onClick={() => {
+                          const newProfile = {
+                            ...profile,
+                            theme: {
+                              ...profile.theme,
+                              primaryColor: template.primary,
+                              backgroundColor: template.bg,
+                            }
+                          };
+                          setProfile(newProfile);
+                          saveProfileNow(newProfile);
+                          toast.success(`Applied ${template.name} template!`);
+                        }}
+                        className="aspect-square rounded-lg border-2 border-border hover:border-primary transition-all hover:scale-105 overflow-hidden"
+                        title={template.name}
+                      >
+                        <div 
+                          className="w-full h-full flex items-center justify-center"
+                          style={{ backgroundColor: template.bg }}
+                        >
+                          <div 
+                            className="w-4 h-4 rounded-full"
+                            style={{ backgroundColor: template.primary }}
+                          />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">Click a template to apply its colors instantly</p>
+                </div>
+                
               <div className="space-y-3 sm:space-y-4">
                 <div>
                   <Label htmlFor="primary-color" className="mb-2 sm:mb-3 block text-sm">Primary Color</Label>
