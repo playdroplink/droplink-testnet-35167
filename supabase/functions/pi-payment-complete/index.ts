@@ -1,9 +1,14 @@
+// Pi Payment Complete Edge Function - MAINNET
+// This function handles Phase III of the Pi Network 3-phase payment flow
 // @ts-ignore: Deno global is available at runtime in Supabase Edge Functions
 declare const Deno: any;
 // @ts-ignore - Deno runtime types (available at runtime)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // @ts-ignore - ESM module (available at runtime)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// Pi Network MAINNET API endpoint - DO NOT use sandbox
+const PI_API_BASE_URL = "https://api.minepi.com";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -73,9 +78,10 @@ serve(async (req) => {
     
     console.log('[COMPLETE] Final metadata:', JSON.stringify(finalMetadata));
 
-    // Step 1: Get payment details from Pi API to verify
-    console.log('[COMPLETE] 📡 Fetching payment details from Pi API...');
-    const getPaymentResponse = await fetch(`https://api.minepi.com/v2/payments/${paymentId}`, {
+    // Step 1: Get payment details from Pi MAINNET API to verify
+    console.log('[COMPLETE] 📡 Fetching payment details from Pi MAINNET API...');
+    console.log('[COMPLETE] Network: MAINNET (sandbox=false)');
+    const getPaymentResponse = await fetch(`${PI_API_BASE_URL}/v2/payments/${paymentId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Key ${PI_API_KEY}`,
@@ -92,9 +98,9 @@ serve(async (req) => {
     const paymentDetails = await getPaymentResponse.json();
     console.log('[COMPLETE] Payment details:', JSON.stringify(paymentDetails));
 
-    // Step 2: Complete the payment with Pi API
-    console.log('[COMPLETE] 📡 Completing payment with Pi API...');
-    const completeResponse = await fetch(`https://api.minepi.com/v2/payments/${paymentId}/complete`, {
+    // Step 2: Complete the payment with Pi MAINNET API
+    console.log('[COMPLETE] 📡 Completing payment with Pi MAINNET API...');
+    const completeResponse = await fetch(`${PI_API_BASE_URL}/v2/payments/${paymentId}/complete`, {
       method: 'POST',
       headers: {
         'Authorization': `Key ${PI_API_KEY}`,
