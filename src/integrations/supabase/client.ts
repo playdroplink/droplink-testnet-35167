@@ -7,16 +7,31 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Only log if in development and values are missing
 if (import.meta.env.DEV && (!SUPABASE_URL || !SUPABASE_ANON_KEY)) {
-  console.warn('[Supabase] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY in environment variables');
+  console.warn('[Supabase] Missing environment variables:');
+  console.warn('VITE_SUPABASE_URL:', SUPABASE_URL);
+  console.warn('VITE_SUPABASE_ANON_KEY:', SUPABASE_ANON_KEY ? '[PRESENT]' : '[MISSING]');
+}
+
+// Validate that we have the required configuration
+if (!SUPABASE_URL) {
+  throw new Error('VITE_SUPABASE_URL environment variable is required');
+}
+
+if (!SUPABASE_ANON_KEY) {
+  throw new Error('VITE_SUPABASE_ANON_KEY environment variable is required');
 }
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
+export const supabase = createClient<Database>(
+  SUPABASE_URL || 'https://jzzbmoopwnvgxxirulga.supabase.co', 
+  SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6emJtb29wd252Z3h4aXJ1bGdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyMDMxMjUsImV4cCI6MjA3NDc3OTEyNX0.5DqetNG0bvN620X8t5QP-sGEInb17ZCgY0Jfp7_qZWU', 
+  {
+    auth: {
+      storage: localStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+    }
   }
-});
+);

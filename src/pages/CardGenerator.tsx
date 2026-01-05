@@ -12,6 +12,7 @@ import jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
 import { Button as UIButton } from "@/components/ui/button";
 import { usePi } from "@/contexts/PiContext";
+import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 
 export default function CardGenerator() {
   const { toast } = useToast();
@@ -19,6 +20,9 @@ export default function CardGenerator() {
   
   // Pi auth + profile resolution
   const { piUser, isAuthenticated, signIn } = usePi() as any;
+  
+  // Get active subscription status (properly checks for 30 Pi Pro plan)
+  const { plan, isActive, loading: subscriptionLoading } = useActiveSubscription();
 
   // Load persisted profile as a soft fallback only
   const profileData = localStorage.getItem("profile");
@@ -107,8 +111,8 @@ export default function CardGenerator() {
   // Detect Pi Browser
   const isPiBrowser = navigator.userAgent.includes("PiBrowser") || window.location.hostname.includes("pi.app");
   
-  // Check if user has Pro plan (30 Pi subscription)
-  const hasProPlan = profile?.subscription_status === 'active' || profile?.is_pro === true;
+  // Check if user has Pro plan (30 Pi subscription) - properly detects active subscription
+  const hasProPlan = (plan === "pro" || plan === "premium") && isActive;
 
   // Preset color themes
   const presets = [
@@ -219,7 +223,7 @@ export default function CardGenerator() {
     if (!hasProPlan) {
       toast({
         title: "Pro Plan Required",
-        description: "Subscribe to 30 Pi Pro plan to customize card colors.",
+        description: "Subscribe to the 30 Pi Pro plan to unlock card customization features.",
         variant: "destructive",
       });
       return;

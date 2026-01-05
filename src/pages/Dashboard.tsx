@@ -591,25 +591,37 @@ const Dashboard = () => {
       }
       
       // Check for Supabase session (Gmail/email users)
-      const { data: { session } } = await supabase.auth.getSession();
-      const supabaseUser = session?.user;
+      let session = null;
+      let supabaseUser = null;
+      
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting session:', error);
+        } else {
+          session = data?.session;
+          supabaseUser = session?.user;
+        }
+      } catch (error) {
+        console.error('Failed to get session:', error);
+      }
       
       // Determine user identifier
       let userIdentifier: string | null = null;
       let isPiUser = false;
       let isNewUser = false;
       
-      if (isAuthenticated && piUser) {
+      if (isAuthenticated && piUser && piUser.username) {
         // Pi Network user
         userIdentifier = piUser.username;
         isPiUser = true;
         setDisplayUsername(piUser.username);
         console.log("Loading profile for Pi user:", piUser.username);
-      } else if (supabaseUser) {
+      } else if (supabaseUser && supabaseUser.email) {
         // Gmail/Email user
-        userIdentifier = supabaseUser.email?.split("@")[0] || supabaseUser.id.slice(0, 8);
+        userIdentifier = supabaseUser.email.split("@")[0] || supabaseUser.id?.slice(0, 8) || 'user';
         isPiUser = false;
-        setDisplayUsername(supabaseUser.email?.split("@")[0] || null);
+        setDisplayUsername(supabaseUser.email.split("@")[0] || null);
         console.log("Loading profile for email user:", supabaseUser.email);
       } else {
         // No authentication - always redirect to auth
@@ -746,8 +758,8 @@ const Dashboard = () => {
             } catch (error) {
               console.warn('Financial data function not available, using profile data fallback');
               financialData = {
-                pi_wallet_address: profileData.pi_wallet_address || '',
-                pi_donation_message: profileData.pi_donation_message || 'Send me a coffee ☕',
+                pi_wallet_address: profileData?.pi_wallet_address || '',
+                pi_donation_message: profileData?.pi_donation_message || 'Send me a coffee ☕',
                 crypto_wallets: {},
                 bank_details: {}
               };
@@ -756,10 +768,10 @@ const Dashboard = () => {
             // No session or Pi token - load from profiles table directly
             // Note: Financial data is stored in profiles table (pi_wallet_address, bank_details, crypto_wallets)
             financialData = {
-              pi_wallet_address: profileData.pi_wallet_address,
-              pi_donation_message: profileData.pi_donation_message || "Send me a coffee ☕",
-              crypto_wallets: profileData.crypto_wallets || {},
-              bank_details: profileData.bank_details || {},
+              pi_wallet_address: profileData?.pi_wallet_address || '',
+              pi_donation_message: profileData?.pi_donation_message || "Send me a coffee ☕",
+              crypto_wallets: profileData?.crypto_wallets || {},
+              bank_details: profileData?.bank_details || {},
             };
           }
         } catch (error) {
@@ -769,18 +781,18 @@ const Dashboard = () => {
         const cryptoWallets = financialData.crypto_wallets as any;
         const bankDetails = financialData.bank_details as any;
         
-        const displayName = isPiUser && piUser ? piUser.username : (supabaseUser?.email?.split("@")[0] || "user");
+        const displayName = isPiUser && piUser?.username ? piUser.username : (supabaseUser?.email?.split("@")[0] || "user");
         
         const loadedProfile = {
-          id: profileData.id || "",
-          username: profileData.username || displayName,
-          logo: profileData.logo || "",
-          businessName: profileData.business_name || displayName,
-          storeUrl: `@${profileData.username || displayName}`,
-          description: profileData.description || "",
-          email: (profileData as any).email || supabaseUser?.email || "",
-          youtubeVideoUrl: (profileData as any).youtube_video_url || "",
-          backgroundMusicUrl: (profileData as any).background_music_url || "",
+          id: profileData?.id || "",
+          username: profileData?.username || displayName,
+          logo: profileData?.logo || "",
+          businessName: profileData?.business_name || displayName,
+          storeUrl: `@${profileData?.username || displayName}`,
+          description: profileData?.description || "",
+          email: (profileData as any)?.email || supabaseUser?.email || "",
+          youtubeVideoUrl: (profileData as any)?.youtube_video_url || "",
+          backgroundMusicUrl: (profileData as any)?.background_music_url || "",
           socialLinks: Array.isArray(socialLinks) && socialLinks.length > 0 ? socialLinks : [
             { type: "twitter", url: "", icon: "twitter" },
             { type: "instagram", url: "", icon: "instagram" },
