@@ -29,12 +29,18 @@ const plans: Plan[] = [
     icon: Sparkles,
     gradient: 'from-gray-400 to-gray-600',
     features: [
-      '1 custom link',
-      '1 social media link',
+      '1 social media link only (no custom links)',
       'Basic profile customization',
-      'Community support',
-      'DropLink watermark',
-      'View ads for premium features'
+      'Basic QR code sharing',
+      'Public bio page visibility',
+      'DropLink watermark displayed',
+      'Pi Ad Network banners shown',
+      'Limited theme options (3 basic templates)',
+      'Community support only',
+      'Watch ads to temporarily access premium features',
+      'Earn DROP tokens by watching ads',
+      'No Pi Wallet for tips (Basic+ required)',
+      'No custom links (Premium+ required)'
     ]
   },
   {
@@ -45,12 +51,17 @@ const plans: Plan[] = [
     icon: Zap,
     gradient: 'from-blue-400 to-blue-600',
     features: [
-      'Up to 5 custom links',
+      'Up to 5 custom links (Premium feature partially unlocked)',
       'Up to 3 social media links',
-      'No watermark',
-      'Ad-free experience',
-      'Email support',
-      'Basic analytics'
+      'Pi Wallet for receiving tips and donations (Basic+ required)',
+      'DROP token management and earning',
+      'Standard profile customization', 
+      'No DropLink watermark',
+      'Basic analytics dashboard access',
+      'Email support (standard)',
+      '1GB storage space',
+      'Priority for new features',
+      'Pi Ad Network still shown (Premium+ for ad-free)'
     ]
   },
   {
@@ -62,13 +73,20 @@ const plans: Plan[] = [
     gradient: 'from-purple-500 to-pink-600',
     popular: true,
     features: [
-      'Unlimited custom links',
-      'Unlimited social media links',
-      'YouTube video integration',
-      'Custom themes & colors',
-      'Advanced analytics',
-      'Pi wallet integration',
-      'Priority support'
+      'Everything in Basic, plus:',
+      'Unlimited custom links (up to 25 with advanced management)',
+      'Unlimited social media links (up to 99)',
+      'YouTube video integration (Premium+ required)',
+      'Advanced theme customization and GIF backgrounds (Premium+ required)',
+      'Background music player',
+      'Digital products listings (Premium+ required)',
+      'Virtual card generation and management',
+      'Advanced analytics dashboard',
+      'Pi Network wallet integration with QR codes',
+      'Priority email support',
+      'AI features and logo generation',
+      '5GB storage space',
+      'Ad-free experience'
     ]
   },
   {
@@ -79,14 +97,21 @@ const plans: Plan[] = [
     icon: TrendingUp,
     gradient: 'from-orange-500 to-red-600',
     features: [
-      'Everything in Premium',
-      'AI-powered analytics',
+      'Everything in Premium, plus:',
+      'Advanced virtual card features and customization',
+      'AI-powered analytics insights',
+      'Advanced visitor & location-based tracking',
       'A/B testing for links',
-      'API access',
+      'API access for integrations',
       'White-label solutions',
       '24/7 priority support',
-      'Pi Payments integration',
-      'Multi-profile management'
+      'Bulk link management',
+      'Export analytics data',
+      'Pi Network payments integration',
+      'Transaction history & management',
+      'AI chat widget',
+      'Multi-profile management',
+      'Ad-free experience'
     ]
   }
 ];

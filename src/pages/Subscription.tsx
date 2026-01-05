@@ -27,18 +27,18 @@ const plans: Plan[] = [
     monthlyPrice: 0,
     yearlyPrice: 0,
     features: [
-      "1 custom link only (no additional links)",
-      "1 social media link only (no additional socials)",
-      "No Pi tips or product sales",
+      "1 social media link only (no custom links)",
       "Basic profile customization",
-      "Basic QR code sharing",
+      "Basic QR code sharing", 
       "Public bio page visibility",
       "DropLink watermark displayed",
       "Pi Ad Network banners shown",
-      "Limited theme options",
+      "Limited theme options (3 basic templates)",
       "Community support only",
       "Watch ads to temporarily access premium features",
-      "Earn DROP tokens by watching ads"
+      "Earn DROP tokens by watching ads",
+      "No Pi Wallet for tips (Basic+ required)",
+      "No custom links (Premium+ required)"
     ]
   },
   {
@@ -46,17 +46,18 @@ const plans: Plan[] = [
     monthlyPrice: 10,
     yearlyPrice: 96,
     features: [
-      "Up to 5 custom links",
+      "Up to 5 custom links (Premium feature partially unlocked)",
       "Up to 3 social media links",
+      "Pi Wallet for receiving tips and donations (Basic+ required)",
+      "DROP token management and earning",
       "Standard profile customization",
       "Standard QR code sharing",
       "No DropLink watermark",
-      "Pi Ad Network banners shown",
-      "Access to analytics dashboard (basic)",
+      "Basic analytics dashboard access",
       "Email support (standard)",
-      "More theme options (3+)",
-      "Product listings (up to 3)",
-      "Priority for new features"
+      "1GB storage space",
+      "Priority for new features",
+      "Pi Ad Network still shown (Premium+ for ad-free)"
     ],
     savings: "20% savings on yearly"
   },
@@ -66,17 +67,20 @@ const plans: Plan[] = [
     yearlyPrice: 192,
     features: [
       "Everything in Basic, plus:",
-      "Unlimited custom links with icon selection",
-      "Unlimited social media links",
-      "YouTube video integration",
-      "Custom themes & colors (6+ options)",
+      "Unlimited custom links (up to 25 with advanced management)",
+      "Unlimited social media links (up to 99)", 
+      "YouTube video integration (Premium+ required)",
+      "Advanced theme customization and GIF backgrounds (Premium+ required)",
+      "Background music player",
+      "Digital products listings (Premium+ required)",
+      "Virtual card generation and management",
       "Advanced analytics dashboard",
-      "Pi Network wallet integration",
-      "DROP token receiving",
-      "Product listings with pricing",
+      "Pi Network wallet integration with QR codes",
       "Priority email support",
-      "Custom domain support (coming soon)",
-      "Ad-free experience"
+      "AI features and logo generation",
+      "5GB storage space",
+      "Ad-free experience",
+      "Full Design tab access with color customization"
     ],
     popular: true,
     savings: "20% savings on yearly"
@@ -87,19 +91,18 @@ const plans: Plan[] = [
     yearlyPrice: 288,
     features: [
       "Everything in Premium, plus:",
-      "AI-powered analytics insights",
-      "Advanced visitor & location-based tracking",
-      "A/B testing for links",
-      "API access for integrations",
-      "White-label solutions",
-      "24/7 priority support",
-      "Bulk link management",
-      "Export analytics data",
-      "Pi Network payments integration",
-      "Transaction history & management",
-      "AI chat widget",
-      "Multi-profile management",
-      "Ad-free experience"
+      "Analytics dashboard (Pro+ required for advanced features)",
+      "Unlimited custom links (999) and social links (999)",
+      "Custom domain support (Pro exclusive)",
+      "Advanced virtual card features and customization",
+      "Advanced API access for integrations",
+      "White-label solutions (no DropLink branding)",
+      "24/7 priority support with dedicated channel",
+      "Advanced security and team collaboration",
+      "Custom integrations and enterprise features",
+      "10GB storage for media and files",
+      "Bulk management and export capabilities",
+      "Complete feature unlock across all dashboard tabs"
     ]
   }
 ];
