@@ -39,7 +39,7 @@ async function getAuthorizedProfile(req: Request, body?: any) {
 
   const piAccessToken = req.headers.get('x-pi-access-token') || body?.piAccessToken;
   if (piAccessToken) {
-    const piResponse = await fetch('https://api.minepi.com/v2/me', {
+    const piResponse = await fetch('https://api.mainnet.minepi.com/v2/me', {
       headers: {
         'Authorization': `Bearer ${piAccessToken}`,
         'Content-Type': 'application/json',

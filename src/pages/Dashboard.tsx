@@ -2989,7 +2989,7 @@ const Dashboard = () => {
           </div>
           <div className="w-full px-3 sm:px-4 md:px-6 mb-3">
             <Button 
-              onClick={() => navigate('/merchant-products')} 
+              onClick={() => window.open('https://droppay.space/', '_blank')} 
               className="w-full bg-sky-500 hover:bg-sky-600 text-white"
               size="sm"
             >

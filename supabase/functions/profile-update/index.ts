@@ -100,7 +100,7 @@ async function getProfileFromPiToken(piAccessToken: string, requestedUsername?: 
     throw new Error('Missing Pi access token');
   }
 
-  const piResponse = await fetch('https://api.minepi.com/v2/me', {
+  const piResponse = await fetch('https://api.mainnet.minepi.com/v2/me', {
     headers: {
       'Authorization': `Bearer ${piAccessToken}`,
       'Content-Type': 'application/json',

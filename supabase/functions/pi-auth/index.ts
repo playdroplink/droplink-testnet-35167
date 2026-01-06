@@ -37,7 +37,7 @@ serve(async (req) => {
     // Verify the access token with Pi API
     let piUserData;
     try {
-      const piResponse = await fetch("https://api.minepi.com/v2/me", {
+      const piResponse = await fetch("https://api.mainnet.minepi.com/v2/me", {
         headers: {
           "Authorization": `Bearer ${accessToken}`,
         },

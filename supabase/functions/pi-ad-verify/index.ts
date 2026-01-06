@@ -42,7 +42,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Verify Pi Network token
-    const piResponse = await fetch('https://api.minepi.com/v2/me', {
+    const piResponse = await fetch('https://api.mainnet.minepi.com/v2/me', {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -84,7 +84,7 @@ serve(async (req) => {
     }
 
     // Verify ad status with Pi Platform API
-    const adVerifyResponse = await fetch(`https://api.minepi.com/v2/ads_network/status/${adId}`, {
+    const adVerifyResponse = await fetch(`https://api.mainnet.minepi.com/v2/ads_network/status/${adId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Key ${piApiKey}`,
