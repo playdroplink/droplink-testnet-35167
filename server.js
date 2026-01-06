@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { secureLog, logApiStatus } from './utils/secureLogging.js';
 
 dotenv.config();
 
@@ -160,10 +161,10 @@ app.post('/pi-payment-approve', async (req, res) => {
     }
     const piApiKey = process.env.PI_API_KEY;
     if (!piApiKey) {
-      console.error('PI_API_KEY not configured (missing in environment)');
+      secureLog.error('PI_API_KEY not configured (missing in environment)');
       return res.status(500).json({ error: 'Server configuration error: PI_API_KEY missing' });
     } else {
-      console.log('PI_API_KEY loaded from environment.');
+      logApiStatus('Pi Network', piApiKey);
     }
     const approveResponse = await fetch(`https://api.minepi.com/v2/payments/${paymentId}/approve`, {
       method: 'POST',

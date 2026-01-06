@@ -5,6 +5,8 @@
  * Enable by setting VITE_DEV_MODE=true in .env
  */
 
+import { secureLog } from '../utils/secureLogging';
+
 // Check if dev mode is enabled
 export const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
 
@@ -107,15 +109,15 @@ export function getDevMockProfile() {
  */
 export function logDevModeStatus(): void {
   const status = getDevModeStatus();
-  console.log('🛠️ DEV MODE STATUS:');
-  console.log(`  - Enabled: ${status.enabled}`);
-  console.log(`  - Env variable (VITE_DEV_MODE): ${status.envEnabled}`);
-  console.log(`  - localStorage override: ${status.localStorageEnabled}`);
+  secureLog.log('🛠️ DEV MODE STATUS:');
+  secureLog.log(`  - Enabled: ${status.enabled}`);
+  secureLog.log(`  - Env variable configured: ${!!status.envEnabled}`);
+  secureLog.log(`  - localStorage override: ${status.localStorageEnabled}`);
   
   if (status.enabled) {
-    console.log('✅ Dev mode is ACTIVE - Pi auth bypass enabled');
-    console.log('📝 Mock user:', MOCK_DEV_USER.username);
+    secureLog.log('✅ Dev mode is ACTIVE - Pi auth bypass enabled');
+    secureLog.log('📝 Mock user:', MOCK_DEV_USER.username);
   } else {
-    console.log('⚠️ Dev mode is DISABLED - Pi auth required');
+    secureLog.log('⚠️ Dev mode is DISABLED - Pi auth required');
   }
 }

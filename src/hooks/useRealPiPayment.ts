@@ -10,9 +10,11 @@ import {
   PaymentItem, 
   PaymentResult 
 } from '../services/realPiPaymentService';
+import { logEnvStatus } from '../utils/secureLogging';
 
 const PI_API_KEY = import.meta.env.VITE_PI_API_KEY || "";
-console.log('Using env PI_API_KEY:', PI_API_KEY);
+// Security: Never log API keys - only log if they exist
+logEnvStatus('VITE_PI_API_KEY', PI_API_KEY);
 
 export const useRealPiPayment = () => {
   const [isProcessing, setIsProcessing] = useState(false);

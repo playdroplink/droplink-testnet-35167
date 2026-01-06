@@ -2,6 +2,7 @@ import express from 'express';
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
+import { secureLog, logApiStatus } from './utils/secureLogging.js';
 
 dotenv.config();
 
@@ -25,19 +26,19 @@ app.post('/pi-payment-complete', async (req: any, res: any) => {
       return res.status(400).json({ error: 'Payment ID and transaction ID are required' });
     }
 
-    console.log('Completing Pi payment:', paymentId, 'txid:', txid);
+    secureLog.log('Completing Pi payment:', paymentId, 'txid:', txid);
 
     // Use VITE_PI_API_KEY if present, else fallback to PI_API_KEY
     const piApiKey = process.env.VITE_PI_API_KEY || process.env.PI_API_KEY;
     if (!piApiKey) {
-      console.error('PI_API_KEY or VITE_PI_API_KEY not configured (missing in environment)');
+      secureLog.error('PI_API_KEY or VITE_PI_API_KEY not configured (missing in environment)');
       return res.status(500).json({ error: 'Server configuration error: PI_API_KEY or VITE_PI_API_KEY missing' });
     } else {
       // Debug log for presence of PI_API_KEY (do not log the key value)
-      console.log('PI_API_KEY (or VITE_PI_API_KEY) loaded from environment.');
+      logApiStatus('Pi Network', piApiKey);
     }
 
-    console.log('Calling Pi API to complete payment...');
+    secureLog.log('Calling Pi API to complete payment...');
 
     const completeResponse = await fetch(`https://api.minepi.com/v2/payments/${paymentId}/complete`, {
       method: 'POST',
@@ -49,11 +50,11 @@ app.post('/pi-payment-complete', async (req: any, res: any) => {
     });
 
     const responseText = await completeResponse.text();
-    console.log('Pi API response status:', completeResponse.status);
-    console.log('Pi API response:', responseText);
+    secureLog.log('Pi API response status:', completeResponse.status);
+    secureLog.debug('Pi API response:', responseText);
 
     if (!completeResponse.ok) {
-      console.error('Pi payment completion failed:', responseText);
+      secureLog.error('Pi payment completion failed:', responseText);
       return res.status(400).json({ error: `Failed to complete payment: ${responseText}` });
     }
 
@@ -64,7 +65,7 @@ app.post('/pi-payment-complete', async (req: any, res: any) => {
       paymentData = { status: 'completed', paymentId, txid };
     }
 
-    console.log('Payment completed successfully:', paymentData);
+    secureLog.log('Payment completed successfully:', paymentData);
 
     // Update user's subscription status in database
     const supabaseUrl = process.env.SUPABASE_URL;
@@ -81,7 +82,7 @@ app.post('/pi-payment-complete', async (req: any, res: any) => {
     const period = 'monthly';
     const piAmount = paymentData.amount;
 
-    console.log('Subscription metadata:', { profileId, plan, period, piAmount });
+    secureLog.log('Subscription metadata:', { profileId, plan, period, piAmount });
 
     if (profileId && plan) {
       // Calculate expiration date (monthly only)
@@ -89,7 +90,7 @@ app.post('/pi-payment-complete', async (req: any, res: any) => {
       const expiresAt = new Date(now);
       expiresAt.setMonth(expiresAt.getMonth() + 1);
 
-      console.log('Updating profile subscription:', profileId, 'to', plan, 'expires:', expiresAt.toISOString());
+      secureLog.log('Updating profile subscription:', profileId, 'to', plan, 'expires:', expiresAt.toISOString());
 
       // Update profile subscription
       const { error: updateError } = await supabase
@@ -103,11 +104,11 @@ app.post('/pi-payment-complete', async (req: any, res: any) => {
         .eq('id', profileId);
 
       if (updateError) {
-        console.error('Failed to update profile:', updateError);
+        secureLog.error('Failed to update profile:', updateError);
         return res.status(500).json({ error: updateError.message || updateError });
       }
 
-      console.log('Profile updated successfully');
+      secureLog.log('Profile updated successfully');
 
       // Record the transaction
       const { error: txError } = await supabase
@@ -123,20 +124,20 @@ app.post('/pi-payment-complete', async (req: any, res: any) => {
         });
 
       if (txError) {
-        console.error('Failed to record transaction:', txError);
+        secureLog.error('Failed to record transaction:', txError);
         // Don't throw - subscription update was successful
       } else {
-        console.log('Transaction recorded successfully');
+        secureLog.log('Transaction recorded successfully');
       }
 
-      console.log(`Updated profile ${profileId} to ${plan} (${period}) until ${expiresAt.toISOString()}`);
+      secureLog.log(`Updated profile ${profileId} to ${plan} (${period}) until ${expiresAt.toISOString()}`);
     } else {
-      console.warn('Missing subscription metadata, skipping profile update');
+      secureLog.warn('Missing subscription metadata, skipping profile update');
     }
 
     return res.json({ success: true, payment: paymentData });
   } catch (error) {
-    console.error('Error in pi-payment-complete:', error);
+    secureLog.error('Error in pi-payment-complete:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return res.status(400).json({ error: errorMessage });
   }
@@ -144,6 +145,6 @@ app.post('/pi-payment-complete', async (req: any, res: any) => {
 
 const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  secureLog.log(`Server running on port ${PORT}`);
 });
 

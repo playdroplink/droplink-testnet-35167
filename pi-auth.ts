@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
+import { secureLog } from './utils/secureLogging.js';
 
 dotenv.config();
 
@@ -29,7 +30,7 @@ app.post('/pi-auth', async (req: Request, res: Response) => {
 
     const piApiKey = process.env.PI_API_KEY;
     if (!piApiKey) {
-      console.error('PI_API_KEY not configured');
+      secureLog.error('PI_API_KEY not configured');
       return res.status(500).json({ error: 'Server configuration error: PI_API_KEY missing' });
     }
 
