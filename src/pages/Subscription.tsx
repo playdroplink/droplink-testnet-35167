@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, Gift } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Check, Gift, AlertTriangle, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
@@ -11,6 +12,7 @@ import { usePi } from "@/contexts/PiContext";
 import { useRealPiPayment } from "@/hooks/useRealPiPayment";
 import { validateMainnetConfig } from "@/config/pi-config";
 import { GiftCardModal } from "@/components/GiftCardModal";
+import { createDroppayPaymentViaApi } from "@/lib/droppay";
 
 interface Plan {
   name: string;
@@ -114,7 +116,12 @@ const Subscription = () => {
   const [subscription, setSubscription] = useState<any>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [showGiftCardModal, setShowGiftCardModal] = useState(false);
+  const [dropPayLoading, setDropPayLoading] = useState(false);
+  const [showPiConfirmModal, setShowPiConfirmModal] = useState(false);
+  const [showDropPayConfirmModal, setShowDropPayConfirmModal] = useState(false);
+  const [pendingPlanData, setPendingPlanData] = useState<{planName: string, price: number} | null>(null);
   const piConfigured = !!import.meta.env.VITE_PI_API_KEY;
+  const dropPayConfigured = !!import.meta.env.VITE_DROPPAY_API_KEY;
   const navigate = useNavigate();
   const { piUser, signIn, loading: piLoading } = usePi() as any;
   const { processPayment, isProcessing, paymentProgress } = useRealPiPayment();
@@ -225,19 +232,16 @@ const Subscription = () => {
     
     // Show confirmation for paid plans
     if (planName !== 'Free' && price > 0) {
-      const confirmed = window.confirm(
-        `⚠️ REAL Pi PAYMENT\n\n` +
-        `You are about to pay ${price} Pi for the ${planName} plan (${isYearly ? 'Yearly' : 'Monthly'}).\n\n` +
-        `This is a REAL Pi Network mainnet transaction. Actual Pi coins will be deducted from your wallet.\n\n` +
-        `Do you want to proceed?`
-      );
-      
-      if (!confirmed) {
-        toast.info('Subscription cancelled');
-        return;
-      }
+      setPendingPlanData({ planName, price });
+      setShowPiConfirmModal(true);
+      return;
     }
     
+    // Handle free plan directly
+    await processPiPayment(planName, price);
+  };
+
+  const processPiPayment = async (planName: string, price: number) => {
     setLoading(true);
     try {
       if (planName === 'Free') {
@@ -339,6 +343,97 @@ const Subscription = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSubscribeWithDropPay = async (planName: string, price: number) => {
+    if (!dropPayConfigured) {
+      toast.error('DropPay is not configured');
+      return;
+    }
+    
+    // Show confirmation for paid plans
+    if (planName !== 'Free' && price > 0) {
+      setPendingPlanData({ planName, price });
+      setShowDropPayConfirmModal(true);
+      return;
+    }
+
+    // Handle free plan directly
+    await processDropPayPayment(planName, price);
+  };
+
+  const processDropPayPayment = async (planName: string, price: number) => {
+    setDropPayLoading(true);
+    try {
+      if (planName === 'Free') {
+        toast.success('Free plan activated! 🎉');
+        setCurrentPlan('Free');
+        setSubscription({ plan_type: 'free' });
+        setDropPayLoading(false);
+        return;
+      }
+
+      console.log('[DROPPAY SUBSCRIPTION] Creating payment for:', planName, price, 'Pi');
+      
+      // Prepare redirect URLs
+      const baseUrl = window.location.origin;
+      const billingPeriod = isYearly ? 'yearly' : 'monthly';
+      const successUrl = `${baseUrl}/payment-success?plan=${encodeURIComponent(planName.toLowerCase())}&period=${encodeURIComponent(billingPeriod)}&amount=${encodeURIComponent(price)}`;
+      const cancelUrl = `${baseUrl}/payment-cancel?plan=${encodeURIComponent(planName.toLowerCase())}&period=${encodeURIComponent(billingPeriod)}&amount=${encodeURIComponent(price)}`;
+      
+      // Create DropPay payment
+      const result = await createDroppayPaymentViaApi({
+        amount: price,
+        currency: 'PI',
+        description: `DropLink ${planName} ${isYearly ? 'Yearly' : 'Monthly'} Subscription`,
+        metadata: {
+          type: 'subscription',
+          subscriptionPlan: planName.toLowerCase(),
+          billingPeriod: isYearly ? 'yearly' : 'monthly',
+          username: piUser?.username || '',
+          profileId: profileId || '',
+          profile_id: profileId || '', // Webhook expects this format
+          plan: planName.toLowerCase(), // Webhook expects this format
+          period: isYearly ? 'yearly' : 'monthly', // Webhook expects this format
+          platform: 'droplink',
+          successUrl: successUrl,
+          cancelUrl: cancelUrl
+        }
+      });
+
+      console.log('[DROPPAY SUBSCRIPTION] Payment creation result:', result);
+
+      if (result.success && result.payment?.checkout_url) {
+        console.log('[DROPPAY SUBSCRIPTION] Redirecting to:', result.payment.checkout_url);
+        toast.success('Redirecting to DropPay...', {
+          description: 'You will be redirected to complete your payment'
+        });
+        
+        // Redirect to DropPay checkout
+        window.open(result.payment.checkout_url, '_blank', 'noopener,noreferrer');
+        
+        // Show instructions to user
+        setTimeout(() => {
+          toast.info('Complete payment in DropPay tab', {
+            description: 'Your subscription will activate automatically after payment',
+            duration: 10000
+          });
+        }, 1000);
+        
+      } else {
+        console.error('[DROPPAY SUBSCRIPTION] Payment creation failed:', result.error);
+        toast.error('Failed to create DropPay payment', {
+          description: result.error || 'Please try again later'
+        });
+      }
+    } catch (error: any) {
+      console.error('[DROPPAY SUBSCRIPTION] Error:', error);
+      toast.error('DropPay subscription failed', {
+        description: error.message || 'Please try again'
+      });
+    } finally {
+      setDropPayLoading(false);
     }
   };
 
@@ -617,7 +712,14 @@ const Subscription = () => {
           <p className="text-lg text-muted-foreground mb-2">Unlock more features and remove ads with a paid plan.</p>
           
           <div className="mt-3 flex flex-col gap-2 items-center text-sm">
-            <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 border border-green-200">Pi Payments: {piConfigured ? '✓ Online' : 'Not configured'}</span>
+            <div className="flex gap-3 items-center flex-wrap justify-center">
+              <span className={`px-3 py-1 rounded-full border ${piConfigured ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                Pi Payments: {piConfigured ? '✓ Online' : 'Not configured'}
+              </span>
+              <span className={`px-3 py-1 rounded-full border ${dropPayConfigured ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                DropPay: {dropPayConfigured ? '✓ Online' : 'Not configured'}
+              </span>
+            </div>
           </div>
           <div className="mt-4 p-4 bg-sky-400 border-2 border-sky-600 rounded-lg max-w-2xl mx-auto">
             <p className="text-sm font-semibold text-white mb-1">⚠️ REAL Pi Network Payments</p>
@@ -657,9 +759,49 @@ const Subscription = () => {
                       </li>
                     ))}
                   </ul>
-                  <Button className="w-full mb-2" variant="default" disabled={isCurrent || loading || isProcessing} onClick={() => handleSubscribe(plan.name, price)}>
-                    {isCurrent ? '✓ Current Plan' : (loading || isProcessing) ? `⏳ ${paymentProgress || 'Processing...'}` : plan.name === 'Free' ? 'Activate Free Plan' : `Subscribe with Pi`}
-                  </Button>
+                  {/* Payment Buttons */}
+                  {plan.name === 'Free' ? (
+                    <Button 
+                      className="w-full mb-2" 
+                      variant="default" 
+                      disabled={isCurrent || loading || isProcessing} 
+                      onClick={() => handleSubscribe(plan.name, price)}
+                    >
+                      {isCurrent ? '✓ Current Plan' : 'Activate Free Plan'}
+                    </Button>
+                  ) : (
+                    <div className="space-y-2">
+                      {/* Pi Payment Button */}
+                      {piConfigured && (
+                        <Button 
+                          className="w-full" 
+                          variant="default" 
+                          disabled={isCurrent || loading || isProcessing || dropPayLoading} 
+                          onClick={() => handleSubscribe(plan.name, price)}
+                        >
+                          {isCurrent ? '✓ Current Plan' : (loading || isProcessing) ? `⏳ ${paymentProgress || 'Processing...'}` : 'Subscribe with Pi Network'}
+                        </Button>
+                      )}
+                      
+                      {/* DropPay Button */}
+                      {dropPayConfigured && (
+                        <Button 
+                          className="w-full bg-orange-600 hover:bg-orange-700 text-white border-orange-600" 
+                          disabled={isCurrent || loading || isProcessing || dropPayLoading} 
+                          onClick={() => handleSubscribeWithDropPay(plan.name, price)}
+                        >
+                          {isCurrent ? '✓ Current Plan' : dropPayLoading ? '⏳ Redirecting to DropPay...' : 'Subscribe with DropPay'}
+                        </Button>
+                      )}
+                      
+                      {/* Fallback if neither payment method is configured */}
+                      {!piConfigured && !dropPayConfigured && (
+                        <Button className="w-full" variant="default" disabled>
+                          Payment methods not configured
+                        </Button>
+                      )}
+                    </div>
+                  )}
 
 
                   {subscription && isCurrent && subscription.end_date && (
@@ -685,6 +827,110 @@ const Subscription = () => {
         onRedeem={handleGiftCardRedeem}
         profileId={profileId || undefined}
       />
+
+      {/* Pi Payment Confirmation Modal */}
+      <Dialog open={showPiConfirmModal} onOpenChange={setShowPiConfirmModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-sky-600">
+              <AlertTriangle className="w-5 h-5" />
+              Confirm Pi Payment
+            </DialogTitle>
+            <DialogDescription className="text-left space-y-2">
+              <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
+                <p className="font-semibold text-sky-900 mb-2">⚠️ REAL Pi Network Payment</p>
+                <div className="text-sm text-sky-800 space-y-1">
+                  <p><strong>Plan:</strong> {pendingPlanData?.planName} ({isYearly ? 'Yearly' : 'Monthly'})</p>
+                  <p><strong>Amount:</strong> {pendingPlanData?.price} Pi</p>
+                  <p><strong>Network:</strong> Mainnet (Production)</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600">
+                This is a REAL Pi Network mainnet transaction. Actual Pi coins will be deducted from your wallet.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowPiConfirmModal(false);
+                setPendingPlanData(null);
+                toast.info('Payment cancelled');
+              }}
+              disabled={loading || isProcessing}
+            >
+              Cancel
+            </Button>
+            <Button 
+              className="bg-sky-600 hover:bg-sky-700"
+              disabled={loading || isProcessing}
+              onClick={async () => {
+                setShowPiConfirmModal(false);
+                if (pendingPlanData) {
+                  await processPiPayment(pendingPlanData.planName, pendingPlanData.price);
+                }
+                setPendingPlanData(null);
+              }}
+            >
+              <CreditCard className="w-4 h-4 mr-2" />
+              Confirm Payment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* DropPay Confirmation Modal */}
+      <Dialog open={showDropPayConfirmModal} onOpenChange={setShowDropPayConfirmModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-orange-600">
+              <CreditCard className="w-5 h-5" />
+              Confirm DropPay Payment
+            </DialogTitle>
+            <DialogDescription className="text-left space-y-2">
+              <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                <p className="font-semibold text-orange-900 mb-2">💳 DropPay Secure Payment</p>
+                <div className="text-sm text-blue-800 space-y-1">
+                  <p><strong>Plan:</strong> {pendingPlanData?.planName} ({isYearly ? 'Yearly' : 'Monthly'})</p>
+                  <p><strong>Amount:</strong> {pendingPlanData?.price} Pi</p>
+                  <p><strong>Payment Method:</strong> DropPay</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600">
+                You will be redirected to DropPay for secure payment processing. Your subscription will activate automatically after payment.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowDropPayConfirmModal(false);
+                setPendingPlanData(null);
+                toast.info('Payment cancelled');
+              }}
+              disabled={dropPayLoading}
+            >
+              Cancel
+            </Button>
+            <Button 
+              className="bg-orange-600 hover:bg-orange-700"
+              disabled={dropPayLoading}
+              onClick={async () => {
+                setShowDropPayConfirmModal(false);
+                if (pendingPlanData) {
+                  await processDropPayPayment(pendingPlanData.planName, pendingPlanData.price);
+                }
+                setPendingPlanData(null);
+              }}
+            >
+              <CreditCard className="w-4 h-4 mr-2" />
+              Continue to DropPay
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

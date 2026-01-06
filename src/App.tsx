@@ -14,6 +14,8 @@ import MerchantStorePreview from "./pages/MerchantStorePreview";
 import StoreFront from "./pages/StoreFront";
 import PublicBio from "./pages/PublicBio";
 import PaymentPage from "./pages/PaymentPage";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCancel from "./pages/PaymentCancel";
 import NotFound from "./pages/NotFound";
 import Subscription from "./pages/Subscription";
 import Followers from "./pages/Followers";
@@ -83,7 +85,9 @@ const App = () => {
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/domain" element={<CustomDomain />} />
             <Route path="/admin-mrwain" element={<AdminMrwain />} />
-            {/* <Route path="/debug" element={<ProfileDebug />} /> */}
+            {/* Payment routes */}
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/payment-cancel" element={<PaymentCancel />} />
             <Route path="/pay/:linkId" element={<PaymentPage />} />
             <Route path="/search-users" element={<UserSearchPage />} />
             <Route path="/u/:username" element={<PublicBio />} />
