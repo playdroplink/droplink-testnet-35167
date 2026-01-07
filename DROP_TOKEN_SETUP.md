@@ -257,4 +257,4 @@ Once setup is complete, your DROP token will be:
 ✅ Ready for distribution and transactions  
 ✅ Integrated into DropLink platform  
 
-Users can now earn and trade DROP tokens within the DropLink ecosystem!
+Users can now earn and trade DROP tokens within the Drop ecosystem!

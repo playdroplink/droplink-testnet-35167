@@ -250,7 +250,7 @@ export const DropPayModal = ({ children }: DropPayModalProps) => {
           {/* Footer Note */}
           <div className="text-center text-sm text-gray-500 border-t pt-4">
             <p>
-              DropPay is part of the DropLink ecosystem, bringing seamless Pi payments to the decentralized web.
+              DropPay is part of the Drop ecosystem, bringing seamless Pi payments to the decentralized web.
             </p>
           </div>
         </div>
