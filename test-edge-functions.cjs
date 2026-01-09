@@ -1,5 +1,5 @@
 // Quick Edge Functions Test
-const SUPABASE_URL = "https://jzzbmoopwnvgxxirulga.supabase.co";
+const SUPABASE_URL = "https://kvqfnmdkxaclsnyuzkyp.supabase.co";
 const SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6emJtb29wd252Z3h4aXJ1bGdhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTIwMzEyNSwiZXhwIjoyMDc0Nzc5MTI1fQ.BGsSUMxHQPHTNtrbKyPyRRx26CL2Qw3smDDOFYrjtTk";
 
 async function testEdgeFunction(functionName, testData = {}) {
