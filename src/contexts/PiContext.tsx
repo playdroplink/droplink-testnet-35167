@@ -265,10 +265,22 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           
           // Check ad network support
           try {
-            const features = await window.Pi.nativeFeaturesList();
-            const adSupported = features.includes('ad_network');
-            console.log('[PI DEBUG] 🎯 Ad Network Support (via nativeFeaturesList):', adSupported);
-            console.log('[PI DEBUG] 📋 Available features:', features);
+            let adSupported = false;
+            let features: string[] = [];
+            
+            // Check if nativeFeaturesList is available and is a function
+            if (typeof (window as any)?.Pi?.nativeFeaturesList === 'function') {
+              try {
+                features = await (window as any).Pi.nativeFeaturesList();
+                adSupported = features.includes('ad_network');
+                console.log('[PI DEBUG] 🎯 Ad Network Support (via nativeFeaturesList):', adSupported);
+                console.log('[PI DEBUG] 📋 Available features:', features);
+              } catch (featureErr) {
+                console.warn('[PI DEBUG] ⚠️ nativeFeaturesList call failed:', featureErr);
+              }
+            } else {
+              console.log('[PI DEBUG] ℹ️ nativeFeaturesList not available, using fallback checks');
+            }
             
             // Fallback checks for ad network availability
             let hasAdAPI = adSupported;
@@ -297,23 +309,27 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           const storedUser = localStorage.getItem('pi_user');
           
           if (storedToken && storedUser) {
-            console.log(`[PI DEBUG] 🔍 Found stored Pi authentication, verifying with ${networkLabel} API...`);
+            console.log(`[PI DEBUG] 🔍 Found stored Pi authentication...`);
             try {
-              // Verify token is still valid using the authentication service
-              const isValid = await verifyStoredPiToken(storedToken);
+              const userData = JSON.parse(storedUser);
+              setAccessToken(storedToken);
+              setPiUser(userData);
+              console.log(`[PI DEBUG] ✅ Loaded stored credentials`);
               
-              if (isValid) {
-                const userData = JSON.parse(storedUser);
-                setAccessToken(storedToken);
-                setPiUser(userData);
-                console.log(`[PI DEBUG] ✅ Auto-authenticated with stored credentials (${networkLabel})`);
-              } else {
-                console.warn('[PI DEBUG] ⚠️ Stored token verification failed, clearing...');
-                localStorage.removeItem('pi_access_token');
-                localStorage.removeItem('pi_user');
-              }
+              // Verify token asynchronously without blocking init
+              verifyStoredPiToken(storedToken).then((isValid) => {
+                if (!isValid) {
+                  console.warn('[PI DEBUG] ⚠️ Token expired, user needs to re-authenticate');
+                  localStorage.removeItem('pi_access_token');
+                  localStorage.removeItem('pi_user');
+                  setPiUser(null);
+                  setAccessToken(null);
+                }
+              }).catch(() => {
+                // Silent - network issues shouldn't break app
+              });
             } catch (err) {
-              console.warn('[PI DEBUG] ⚠️ Failed to verify stored credentials:', err);
+              console.warn('[PI DEBUG] ⚠️ Failed to load stored credentials:', err);
               localStorage.removeItem('pi_access_token');
               localStorage.removeItem('pi_user');
             }

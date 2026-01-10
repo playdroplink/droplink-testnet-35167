@@ -78,12 +78,54 @@
     <meta name="referrer" content="origin-when-cross-origin" />
 
 
-    <!-- Pi Network SDK: Load script in head (official docs pattern) -->
-    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <!-- Pi CORS Fix for Development -->
+    <script src="/pi-cors-fix.js"></script>
+    
+    <!-- Pi Network SDK: Load script with CORS and error handling -->
     <script>
-      // Pi SDK initialization happens in PiContext.tsx via window.Pi.init()
-      // This ensures proper initialization order and config management
-      console.log('[PI SDK] 📦 Pi SDK script loaded, awaiting context initialization');
+      // Enhanced Pi SDK loader with CORS fallback
+      (function() {
+        console.log('[PI SDK] 🟢 Starting enhanced Pi SDK loader...');
+        
+        // Primary SDK load
+        const script = document.createElement('script');
+        script.src = 'https://sdk.minepi.com/pi-sdk.js';
+        script.crossOrigin = 'anonymous';
+        
+        script.onload = function() {
+          console.log('[PI SDK] ✅ Pi SDK script loaded successfully');
+          window.piSDKLoaded = true;
+        };
+        
+        script.onerror = function() {
+          console.error('[PI SDK] ❌ Failed to load Pi SDK from CDN - using fallback');
+          
+          // Fallback: Try different approach
+          if (typeof window.Pi === 'undefined') {
+            window.Pi = {
+              init: function() {
+                console.log('[PI SDK] 🔄 Using Pi SDK fallback mode');
+                return Promise.resolve();
+              },
+              authenticate: function() {
+                console.log('[PI SDK] ⚠️ Pi authentication not available in fallback mode');
+                return Promise.reject('Pi SDK not loaded');
+              }
+            };
+          }
+          window.piSDKLoaded = 'fallback';
+        };
+        
+        document.head.appendChild(script);
+        
+        // Set a timeout for loading
+        setTimeout(() => {
+          if (!window.piSDKLoaded) {
+            console.warn('[PI SDK] ⚠️ Pi SDK loading timeout - may not be in Pi Browser');
+            script.onerror();
+          }
+        }, 5000);
+      })();
     </script>
     <script>
       // Enhanced Pi SDK loading with better error handling
@@ -162,9 +204,16 @@
         
         console.log('[PI VALIDATION] 🔍 Validating Pi environment...');
         
-        // Check HTTPS
+        // Check HTTPS (more lenient for development)
         if (window.location.protocol !== 'https:') {
-          console.warn('[PI VALIDATION] ⚠️ Not on HTTPS - Pi Browser requires HTTPS for validation');
+          if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.warn('[PI VALIDATION] ⚠️ Development mode: HTTPS recommended but not enforced');
+            console.log('[PI VALIDATION] 💡 For production Pi validation, use HTTPS');
+          } else {
+            console.warn('[PI VALIDATION] ⚠️ Not on HTTPS - Pi Browser requires HTTPS for validation');
+          }
+        } else {
+          console.log('[PI VALIDATION] ✅ HTTPS detected - Pi SDK validation enabled');
         }
         
         // Validate manifest.json

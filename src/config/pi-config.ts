@@ -87,10 +87,17 @@ export const PI_CONFIG = {
   PLATFORM_URL,
   MAINNET_URL: PLATFORM_URL,
   
-  getAuthHeaders: (accessToken: string) => ({
-    'Authorization': `Bearer ${accessToken}`,
-    'Content-Type': 'application/json',
-  }),
+  getAuthHeaders: (accessToken: string) => {
+    const headers: Record<string, string> = {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    };
+    // Add API key if available (required for Pi API authentication)
+    if (PI_API_KEY) {
+      headers['X-Api-Key'] = PI_API_KEY;
+    }
+    return headers;
+  },
   
   ENDPOINTS: {
     ME: `${BASE_API_URL}/v2/me`,

@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { usePi } from "@/contexts/PiContext";
 import { useRealPiPayment } from "@/hooks/useRealPiPayment";
+import { useSubscriptionPayment } from "@/hooks/useSubscriptionPayment";
 import { validateMainnetConfig } from "@/config/pi-config";
 import { GiftCardModal } from "@/components/GiftCardModal";
 import { createDroppayPaymentViaApi } from "@/lib/droppay";
@@ -23,7 +24,7 @@ interface Plan {
   savings?: string;
 }
 
-const plans: Plan[] = [
+const PLANS: Plan[] = [
   {
     name: "Free",
     monthlyPrice: 0,
@@ -125,6 +126,13 @@ const Subscription = () => {
   const navigate = useNavigate();
   const { piUser, signIn, loading: piLoading } = usePi() as any;
   const { processPayment, isProcessing, paymentProgress } = useRealPiPayment();
+  const {
+    processSubscriptionPayment,
+    isProcessing: isSubscriptionProcessing,
+    paymentProgress: subscriptionProgress,
+    currentPhase,
+    error: subscriptionError,
+  } = useSubscriptionPayment();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -438,6 +446,52 @@ const Subscription = () => {
   };
 
 
+  // Enhanced Pi Subscription Payment
+  const processEnhancedPiSubscription = async (planName: string, price: number) => {
+    if (!piUser || !profileId) {
+      toast.error('Please sign in with Pi Network and complete your profile setup');
+      return false;
+    }
+
+    try {
+      const billingPeriod = isYearly ? 'yearly' : 'monthly';
+      
+      const success = await processSubscriptionPayment(
+        {
+          name: planName,
+          price: price,
+          billingPeriod: billingPeriod,
+          description: `${planName} ${billingPeriod} subscription`
+        },
+        {
+          id: profileId,
+          username: piUser.username
+        }
+      );
+
+      if (success) {
+        setCurrentPlan(planName);
+        setSubscription({
+          plan_type: planName.toLowerCase(),
+          status: 'active',
+          end_date: new Date(Date.now() + (billingPeriod === 'yearly' ? 365 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000)).toISOString()
+        });
+        
+        // Redirect after delay
+        setTimeout(() => navigate('/'), 3000);
+        return true;
+      }
+      
+      return false;
+    } catch (error: any) {
+      console.error('[ENHANCED PI SUBSCRIPTION] Payment failed:', error);
+      toast.error('Subscription payment failed', {
+        description: error?.message || 'Please try again'
+      });
+      return false;
+    }
+  };
+
   const handleGiftCardPurchase = async (planType: string, billingPeriod: string, price: number, recipientEmail?: string, message?: string) => {
     if (!piUser) {
       toast.error('🔒 Pi Network Authentication Required', {
@@ -733,8 +787,15 @@ const Subscription = () => {
           <Label htmlFor="billing-toggle" className={isYearly ? 'font-bold' : ''}>Yearly <span className="text-primary">(Save 20%)</span></Label>
         </div>
 
+        {isSubscriptionProcessing && (
+          <div className="mb-4 text-center text-sm text-sky-700 bg-sky-50 border border-sky-200 rounded-lg px-4 py-2 inline-flex items-center gap-2">
+            <CreditCard className="w-4 h-4" />
+            {subscriptionProgress?.message || 'Processing Pi payment...'}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {plans.map((plan) => {
+          {PLANS.map((plan) => {
             const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
             const period = isYearly ? 'per year' : 'per month';
             const isCurrent = currentPlan === plan.name;
@@ -776,10 +837,14 @@ const Subscription = () => {
                         <Button 
                           className="w-full" 
                           variant="default" 
-                          disabled={isCurrent || loading || isProcessing || dropPayLoading} 
+                          disabled={isCurrent || loading || isProcessing || dropPayLoading || isSubscriptionProcessing} 
                           onClick={() => handleSubscribe(plan.name, price)}
                         >
-                          {isCurrent ? '✓ Current Plan' : (loading || isProcessing) ? `⏳ ${paymentProgress || 'Processing...'}` : 'Subscribe with Pi Network'}
+                          {isCurrent
+                            ? '✓ Current Plan'
+                            : (loading || isProcessing || isSubscriptionProcessing)
+                              ? `⏳ ${(subscriptionProgress?.message || paymentProgress || 'Processing...')}`
+                              : 'Subscribe with Pi Network'}
                         </Button>
                       )}
                       
@@ -787,7 +852,7 @@ const Subscription = () => {
                       {dropPayConfigured && (
                         <Button 
                           className="w-full bg-orange-600 hover:bg-orange-700 text-white border-orange-600" 
-                          disabled={isCurrent || loading || isProcessing || dropPayLoading} 
+                          disabled={isCurrent || loading || isProcessing || dropPayLoading || isSubscriptionProcessing} 
                           onClick={() => handleSubscribeWithDropPay(plan.name, price)}
                         >
                           {isCurrent ? '✓ Current Plan' : dropPayLoading ? '⏳ Redirecting to DropPay...' : 'Subscribe with DropPay'}
@@ -858,23 +923,23 @@ const Subscription = () => {
                 setPendingPlanData(null);
                 toast.info('Payment cancelled');
               }}
-              disabled={loading || isProcessing}
+              disabled={loading || isProcessing || isSubscriptionProcessing}
             >
               Cancel
             </Button>
             <Button 
               className="bg-sky-600 hover:bg-sky-700"
-              disabled={loading || isProcessing}
+              disabled={loading || isProcessing || isSubscriptionProcessing}
               onClick={async () => {
                 setShowPiConfirmModal(false);
                 if (pendingPlanData) {
-                  await processPiPayment(pendingPlanData.planName, pendingPlanData.price);
+                  await processEnhancedPiSubscription(pendingPlanData.planName, pendingPlanData.price);
                 }
                 setPendingPlanData(null);
               }}
             >
               <CreditCard className="w-4 h-4 mr-2" />
-              Confirm Payment
+              {isSubscriptionProcessing ? 'Processing...' : 'Confirm Payment'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -910,13 +975,13 @@ const Subscription = () => {
                 setPendingPlanData(null);
                 toast.info('Payment cancelled');
               }}
-              disabled={dropPayLoading}
+              disabled={dropPayLoading || isSubscriptionProcessing}
             >
               Cancel
             </Button>
             <Button 
               className="bg-orange-600 hover:bg-orange-700"
-              disabled={dropPayLoading}
+              disabled={dropPayLoading || isSubscriptionProcessing}
               onClick={async () => {
                 setShowDropPayConfirmModal(false);
                 if (pendingPlanData) {

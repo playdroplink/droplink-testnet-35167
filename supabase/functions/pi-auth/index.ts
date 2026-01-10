@@ -35,9 +35,21 @@ serve(async (req) => {
     }
 
     // Verify the access token with Pi API
+    // Support both sandbox and mainnet based on environment
+    // Check multiple possible environment variable names
+    const sandboxEnv = Deno.env.get('VITE_PI_SANDBOX_MODE') || 
+                       Deno.env.get('PI_SANDBOX_MODE') || 
+                       'false';
+    const isSandbox = sandboxEnv === 'true';
+    const piApiUrl = isSandbox
+      ? 'https://sandbox.minepi.com/v2/me'
+      : 'https://api.minepi.com/v2/me';
+    
     let piUserData;
     try {
-      const piResponse = await fetch("https://api.mainnet.minepi.com/v2/me", {
+      console.log(`Verifying token with Pi API (${isSandbox ? 'Sandbox' : 'Mainnet'}): ${piApiUrl}`);
+      console.log(`Environment check - PI_SANDBOX_MODE: ${Deno.env.get('PI_SANDBOX_MODE')}, VITE_PI_SANDBOX_MODE: ${Deno.env.get('VITE_PI_SANDBOX_MODE')}`);
+      const piResponse = await fetch(piApiUrl, {
         headers: {
           "Authorization": `Bearer ${accessToken}`,
         },
@@ -101,6 +113,12 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         profile,
+        piUser: {
+          uid: piUserData.uid,
+          username: piUserData.username,
+          wallet_address: piUserData.wallet_address || null,
+          meta: piUserData.meta || {},
+        },
         emailSignIn: false, // Email sign-in is hidden
         emailSignUp: false  // Email sign-up is hidden
       }),
