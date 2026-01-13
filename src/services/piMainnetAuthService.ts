@@ -33,9 +33,21 @@ export async function validatePiAccessToken(accessToken: string) {
 
     if (error) {
       console.warn(`[Pi Auth Service] ⚠️ Edge function error:`, error);
+      console.warn(`[Pi Auth Service] Error details:`, {
+        message: error.message,
+        context: error.context,
+        status: error.status
+      });
       
-      // If edge function is not available, fall back to direct API call
-      if (error.message?.includes('404') || error.message?.includes('FunctionsRelayError')) {
+      // If edge function is not available or fails, fall back to direct API call
+      // Common errors: 404, FunctionsRelayError, FunctionsHttpError, network errors
+      if (error.message?.includes('404') || 
+          error.message?.includes('FunctionsRelayError') ||
+          error.message?.includes('FunctionsHttpError') ||
+          error.message?.includes('Failed to send') ||
+          error.message?.includes('network') ||
+          error.name === 'FunctionsRelayError' ||
+          error.name === 'FunctionsHttpError') {
         console.log(`[Pi Auth Service] 🔄 Falling back to direct Pi API validation...`);
         return await validatePiAccessTokenDirect(accessToken);
       }
@@ -44,7 +56,9 @@ export async function validatePiAccessToken(accessToken: string) {
         throw new Error(`Pi authentication failed: Invalid or expired token`);
       }
       
-      throw new Error(`Backend validation failed: ${error.message}`);
+      // For any other edge function errors, fall back to direct API
+      console.log(`[Pi Auth Service] 🔄 Unknown edge function error, falling back to direct API...`);
+      return await validatePiAccessTokenDirect(accessToken);
     }
 
     if (!data || !data.piUser) {

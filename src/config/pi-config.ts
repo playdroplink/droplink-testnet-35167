@@ -11,8 +11,19 @@ import { isPiBrowserEnv } from "@/contexts/PiContext";
 
 // Prefer explicit sandbox flag but also honor VITE_PI_NETWORK=sandbox|testnet to avoid mismatched configs
 const networkEnv = String(import.meta.env.VITE_PI_NETWORK ?? "").toLowerCase();
-// Determine sandbox mode from environment variables
-const sandboxFlag = import.meta.env.VITE_PI_SANDBOX_MODE === 'true' || networkEnv === 'sandbox' || networkEnv === 'testnet';
+// Determine sandbox mode from environment variables (default to false for production)
+const sandboxMode = import.meta.env.VITE_PI_SANDBOX_MODE ?? 'false';
+const sandboxFlag = sandboxMode === 'true' || networkEnv === 'sandbox' || networkEnv === 'testnet';
+
+// Log configuration for debugging
+if (typeof window !== 'undefined') {
+  console.log('[PI CONFIG] 🌐 Network Mode:', sandboxFlag ? 'SANDBOX' : 'MAINNET');
+  console.log('[PI CONFIG] Environment:', {
+    VITE_PI_NETWORK: networkEnv,
+    VITE_PI_SANDBOX_MODE: sandboxMode,
+    isSandbox: sandboxFlag
+  });
+}
 
 const PI_API_KEY = import.meta.env.VITE_PI_API_KEY ?? "";
 const PI_VALIDATION_KEY = import.meta.env.VITE_PI_VALIDATION_KEY ?? "";
