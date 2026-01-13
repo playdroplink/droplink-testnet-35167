@@ -138,4 +138,8 @@ export interface ProfileData {
   shortenedLinks?: ShortenedLink[];
   linkLayoutType?: string;
   piWalletQrUrl?: string;
+  card_front_color?: string;
+  card_back_color?: string;
+  card_text_color?: string;
+  card_accent_color?: string;
 }

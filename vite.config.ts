@@ -56,8 +56,11 @@ export default defineConfig(({ mode }) => {
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
         'Cross-Origin-Embedder-Policy': 'unsafe-none',
         'Cross-Origin-Opener-Policy': 'unsafe-none'
-      }
+      },
+      // Ensure validation key is accessible
+      middlewareMode: false,
     },
+    publicDir: 'public',
     plugins: [
       react(),
       mode === 'development' && componentTagger(),

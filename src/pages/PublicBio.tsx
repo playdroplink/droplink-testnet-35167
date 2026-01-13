@@ -14,6 +14,7 @@ import { GiftDialog } from "@/components/GiftDialog";
 import { AIChatWidget } from "@/components/AIChatWidget";
 import PublicBioMessageForm from "@/components/PublicBioMessageForm";
 import { BackgroundMusicPlayer } from "@/components/BackgroundMusicPlayer";
+import { VirtualCard } from "@/components/VirtualCard";
 import { PiAdBanner } from "@/components/PiAdBanner";
 import PiAdsBanner from "@/components/PiAdsBanner";
 import PiAdNetwork from "@/components/PiAdNetwork";
@@ -56,6 +57,8 @@ const PublicBio = () => {
   const { createPayment } = usePi();
 
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showCookieModal, setShowCookieModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const { username: rawUsername } = useParams();
   // Strip @ prefix if present (for @username URLs)
   const username = rawUsername?.startsWith('@') ? rawUsername.substring(1) : rawUsername;
@@ -518,6 +521,10 @@ const PublicBio = () => {
         showShareButton: profileData.show_share_button || false,
         storeUrl: `@${profileData.username || username || 'user'}`,
         showPiWalletTips,
+        card_front_color: profileData.card_front_color,
+        card_back_color: profileData.card_back_color,
+        card_text_color: profileData.card_text_color,
+        card_accent_color: profileData.card_accent_color,
       });
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -781,7 +788,16 @@ const PublicBio = () => {
         {showPiAds && (
           <div className="mb-6">
             <div className="flex items-center justify-between gap-3">
-              <div className="text-white text-sm font-semibold">Pi Ad Network</div>
+              {profile.showShareButton && (
+                <Button
+                  onClick={() => setShowShareDialog(true)}
+                  variant="ghost"
+                  size="icon"
+                  className="hover:bg-white/10 transition-all duration-200"
+                >
+                  <Share2 className="w-6 h-6 text-white hover:text-cyan-400" />
+                </Button>
+              )}
               {piAdsOpen ? (
                 <Button
                   size="sm"
@@ -1305,19 +1321,6 @@ const PublicBio = () => {
           </div>
         )}
 
-        {/* Share Button */}
-        {profile.showShareButton && (
-          <div className="flex justify-center py-6">
-            <Button
-              onClick={() => setShowShareDialog(true)}
-              className="gap-3 px-8 py-6 text-gray-900 bg-white border-2 border-gray-300 hover:bg-gray-50 hover:border-gray-400 font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
-              style={{ backgroundColor: '#fff', color: '#111', borderColor: '#d1d5db' }}
-            >
-              <Share2 className="w-6 h-6" />
-              <span style={{color:'#111'}}>Share Profile</span>
-            </Button>
-          </div>
-        )}
 
         {/* Followers Section */}
         {profileId && (
@@ -1340,20 +1343,8 @@ const PublicBio = () => {
           </div>
         )}
 
-        {/* Droplink Branding Footer */}
-        {!profile.hasPremium && (
-          <div className="text-center py-8 border-t border-white/10">
-            <button
-              onClick={() => window.location.href = 'https://www.droplink.space'}
-              className="text-white/70 text-sm font-semibold hover:text-cyan-400 transition-all duration-200 cursor-pointer group"
-            >
-              JOIN <span className="text-cyan-400 group-hover:text-cyan-300">DROPLINK</span> BY <span className="text-white/80">MRWAIN ORGANIZATION</span>
-            </button>
-          </div>
-        )}
-
         {/* Report Button in Footer */}
-        <div className="text-center py-8 border-t border-white/10">
+        <div className="text-center py-6">
           <button
             className="bg-gradient-to-r from-red-500/20 to-pink-500/20 hover:from-red-500/30 hover:to-pink-500/30 rounded-full p-3 shadow-lg border border-red-400/40 inline-flex items-center gap-2 px-6 transition-all duration-200 backdrop-blur"
             title="Report unwanted content"
@@ -1362,6 +1353,60 @@ const PublicBio = () => {
             <Flag className="w-4 h-4 text-red-400" />
             <span className="text-sm text-red-300 font-semibold">Report Unwanted Content</span>
           </button>
+        </div>
+
+        {/* Droplink Branding Footer */}
+        {!profile.hasPremium && (
+          <div className="text-center py-6">
+            <button
+              onClick={() => window.location.href = 'https://www.droplink.space'}
+              className="text-white/70 text-xs font-semibold hover:text-cyan-400 transition-all duration-200 cursor-pointer group"
+            >
+              JOIN <span className="text-cyan-400 group-hover:text-cyan-300">DROPLINK</span> BY <span className="text-white/80">MRWAIN ORGANIZATION</span>
+            </button>
+          </div>
+        )}
+
+        {/* Footer Links */}
+        <div className="text-center py-4">
+          <div className="flex flex-wrap justify-center gap-2 text-xs text-white/60">
+            <a
+              href="https://www.droplink.space/cookies"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white/80 transition-colors"
+            >
+              Cookie Preferences
+            </a>
+            <span>·</span>
+            <button
+              onClick={() => setShowReportModal(true)}
+              className="hover:text-white/80 transition-colors"
+            >
+              Report
+            </button>
+            <span>·</span>
+            <button
+              onClick={() => navigate('/privacy')}
+              className="hover:text-white/80 transition-colors"
+            >
+              Privacy
+            </button>
+            <span>·</span>
+            <button
+              onClick={() => navigate('/terms')}
+              className="hover:text-white/80 transition-colors"
+            >
+              Terms
+            </button>
+            <span>·</span>
+            <button
+              onClick={() => navigate('/search-users')}
+              className="hover:text-white/80 transition-colors"
+            >
+              Explore other Droplink
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1416,35 +1461,28 @@ const PublicBio = () => {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="flex justify-center p-4 bg-white rounded-lg relative w-[240px] h-[240px] mx-auto items-center">
-              <QRCodeSVG
-                value={`${window.location.origin}/${profile.storeUrl}`}
-                size={200}
-                fgColor="#222"
-                bgColor="#fff"
-              />
-              <img
-                src="https://i.ibb.co/1fdJky1d/Gemini-Generated-Image-ar8t52ar8t52ar8t.png"
-                alt="Droplink Logo"
-                className="absolute left-1/2 top-1/2 w-12 h-12 -translate-x-1/2 -translate-y-1/2 z-10 shadow-lg border-2 border-white bg-white rounded-lg"
-                style={{ pointerEvents: 'none' }}
-              />
-            </div>
-            <p className="text-base font-semibold text-center text-gray-900" style={{wordBreak:'break-word'}}>
-              {`${window.location.origin}/${profile.storeUrl}`}
-            </p>
-            <div className="flex gap-2 justify-center">
-              <Button 
-                size="sm" 
-                onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/${profile.storeUrl}`);
-                  toast.success("Link copied!");
-                }}
-              >
-                <Copy className="w-4 h-4" />
-                Copy Profile Link
-              </Button>
-            </div>
+            {/* Virtual Card Display */}
+            <VirtualCard
+              username={profile.username}
+              storeUrl={`${window.location.origin}/u/${profile.username}`}
+              frontColor={profile.card_front_color || "#2bbdee"}
+              backColor={profile.card_back_color || "#2bbdee"}
+              textColor={profile.card_text_color || "#000000"}
+              accentColor={profile.card_accent_color || "#fafafa"}
+            />
+            
+            {/* Copy Link Button */}
+            <Button
+              className="w-full bg-sky-500 hover:bg-sky-600 text-white"
+              onClick={() => {
+                const profileUrl = `${window.location.origin}/${profile.storeUrl}`;
+                navigator.clipboard.writeText(profileUrl);
+                toast.success("Profile link copied!");
+              }}
+            >
+              <Copy className="w-4 h-4 mr-2" />
+              Copy Profile Link
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

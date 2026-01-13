@@ -24,7 +24,7 @@ export const VirtualCard = ({
   const cardRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="perspective-1000 w-full max-w-md mx-auto">
+    <div className="perspective-1000 w-full mx-auto">
       <div
         ref={cardRef}
         className={`relative w-full aspect-[1.586/1] transition-transform duration-700 transform-style-3d cursor-pointer ${
@@ -78,13 +78,13 @@ export const VirtualCard = ({
           </div>
 
           {/* Username Footer */}
-          <div className="flex items-end justify-between">
+          <div className="flex items-end justify-between relative z-10">
             <div>
-              <div className="text-xs opacity-70 mb-1" style={{ color: textColor }}>MERCHANT</div>
+              <div className="text-xs font-medium mb-1" style={{ color: textColor }}>MERCHANT</div>
               <div className="text-lg font-bold tracking-wide" style={{ color: textColor }}>@{username}</div>
             </div>
             <div className="text-right">
-              <div className="text-xs opacity-70 mb-1" style={{ color: textColor }}>NETWORK</div>
+              <div className="text-xs font-medium mb-1" style={{ color: textColor }}>NETWORK</div>
               <div className="text-sm font-semibold" style={{ color: textColor }}>
                 Pi Network
               </div>
