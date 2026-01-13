@@ -55,14 +55,21 @@ export const VirtualCard = ({
         }
         
         .no-print {
-          display: none !important;
+          display: none;
         }
       }
     `;
-    document.head.appendChild(style);
+    
+    if (!document.getElementById('virtual-card-styles')) {
+      style.id = 'virtual-card-styles';
+      document.head.appendChild(style);
+    }
 
     return () => {
-      document.head.removeChild(style);
+      const existingStyle = document.getElementById('virtual-card-styles');
+      if (existingStyle) {
+        document.head.removeChild(existingStyle);
+      }
     };
   }, []);
 
