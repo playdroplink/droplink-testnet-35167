@@ -8,7 +8,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Pi Network MAINNET API endpoint - DO NOT use sandbox
-const PI_API_BASE_URL = "https://api.mainnet.minepi.com";
+const PI_API_BASE_URL = "https://api.minepi.com";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
