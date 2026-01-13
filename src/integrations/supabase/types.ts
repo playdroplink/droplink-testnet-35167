@@ -446,6 +446,10 @@ export type Database = {
         Row: {
           bank_details: Json | null
           business_name: string
+          card_accent_color: string | null
+          card_back_color: string | null
+          card_front_color: string | null
+          card_text_color: string | null
           created_at: string
           crypto_wallets: Json | null
           description: string | null
@@ -465,6 +469,10 @@ export type Database = {
         Insert: {
           bank_details?: Json | null
           business_name: string
+          card_accent_color?: string | null
+          card_back_color?: string | null
+          card_front_color?: string | null
+          card_text_color?: string | null
           created_at?: string
           crypto_wallets?: Json | null
           description?: string | null
@@ -484,6 +492,10 @@ export type Database = {
         Update: {
           bank_details?: Json | null
           business_name?: string
+          card_accent_color?: string | null
+          card_back_color?: string | null
+          card_front_color?: string | null
+          card_text_color?: string | null
           created_at?: string
           crypto_wallets?: Json | null
           description?: string | null

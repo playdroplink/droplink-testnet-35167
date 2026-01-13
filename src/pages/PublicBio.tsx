@@ -521,10 +521,10 @@ const PublicBio = () => {
         showShareButton: profileData.show_share_button || false,
         storeUrl: `@${profileData.username || username || 'user'}`,
         showPiWalletTips,
-        card_front_color: profileData.card_front_color,
-        card_back_color: profileData.card_back_color,
-        card_text_color: profileData.card_text_color,
-        card_accent_color: profileData.card_accent_color,
+        card_front_color: profileData.card_front_color || "#2bbdee",
+        card_back_color: profileData.card_back_color || "#2bbdee",
+        card_text_color: profileData.card_text_color || "#000000",
+        card_accent_color: profileData.card_accent_color || "#fafafa",
       });
     } catch (error) {
       console.error("Error loading profile:", error);
