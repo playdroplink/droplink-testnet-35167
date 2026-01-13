@@ -29,7 +29,7 @@ const PiAuth = () => {
     const [enableChristmasTheme, setEnableChristmasTheme] = useState(() => {
       // Load from localStorage on mount
       const saved = localStorage.getItem('droplink-christmas-theme');
-      return saved !== null ? JSON.parse(saved) : true; // Default to true
+      return saved !== null ? JSON.parse(saved) : false; // Default to false - Christmas is over
     });
   const navigate = useNavigate();
   const { isAuthenticated, loading, signIn, piUser } = usePi();
