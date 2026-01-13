@@ -44,20 +44,6 @@ const plans = [
   { id: 'pro', name: 'Pro', monthlyPrice: 30, yearlyPrice: 288, color: 'from-orange-500 to-red-600' }
 ];
 
-// Christmas snowflake animation
-const Snowflake = ({ delay }: { delay: number }) => (
-  <div 
-    className="absolute text-white opacity-70 animate-fall pointer-events-none"
-    style={{ 
-      left: `${Math.random() * 100}%`,
-      animationDelay: `${delay}s`,
-      fontSize: `${Math.random() * 10 + 10}px`
-    }}
-  >
-    ❄️
-  </div>
-);
-
 // Helper function to generate gift card code client-side
 const generateGiftCardCode = (): string => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -80,7 +66,7 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
-    toast.success('🎄 Code copied to clipboard!');
+    toast.success('Code copied to clipboard!');
   };
 
   const selectedPlanData = plans.find(p => p.id === selectedPlan);
@@ -133,13 +119,13 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
                 senderProfileId: profileId
               }
             });
-            toast.success('🎄 Gift card purchased and email sent! 🎁');
+            toast.success('Gift card purchased and email sent!');
           } catch (emailError) {
             console.error('Email send error:', emailError);
             toast.success('Gift card purchased! (Email delivery pending)');
           }
         } else {
-          toast.success('🎄 Gift card purchased successfully! 🎁');
+          toast.success('Gift card purchased successfully!');
         }
         
         // Reset form
@@ -156,7 +142,7 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
 
   const handleRedeem = async () => {
     if (!redeemCode.trim()) {
-      toast.error('🎁 Please enter a gift card code');
+      toast.error('Please enter a gift card code');
       return;
     }
 
@@ -288,67 +274,50 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
       )}
 
       <Dialog open={open && !showRedeemSuccess} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-red-50 via-white to-green-50 border-2 border-red-200 mx-4">
-        {/* Christmas Snowflakes */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(15)].map((_, i) => (
-            <Snowflake key={i} delay={i * 0.3} />
-          ))}
-        </div>
-
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white border border-slate-200 mx-4">
         <DialogHeader className="relative z-10">
-          <DialogTitle className="flex items-center gap-2 text-3xl bg-gradient-to-r from-red-600 via-green-600 to-red-600 bg-clip-text text-transparent">
-            <span className="text-3xl">🎄</span>
-            <Gift className="w-7 h-7 text-red-500 animate-bounce" />
+          <DialogTitle className="flex items-center gap-2 text-2xl text-slate-900">
+            <Gift className="w-6 h-6 text-sky-500" />
             DropLink Gift Cards
-            <span className="text-3xl">🎁</span>
           </DialogTitle>
-          <DialogDescription className="text-center text-red-700 font-medium">
-            🎅 Give the gift of DropLink this Christmas! 🤶
+          <DialogDescription className="text-center text-slate-600 font-medium">
+            Send DropLink access or upgrades with a one-time gift card.
           </DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'buy' | 'redeem')} className="relative z-10">
-          <TabsList className="grid w-full grid-cols-2 bg-gradient-to-r from-red-100 to-green-100 border border-red-200">
-            <TabsTrigger value="buy" className="data-[state=active]:bg-red-500 data-[state=active]:text-white">
-              🎁 Buy Gift Card
+          <TabsList className="grid w-full grid-cols-2 bg-slate-50 border border-slate-200">
+            <TabsTrigger value="buy" className="data-[state=active]:bg-sky-500 data-[state=active]:text-white">
+              Buy Gift Card
             </TabsTrigger>
-            <TabsTrigger value="redeem" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
-              🎄 Redeem Code
+            <TabsTrigger value="redeem" className="data-[state=active]:bg-sky-600 data-[state=active]:text-white">
+              Redeem Code
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="buy" className="space-y-4 mt-4">
             {purchasedCode ? (
-              <Card className="bg-gradient-to-br from-red-600 via-red-500 to-green-600 text-white border-4 border-yellow-300 shadow-2xl relative overflow-hidden">
-                {/* Christmas decorations */}
-                <div className="absolute top-0 left-0 text-6xl opacity-20">🎄</div>
-                <div className="absolute bottom-0 right-0 text-6xl opacity-20">🎁</div>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-9xl opacity-5">❄️</div>
-                
+              <Card className="bg-gradient-to-br from-sky-600 via-sky-500 to-indigo-600 text-white border border-sky-200 shadow-xl relative overflow-hidden">
                 <CardContent className="p-6 space-y-4 relative z-10">
-                  <div className="text-center">
-                    <div className="flex items-center justify-center gap-2 mb-4">
-                      <span className="text-4xl animate-bounce">🎅</span>
-                      <Gift className="w-16 h-16 animate-pulse" />
-                      <span className="text-4xl animate-bounce">🤶</span>
+                  <div className="text-center space-y-4">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Gift className="w-12 h-12" />
                     </div>
-                    <h3 className="text-3xl font-bold mb-2 flex items-center justify-center gap-2">
-                      <Sparkles className="w-6 h-6" />
-                      Gift Card Created! 
-                      <Sparkles className="w-6 h-6" />
+                    <h3 className="text-2xl font-bold mb-2 flex items-center justify-center gap-2">
+                      <Sparkles className="w-5 h-5" />
+                      Gift Card Created
                     </h3>
-                    <p className="text-white/90 mb-4 text-lg">🎄 Share the Christmas joy! 🎄</p>
+                    <p className="text-white/80 mb-4 text-base">Share this code with your recipient.</p>
                     
-                    <div className="bg-white/30 backdrop-blur-sm rounded-lg p-4 mb-4 border-2 border-yellow-300 shadow-lg">
-                      <p className="text-sm text-white/90 mb-2 font-semibold">🎁 Your Gift Card Code 🎁</p>
+                    <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 mb-4 border border-white/30 shadow-lg">
+                      <p className="text-sm text-white/90 mb-2 font-semibold">Gift Card Code</p>
                       <div className="flex items-center justify-center gap-2">
                         <code className="text-2xl font-mono font-bold tracking-wider bg-white/20 px-4 py-2 rounded">{purchasedCode}</code>
                         <Button
                           type="button"
                           size="sm"
                           variant="ghost"
-                          className="text-white hover:bg-white/20 border border-white/50"
+                          className="text-white hover:bg-white/20 border border-white/30"
                           onClick={() => copyCode(purchasedCode)}
                         >
                           <Copy className="w-4 h-4" />
@@ -356,13 +325,11 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
                       </div>
                     </div>
 
-                    <div className="text-sm text-white/90 space-y-2 bg-white/20 rounded-lg p-4 border border-white/30">
+                    <div className="text-sm text-white/90 space-y-2 bg-white/10 rounded-lg p-4 border border-white/20">
                       <p className="flex items-center justify-center gap-2">
-                        <span className="text-xl">🎁</span>
                         <strong>Plan:</strong> {selectedPlanData?.name} ({billingPeriod})
                       </p>
                       <p className="flex items-center justify-center gap-2">
-                        <span className="text-xl">💎</span>
                         <strong>Value:</strong> {price} Pi
                       </p>
                       {recipientEmail && (
@@ -377,21 +344,21 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
                   <Button
                     type="button"
                     variant="secondary"
-                    className="w-full bg-white text-red-600 hover:bg-yellow-100 font-bold text-lg"
+                    className="w-full bg-white text-sky-700 hover:bg-sky-50 font-semibold text-lg"
                     onClick={() => {
                       setPurchasedCode(null);
                       onOpenChange(false);
                     }}
                   >
-                    🎄 Done 🎄
+                    Done
                   </Button>
                 </CardContent>
               </Card>
             ) : (
               <>
                 <div>
-                  <Label className="mb-3 block text-red-700 font-semibold flex items-center gap-2">
-                    <span className="text-xl">🎄</span>
+                  <Label className="mb-3 block text-slate-800 font-semibold flex items-center gap-2">
+                    <Gift className="w-4 h-4 text-sky-500" />
                     Select Plan
                   </Label>
                   <div className="grid grid-cols-3 gap-3">
@@ -400,17 +367,17 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
                         key={plan.id}
                         className={cn(
                           'cursor-pointer transition-all hover:shadow-lg border-2',
-                          selectedPlan === plan.id ? 'ring-4 ring-red-500 border-green-500 shadow-xl' : 'border-red-200 hover:border-green-400'
+                          selectedPlan === plan.id ? 'ring-4 ring-sky-400 border-sky-500 shadow-xl' : 'border-slate-200 hover:border-sky-200'
                         )}
                         onClick={() => setSelectedPlan(plan.id)}
                       >
-                        <CardContent className="p-4 text-center bg-gradient-to-br from-red-50 to-green-50">
+                        <CardContent className="p-4 text-center bg-gradient-to-br from-slate-50 to-sky-50">
                           <div className={`w-12 h-12 mx-auto mb-2 rounded-full bg-gradient-to-br ${plan.color} flex items-center justify-center shadow-lg`}>
                             <CreditCard className="w-6 h-6 text-white" />
                           </div>
-                          <p className="font-semibold text-green-800">{plan.name}</p>
+                          <p className="font-semibold text-slate-800">{plan.name}</p>
                           {plan.popular && (
-                            <span className="text-xs text-red-600 font-bold flex items-center justify-center gap-1">
+                            <span className="text-xs text-sky-700 font-bold flex items-center justify-center gap-1">
                               <Sparkles className="w-3 h-3" /> Popular
                             </span>
                           )}
@@ -421,34 +388,34 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
                 </div>
 
                 <div>
-                  <Label className="mb-3 block text-green-700 font-semibold flex items-center gap-2">
-                    <span className="text-xl">🎁</span>
+                  <Label className="mb-3 block text-slate-800 font-semibold flex items-center gap-2">
+                    <Gift className="w-4 h-4 text-sky-500" />
                     Billing Period
                   </Label>
                   <div className="grid grid-cols-2 gap-3">
                     <Card
                       className={cn(
                         'cursor-pointer transition-all hover:shadow-lg border-2',
-                        billingPeriod === 'monthly' ? 'ring-4 ring-green-500 border-red-500 shadow-xl' : 'border-green-200 hover:border-red-400'
+                        billingPeriod === 'monthly' ? 'ring-4 ring-sky-400 border-sky-500 shadow-xl' : 'border-slate-200 hover:border-sky-200'
                       )}
                       onClick={() => setBillingPeriod('monthly')}
                     >
-                      <CardContent className="p-4 text-center bg-gradient-to-br from-green-50 to-red-50">
-                        <p className="font-semibold text-red-800">Monthly</p>
-                        <p className="text-sm text-green-600">{selectedPlanData?.monthlyPrice} Pi/month</p>
+                      <CardContent className="p-4 text-center bg-gradient-to-br from-slate-50 to-sky-50">
+                        <p className="font-semibold text-slate-800">Monthly</p>
+                        <p className="text-sm text-slate-600">{selectedPlanData?.monthlyPrice} Pi/month</p>
                       </CardContent>
                     </Card>
                     <Card
                       className={cn(
                         'cursor-pointer transition-all hover:shadow-lg border-2',
-                        billingPeriod === 'yearly' ? 'ring-4 ring-green-500 border-red-500 shadow-xl' : 'border-green-200 hover:border-red-400'
+                        billingPeriod === 'yearly' ? 'ring-4 ring-sky-400 border-sky-500 shadow-xl' : 'border-slate-200 hover:border-sky-200'
                       )}
                       onClick={() => setBillingPeriod('yearly')}
                     >
-                      <CardContent className="p-4 text-center bg-gradient-to-br from-green-50 to-red-50">
-                        <p className="font-semibold text-red-800">Yearly</p>
-                        <p className="text-sm text-green-600">{selectedPlanData?.yearlyPrice} Pi/year</p>
-                        <span className="text-xs text-red-600 font-bold">🎄 Save 20%!</span>
+                      <CardContent className="p-4 text-center bg-gradient-to-br from-slate-50 to-sky-50">
+                        <p className="font-semibold text-slate-800">Yearly</p>
+                        <p className="text-sm text-slate-600">{selectedPlanData?.yearlyPrice} Pi/year</p>
+                        <span className="text-xs text-sky-700 font-bold">Save 20%</span>
                       </CardContent>
                     </Card>
                   </div>
@@ -456,7 +423,7 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
 
                 <div className="space-y-3">
                   <div>
-                    <Label htmlFor="recipientEmail" className="text-red-700 flex items-center gap-2">
+                    <Label htmlFor="recipientEmail" className="text-slate-800 flex items-center gap-2">
                       <Mail className="w-4 h-4" />
                       Recipient Email (Optional)
                     </Label>
@@ -466,31 +433,30 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
                       placeholder="friend@example.com"
                       value={recipientEmail}
                       onChange={(e) => setRecipientEmail(e.target.value)}
-                      className="border-green-300 focus:border-red-500"
+                      className="border-slate-300 focus:border-sky-500"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="message" className="text-green-700 flex items-center gap-2">
+                    <Label htmlFor="message" className="text-slate-800 flex items-center gap-2">
                       <Gift className="w-4 h-4" />
                       Personal Message (Optional)
                     </Label>
                     <Textarea
                       id="message"
-                      placeholder="Merry Christmas! Enjoy DropLink! 🎄"
+                      placeholder="Add a personal note for the recipient"
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
-                      className="border-red-300 focus:border-green-500"
+                      className="border-slate-300 focus:border-sky-500"
                     />
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-r from-red-100 via-white to-green-100 p-4 rounded-lg border-2 border-yellow-300 shadow-lg">
+                <div className="bg-gradient-to-r from-slate-50 via-white to-sky-50 p-4 rounded-lg border border-slate-200 shadow-sm">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-red-700 flex items-center gap-2">
-                      <span className="text-xl">🎁</span>
+                    <span className="font-semibold text-slate-800 flex items-center gap-2">
                       Total
                     </span>
-                    <span className="text-2xl font-bold text-green-700">{price} Pi</span>
+                    <span className="text-2xl font-bold text-slate-900">{price} Pi</span>
                   </div>
                   <p className="text-xs text-gray-600">
                     {selectedPlanData?.name} ({billingPeriod}) subscription gift card
@@ -500,9 +466,9 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
                 <Button
                   onClick={handlePurchase}
                   disabled={loading || !profileId}
-                  className="w-full bg-gradient-to-r from-red-500 to-green-600 hover:from-red-600 hover:to-green-700 text-white font-bold text-lg shadow-lg"
+                  className="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold text-lg shadow"
                 >
-                  {loading ? '⏳ Processing...' : '🎄 Purchase with Pi 🎁'}
+                  {loading ? 'Processing...' : 'Purchase with Pi'}
                 </Button>
                 {!profileId && (
                   <p className="text-sm text-center text-red-600 mt-2">
@@ -514,21 +480,19 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
           </TabsContent>
 
           <TabsContent value="redeem" className="space-y-4 mt-4">
-            <Card className="bg-gradient-to-br from-green-50 via-white to-red-50 border-2 border-green-200">
+            <Card className="bg-white border border-slate-200">
               <CardContent className="p-6 space-y-4">
                 <div className="text-center mb-4">
                   <div className="flex items-center justify-center gap-2 mb-2">
-                    <span className="text-4xl">🎄</span>
-                    <Gift className="w-12 h-12 text-green-600" />
-                    <span className="text-4xl">🎁</span>
+                    <Gift className="w-12 h-12 text-sky-600" />
                   </div>
-                  <h3 className="text-xl font-bold text-green-800">Redeem Your Gift Card</h3>
-                  <p className="text-sm text-red-600">Enter your Christmas gift code below</p>
+                  <h3 className="text-xl font-bold text-slate-900">Redeem Your Gift Card</h3>
+                  <p className="text-sm text-slate-600">Enter your gift code below</p>
                 </div>
 
                 <div>
-                  <Label htmlFor="redeemCode" className="text-green-700 font-semibold flex items-center gap-2">
-                    <span className="text-xl">🎁</span>
+                  <Label htmlFor="redeemCode" className="text-slate-800 font-semibold flex items-center gap-2">
+                    <Gift className="w-4 h-4 text-sky-500" />
                     Gift Card Code
                   </Label>
                   <Input
@@ -536,16 +500,16 @@ export function GiftCardModal({ open, onOpenChange, onPurchase, onRedeem, profil
                     placeholder="GIFT-XXXX-XXXX"
                     value={redeemCode}
                     onChange={(e) => setRedeemCode(e.target.value.toUpperCase())}
-                    className="text-center text-lg font-mono tracking-wider border-2 border-red-300 focus:border-green-500"
+                    className="text-center text-lg font-mono tracking-wider border border-slate-300 focus:border-sky-500"
                   />
                 </div>
 
                 <Button
                   onClick={handleRedeem}
                   disabled={loading || !redeemCode.trim()}
-                  className="w-full bg-gradient-to-r from-green-500 to-red-600 hover:from-green-600 hover:to-red-700 text-white font-bold text-lg shadow-lg"
+                  className="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold text-lg shadow"
                 >
-                  {loading ? '⏳ Redeeming...' : '🎄 Redeem Gift Card 🎁'}
+                  {loading ? 'Redeeming...' : 'Redeem Gift Card'}
                 </Button>
 
                 <div className="text-center text-sm text-gray-500 bg-white/50 p-3 rounded-lg border border-gray-200">

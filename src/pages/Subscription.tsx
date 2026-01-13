@@ -572,7 +572,7 @@ const Subscription = () => {
         }
 
         toast.dismiss(toastId);
-        toast.success('🎄 Gift card purchased successfully! 🎁', {
+        toast.success('Gift card purchased successfully', {
           description: 'Share the code with your recipient'
         });
         
@@ -589,8 +589,8 @@ const Subscription = () => {
                 senderProfileId: profileId
               }
             });
-            toast.success('📧 Gift card email sent to recipient!', {
-              description: `${recipientEmail} will receive their Christmas gift!`
+            toast.success('Gift card email sent to recipient', {
+              description: `${recipientEmail} will receive their gift card code.`
             });
           } catch (emailError) {
             console.error('Email send error:', emailError);
@@ -630,7 +630,7 @@ const Subscription = () => {
     }
 
     try {
-      const toastId = toast.loading('🎁 Redeeming gift card...');
+      const toastId = toast.loading('Redeeming gift card...');
       
       const { data: giftCard, error: fetchError } = await supabase
         .from('gift_cards')

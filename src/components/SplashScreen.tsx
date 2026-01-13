@@ -10,10 +10,6 @@ export interface SplashScreenProps {
 const SplashScreen = ({ onComplete }: SplashScreenProps) => {
   const [progress, setProgress] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
-  const [enableChristmasTheme, setEnableChristmasTheme] = useState(() => {
-    const saved = localStorage.getItem('droplink-christmas-theme');
-    return saved !== null ? JSON.parse(saved) : false;
-  });
 
   useEffect(() => {
     // Total loading time in milliseconds - slightly longer for smoother animation
@@ -63,72 +59,13 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
     <AnimatePresence mode="wait" onExitComplete={() => {}}>
       {!isExiting && (
         <motion.div
-          className={`fixed inset-0 z-50 flex flex-col items-center justify-center ${enableChristmasTheme ? 'bg-gradient-to-b from-red-600 via-sky-400 to-green-600' : 'bg-sky-400'}`}
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-sky-400"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
           key="splash-screen"
         >
-          {/* Christmas Decorations - Only show when Christmas theme is enabled */}
-          {enableChristmasTheme && (
-            <>
-              {/* Top Left Snowflakes */}
-              <motion.div
-                className="absolute left-4 top-4 text-4xl pointer-events-none"
-                animate={{ opacity: [0.3, 1, 0.3] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                ❄️
-              </motion.div>
-              
-              {/* Top Right Christmas Tree */}
-              <motion.div
-                className="absolute right-4 top-4 text-4xl pointer-events-none"
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              >
-                🎄
-              </motion.div>
-              
-              {/* Bottom Left Christmas Tree */}
-              <motion.div
-                className="absolute left-4 bottom-4 text-4xl pointer-events-none"
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity, delay: 0.3 }}
-              >
-                🎄
-              </motion.div>
-              
-              {/* Bottom Right Snowflakes */}
-              <motion.div
-                className="absolute right-4 bottom-4 text-4xl pointer-events-none"
-                animate={{ opacity: [0.3, 1, 0.3] }}
-                transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-              >
-                ❄️
-              </motion.div>
-              
-              {/* Snowman - Top Center */}
-              <motion.div
-                className="absolute left-1/2 top-8 -translate-x-1/2 text-3xl pointer-events-none opacity-60"
-                animate={{ rotate: [0, 10, -10, 0] }}
-                transition={{ duration: 3, repeat: Infinity }}
-              >
-                ⛄
-              </motion.div>
-              
-              {/* Santa - Bottom Center */}
-              <motion.div
-                className="absolute left-1/2 bottom-8 -translate-x-1/2 text-3xl pointer-events-none opacity-70"
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                🎅
-              </motion.div>
-            </>
-          )}
-
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -150,29 +87,21 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
                 times: [0, 0.7, 1] 
               }}
             >
-              {enableChristmasTheme ? (
-                <img 
-                  src="https://i.ibb.co/DH2HWD9w/Gemini-Generated-Image-uo458huo458huo45-removebg-preview.png"
-                  alt="Droplink Christmas Logo"
-                  className="h-full w-full object-contain"
-                />
-              ) : (
-                <img 
-                  src="https://i.ibb.co/67KHWdv9/Add-a-subheading-2-removebg-preview.png"
-                  alt="Droplink Logo"
-                  className="h-full w-full object-contain"
-                />
-              )}
+              <img 
+                src="https://i.ibb.co/67KHWdv9/Add-a-subheading-2-removebg-preview.png"
+                alt="Droplink Logo"
+                className="h-full w-full object-contain"
+              />
             </motion.div>
             
             {/* App Name */}
             <motion.h1 
-              className={`mb-2 font-poppins text-4xl font-bold ${enableChristmasTheme ? 'text-white' : 'text-white'}`}
+              className="mb-2 font-poppins text-4xl font-bold text-white"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" }}
             >
-              {enableChristmasTheme ? '🎄 Droplink 🎄' : 'Droplink'}
+              Droplink
             </motion.h1>
             
             {/* Company Name */}
@@ -187,12 +116,12 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
             
             {/* Progress Percentage */}
             <motion.p
-              className={`mt-6 font-medium ${enableChristmasTheme ? 'text-white drop-shadow-lg' : 'text-white/90'}`}
+              className="mt-6 font-medium text-white/90"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6, duration: 0.5 }}
             >
-              {enableChristmasTheme && '🎁 '}{Math.round(progress)}%{enableChristmasTheme && ' 🎁'}
+              {Math.round(progress)}%
             </motion.p>
             
             {/* Progress Bar */}
@@ -202,37 +131,27 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
               animate={{ opacity: 1, width: "100%" }}
               transition={{ delay: 0.7, duration: 0.6 }}
             >
-              <div className={enableChristmasTheme ? "relative" : ""}>
+              <div>
                 <Progress 
                   value={progress} 
-                  className={`h-2 overflow-hidden ${enableChristmasTheme ? 'bg-white/30' : ''}`}
+                  className="h-2 overflow-hidden"
                 />
-                {enableChristmasTheme && (
-                  <motion.div
-                    className="absolute -top-1 text-xl"
-                    style={{ left: `${Math.min(progress, 95)}%` }}
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 1, repeat: Infinity }}
-                  >
-                    🎅
-                  </motion.div>
-                )}
               </div>
             </motion.div>
             
             {/* Support Email */}
             <motion.p
-              className={`mt-8 text-xs ${enableChristmasTheme ? 'text-white/80 font-medium' : 'text-white/60'}`}
+              className="mt-8 text-xs text-white/60"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8, duration: 0.5 }}
             >
-              {enableChristmasTheme && '🎄 '}Need help? Contact us at support@droplinkspace{enableChristmasTheme && ' 🎄'}
+              Need help? Contact us at support@droplinkspace
             </motion.p>
             
             {/* Copyright */}
             <motion.p
-              className={`mt-4 text-xs ${enableChristmasTheme ? 'text-white/70 font-medium' : 'text-white/50'}`}
+              className="mt-4 text-xs text-white/50"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.9, duration: 0.5 }}

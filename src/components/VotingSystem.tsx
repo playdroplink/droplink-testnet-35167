@@ -21,8 +21,8 @@ interface Feature {
 const SAMPLE_FEATURES: Feature[] = [
   {
     id: '1',
-    title: 'Dark Mode Theme',
-    description: 'Add a beautiful dark mode theme option for better user experience in low-light environments',
+    title: 'Faster Page Loads',
+    description: 'Optimize assets and caching for quicker bio page performance on all devices',
     category: 'ui',
     status: 'proposed',
     upvotes: 42,

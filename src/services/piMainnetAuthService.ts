@@ -100,38 +100,11 @@ export async function validatePiAccessToken(accessToken: string) {
 
 /**
  * Direct Pi API validation (fallback method)
- * Note: This may not work from browser due to CORS restrictions
+ * DISABLED: Causes CORS errors on localhost
  */
 async function validatePiAccessTokenDirect(accessToken: string) {
-  const endpoint = PI_CONFIG.ENDPOINTS.ME;
-  console.log(`[Pi Auth Service] 🌐 Calling Pi API directly at ${endpoint}...`);
-  
-  const response = await fetch(endpoint, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    mode: 'cors',
-    cache: 'no-store',
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    
-    if (response.status === 401) {
-      console.error(`[Pi Auth Service] ❌ Direct API validation failed: 401 Unauthorized`);
-      throw new Error(`Pi authentication failed: Invalid or expired token`);
-    }
-    
-    console.error(`[Pi Auth Service] ❌ Direct API validation failed: ${response.status}`, errorText);
-    throw new Error(`Pi API returned ${response.status}: ${errorText}`);
-  }
-
-  const piData = await response.json();
-  console.log(`[Pi Auth Service] ✅ Token validated directly. Pi user:`, piData.username);
-  
-  return piData;
+  console.log('[Pi Auth Service] ⚠️ Direct Pi API validation disabled - CORS issues on localhost');
+  throw new Error('Direct Pi API validation is disabled. Use Pi Browser or edge function only.');
 }
 
 /**

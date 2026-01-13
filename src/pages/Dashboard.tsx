@@ -127,11 +127,6 @@ const Dashboard = () => {
   const [aiLogoPrompt, setAiLogoPrompt] = useState("");
   const [aiLogoLoading, setAiLogoLoading] = useState(false);
   const [aiLogoError, setAiLogoError] = useState("");
-  // Christmas Theme Toggle State
-  const [enableChristmasTheme, setEnableChristmasTheme] = useState(() => {
-    const saved = localStorage.getItem('droplink-christmas-theme');
-    return saved !== null ? JSON.parse(saved) : false; // Default to false for dashboard
-  });
   const navigate = useNavigate();
   
   // Hooks must be called unconditionally
@@ -176,11 +171,6 @@ const Dashboard = () => {
     setGreeting(getGreeting());
   }, []);
 
-  // Save Christmas theme preference to localStorage
-  useEffect(() => {
-    localStorage.setItem('droplink-christmas-theme', JSON.stringify(enableChristmasTheme));
-  }, [enableChristmasTheme]);
-  
   const subscription = useActiveSubscription();
   const { plan, expiresAt, loading: subscriptionLoading } = subscription;
   const [showRenewModal, setShowRenewModal] = useState(false);
@@ -1334,7 +1324,7 @@ const Dashboard = () => {
 
   return (
     <div
-      className={`min-h-screen ${enableChristmasTheme ? 'bg-gradient-to-b from-red-600 via-sky-400 to-green-600' : 'bg-sky-100'} overflow-x-hidden`}
+      className="min-h-screen bg-sky-100 overflow-x-hidden"
       style={{
         position: "relative",
         overflow: "hidden",
@@ -1342,17 +1332,6 @@ const Dashboard = () => {
         maxWidth: "100vw",
       }}
     >
-      {/* Festive snowflakes background - only show if Christmas theme enabled */}
-      {enableChristmasTheme && (
-        <div className="absolute inset-0 pointer-events-none z-0">
-          <div className="absolute top-10 left-10 text-4xl animate-pulse">❄️</div>
-          <div className="absolute top-20 right-20 text-5xl animate-bounce">🎄</div>
-          <div className="absolute bottom-20 left-20 text-4xl animate-pulse">❄️</div>
-          <div className="absolute bottom-10 right-10 text-5xl animate-bounce">🎄</div>
-          <div className="absolute top-1/3 left-1/4 text-3xl opacity-60">⛄</div>
-          <div className="absolute top-2/3 right-1/4 text-3xl opacity-60">⛄</div>
-        </div>
-      )}
       {/* Material You Glow Effect */}
       <div
         aria-hidden="true"
@@ -1373,18 +1352,14 @@ const Dashboard = () => {
       <div className="px-2 sm:px-4 lg:px-6 pt-2 sm:pt-3 lg:pt-4 pb-1 sm:pb-2 relative z-10">
         {greeting && displayUsername && (
           <h2
-            className={`text-xl font-semibold mb-2 animate-fade-in ${
-              enableChristmasTheme ? 'text-white drop-shadow' : 'text-sky-700'
-            }`}
+            className="text-xl font-semibold mb-2 animate-fade-in text-sky-700"
           >
             {greeting}, {displayUsername}!
           </h2>
         )}
         {greeting && !displayUsername && (
           <h2
-            className={`text-xl font-semibold mb-2 animate-fade-in ${
-              enableChristmasTheme ? 'text-white drop-shadow' : 'text-sky-700'
-            }`}
+            className="text-xl font-semibold mb-2 animate-fade-in text-sky-700"
           >
             {greeting}!
           </h2>
@@ -1449,44 +1424,7 @@ const Dashboard = () => {
                 {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </Button>
             )}
-            {/* Christmas Theme Toggle Button - Hidden (Christmas is over) */}
-            {false && (
-            <Button
-              type="button"
-              onClick={() => setEnableChristmasTheme(!enableChristmasTheme)}
-              size="sm"
-              variant="outline"
-              title={enableChristmasTheme ? "Switch to Standard Mode" : "Switch to Christmas Mode"}
-              className={`h-9 w-9 sm:w-auto px-0 sm:px-3 border-none ${enableChristmasTheme ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-sky-100 text-sky-600 hover:bg-sky-200'}`}
-            >
-              <span className="text-lg">{enableChristmasTheme ? '🎄' : '❄️'}</span>
-              <span className="hidden sm:inline ml-1.5 text-xs sm:text-sm font-medium">
-                {enableChristmasTheme ? 'Christmas' : 'Standard'}
-              </span>
-            </Button>
-            )}
-            {/* Light/Dark Mode Toggle Button */}
-            <Button
-              type="button"
-              onClick={() => {
-                const newTheme = preferences.theme_mode === 'dark' ? 'light' : 'dark';
-                updateNestedPreference('dashboard_layout', 'activeTab', preferences.dashboard_layout.activeTab);
-                updatePreference('theme_mode', newTheme);
-              }}
-              size="sm"
-              variant="outline"
-              title={preferences.theme_mode === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              className="h-9 w-9 sm:w-auto px-0 sm:px-3 border-none bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700"
-            >
-              {preferences.theme_mode === 'dark' ? (
-                <Sun className="w-4 h-4 text-yellow-500" />
-              ) : (
-                <Moon className="w-4 h-4 text-slate-600" />
-              )}
-              <span className="hidden sm:inline ml-1.5 text-xs sm:text-sm font-medium">
-                {preferences.theme_mode === 'dark' ? 'Light' : 'Dark'}
-              </span>
-            </Button>
+            {/* Theme controls removed: dark mode and seasonal themes disabled */}
             {/* Add Plan button to header for both mobile and desktop */}
             <Button
               type="button"

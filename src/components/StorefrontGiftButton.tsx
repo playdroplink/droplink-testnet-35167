@@ -18,7 +18,7 @@ const StorefrontGiftButton: React.FC<StorefrontGiftButtonProps> = ({ receiverPro
   return (
     <>
       <Button variant="outline" className="mt-2" onClick={() => setOpen(true)}>
-        🎁 Send Gift / Drop
+        Send Gift / Drop
       </Button>
       <GiftDialog
         open={open}

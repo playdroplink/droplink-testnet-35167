@@ -91,40 +91,47 @@
         const script = document.createElement('script');
         script.src = 'https://sdk.minepi.com/pi-sdk.js';
         script.crossOrigin = 'anonymous';
+        script.type = 'text/javascript';
         
         script.onload = function() {
           console.log('[PI SDK] ✅ Pi SDK script loaded successfully');
           window.piSDKLoaded = true;
         };
         
-        script.onerror = function() {
-          console.error('[PI SDK] ❌ Failed to load Pi SDK from CDN - using fallback');
+        script.onerror = function(error) {
+          console.warn('[PI SDK] ⚠️ Pi SDK failed to load - this is normal outside Pi Browser');
           
-          // Fallback: Try different approach
+          // Only create fallback if truly needed
           if (typeof window.Pi === 'undefined') {
             window.Pi = {
               init: function() {
-                console.log('[PI SDK] 🔄 Using Pi SDK fallback mode');
+                console.log('[PI SDK] 🔄 Fallback mode - not in Pi Browser');
                 return Promise.resolve();
               },
               authenticate: function() {
-                console.log('[PI SDK] ⚠️ Pi authentication not available in fallback mode');
-                return Promise.reject('Pi SDK not loaded');
+                return Promise.reject('Pi Browser required');
               }
             };
           }
           window.piSDKLoaded = 'fallback';
         };
         
-        document.head.appendChild(script);
+        // Only append script if we might be in Pi Browser
+        const userAgent = navigator.userAgent || '';
+        if (userAgent.includes('PiBrowser') || userAgent.includes('Pi Browser')) {
+          document.head.appendChild(script);
+        } else {
+          console.log('[PI SDK] ℹ️ Not in Pi Browser - skipping SDK load');
+          script.onerror();
+        }
         
         // Set a timeout for loading
         setTimeout(() => {
           if (!window.piSDKLoaded) {
-            console.warn('[PI SDK] ⚠️ Pi SDK loading timeout - may not be in Pi Browser');
-            script.onerror();
+            console.log('[PI SDK] ℹ️ SDK load timeout - not in Pi Browser');
+            if (typeof script.onerror === 'function') script.onerror();
           }
-        }, 5000);
+        }, 3000);
       })();
     </script>
     <script>

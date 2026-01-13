@@ -220,30 +220,6 @@ All colors MUST be HSL.
     overflow-x: hidden;
   }
 
-/* Dark mode theme */
-.dark {
-  --background: 0 0% 0%;
-  --foreground: 0 0% 100%;
-  --card: 0 0% 8%;
-  --card-foreground: 0 0% 100%;
-  --popover: 0 0% 0%;
-  --popover-foreground: 0 0% 100%;
-  --primary: 197 92% 60%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 0 0% 8%;
-  --secondary-foreground: 0 0% 100%;
-  --muted: 0 0% 8%;
-  --muted-foreground: 0 0% 70%;
-  --accent: 197 92% 60%;
-  --accent-foreground: 0 0% 100%;
-  --destructive: 0 63% 31%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 0 0% 15%;
-  --input: 0 0% 12%;
-  --ring: 197 92% 60%;
-  --input-bg: 0 0% 5%;
-  --hover-bg: 0 0% 10%;
-}
 
   .transparent-surface {
     @apply bg-background/30 backdrop-blur-xl border border-border/30;
@@ -268,19 +244,3 @@ All colors MUST be HSL.
   }
 }
 
-/* Christmas snowflake animation for gift cards */
-@keyframes fall {
-  0% {
-    top: -10%;
-    opacity: 0.7;
-  }
-  100% {
-    top: 110%;
-    opacity: 0;
-  }
-}
-
-.animate-fall {
-  animation: fall linear infinite;
-  animation-duration: 10s;
-}

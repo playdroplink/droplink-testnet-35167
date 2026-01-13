@@ -29,18 +29,22 @@ export const VirtualCard = ({
     style.textContent = `
       .perspective-1000 {
         perspective: 1000px;
+        -webkit-perspective: 1000px;
       }
       
       .transform-style-3d {
         transform-style: preserve-3d;
+        -webkit-transform-style: preserve-3d;
       }
       
       .backface-hidden {
         backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
       }
       
       .rotate-y-180 {
         transform: rotateY(180deg);
+        -webkit-transform: rotateY(180deg);
       }
       
       @media print {
@@ -81,7 +85,7 @@ export const VirtualCard = ({
           isFlipped ? "rotate-y-180" : ""
         }`}
         onClick={() => setIsFlipped(!isFlipped)}
-        style={{ transformStyle: "preserve-3d" }}
+        style={{ transformStyle: "preserve-3d", WebkitTransformStyle: "preserve-3d" }}
       >
         {/* Front Side */}
         <Card
@@ -90,6 +94,7 @@ export const VirtualCard = ({
             backgroundColor: frontColor,
             color: textColor,
             backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
           }}
         >
           {/* Card Header */}
@@ -159,7 +164,9 @@ export const VirtualCard = ({
             backgroundColor: backColor,
             color: textColor,
             backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
+            WebkitTransform: "rotateY(180deg)",
           }}
         >
           {/* Magnetic Strip at top */}

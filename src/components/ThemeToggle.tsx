@@ -36,7 +36,7 @@ export const ThemeToggle = ({
       size={size}
       className={`transition-smooth ${showText ? 'gap-2' : ''} ${className} opacity-50 cursor-not-allowed`}
       disabled={true}
-      title="Light mode only (Dark mode temporarily disabled)"
+      title="Light mode only"
     >
       <Sun className="h-4 w-4" />
       {showText && (

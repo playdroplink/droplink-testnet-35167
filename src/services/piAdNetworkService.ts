@@ -154,7 +154,7 @@ export class PiAdNetworkService {
    * Returns adId for server verification
    */
   static async showRewardedAd(): Promise<{ success: boolean; adId?: string }> {
-    console.log('[PI ADS] 🎁 Showing rewarded ad...');
+    console.log('[PI ADS] Showing rewarded ad...');
     
     try {
       if (!window.Pi?.Ads?.showAd) {
@@ -191,7 +191,7 @@ export class PiAdNetworkService {
   static async showRewardedAdAdvanced(
     onAdWatched: (adId: string) => Promise<boolean>
   ): Promise<{ success: boolean; rewarded: boolean; adId?: string }> {
-    console.log('[PI ADS] 🎁 Showing rewarded ad (advanced)...');
+    console.log('[PI ADS] Showing rewarded ad (advanced)...');
     
     try {
       if (!window.Pi?.Ads) {
@@ -387,7 +387,7 @@ export async function watchAdsForReward(
   let watched = 0;
   
   for (let i = 0; i < adsToWatch; i++) {
-    console.log(`[PI ADS] 🎁 Watching ad ${i + 1}/${adsToWatch}...`);
+    console.log(`[PI ADS] Watching ad ${i + 1}/${adsToWatch}...`);
     
     const result = await PiAdNetworkService.showRewardedAdAdvanced(verifyAdCallback);
     
