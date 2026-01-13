@@ -2,6 +2,21 @@
 // Console filtering must be imported first to suppress errors early
 import './lib/console-filter';
 
+// Production security layer - ONLY enabled on actual production domain
+// NOT enabled on localhost (development)
+import { enableProductionSecurity, validateProductionSecurity } from './utils/productionSecurity';
+
+// Only enable on actual production domain (droplink.space with HTTPS)
+const isProductionDomain = typeof window !== 'undefined' ? 
+  window.location.hostname === 'droplink.space' || window.location.hostname === 'www.droplink.space'
+  : false;
+const isHTTPS = typeof window !== 'undefined' ? window.location.protocol === 'https:' : false;
+
+if (isProductionDomain && isHTTPS) {
+  enableProductionSecurity();
+  validateProductionSecurity();
+}
+
 // Polyfill global for browser compatibility (stellar-sdk fix)
 if (typeof global === "undefined") {
   // @ts-ignore
