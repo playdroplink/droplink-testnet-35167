@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
-    "lib": ["deno.window"],
-    "strict": true
+    "lib": ["deno.window", "deno.ns", "esnext"],
+    "strict": true,
+    "allowJs": true,
+    "types": ["./deno.d.ts"]
   },
   "imports": {
     "std/": "https://deno.land/std@0.168.0/",
