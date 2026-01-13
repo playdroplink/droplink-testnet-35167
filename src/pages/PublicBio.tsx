@@ -814,7 +814,7 @@ const PublicBio = () => {
                   className="text-white hover:text-white/80 hover:bg-transparent"
                   onClick={() => setPiAdsOpen(true)}
                 >
-                  View Ads
+                  <Zap className="w-5 h-5" />
                 </Button>
               )}
             </div>

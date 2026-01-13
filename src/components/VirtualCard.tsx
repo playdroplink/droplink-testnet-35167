@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Card } from "@/components/ui/card";
 import { CreditCard } from "lucide-react";
@@ -22,6 +22,49 @@ export const VirtualCard = ({
 }: VirtualCardProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Add custom CSS for 3D effects
+    const style = document.createElement("style");
+    style.textContent = `
+      .perspective-1000 {
+        perspective: 1000px;
+      }
+      
+      .transform-style-3d {
+        transform-style: preserve-3d;
+      }
+      
+      .backface-hidden {
+        backface-visibility: hidden;
+      }
+      
+      .rotate-y-180 {
+        transform: rotateY(180deg);
+      }
+      
+      @media print {
+        .perspective-1000 {
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+        
+        body {
+          margin: 0;
+          padding: 20mm;
+        }
+        
+        .no-print {
+          display: none !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   return (
     <div className="perspective-1000 w-full mx-auto">
@@ -153,40 +196,3 @@ export const VirtualCard = ({
     </div>
   );
 };
-
-// Add custom CSS for 3D effects
-const style = document.createElement("style");
-style.textContent = `
-  .perspective-1000 {
-    perspective: 1000px;
-  }
-  
-  .transform-style-3d {
-    transform-style: preserve-3d;
-  }
-  
-  .backface-hidden {
-    backface-visibility: hidden;
-  }
-  
-  .rotate-y-180 {
-    transform: rotateY(180deg);
-  }
-  
-  @media print {
-    .perspective-1000 {
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-    
-    body {
-      margin: 0;
-      padding: 20mm;
-    }
-    
-    .no-print {
-      display: none !important;
-    }
-  }
-`;
-document.head.appendChild(style);
