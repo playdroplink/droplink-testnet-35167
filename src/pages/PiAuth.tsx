@@ -232,7 +232,8 @@ const PiAuth = () => {
         <CardHeader className="text-center">
           {/* Theme Toggle Switches */}
           <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b">
-            {/* Christmas Theme Toggle */}
+            {/* Christmas Theme Toggle - Hidden (Christmas is over) */}
+            {false && (
             <div className="flex items-center gap-2">
               <Label htmlFor="christmas-toggle" className="text-xs sm:text-sm font-medium whitespace-nowrap">
                 {enableChristmasTheme ? '🎄' : '❄️'}
@@ -243,6 +244,7 @@ const PiAuth = () => {
                 onCheckedChange={setEnableChristmasTheme}
               />
             </div>
+            )}
             
             {/* Light/Dark Mode Toggle */}
             <div className="flex items-center gap-2">

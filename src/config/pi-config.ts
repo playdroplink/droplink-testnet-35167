@@ -25,6 +25,7 @@ if (typeof window !== 'undefined') {
   });
 }
 
+const PI_APP_ID = import.meta.env.VITE_PI_APP_ID ?? "droplink-317d26f51b67e992";
 const PI_API_KEY = import.meta.env.VITE_PI_API_KEY ?? "";
 const PI_VALIDATION_KEY = import.meta.env.VITE_PI_VALIDATION_KEY ?? "";
 const PLATFORM_URL = import.meta.env.VITE_PLATFORM_URL ?? "https://droplink.space";
@@ -54,6 +55,7 @@ export const PI_CONFIG = {
   SDK: {
     version: "2.0",
     sandbox: sandboxFlag,
+    appId: PI_APP_ID,
   },
   
   // Official Documentation Links

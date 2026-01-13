@@ -1449,7 +1449,8 @@ const Dashboard = () => {
                 {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </Button>
             )}
-            {/* Christmas Theme Toggle Button */}
+            {/* Christmas Theme Toggle Button - Hidden (Christmas is over) */}
+            {false && (
             <Button
               type="button"
               onClick={() => setEnableChristmasTheme(!enableChristmasTheme)}
@@ -1463,6 +1464,7 @@ const Dashboard = () => {
                 {enableChristmasTheme ? 'Christmas' : 'Standard'}
               </span>
             </Button>
+            )}
             {/* Light/Dark Mode Toggle Button */}
             <Button
               type="button"

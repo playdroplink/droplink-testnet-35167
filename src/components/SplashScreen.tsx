@@ -42,17 +42,12 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
     
     // Complete the loading after the total time
     const timer = setTimeout(() => {
-      // Play sound when loading completes (with error handling)
-      try {
-        playSound(sounds.loadingComplete, 0.4);
-      } catch (error) {
-        console.warn('Audio playback failed:', error);
-      }
+      // Audio removed - browser blocks autoplay without user interaction
       
       // Set exiting state first for smooth transition
       setIsExiting(true);
       
-      // Small delay after sound before transitioning
+      // Small delay before transitioning
       setTimeout(() => {
         onComplete();
       }, 500);
