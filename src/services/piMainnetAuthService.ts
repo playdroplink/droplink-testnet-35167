@@ -25,8 +25,8 @@ export async function validatePiAccessToken(accessToken: string) {
 
   console.log(`[Pi Auth Service] 🔐 Validating Pi access token with ${networkLabel} backend...`);
   
+  // Try using Supabase Edge Function for secure server-side token validation
   try {
-    // Try using Supabase Edge Function for secure server-side token validation
     const { data, error } = await supabase.functions.invoke('pi-auth', {
       body: { accessToken }
     });
@@ -72,18 +72,29 @@ export async function validatePiAccessToken(accessToken: string) {
     console.log(`[Pi Auth Service] ✅ Token validated via edge function. Pi user:`, piData.username);
     
     return piData;
-  } catch (error: any) {
-    const isFetchError = error?.message?.toLowerCase().includes('failed to fetch');
-    const networkHint = PI_CONFIG.SANDBOX_MODE
-      ? 'Check sandbox API URL, Pi Browser network connectivity, and ensure HTTPS is allowed.'
-      : 'Check mainnet connectivity and API URL.';
+  } catch (edgeFunctionError: any) {
+    // Edge function invocation failed - fall back to direct API
+    console.warn(`[Pi Auth Service] ⚠️ Edge function invocation error:`, edgeFunctionError);
+    console.log(`[Pi Auth Service] 🔄 Falling back to direct Pi API validation due to edge function error...`);
+    
+    try {
+      return await validatePiAccessTokenDirect(accessToken);
+    } catch (directApiError: any) {
+      const isFetchError = directApiError?.message?.toLowerCase().includes('failed to fetch');
+      const networkHint = PI_CONFIG.SANDBOX_MODE
+        ? 'Check sandbox API URL, Pi Browser network connectivity, and ensure HTTPS is allowed.'
+        : 'Check mainnet connectivity and API URL.';
 
-    console.error('[Pi Auth Service] ❌ Failed to validate Pi token:', error, networkHint);
-    throw new Error(
-      isFetchError
-        ? `Failed to validate Pi access token: network request failed. ${networkHint}`
-        : `Failed to validate Pi access token: ${error.message}. ${networkHint}`
-    );
+      console.error('[Pi Auth Service] ❌ Failed to validate Pi token via both methods:', {
+        edgeFunctionError: edgeFunctionError.message,
+        directApiError: directApiError.message
+      });
+      throw new Error(
+        isFetchError
+          ? `Failed to validate Pi access token: network request failed. ${networkHint}`
+          : `Failed to validate Pi access token: ${directApiError.message}. ${networkHint}`
+      );
+    }
   }
 }
 
@@ -242,9 +253,21 @@ export async function authenticatePiUser(accessToken: string, options?: any) {
 
     if (error) {
       console.warn('[Pi Auth Service] ⚠️ Edge function error:', error);
+      console.warn('[Pi Auth Service] Error details:', {
+        message: error.message,
+        name: error.name,
+        status: error.status
+      });
       
       // If edge function is not available, use manual flow
-      if (error.message?.includes('404') || error.message?.includes('FunctionsRelayError')) {
+      // Fallback for: 404, FunctionsRelayError, FunctionsHttpError, network errors, etc.
+      if (error.message?.includes('404') || 
+          error.message?.includes('FunctionsRelayError') ||
+          error.message?.includes('FunctionsHttpError') ||
+          error.message?.includes('Failed to send') ||
+          error.message?.includes('network') ||
+          error.name === 'FunctionsRelayError' ||
+          error.name === 'FunctionsHttpError') {
         console.log('[Pi Auth Service] 🔄 Falling back to manual authentication flow...');
         return await authenticatePiUserManual(accessToken, options);
       }
@@ -269,8 +292,18 @@ export async function authenticatePiUser(accessToken: string, options?: any) {
 
     return result;
   } catch (error: any) {
-    console.error('[Pi Auth Service] ❌ Authentication failed:', error);
-    throw error;
+    console.warn('[Pi Auth Service] ⚠️ Edge function invocation error:', error);
+    console.log('[Pi Auth Service] 🔄 Falling back to manual authentication flow due to error...');
+    
+    try {
+      return await authenticatePiUserManual(accessToken, options);
+    } catch (manualError: any) {
+      console.error('[Pi Auth Service] ❌ Authentication failed via both methods:', {
+        edgeFunctionError: error.message,
+        manualError: manualError.message
+      });
+      throw manualError;
+    }
   }
 }
 

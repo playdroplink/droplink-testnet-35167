@@ -12,7 +12,7 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
   const [isExiting, setIsExiting] = useState(false);
   const [enableChristmasTheme, setEnableChristmasTheme] = useState(() => {
     const saved = localStorage.getItem('droplink-christmas-theme');
-    return saved !== null ? JSON.parse(saved) : true;
+    return saved !== null ? JSON.parse(saved) : false;
   });
 
   useEffect(() => {
