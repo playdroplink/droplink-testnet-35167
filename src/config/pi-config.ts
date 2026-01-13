@@ -99,19 +99,19 @@ export const PI_CONFIG = {
   },
   
   ENDPOINTS: {
-    ME: `${BASE_API_URL}/v2/me`,
-    WALLETS: `${BASE_API_URL}/v2/wallets`,
-    TRANSACTIONS: `${BASE_API_URL}/v2/transactions`,
-    PAYMENTS: `${BASE_API_URL}/v2/payments`,
-    OPERATIONS: `${BASE_API_URL}/v2/operations`,
-    LEDGERS: `${BASE_API_URL}/v2/ledgers`,
-    EFFECTS: `${BASE_API_URL}/v2/effects`,
-    FEE_STATS: `${BASE_API_URL}/v2/fee_stats`,
-    PI_BLOCKCHAIN: `${BASE_API_URL}/v2/blockchain`,
-    PI_ASSETS: `${BASE_API_URL}/v2/assets`,
-    PI_ACCOUNT_BALANCES: `${BASE_API_URL}/v2/accounts`,
+    ME: `${BASE_API_URL}/me`,
+    WALLETS: `${BASE_API_URL}/wallets`,
+    TRANSACTIONS: `${BASE_API_URL}/transactions`,
+    PAYMENTS: `${BASE_API_URL}/payments`,
+    OPERATIONS: `${BASE_API_URL}/operations`,
+    LEDGERS: `${BASE_API_URL}/ledgers`,
+    EFFECTS: `${BASE_API_URL}/effects`,
+    FEE_STATS: `${BASE_API_URL}/fee_stats`,
+    PI_BLOCKCHAIN: `${BASE_API_URL}/blockchain`,
+    PI_ASSETS: `${BASE_API_URL}/assets`,
+    PI_ACCOUNT_BALANCES: `${BASE_API_URL}/accounts`,
     HORIZON: HORIZON_URL,
-    PI_ASSET_DISCOVERY: `${BASE_API_URL}/v2/assets`
+    PI_ASSET_DISCOVERY: `${BASE_API_URL}/assets`
   },
 
   // Mainnet token configuration should be added here if/when available
