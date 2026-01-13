@@ -193,14 +193,9 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   const [adNetworkSupported, setAdNetworkSupported] = useState<boolean>(false);
   const [grantedScopes, setGrantedScopes] = useState<string[]>([]);
   
-  // Wallet and token state
+  // Wallet and token state (production: no mock wallet)
   const [dropBalance, setDropBalance] = useState<DropTokenBalance>({ balance: "0", hasTrustline: false });
-  // For testing: always provide a mock wallet
-  const [currentWallet, setCurrentWallet] = useState<WalletInfo | null>({
-    address: 'GTESTWALLETADDRESS1234567890',
-    type: 'pi_network',
-    hasPrivateKey: false
-  });
+  const [currentWallet, setCurrentWallet] = useState<WalletInfo | null>(null);
   
   // Multiple account management state
   const [currentAccount, setCurrentAccount] = useState<PiAccount | null>(null);
@@ -209,14 +204,14 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   
   // Set isAuthenticated based on real authentication state
   const isAuthenticated = !!(piUser && accessToken);
-  const networkLabel = PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet';
+  const networkLabel = 'Mainnet';
 
   useEffect(() => {
     const initializePi = async () => {
       try {
         console.log('[PI DEBUG] 🥧 Starting Pi Network initialization...');
         
-        // Validate configuration (supports sandbox or mainnet)
+        // Validate configuration (mainnet)
         if (!validateMainnetConfig()) {
           console.error('[PI DEBUG] ❌ Invalid Pi Network configuration');
           setError('Invalid Pi Network configuration');
@@ -252,7 +247,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           
           console.log('[PI DEBUG] ✅ window.Pi is available, initializing SDK...');
           
-          // Initialize Pi SDK using official SDK options (version and sandbox)
+          // Initialize Pi SDK using official SDK options (mainnet)
           try {
             await window.Pi.init(PI_CONFIG.SDK);
             console.log(`[PI DEBUG] ✅ Pi SDK initialized successfully (${networkLabel})`);
@@ -347,7 +342,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     initializePi();
   }, []);
 
-  // Sign In with Pi Network (sandbox or mainnet)
+  // Sign In with Pi Network (mainnet)
   const signIn = async (scopes?: string[]) => {
     // Use scopes from config if not provided
     const requestedScopes = scopes || PI_CONFIG.scopes || ['username'];
@@ -487,7 +482,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
-      // Validate access token with Pi API (sandbox or mainnet)
+      // Validate access token with Pi API (mainnet)
       if (!authResult) {
         console.error('[PI DEBUG] ❌ authResult is null/undefined');
         const err = 'No authentication result received from Pi Network.';
@@ -641,9 +636,9 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
         };
         setDropBalance(result);
         
-        // Note: Automatic token display is deprecated for testnet tokens
+        // Note: Automatic token display is deprecated
         if (typeof window !== 'undefined' && window.Pi) {
-          console.log(`ℹ️ Token display requires proper ${PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'} token configuration`);
+          console.log('ℹ️ Token display requires proper mainnet token configuration');
         }
         
         return result;
@@ -678,8 +673,8 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       console.log('🔗 Creating token trustline...');
       
       // Note: Trustline creation is now generic for any mainnet token
-      console.warn('ℹ️ Trustline creation is deprecated for testnet tokens');
-      console.warn(`ℹ️ Use createTokenTrustline() for verified ${PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'} tokens`);
+      console.warn('ℹ️ Trustline creation is deprecated for non-mainnet tokens');
+      console.warn('ℹ️ Use createTokenTrustline() for verified mainnet tokens');
       
       // For demo purposes, we'll return false since no specific token is configured
       const success = false;
@@ -751,8 +746,8 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       // First check if token exists
       await getDROPBalanceFunc();
       
-      // Note: Automatic token addition is deprecated for testnet tokens
-      console.log(`ℹ️ Token display depends on proper ${PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'} token configuration`);
+      // Note: Automatic token addition is deprecated
+      console.log('ℹ️ Token display depends on proper mainnet token configuration');
       const added = false; // No tokens configured for mainnet
       
       if (added) {
@@ -890,7 +885,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
 
     // Enforce production policy: disallow creating additional/dev test accounts when configured
     if (!PI_CONFIG.ALLOW_MULTIPLE_ACCOUNTS && availableAccounts.length > 0) {
-      throw new Error(`Creating additional accounts is disabled in this deployment (${PI_CONFIG.SANDBOX_MODE ? 'sandbox' : 'mainnet'} only)`);
+      throw new Error('Creating additional accounts is disabled in this deployment (mainnet only)');
     }
 
     try {
@@ -1044,7 +1039,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getCurrentWalletAddress = (): string | null => {
-    return currentWallet?.address || 'GTESTWALLETADDRESS1234567890';
+    return currentWallet?.address || null;
   };
 
   const createPayment = async (amount: number, memo: string, metadata?: any): Promise<string | null> => {
@@ -1090,16 +1085,10 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       return null;
     }
 
-    // Network awareness: allow sandbox for testing
-    if (PI_CONFIG.SANDBOX_MODE) {
-      console.log('[PAYMENT] 🧪 Sandbox payment mode enabled (test network)');
-    } else {
-      console.log('[PAYMENT] ⚠️ REAL Pi Network MAINNET Payment');
-    }
+    console.log('[PAYMENT] ⚠️ REAL Pi Network MAINNET Payment');
     console.log('[PAYMENT] Amount:', amount, 'Pi');
     console.log('[PAYMENT] Memo:', memo);
     console.log('[PAYMENT] Network:', PI_CONFIG.NETWORK);
-    console.log('[PAYMENT] Sandbox Mode:', PI_CONFIG.SANDBOX_MODE);
     console.log('[PAYMENT] User:', piUser.username);
     console.log('[PAYMENT] Access Token:', accessToken.substring(0, 20) + '...');
 
@@ -1400,7 +1389,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
               verified = true;
             }
           } else {
-            // No adId available (rare) — allow in sandbox/mock
+            // No adId available (rare) — allow when adId is missing
             const isMock = (window as any).Pi && (window as any).Pi.__isMock;
             if (isMock) verified = true;
           }

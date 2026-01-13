@@ -41,12 +41,10 @@
     }
   };
   
-  // Override fetch to handle CORS for Pi SDK
+  // Override fetch to add CORS headers for Pi SDK, but do not return mock data
   window.fetch = function(url, options = {}) {
-    // If it's a Pi SDK request, add CORS headers
     if (typeof url === 'string' && url.includes('minepi.com')) {
       console.log('[PI CORS FIX] 📡 Intercepting Pi SDK fetch request');
-      
       const corsOptions = {
         ...options,
         mode: 'cors',
@@ -55,75 +53,15 @@
           'Access-Control-Allow-Origin': '*',
         }
       };
-      
-      return originalFetch.call(this, url, corsOptions).catch(error => {
-        if (error.name === 'TypeError' && error.message.includes('CORS')) {
-          console.warn('[PI CORS FIX] ⚠️ CORS error detected, using fallback');
-          
-          // Return a mock response for development
-          return Promise.resolve(new Response(
-            JSON.stringify({ error: 'CORS_FALLBACK', message: 'Pi SDK not available in development' }),
-            { 
-              status: 200,
-              headers: { 'Content-Type': 'application/json' }
-            }
-          ));
-        }
-        throw error;
-      });
+      return originalFetch.call(this, url, corsOptions);
     }
-    
-    // For all other requests, use original fetch
     return originalFetch.call(this, url, options);
   };
   
-  // Pi SDK environment detection and fallback
+  // Pi SDK environment detection without mocking
   function setupPiFallback() {
     if (typeof window.Pi === 'undefined' && window.location.hostname === 'localhost') {
-      console.log('[PI CORS FIX] 🔄 Setting up Pi SDK development fallback');
-      
-      window.Pi = {
-        init: function(config) {
-          console.log('[PI CORS FIX] 🎮 Pi.init() called with config:', config);
-          return Promise.resolve({
-            isSignedIn: false,
-            user: null
-          });
-        },
-        
-        authenticate: function(scopes, onIncompletePaymentFound) {
-          console.log('[PI CORS FIX] 🔐 Pi.authenticate() called');
-          console.warn('[PI CORS FIX] ⚠️ Pi authentication not available in localhost development');
-          
-          // Return mock user for development
-          return Promise.resolve({
-            accessToken: 'mock_development_token',
-            user: {
-              uid: 'dev_user_123',
-              username: 'dev_user'
-            }
-          });
-        },
-        
-        createPayment: function(paymentData, callbacks) {
-          console.log('[PI CORS FIX] 💰 Pi.createPayment() called with:', paymentData);
-          console.warn('[PI CORS FIX] ⚠️ Pi payments not available in localhost development');
-          
-          if (callbacks && callbacks.onError) {
-            callbacks.onError('DEVELOPMENT_MODE', 'Pi payments not available in development mode');
-          }
-          
-          return Promise.reject(new Error('Pi payments not available in development mode'));
-        },
-        
-        openShareDialog: function(title, message) {
-          console.log('[PI CORS FIX] 📤 Pi.openShareDialog() called');
-          console.warn('[PI CORS FIX] ⚠️ Pi share dialog not available in localhost development');
-          return Promise.resolve();
-        }
-      };
-      
-      console.log('[PI CORS FIX] ✅ Pi SDK development fallback installed');
+      console.warn('[PI CORS FIX] ⚠️ Pi SDK not available on localhost. No mock installed. Use Pi Browser / real SDK.');
     }
   }
   
@@ -144,12 +82,12 @@
     checkCount++;
     
     if (typeof window.Pi !== 'undefined' && window.Pi.init) {
-      console.log('[PI CORS FIX] ✅ Real Pi SDK detected, removing fallback');
+      console.log('[PI CORS FIX] ✅ Real Pi SDK detected, no fallback needed');
       clearInterval(checkPiSDK);
     } else if (checkCount >= maxChecks) {
-      console.log('[PI CORS FIX] ⏰ Pi SDK check timeout, keeping development fallback');
+      console.warn('[PI CORS FIX] ⏰ Pi SDK check timeout; still no SDK detected.');
       clearInterval(checkPiSDK);
-      setupPiFallback(); // Ensure fallback is in place
+      setupPiFallback();
     }
   }, 100);
   
