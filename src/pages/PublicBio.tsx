@@ -1451,33 +1451,41 @@ const PublicBio = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Share Profile Dialog */}
+      {/* Share Profile Modal - HeroUI Style */}
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Share2 className="w-5 h-5" />
-              Share Profile
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {/* Virtual Card Display */}
-            <VirtualCard
-              username={profile.username}
-              storeUrl={`${window.location.origin}/u/${profile.username}`}
-              frontColor={profile.card_front_color || "#2bbdee"}
-              backColor={profile.card_back_color || "#2bbdee"}
-              textColor={profile.card_text_color || "#000000"}
-              accentColor={profile.card_accent_color || "#fafafa"}
-            />
-            
-            {/* Copy Link Button */}
+        <DialogContent className="sm:max-w-[500px] md:max-w-[550px] rounded-xl overflow-visible p-6">
+          {/* Header with Icon */}
+          <div className="flex items-center gap-3 mb-6 mt-2">
+            <div className="bg-sky-100 dark:bg-sky-900 text-sky-600 dark:text-sky-300 p-3 rounded-lg">
+              <Share2 className="size-5" />
+            </div>
+            <DialogTitle className="text-xl font-semibold">Share Profile</DialogTitle>
+          </div>
+          
+          {/* Body Content */}
+          <div className="space-y-6 py-2">
+            {/* Virtual Card Display - Full Size */}
+            <div className="w-full">
+              <VirtualCard
+                username={profile.username}
+                storeUrl={`${window.location.origin}/u/${profile.username}`}
+                frontColor={profile.card_front_color || "#2bbdee"}
+                backColor={profile.card_back_color || "#2bbdee"}
+                textColor={profile.card_text_color || "#000000"}
+                accentColor={profile.card_accent_color || "#fafafa"}
+              />
+            </div>
+          </div>
+          
+          {/* Footer with Action Button */}
+          <div className="flex gap-2 justify-end border-t pt-4 mt-4">
             <Button
-              className="w-full bg-sky-500 hover:bg-sky-600 text-white"
+              className="w-full bg-sky-500 hover:bg-sky-600 text-white h-11"
               onClick={() => {
                 const profileUrl = `${window.location.origin}/${profile.storeUrl}`;
                 navigator.clipboard.writeText(profileUrl);
                 toast.success("Profile link copied!");
+                setShowShareDialog(false);
               }}
             >
               <Copy className="w-4 h-4 mr-2" />
