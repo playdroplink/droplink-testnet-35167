@@ -144,12 +144,12 @@ export const FollowersSection = ({ profileId, currentUserProfileId }: FollowersS
 
   return (
     <div className="space-y-4">
-      <Card className="bg-card border-border">
-        <CardHeader className="pb-3">
+      <Card className="bg-white/5 border border-white/10 backdrop-blur-sm">
+        <CardHeader className="pb-3 border-b border-white/10">
           <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              Community
+            <div className="flex items-center gap-2 text-white">
+              <Users className="w-5 h-5 text-blue-400" />
+              <span>Community</span>
             </div>
             {currentUserProfileId && currentUserProfileId !== profileId && (
               <Button
@@ -173,56 +173,55 @@ export const FollowersSection = ({ profileId, currentUserProfileId }: FollowersS
             )}
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between mb-4">
+        <CardContent className="pt-5">
+          <div className="flex items-center justify-between mb-5 px-2">
             <div className="text-center flex-1">
-              <p className="text-2xl font-bold text-primary">{followersCount}</p>
-              <p className="text-sm text-muted-foreground">Followers</p>
+              <p className="text-2xl font-bold text-white">{followersCount}</p>
+              <p className="text-xs text-white/70 mt-1">Followers</p>
             </div>
-            <div className="h-8 w-px bg-border mx-4"></div>
+            <div className="h-10 w-px bg-white/10 mx-4"></div>
             <div className="text-center flex-1">
-              <p className="text-2xl font-bold text-primary">{followingCount}</p>
-              <p className="text-sm text-muted-foreground">Following</p>
+              <p className="text-2xl font-bold text-white">{followingCount}</p>
+              <p className="text-xs text-white/70 mt-1">Following</p>
             </div>
           </div>
           
           {currentUserProfileId && currentUserProfileId !== profileId && (
             <div className="space-y-2">
               {!isFollowing && (
-                <div className="text-center p-3 bg-primary/10 rounded-lg border border-primary/20">
-                  <p className="text-sm text-muted-foreground mb-2">
+                <div className="text-center p-3 bg-blue-500/15 rounded-lg border border-blue-400/20">
+                  <p className="text-xs text-white/80 mb-2 font-medium">
                     Follow {businessName} to stay updated!
                   </p>
                   <Button
                     onClick={handleFollow}
                     disabled={loading}
-                    className="w-full"
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white border-0 h-9 text-sm"
                   >
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Follow {businessName}
+                    <UserPlus className="w-3 h-3 mr-1" />
+                    Follow
                   </Button>
                 </div>
               )}
               <Button
                 onClick={() => setGiftDialogOpen(true)}
-                className="w-full"
-                variant="secondary"
+                className="w-full bg-white/10 hover:bg-white/15 text-white/90 border border-white/10 h-9 text-sm"
+                variant="outline"
               >
-                <Gift className="w-4 h-4 mr-2" />
-                Send Gift to {businessName}
+                <Gift className="w-3 h-3 mr-2" />
+                Send Gift
               </Button>
             </div>
           )}
 
           {!currentUserProfileId && (
-            <div className="text-center p-3 bg-muted/50 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-2">
+            <div className="text-center p-3 bg-blue-500/15 rounded-lg border border-blue-400/20">
+              <p className="text-xs text-white/80 mb-2 font-medium">
                 Join to follow and connect with creators!
               </p>
               <Button
                 onClick={() => window.location.href = "/"}
-                className="w-full"
-                variant="outline"
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white border-0 h-9 text-sm"
               >
                 Sign Up Free
               </Button>

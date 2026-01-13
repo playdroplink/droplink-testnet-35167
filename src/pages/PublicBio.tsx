@@ -838,7 +838,7 @@ const PublicBio = () => {
           <div className="flex gap-6 justify-center text-sm text-white">
             {userPreferences?.store_settings?.showFollowerCount !== false && (
               <div className="text-center">
-                <div className="font-semibold text-lg" style={{ color: profile.theme.primaryColor }}>
+                <div className="font-semibold text-lg text-white">
                   {followerCount.toLocaleString()}
                 </div>
                 <div className="text-white">Followers</div>
@@ -846,7 +846,7 @@ const PublicBio = () => {
             )}
             {userPreferences?.store_settings?.showVisitCount !== false && (
               <div className="text-center">
-                <div className="font-semibold text-lg" style={{ color: profile.theme.primaryColor }}>
+                <div className="font-semibold text-lg text-white">
                   {visitCount.toLocaleString()}
                 </div>
                 <div className="text-white">Views</div>
@@ -1310,10 +1310,10 @@ const PublicBio = () => {
           <div className="flex justify-center py-6">
             <Button
               onClick={() => setShowShareDialog(true)}
-              className="gap-2 text-gray-900 bg-white border border-gray-300 hover:bg-gray-100"
-              style={{ backgroundColor: '#fff', color: '#111', borderColor: '#e5e7eb' }}
+              className="gap-3 px-8 py-6 text-gray-900 bg-white border-2 border-gray-300 hover:bg-gray-50 hover:border-gray-400 font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
+              style={{ backgroundColor: '#fff', color: '#111', borderColor: '#d1d5db' }}
             >
-              <Share2 className="w-4 h-4" />
+              <Share2 className="w-6 h-6" />
               <span style={{color:'#111'}}>Share Profile</span>
             </Button>
           </div>
@@ -1345,22 +1345,22 @@ const PublicBio = () => {
           <div className="text-center py-8 border-t border-white/10">
             <button
               onClick={() => window.location.href = 'https://www.droplink.space'}
-              className="text-white/60 text-sm font-medium hover:text-sky-400 transition-colors cursor-pointer"
+              className="text-white/70 text-sm font-semibold hover:text-cyan-400 transition-all duration-200 cursor-pointer group"
             >
-              JOIN <span className="text-sky-400">DROPLINK</span> BY MRWAIN ORGANIZATION
+              JOIN <span className="text-cyan-400 group-hover:text-cyan-300">DROPLINK</span> BY <span className="text-white/80">MRWAIN ORGANIZATION</span>
             </button>
           </div>
         )}
 
         {/* Report Button in Footer */}
-        <div className="text-center py-6 border-t border-white/10">
+        <div className="text-center py-8 border-t border-white/10">
           <button
-            className="bg-white/80 hover:bg-red-100 rounded-full p-3 shadow-lg border border-red-300 inline-flex items-center gap-2 px-6 transition-all"
+            className="bg-gradient-to-r from-red-500/20 to-pink-500/20 hover:from-red-500/30 hover:to-pink-500/30 rounded-full p-3 shadow-lg border border-red-400/40 inline-flex items-center gap-2 px-6 transition-all duration-200 backdrop-blur"
             title="Report unwanted content"
             onClick={() => setShowReportModal(true)}
           >
-            <Flag className="w-4 h-4 text-red-500" />
-            <span className="text-sm text-red-600 font-medium">Report Unwanted Content</span>
+            <Flag className="w-4 h-4 text-red-400" />
+            <span className="text-sm text-red-300 font-semibold">Report Unwanted Content</span>
           </button>
         </div>
       </div>

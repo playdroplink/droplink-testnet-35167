@@ -31,7 +31,8 @@ export interface CustomLink {
 }
 
 export interface SocialLink {
-  type: string; // e.g. 'twitter', 'instagram', etc.
+  type?: string; // e.g. 'twitter', 'instagram', etc. (deprecated in favor of platform)
+  platform?: string; // normalized platform name
   url: string;
   icon?: string; // icon name or url
   label?: string; // custom label
