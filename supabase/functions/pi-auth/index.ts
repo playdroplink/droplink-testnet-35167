@@ -35,20 +35,13 @@ serve(async (req) => {
     }
 
     // Verify the access token with Pi API
-    // Support both sandbox and mainnet based on environment
-    // Check multiple possible environment variable names
-    const sandboxEnv = Deno.env.get('VITE_PI_SANDBOX_MODE') || 
-                       Deno.env.get('PI_SANDBOX_MODE') || 
-                       'false';
-    const isSandbox = sandboxEnv === 'true';
-    const piApiUrl = isSandbox
-      ? 'https://sandbox.minepi.com/v2/me'
-      : 'https://api.minepi.com/v2/me';
+    // PRODUCTION ONLY - MAINNET (NO SANDBOX)
+    const piApiUrl = 'https://api.minepi.com/v2/me';
     
     let piUserData;
     try {
-      console.log(`Verifying token with Pi API (${isSandbox ? 'Sandbox' : 'Mainnet'}): ${piApiUrl}`);
-      console.log(`Environment check - PI_SANDBOX_MODE: ${Deno.env.get('PI_SANDBOX_MODE')}, VITE_PI_SANDBOX_MODE: ${Deno.env.get('VITE_PI_SANDBOX_MODE')}`);
+      console.log('Verifying token with Pi API (MAINNET): ' + piApiUrl);
+      console.log('Network: MAINNET - Sandbox/Testnet DISABLED');
       const piResponse = await fetch(piApiUrl, {
         headers: {
           "Authorization": `Bearer ${accessToken}`,

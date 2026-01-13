@@ -7,7 +7,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // @ts-ignore - ESM module (available at runtime)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Pi Network MAINNET API endpoint - DO NOT use sandbox
+// Pi Network MAINNET API endpoint - PRODUCTION ONLY
 const PI_API_BASE_URL = "https://api.minepi.com";
 
 const corsHeaders = {
@@ -73,7 +73,7 @@ serve(async (req) => {
 
     // Step 1: Get payment details from Pi API (MAINNET)
     console.log('[APPROVAL] 📡 Fetching payment details from Pi MAINNET API...');
-    console.log('[APPROVAL] Network: MAINNET (sandbox=false)');
+    console.log('[APPROVAL] Network: MAINNET (Production Only)');
     const getPaymentResponse = await fetch(`${PI_API_BASE_URL}/v2/payments/${paymentId}`, {
       method: 'GET',
       headers: {

@@ -9,20 +9,13 @@
 
 import { isPiBrowserEnv } from "@/contexts/PiContext";
 
-// Prefer explicit sandbox flag but also honor VITE_PI_NETWORK=sandbox|testnet to avoid mismatched configs
-const networkEnv = String(import.meta.env.VITE_PI_NETWORK ?? "").toLowerCase();
-// Determine sandbox mode from environment variables (default to false for production)
-const sandboxMode = import.meta.env.VITE_PI_SANDBOX_MODE ?? 'false';
-const sandboxFlag = sandboxMode === 'true' || networkEnv === 'sandbox' || networkEnv === 'testnet';
+// PRODUCTION ONLY - NO SANDBOX, NO TESTNET
+const sandboxFlag = false; // HARDCODED: Always mainnet
 
 // Log configuration for debugging
 if (typeof window !== 'undefined') {
-  console.log('[PI CONFIG] 🌐 Network Mode:', sandboxFlag ? 'SANDBOX' : 'MAINNET');
-  console.log('[PI CONFIG] Environment:', {
-    VITE_PI_NETWORK: networkEnv,
-    VITE_PI_SANDBOX_MODE: sandboxMode,
-    isSandbox: sandboxFlag
-  });
+  console.log('[PI CONFIG] 🌐 Network Mode: MAINNET (Production)');
+  console.log('[PI CONFIG] Sandbox/Testnet: DISABLED');
 }
 
 const PI_APP_ID = import.meta.env.VITE_PI_APP_ID ?? "droplink-317d26f51b67e992";
@@ -31,18 +24,11 @@ const PI_VALIDATION_KEY = import.meta.env.VITE_PI_VALIDATION_KEY ?? "";
 const PLATFORM_URL = import.meta.env.VITE_PLATFORM_URL ?? "https://droplink.space";
 const PAYMENT_RECEIVER_WALLET = import.meta.env.VITE_PI_PAYMENT_RECEIVER_WALLET ?? "GDSXE723WPHZ5RGIJCSYXTPKSOIGPTSXE4RF5U3JTNGTCHXON7ZVD4LJ";
 
-// Toggle API endpoints based on sandbox flag (force HTTPS to avoid Pi Browser mixed content errors)
-// Pi Browser sandbox certs are valid on sandbox.minepi.com (not sandbox-api.minepi.com)
-const resolvedSandboxApi = (import.meta.env.VITE_PI_SANDBOX_URL ?? "https://sandbox.minepi.com").replace(/^http:/, "https:");
-const resolvedMainnetApi = (import.meta.env.VITE_API_URL ?? "https://api.minepi.com").replace(/^http:/, "https:");
-const BASE_API_URL = sandboxFlag ? resolvedSandboxApi : resolvedMainnetApi;
-
-const resolvedSandboxHorizon = (import.meta.env.VITE_PI_TESTNET_HORIZON_URL ?? "https://api.testnet.minepi.com").replace(/^http:/, "https:");
-const resolvedMainnetHorizon = (import.meta.env.VITE_PI_HORIZON_URL ?? "https://api.minepi.com").replace(/^http:/, "https:");
-const HORIZON_URL = sandboxFlag ? resolvedSandboxHorizon : resolvedMainnetHorizon;
-
-const NETWORK_NAME = sandboxFlag ? "sandbox" : "mainnet";
-const NETWORK_PASSPHRASE = sandboxFlag ? "Pi Testnet" : "Pi Mainnet";
+// PRODUCTION ONLY - Mainnet URLs (force HTTPS)
+const BASE_API_URL = "https://api.minepi.com";
+const HORIZON_URL = "https://api.minepi.com";
+const NETWORK_NAME = "mainnet";
+const NETWORK_PASSPHRASE = "Pi Mainnet";
 
 export const PI_CONFIG = {
   API_KEY: PI_API_KEY,
