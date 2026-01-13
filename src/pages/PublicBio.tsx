@@ -459,13 +459,18 @@ const PublicBio = () => {
       let socialLinksArr = [];
       if (Array.isArray(profileData.social_links)) {
         // Dashboard stores as array with "type" field; normalize to "platform" for consistency
-        socialLinksArr = profileData.social_links.map((link: any) => ({
-          platform: link.type || link.platform,
-          url: link.url,
-          icon: link.icon,
-        }));
+        // Filter out links with empty URLs to keep public bio clean
+        socialLinksArr = profileData.social_links
+          .filter((link: any) => link.url && link.url.trim())
+          .map((link: any) => ({
+            platform: link.type || link.platform,
+            url: link.url,
+            icon: link.icon,
+          }));
       } else if (profileData.social_links && typeof profileData.social_links === 'object') {
-        socialLinksArr = Object.entries(profileData.social_links).map(([platform, url]) => ({ platform, url }));
+        socialLinksArr = Object.entries(profileData.social_links)
+          .filter(([_, url]) => url && String(url).trim())
+          .map(([platform, url]) => ({ platform, url }));
       }
 
       // Custom links: only if present and array (fallback to empty array)
@@ -475,7 +480,8 @@ const PublicBio = () => {
       if (profileData.theme_settings && typeof profileData.theme_settings === 'object' && !Array.isArray(profileData.theme_settings)) {
         themeSettingsObj = profileData.theme_settings;
         if (Array.isArray(themeSettingsObj.customLinks)) {
-          customLinksArr = themeSettingsObj.customLinks;
+          // Filter out links with empty URLs to keep public bio clean
+          customLinksArr = themeSettingsObj.customLinks.filter((link: any) => link.url && String(link.url).trim());
         }
         if (typeof themeSettingsObj.showPiWalletTips === 'boolean') {
           showPiWalletTips = themeSettingsObj.showPiWalletTips;
@@ -703,9 +709,7 @@ const PublicBio = () => {
     );
   }
 
-  const socialLinksArray = Object.entries(profile.socialLinks)
-    .filter(([_, url]) => url)
-    .map(([platform, url]) => ({ platform, url }));
+  const socialLinksArray = profile.socialLinks.filter(link => link.url && String(link.url).trim());
 
   return (
     <div 
@@ -790,7 +794,8 @@ const PublicBio = () => {
               ) : (
                 <Button
                   size="sm"
-                  className="bg-sky-500 hover:bg-sky-600 text-white"
+                  variant="ghost"
+                  className="text-white hover:text-white/80 hover:bg-transparent"
                   onClick={() => setPiAdsOpen(true)}
                 >
                   View Ads
@@ -969,8 +974,8 @@ const PublicBio = () => {
           </div>
         )}
 
-        {/* Social Links - Controlled by Preferences */}
-        {Array.isArray(socialLinksArray) && socialLinksArray.length > 0 && userPreferences?.store_settings?.showSocialLinks !== false && (
+        {/* Social Links */}
+        {Array.isArray(socialLinksArray) && socialLinksArray.length > 0 && (
           <div className="flex flex-wrap justify-center gap-3">
             {socialLinksArray.map((link) => (
               <a
@@ -1004,7 +1009,6 @@ const PublicBio = () => {
                   className={`flex items-center justify-center gap-3 w-full py-4 px-6 ${getIconStyle(profile.theme.iconStyle)} font-medium text-white transition-all hover:opacity-90`}
                   style={buttonStyles}
                 >
-                  {getCustomLinkIcon(link.icon)}
                   <span>{link.title}</span>
                 </a>
               );
@@ -1114,9 +1118,9 @@ const PublicBio = () => {
           </div>
         )}
 
-        {/* Pi Wallet Tips - show only if enabled */}
+        {/* Pi Wallet Tips - show only if enabled AND wallet is set */}
         {/* Pi Wallet Tips - lock if expired */}
-        {profile.showPiWalletTips !== false && !isPlanExpired && (
+        {profile.piWalletAddress && profile.showPiWalletTips !== false && !isPlanExpired && (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-white text-center mb-6 flex items-center justify-center gap-2">
               <Wallet className="w-5 h-5 text-blue-400" />
