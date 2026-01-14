@@ -165,7 +165,7 @@ const Subscription = () => {
     fetchData();
   }, [piUser]);
 
-  // Mock payment for testing (DEV MODE ONLY)
+  // Handle payment - PRODUCTION MAINNET ONLY
   const handleMockPayment = async (planName: string, price: number) => {
     if (!profileId) {
       toast.error('Profile not loaded. Please refresh.');

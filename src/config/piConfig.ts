@@ -50,49 +50,28 @@ export const PI_CONFIG = {
     return this.IS_SANDBOX ? this.SANDBOX_URL : this.BASE_URL;
   },
 
-  // Environment detection
+  // Environment detection - PRODUCTION ONLY (Always mainnet)
   detectEnvironment() {
     const isPiBrowser = typeof window !== 'undefined' &&
                        (window.Pi ||
                         navigator.userAgent.toLowerCase().includes('pi browser') ||
                         navigator.userAgent.toLowerCase().includes('pibrowser'));
 
-    const isTestnetMode = window.location.hostname.includes('testnet') ||
-                         window.location.hostname.includes('localhost') ||
-                         localStorage.getItem('pi-network-mode') === 'testnet';
-
-    const isDevelopment = window.location.hostname === 'localhost' ||
-                         window.location.hostname === '127.0.0.1';
-
-    const isLocalhost = window.location.hostname === 'localhost' ||
-                       window.location.hostname === '127.0.0.1';
-
+    // PRODUCTION ONLY - Always mainnet
     return {
       isPiBrowser,
-      isTestnetMode,
-      isDevelopment,
-      isLocalhost,
-      shouldUseTestnet: isTestnetMode || isDevelopment,
-      shouldUseMainnet: !isTestnetMode && !isDevelopment && isPiBrowser
+      isTestnetMode: false,
+      isDevelopment: false,
+      isLocalhost: false,
+      shouldUseTestnet: false,
+      shouldUseMainnet: isPiBrowser
     };
   },
 
-  // Get sandbox setting for SDK
+  // Get sandbox setting for SDK - PRODUCTION ONLY (Always false for mainnet)
   getSandboxSetting() {
-    const env = this.detectEnvironment();
-
-    // Use testnet for localhost to avoid CORS issues
-    if (env.isLocalhost) {
-      console.log('🔧 Localhost detected, using testnet mode');
-      return true;
-    }
-
-    // Use mainnet for Pi Browser mobile unless explicitly testnet
-    if (env.isPiBrowser && !env.shouldUseTestnet) {
-      return false;
-    }
-
-    return this.IS_SANDBOX;
+    // PRODUCTION ONLY - Always mainnet
+    return false;
   },
 
   getNetworkMode() {
