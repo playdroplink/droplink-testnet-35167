@@ -102,12 +102,13 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Payment completion error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Payment completion error:', errorMessage);
     
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message
+        error: errorMessage
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
