@@ -8,7 +8,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Pi Network MAINNET API endpoint
-const PI_API_BASE_URL = "https://api.mainnet.minepi.com";
+const PI_API_BASE_URL = "https://api.minepi.com";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -113,12 +113,13 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Ad reward verification error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Ad reward verification error:', errorMessage);
     
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message
+        error: errorMessage
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
