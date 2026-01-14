@@ -2,6 +2,15 @@
 export function isPiBrowserEnv(): boolean {
   if (typeof window === 'undefined' || !window.navigator) return false;
   
+  // Development mode bypass - allows testing in regular browser
+  const isDev = import.meta.env.DEV;
+  const devBypass = localStorage.getItem('DROPLINK_DEV_MODE') === 'true';
+  
+  if (isDev && devBypass) {
+    console.log('[PI DEBUG] 🔧 Development mode enabled - Pi Browser check bypassed');
+    return true;
+  }
+  
   // Method 1: Check for window.Pi object (most reliable)
   if (typeof window.Pi !== 'undefined' && window.Pi !== null) {
     console.log('[PI DEBUG] ✅ Pi Browser detected via window.Pi object');
@@ -30,6 +39,9 @@ export function isPiBrowserEnv(): boolean {
   }
   
   console.log('[PI DEBUG] ❌ Pi Browser NOT detected. UserAgent:', ua.substring(0, 100));
+  if (isDev) {
+    console.log('[PI DEBUG] 💡 To test in dev mode, run: localStorage.setItem("DROPLINK_DEV_MODE", "true")');
+  }
   return false;
 }
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";

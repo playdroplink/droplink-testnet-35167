@@ -1,8 +1,9 @@
 /**
- * Pi Network Authentication Service (Mainnet or Sandbox)
- *
+ * Pi Network Authentication Service (Mainnet Only - Production)
+ * Fixed and Simplified Authentication Flow
+ * 
  * Handles:
- * - Pi access token validation with the active Pi API
+ * - Pi access token validation
  * - User profile retrieval from Pi
  * - Supabase profile linking
  * - Complete authentication flow
@@ -11,100 +12,47 @@
 import { supabase } from "@/integrations/supabase/client";
 import { PI_CONFIG } from "@/config/pi-config";
 
-const networkLabel = PI_CONFIG.SANDBOX_MODE ? 'Sandbox' : 'Mainnet';
-
 /**
- * Validates Pi access token by querying Pi API through backend
- * Uses Supabase Edge Function for secure server-side validation
- * Falls back to direct API call if edge function is unavailable
+ * Validates Pi access token via direct Pi API
+ * Simple, straightforward token validation
  */
 export async function validatePiAccessToken(accessToken: string) {
   if (!accessToken) {
     throw new Error('Missing Pi access token');
   }
 
-  console.log(`[Pi Auth Service] 🔐 Validating Pi access token with ${networkLabel} backend...`);
+  console.log('[Pi Auth Service] 🔐 Validating Pi access token...');
   
-  // Try using Supabase Edge Function for secure server-side token validation
   try {
-    const { data, error } = await supabase.functions.invoke('pi-auth', {
-      body: { accessToken }
+    // Direct Pi API validation
+    const response = await fetch(`${PI_CONFIG.ENDPOINTS.ME}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
     });
 
-    if (error) {
-      console.warn(`[Pi Auth Service] ⚠️ Edge function error:`, error);
-      console.warn(`[Pi Auth Service] Error details:`, {
-        message: error.message,
-        context: error.context,
-        status: error.status
-      });
-      
-      // If edge function is not available or fails, fall back to direct API call
-      // Common errors: 404, FunctionsRelayError, FunctionsHttpError, network errors
-      if (error.message?.includes('404') || 
-          error.message?.includes('FunctionsRelayError') ||
-          error.message?.includes('FunctionsHttpError') ||
-          error.message?.includes('Failed to send') ||
-          error.message?.includes('network') ||
-          error.name === 'FunctionsRelayError' ||
-          error.name === 'FunctionsHttpError') {
-        console.log(`[Pi Auth Service] 🔄 Falling back to direct Pi API validation...`);
-        return await validatePiAccessTokenDirect(accessToken);
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Invalid or expired Pi access token');
       }
-      
-      if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
-        throw new Error(`Pi authentication failed: Invalid or expired token`);
-      }
-      
-      // For any other edge function errors, fall back to direct API
-      console.log(`[Pi Auth Service] 🔄 Unknown edge function error, falling back to direct API...`);
-      return await validatePiAccessTokenDirect(accessToken);
+      throw new Error(`Token validation failed: ${response.status}`);
     }
 
-    if (!data || !data.piUser) {
-      console.warn(`[Pi Auth Service] ⚠️ Invalid response from backend:`, data);
-      // Fall back to direct API call
-      console.log(`[Pi Auth Service] 🔄 Falling back to direct Pi API validation...`);
-      return await validatePiAccessTokenDirect(accessToken);
-    }
-
-    const piData = data.piUser;
-    console.log(`[Pi Auth Service] ✅ Token validated via edge function. Pi user:`, piData.username);
+    const piData = await response.json();
+    console.log('[Pi Auth Service] ✅ Pi token validated. Username:', piData.username);
     
-    return piData;
-  } catch (edgeFunctionError: any) {
-    // Edge function invocation failed - fall back to direct API
-    console.warn(`[Pi Auth Service] ⚠️ Edge function invocation error:`, edgeFunctionError);
-    console.log(`[Pi Auth Service] 🔄 Falling back to direct Pi API validation due to edge function error...`);
-    
-    try {
-      return await validatePiAccessTokenDirect(accessToken);
-    } catch (directApiError: any) {
-      const isFetchError = directApiError?.message?.toLowerCase().includes('failed to fetch');
-      const networkHint = PI_CONFIG.SANDBOX_MODE
-        ? 'Check sandbox API URL, Pi Browser network connectivity, and ensure HTTPS is allowed.'
-        : 'Check mainnet connectivity and API URL.';
-
-      console.error('[Pi Auth Service] ❌ Failed to validate Pi token via both methods:', {
-        edgeFunctionError: edgeFunctionError.message,
-        directApiError: directApiError.message
-      });
-      throw new Error(
-        isFetchError
-          ? `Failed to validate Pi access token: network request failed. ${networkHint}`
-          : `Failed to validate Pi access token: ${directApiError.message}. ${networkHint}`
-      );
-    }
+    return {
+      uid: piData.uid,
+      username: piData.username,
+      wallet_address: piData.wallet_address || null,
+      meta: piData.meta || {},
+    };
+  } catch (error: any) {
+    console.error('[Pi Auth Service] ❌ Token validation error:', error);
+    throw new Error(`Failed to validate Pi token: ${error.message}`);
   }
-}
-
-/**
- * Direct Pi API validation (fallback method)
- * DISABLED: Causes CORS errors on localhost
- */
-async function validatePiAccessTokenDirect(accessToken: string) {
-  console.log('[Pi Auth Service] ⚠️ Direct Pi API validation disabled - CORS issues on localhost');
-  throw new Error('Direct Pi API validation is disabled. Use Pi Browser or edge function only.');
 }
 
 /**
@@ -123,6 +71,7 @@ export async function getPiUserProfile(accessToken: string) {
 
 /**
  * Links a Pi user to a Supabase profile
+ * Creates new profile if not exists, updates existing if found
  */
 export async function linkPiUserToSupabase(
   piData: any,
@@ -134,7 +83,7 @@ export async function linkPiUserToSupabase(
   const { createIfNotExists = true, displayName } = options || {};
   
   console.log('[Pi Auth Service] 🔗 Linking Pi user to Supabase profile...');
-  console.log(`[Pi Auth Service] Pi username: ${piData.username}`);
+  console.log(`[Pi Auth Service] Username: ${piData.username}`);
 
   try {
     // Find existing profile by username
@@ -145,14 +94,14 @@ export async function linkPiUserToSupabase(
       .maybeSingle();
 
     if (selectError && selectError.code !== 'PGRST116') {
-      console.error('[Pi Auth Service] ❌ Error checking existing profile:', selectError);
+      console.error('[Pi Auth Service] ❌ Error checking profile:', selectError);
       throw selectError;
     }
 
     if (existingProfile) {
-      console.log('[Pi Auth Service] ✅ Found existing Supabase profile');
+      console.log('[Pi Auth Service] ✅ Profile already exists, updating...');
       
-      // Update profile with latest Pi data
+      // Update with new Pi data
       const { data: updated, error: updateError } = await supabase
         .from('profiles')
         .update({
@@ -168,13 +117,13 @@ export async function linkPiUserToSupabase(
         throw updateError;
       }
 
-      console.log('[Pi Auth Service] ✅ Profile updated with Pi data');
+      console.log('[Pi Auth Service] ✅ Profile updated');
       return updated;
     }
 
     // Create new profile if allowed
     if (createIfNotExists) {
-      console.log('[Pi Auth Service] 📝 Creating new Supabase profile for Pi user...');
+      console.log('[Pi Auth Service] 📝 Creating new profile...');
       
       const { data: newProfile, error: createError } = await supabase
         .from('profiles')
@@ -199,108 +148,46 @@ export async function linkPiUserToSupabase(
         throw createError;
       }
 
-      console.log('[Pi Auth Service] ✅ New profile created for Pi user');
+      console.log('[Pi Auth Service] ✅ New profile created');
       return newProfile;
     }
 
     throw new Error('No profile found and profile creation is disabled');
   } catch (error: any) {
-    console.error('[Pi Auth Service] ❌ Failed to link Pi user to Supabase:', error);
+    console.error('[Pi Auth Service] ❌ Profile linking failed:', error);
     throw error;
   }
 }
 
 /**
  * Complete Pi authentication flow
- * Uses Supabase Edge Function for secure authentication
- * Falls back to manual flow if edge function is unavailable
+ * Simple, straightforward authentication without edge function complexity
  */
 export async function authenticatePiUser(accessToken: string, options?: any) {
-  console.log(`[Pi Auth Service] 🔐 Starting Pi ${networkLabel} authentication flow...`);
+  console.log('[Pi Auth Service] 🔐 Starting Pi authentication...');
   
   try {
-    // Try calling the edge function which handles both Pi API validation and Supabase profile creation
-    const { data, error } = await supabase.functions.invoke('pi-auth', {
-      body: { accessToken }
-    });
+    // Step 1: Validate token
+    const piData = await getPiUserProfile(accessToken);
+    console.log('[Pi Auth Service] ✅ Step 1: Token validated');
 
-    if (error) {
-      console.warn('[Pi Auth Service] ⚠️ Edge function error:', error);
-      console.warn('[Pi Auth Service] Error details:', {
-        message: error.message,
-        name: error.name,
-        status: error.status
-      });
-      
-      // If edge function is not available, use manual flow
-      // Fallback for: 404, FunctionsRelayError, FunctionsHttpError, network errors, etc.
-      if (error.message?.includes('404') || 
-          error.message?.includes('FunctionsRelayError') ||
-          error.message?.includes('FunctionsHttpError') ||
-          error.message?.includes('Failed to send') ||
-          error.message?.includes('network') ||
-          error.name === 'FunctionsRelayError' ||
-          error.name === 'FunctionsHttpError') {
-        console.log('[Pi Auth Service] 🔄 Falling back to manual authentication flow...');
-        return await authenticatePiUserManual(accessToken, options);
-      }
-      
-      throw new Error(`Pi authentication failed: ${error.message}`);
-    }
-
-    if (!data || !data.success || !data.piUser) {
-      console.warn('[Pi Auth Service] ⚠️ Invalid edge function response:', data);
-      console.log('[Pi Auth Service] 🔄 Falling back to manual authentication flow...');
-      return await authenticatePiUserManual(accessToken, options);
-    }
-
-    console.log(`[Pi Auth Service] ✅ Pi ${networkLabel} authentication complete via edge function!`);
+    // Step 2: Link/create Supabase profile
+    const supabaseProfile = await linkPiUserToSupabase(piData, options);
+    console.log('[Pi Auth Service] ✅ Step 2: Profile linked');
 
     const result = {
       success: true,
-      piUser: data.piUser,
-      supabaseProfile: data.profile,
+      piUser: piData,
+      supabaseProfile: supabaseProfile,
       accessToken: accessToken,
     };
 
+    console.log('[Pi Auth Service] ✅ Authentication complete!');
     return result;
   } catch (error: any) {
-    console.warn('[Pi Auth Service] ⚠️ Edge function invocation error:', error);
-    console.log('[Pi Auth Service] 🔄 Falling back to manual authentication flow due to error...');
-    
-    try {
-      return await authenticatePiUserManual(accessToken, options);
-    } catch (manualError: any) {
-      console.error('[Pi Auth Service] ❌ Authentication failed via both methods:', {
-        edgeFunctionError: error.message,
-        manualError: manualError.message
-      });
-      throw manualError;
-    }
+    console.error('[Pi Auth Service] ❌ Authentication failed:', error);
+    throw error;
   }
-}
-
-/**
- * Manual authentication flow (fallback)
- */
-async function authenticatePiUserManual(accessToken: string, options?: any) {
-  console.log(`[Pi Auth Service] 🔐 Using manual authentication flow...`);
-  
-  const piData = await getPiUserProfile(accessToken);
-  console.log('[Pi Auth Service] ✅ Step 1: Pi user profile retrieved');
-
-  const supabaseProfile = await linkPiUserToSupabase(piData, options);
-  console.log('[Pi Auth Service] ✅ Step 2: Supabase profile linked/created');
-
-  const result = {
-    success: true,
-    piUser: piData,
-    supabaseProfile: supabaseProfile,
-    accessToken: accessToken,
-  };
-
-  console.log(`[Pi Auth Service] ✅ Manual authentication complete!`);
-  return result;
 }
 
 /**
@@ -318,9 +205,10 @@ export async function verifyStoredPiToken(accessToken: string): Promise<boolean>
     
     const response = await fetch(PI_CONFIG.ENDPOINTS.ME, {
       method: 'GET',
-      headers: PI_CONFIG.getAuthHeaders(accessToken),
-      mode: 'cors',
-      cache: 'no-store',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
       signal: controller.signal,
     });
     
@@ -330,38 +218,12 @@ export async function verifyStoredPiToken(accessToken: string): Promise<boolean>
       console.log('[Pi Auth Service] ✅ Stored Pi token is valid');
       return true;
     } else if (response.status === 401) {
-      console.warn('[Pi Auth Service] ⚠️ Token expired or invalid (401)');
+      console.warn('[Pi Auth Service] ⚠️ Token expired or invalid');
       return false;
     }
     return false;
   } catch (error: any) {
-    console.warn('[Pi Auth Service] ⚠️ Token check error:', error?.message);
+    console.warn('[Pi Auth Service] ⚠️ Token verification error:', error?.message);
     return false;
-  }
-}
-
-/**
- * Get Pi user wallet information
- */
-export async function getPiUserWallet(accessToken: string) {
-  try {
-    console.log('[Pi Auth Service] 💰 Fetching Pi user wallet info...');
-    
-    const response = await fetch(PI_CONFIG.ENDPOINTS.WALLETS, {
-      method: 'GET',
-      headers: PI_CONFIG.getAuthHeaders(accessToken),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to get wallet: ${response.status} - ${errorText}`);
-    }
-
-    const walletData = await response.json();
-    console.log('[Pi Auth Service] ✅ Wallet data retrieved');
-    return walletData;
-  } catch (error: any) {
-    console.error('[Pi Auth Service] ❌ Failed to get wallet:', error);
-    throw error;
   }
 }
