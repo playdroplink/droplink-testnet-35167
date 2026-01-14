@@ -34,30 +34,33 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "::",
       port: 8080,
+      strictPort: false,
       https: httpsConfig,
       cors: {
-        origin: [
-          'http://localhost:8080',
-          'https://localhost:8080',
-          'http://localhost:8081', 
-          'https://localhost:8081',
-          'https://droplink.space',
-          'https://sdk.minepi.com',
-          'https://app-cdn.minepi.com',
-          'https://api.minepi.com'
-        ],
+        origin: '*',
         credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+        allowedHeaders: ['*']
       },
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
+        'Access-Control-Allow-Headers': '*',
         'Cross-Origin-Embedder-Policy': 'unsafe-none',
-        'Cross-Origin-Opener-Policy': 'unsafe-none'
+        'Cross-Origin-Opener-Policy': 'unsafe-none',
+        'Cross-Origin-Resource-Policy': 'cross-origin'
       },
-      // Ensure validation key is accessible
+      proxy: {
+        '/pi-sdk': {
+          target: 'https://sdk.minepi.com',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/pi-sdk/, ''),
+          secure: false,
+          headers: {
+            'Origin': 'https://sdk.minepi.com'
+          }
+        }
+      },
       middlewareMode: false,
     },
     publicDir: 'public',
