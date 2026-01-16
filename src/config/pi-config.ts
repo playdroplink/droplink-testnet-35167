@@ -19,8 +19,8 @@ if (typeof window !== 'undefined') {
 }
 
 const PI_APP_ID = import.meta.env.VITE_PI_APP_ID ?? "droplink-317d26f51b67e992";
-const PI_API_KEY = import.meta.env.VITE_PI_API_KEY ?? "";
-const PI_VALIDATION_KEY = import.meta.env.VITE_PI_VALIDATION_KEY ?? "";
+const PI_API_KEY = import.meta.env.VITE_PI_API_KEY ?? "qowpmsqwdemax5e27bsvld5h90hiqb0s7arw1uzp0uhm8un71ejxhrulirbrnosm";
+const PI_VALIDATION_KEY = import.meta.env.VITE_PI_VALIDATION_KEY ?? "7511661aac4538b1832d2c9ba117f6d972b26a54640598d3fbb9824013c7079203f65b02d125be3f418605cfb89ba0e4443e3ec997e3800eb464df0bc5410d2a";
 const PLATFORM_URL = import.meta.env.VITE_PLATFORM_URL ?? "https://droplink.space";
 const PAYMENT_RECEIVER_WALLET = import.meta.env.VITE_PI_PAYMENT_RECEIVER_WALLET ?? "GDSXE723WPHZ5RGIJCSYXTPKSOIGPTSXE4RF5U3JTNGTCHXON7ZVD4LJ";
 
@@ -99,7 +99,7 @@ export const PI_CONFIG = {
   },
   
   ENDPOINTS: {
-    ME: `${BASE_API_URL}/me`,
+    ME: `${BASE_API_URL}/v2/me`,
     WALLETS: `${BASE_API_URL}/wallets`,
     TRANSACTIONS: `${BASE_API_URL}/transactions`,
     PAYMENTS: `${BASE_API_URL}/payments`,

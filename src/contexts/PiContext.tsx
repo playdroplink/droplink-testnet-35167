@@ -2,17 +2,31 @@
 export function isPiBrowserEnv(): boolean {
   if (typeof window === 'undefined' || !window.navigator) return false;
 
+  // Check for Pi SDK
   if (typeof window.Pi !== 'undefined' && window.Pi !== null) {
     return true;
   }
 
+  // Check user agent
   const ua = window.navigator.userAgent || '';
   const isPiUA = /PiBrowser|Pi\s?Browser|Pi\s?App|minepi|Pi Network/i.test(ua);
   if (isPiUA) {
     return true;
   }
 
+  // Check for Pi-specific properties
   if ((window.navigator as any).pi !== undefined || (window as any).piApp !== undefined) {
+    return true;
+  }
+
+  // Check for Pi Network specific headers or properties
+  if ((window as any).__PI_SDK__ || (window as any).__PI_CONTEXT__) {
+    return true;
+  }
+
+  // Development mode check
+  if (import.meta.env.DEV && import.meta.env.VITE_DEV_MODE === 'true') {
+    console.log('[PI DETECTION] Running in dev mode - Pi detection enabled');
     return true;
   }
 
@@ -199,10 +213,10 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
 
         if (isPi) {
           let attempts = 0;
-          const maxAttempts = 10;
+          const maxAttempts = 15;
 
           while (typeof window.Pi === 'undefined' && attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 200));
+            await new Promise(resolve => setTimeout(resolve, 300));
             attempts++;
           }
 
@@ -212,38 +226,57 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           }
 
           try {
+            console.log('[PI INIT] Initializing Pi SDK with config:', PI_CONFIG.SDK);
             await window.Pi.init(PI_CONFIG.SDK);
+            console.log('[PI INIT] ✅ Pi SDK initialized successfully');
             setIsInitialized(true);
-          } catch (initErr) {
-            setError('Failed to initialize Pi SDK');
+          } catch (initErr: any) {
+            console.error('[PI INIT] ❌ Failed to initialize Pi SDK:', initErr);
+            setError(`Failed to initialize Pi SDK: ${initErr.message || initErr}`);
             return;
           }
 
           try {
+            console.log('[AD NETWORK] Detecting ad network support...');
             let adSupported = false;
             let features: string[] = [];
 
+            // Method 1: Check nativeFeaturesList
             if (typeof (window as any)?.Pi?.nativeFeaturesList === 'function') {
               try {
                 features = await (window as any).Pi.nativeFeaturesList();
-                adSupported = features.includes('ad_network');
+                adSupported = features.includes('ad_network') || features.includes('ads');
+                console.log('[AD NETWORK] Native features:', features);
               } catch (featureErr) {
-                // Ignore nativeFeaturesList errors and fall back to other checks
+                console.warn('[AD NETWORK] nativeFeaturesList failed:', featureErr);
               }
             }
 
+            // Method 2: Check for ad API endpoints
             let hasAdAPI = adSupported;
             if (!hasAdAPI && (window as any).Pi?.Ads) {
               hasAdAPI = true;
+              console.log('[AD NETWORK] ✅ Pi.Ads API detected');
             }
             if (!hasAdAPI && (window as any).Pi?.showRewardedAd) {
               hasAdAPI = true;
+              console.log('[AD NETWORK] ✅ Pi.showRewardedAd detected');
+            }
+            if (!hasAdAPI && (window as any).Pi?.showInterstitialAd) {
+              hasAdAPI = true;
+              console.log('[AD NETWORK] ✅ Pi.showInterstitialAd detected');
             }
 
+            console.log('[AD NETWORK] Ad network supported:', hasAdAPI);
             setAdNetworkSupported(hasAdAPI);
           } catch (err) {
+            console.error('[AD NETWORK] Error detecting ad network:', err);
+            // Fallback detection
             if ((window as any).Pi?.Ads || (window as any).Pi?.showRewardedAd) {
+              console.log('[AD NETWORK] ✅ Fallback detection successful');
               setAdNetworkSupported(true);
+            } else {
+              setAdNetworkSupported(false);
             }
           }
 

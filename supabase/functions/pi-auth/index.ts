@@ -37,15 +37,24 @@ serve(async (req) => {
     // Verify the access token with Pi API
     // PRODUCTION ONLY - MAINNET (NO SANDBOX)
     const piApiUrl = 'https://api.minepi.com/v2/me';
+    const piApiKey = Deno.env.get('VITE_PI_API_KEY') || Deno.env.get('PI_API_KEY');
     
     let piUserData;
     try {
       console.log('Verifying token with Pi API (MAINNET): ' + piApiUrl);
       console.log('Network: MAINNET - Sandbox/Testnet DISABLED');
+      
+      const headers: Record<string, string> = {
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+      };
+      
+      if (piApiKey) {
+        headers["X-Api-Key"] = piApiKey;
+      }
+      
       const piResponse = await fetch(piApiUrl, {
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-        },
+        headers,
       });
 
       const piResponseText = await piResponse.text();

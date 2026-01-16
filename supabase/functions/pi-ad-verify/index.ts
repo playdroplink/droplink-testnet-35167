@@ -42,10 +42,19 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Verify Pi Network token
+    const piApiKey = Deno.env.get('VITE_PI_API_KEY') || Deno.env.get('PI_API_KEY');
+    
+    const headers: Record<string, string> = {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+    
+    if (piApiKey) {
+      headers['X-Api-Key'] = piApiKey;
+    }
+    
     const piResponse = await fetch('https://api.minepi.com/v2/me', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+      headers
     });
 
     if (!piResponse.ok) {

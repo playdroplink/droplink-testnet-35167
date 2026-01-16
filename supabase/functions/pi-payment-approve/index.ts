@@ -35,10 +35,11 @@ serve(async (req) => {
     console.log('[APPROVAL] Client metadata:', JSON.stringify(metadata || {}));
 
     // Get Pi API Key from environment
-    const PI_API_KEY = Deno.env.get('PI_API_KEY');
+    const PI_API_KEY = Deno.env.get('VITE_PI_API_KEY') || Deno.env.get('PI_API_KEY');
     if (!PI_API_KEY) {
       console.error('[APPROVAL] ❌ PI_API_KEY not configured in environment');
-      throw new Error("PI_API_KEY not configured");
+      console.error('[APPROVAL] Available env vars:', Object.keys(Deno.env.toObject()).filter(k => k.includes('PI')));
+      throw new Error("PI_API_KEY not configured - check environment variables");
     }
 
     // Initialize Supabase client
