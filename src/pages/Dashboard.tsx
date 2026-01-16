@@ -1580,6 +1580,49 @@ const Dashboard = () => {
                       </div>
                     )}
 
+                    {/* Organization Links Section */}
+                    <div className="space-y-2">
+                      <h3 className="font-medium text-sm text-muted-foreground px-2">Mrwain Organization</h3>
+                      <div className="grid grid-cols-1 gap-2">
+                        <Button 
+                          type="button" 
+                          onClick={() => window.open('https://dropshops.space/', '_blank')} 
+                          size="sm" 
+                          className="inline-flex justify-start gap-2 h-12 bg-purple-500 text-white hover:bg-purple-600 border-none"
+                        >
+                          <Store className="w-4 h-4" />
+                          <div className="text-left">
+                            <div className="text-sm font-medium">DropStore</div>
+                            <div className="text-xs opacity-90">Online marketplace</div>
+                          </div>
+                        </Button>
+                        <Button 
+                          type="button" 
+                          onClick={() => window.open('https://droppay.space/', '_blank')} 
+                          size="sm" 
+                          className="inline-flex justify-start gap-2 h-12 bg-green-500 text-white hover:bg-green-600 border-none"
+                        >
+                          <CreditCard className="w-4 h-4" />
+                          <div className="text-left">
+                            <div className="text-sm font-medium">DropPay</div>
+                            <div className="text-xs opacity-90">Payment solutions</div>
+                          </div>
+                        </Button>
+                        <Button 
+                          type="button" 
+                          onClick={() => window.open('https://dropshare.space/', '_blank')} 
+                          size="sm" 
+                          className="inline-flex justify-start gap-2 h-12 bg-blue-500 text-white hover:bg-blue-600 border-none"
+                        >
+                          <Share2 className="w-4 h-4" />
+                          <div className="text-left">
+                            <div className="text-sm font-medium">DropShare</div>
+                            <div className="text-xs opacity-90">Social sharing</div>
+                          </div>
+                        </Button>
+                      </div>
+                    </div>
+
                     {/* Support & Help Section */}
                     <div className="space-y-2">
                       <h3 className="font-medium text-sm text-muted-foreground px-2">Support & Help</h3>
