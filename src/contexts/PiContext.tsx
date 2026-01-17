@@ -2,47 +2,44 @@
 export function isPiBrowserEnv(): boolean {
   if (typeof window === 'undefined' || !window.navigator) return false;
 
-  // Check for Pi SDK (most reliable indicator)
+  // Primary check: Is Pi SDK available? This is the most reliable indicator
   if (typeof window.Pi !== 'undefined' && window.Pi !== null) {
-    console.log('[PI DETECTION] Pi SDK detected');
-    return true;
+    // Verify it's the real SDK, not a mock
+    if (typeof window.Pi.init === 'function' && typeof window.Pi.authenticate === 'function') {
+      console.log('[PI DETECTION] \u2705 Real Pi SDK detected');
+      return true;
+    }
   }
 
-  // Check user agent - CRITICAL FIX: Pi Browser may use various user agent strings
+  // Secondary check: User agent patterns
+  // Pi Browser can have various user agent strings
   const ua = window.navigator.userAgent || '';
-  
-  // More comprehensive user agent patterns
-  const isPiUA = /pibrowser|pi\s?browser|pi\s?app|minepi|pi\s?network|pinetwork|pi-app|pi-browser/i.test(ua);
+  const isPiUA = /pi.?browser|pi.?app|minepi/i.test(ua);
   if (isPiUA) {
-    console.log('[PI DETECTION] Pi Browser detected via user agent:', ua.substring(0, 100));
+    console.log('[PI DETECTION] Pi Browser detected via user agent');
     return true;
   }
 
-  // Check for Pi-specific window properties that indicate Pi Browser environment
+  // Tertiary check: Pi-specific window properties
   if ((window as any).__PI_SDK__ || (window as any).__PI_CONTEXT__ || (window as any).__PIBROWSER__) {
-    console.log('[PI DETECTION] Pi SDK context detected');
+    console.log('[PI DETECTION] Pi Browser context detected');
     return true;
   }
   
-  // Check for piApp property (some Pi Browser versions)
-  if ((window as any).piApp !== undefined) {
-    console.log('[PI DETECTION] piApp property detected');
-    return true;
-  }
-  
-  // Check navigator properties
-  if ((window.navigator as any).pi !== undefined) {
-    console.log('[PI DETECTION] navigator.pi detected');
+  // Check for other Pi indicators
+  if ((window as any).piApp !== undefined || (window.navigator as any).pi !== undefined) {
+    console.log('[PI DETECTION] Pi property detected');
     return true;
   }
 
-  // Development mode check
-  if (import.meta.env.DEV && import.meta.env.VITE_DEV_MODE === 'true') {
-    console.log('[PI DETECTION] Running in dev mode - Pi detection enabled');
-    return true;
+  // Development mode: Be more permissive for testing
+  if (import.meta.env.DEV) {
+    console.log('[PI DETECTION] Development mode - detection uncertain, continuing...');
+    // Return true in dev mode if SDK is being loaded
+    return typeof window.Pi !== 'undefined';
   }
 
-  console.log('[PI DETECTION] Not in Pi Browser. UA:', ua.substring(0, 150));
+  console.log('[PI DETECTION] Pi Browser not detected. UA:', ua.substring(0, 150));
   return false;
 }
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
@@ -343,76 +340,46 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
     
     try {
-      // Check if we're in Pi Browser environment
+      // Check Pi Browser environment (non-blocking)
       const inPiBrowser = isPiBrowserEnv();
       console.log('[SIGNIN] In Pi Browser:', inPiBrowser);
       
-      // If not in Pi Browser, fail immediately
+      // Don't fail here - let Pi SDK handle the check naturally
+      // The SDK will throw its own error if not in Pi Browser
       if (!inPiBrowser) {
-        const msg = 'Pi Browser required: This app only works in the official Pi Browser';
-        console.error('[SIGNIN]', msg);
-        toast(msg, { duration: 12000 });
-        throw new Error(msg);
+        console.warn('[SIGNIN] Pi Browser detection uncertain - will attempt authentication anyway');
       }
       
-      // Ensure SDK is loaded
+      // Ensure SDK is initialized - following official Pi SDK guide
+      // https://pi-apps.github.io/community-developer-guide/docs/gettingStarted/piAppPlatform/piAppPlatformSDK/
       if (typeof window.Pi === 'undefined') {
-        try {
-          let attempts = 0;
-          let piAvailable = false;
-          
-          console.log('[SIGNIN] Waiting for Pi SDK to load...');
-          while (!piAvailable && attempts < 20) {
-            if (typeof window.Pi !== 'undefined' && window.Pi !== null) {
-              piAvailable = true;
-              console.log('[SIGNIN] Pi SDK became available after', attempts, 'attempts');
-            } else {
-              await new Promise(resolve => setTimeout(resolve, 300));
-              attempts++;
-            }
-          }
-          
-          if (!piAvailable) {
-            const msg = `Pi SDK failed to load after ${attempts * 300}ms. Try refreshing the page.`;
-            console.error('[SIGNIN]', msg);
-            toast(msg, { duration: 12000 });
-            throw new Error(msg);
-          }
-
-          console.log('[SIGNIN] Initializing Pi SDK...');
-          console.log('[SIGNIN] SDK Config:', JSON.stringify(PI_CONFIG.SDK, null, 2));
-          const initResult = await window.Pi!.init(PI_CONFIG.SDK);
-          console.log('[SIGNIN] Pi.init() returned:', initResult);
-          setIsInitialized(true);
-          console.log('[SIGNIN] Pi SDK initialized successfully');
-        } catch (reinitError: any) {
-          const msg = reinitError?.message || String(reinitError);
-          setError('Failed to initialize Pi SDK.');
-          setLoading(false);
-          throw new Error('Failed to initialize Pi SDK: ' + msg);
-        }
+        const msg = 'Pi SDK not available. Please ensure you are using the official Pi Browser.';
+        console.error('[SIGNIN]', msg);
+        toast.error(msg, { duration: 8000 });
+        throw new Error(msg);
       }
+
+      // Initialize window.Pi reference (official pattern)
+      const Pi = window.Pi;
+
+      console.log('[SIGNIN] Calling Pi.authenticate with scopes:', requestedScopes);
+      console.log('[SIGNIN] Pi SDK state:', {
+        hasAuthenticate: typeof Pi.authenticate === 'function',
+        hasInit: typeof Pi.init === 'function',
+        hasPi: typeof Pi !== 'undefined'
+      });
 
       let authResult: AuthResult | null = null;
       const tryScopes = async (reqScopes: string[]) => {
-        if (typeof window.Pi === 'undefined') {
-          throw new Error('window.Pi is undefined - SDK not loaded');
-        }
-
         // Verify Pi SDK is properly initialized and has authenticate method
-        if (typeof window.Pi!.authenticate !== 'function') {
-          console.error('[SIGNIN] window.Pi.authenticate is not a function. window.Pi:', window.Pi);
+        if (typeof Pi.authenticate !== 'function') {
+          console.error('[SIGNIN] Pi.authenticate is not a function. Pi:', Pi);
           throw new Error('Pi SDK authenticate method not available');
         }
 
-        console.log('[SIGNIN] Calling Pi.authenticate with scopes:', reqScopes);
-        console.log('[SIGNIN] Pi SDK state:', {
-          hasAuthenticate: typeof window.Pi!.authenticate === 'function',
-          hasInit: typeof window.Pi!.init === 'function',
-          hasPi: typeof window.Pi !== 'undefined'
-        });
-        
-        const result = await window.Pi!.authenticate(reqScopes, PI_CONFIG.onIncompletePaymentFound);
+        // Call Pi.authenticate following official guide pattern
+        // https://pi-apps.github.io/community-developer-guide/docs/gettingStarted/piAppPlatform/piAppPlatformSDK/#authenticate
+        const result = await Pi.authenticate(reqScopes, PI_CONFIG.onIncompletePaymentFound);
         console.log('[SIGNIN] Pi.authenticate returned:', result);
         
         // Validate response structure

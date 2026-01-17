@@ -18,9 +18,10 @@ if (typeof window !== 'undefined') {
   console.log('[PI CONFIG] Sandbox/Testnet: DISABLED');
 }
 
+// Pi Network Credentials - From Pi Developer Portal
 const PI_APP_ID = import.meta.env.VITE_PI_APP_ID ?? "droplink-317d26f51b67e992";
-const PI_API_KEY = import.meta.env.VITE_PI_API_KEY ?? "zmdsfbedi4idcsniyy7ee1twwulq2cbruighxqgtqozyk6ph1fjswft69cddgqwk";
-const PI_VALIDATION_KEY = import.meta.env.VITE_PI_VALIDATION_KEY ?? "7511661aac4538b1832d2c9ba117f6d972b26a54640598d3fbb9824013c7079203f65b02d125be3f418605cfb89ba0e4443e3ec997e3800eb464df0bc5410d2a";
+const PI_API_KEY = "zmdsfbedi4idcsniyy7ee1twwulq2cbruighxqgtqozyk6ph1fjswft69cddgqwk";
+const PI_VALIDATION_KEY = "7511661aac4538b1832d2c9ba117f6d972b26a54640598d3fbb9824013c7079203f65b02d125be3f418605cfb89ba0e4443e3ec997e3800eb464df0bc5410d2a";
 const PLATFORM_URL = import.meta.env.VITE_PLATFORM_URL ?? "https://droplink.space";
 const PAYMENT_RECEIVER_WALLET = import.meta.env.VITE_PI_PAYMENT_RECEIVER_WALLET ?? "GDSXE723WPHZ5RGIJCSYXTPKSOIGPTSXE4RF5U3JTNGTCHXON7ZVD4LJ";
 
@@ -38,9 +39,11 @@ export const PI_CONFIG = {
   SANDBOX_MODE: sandboxFlag,
   ALLOW_MULTIPLE_ACCOUNTS: true,
 
+  // Pi SDK Configuration - Following official guide
+  // https://pi-apps.github.io/community-developer-guide/docs/gettingStarted/piAppPlatform/piAppPlatformSDK/
   SDK: {
-    version: "2.0",
-    sandbox: sandboxFlag,
+    version: "2.0", // Latest SDK version as of August 2022
+    sandbox: false, // Mainnet production mode
   },
   
   // Official Documentation Links
@@ -51,11 +54,11 @@ export const PI_CONFIG = {
     PLATFORM_DOCS: "https://github.com/pi-apps/pi-platform-docs",
   },
   
-  // Scopes for Droplink Mainnet - includes payments, wallet_address, and username
-  // These scopes allow users to:
-  // - Sign in with username
-  // - Make payments for subscriptions
-  // - Access wallet address for tips and donations
+  // Authentication Scopes - Following official Pi SDK guide
+  // username: Returns Pioneer's username for personalization
+  // payments: Required to initialize Pi payments
+  // wallet_address: Access wallet address for transactions
+  // See: https://pi-apps.github.io/community-developer-guide/docs/gettingStarted/piAppPlatform/piAppPlatformSDK/#scopes
   scopes: ['username', 'payments', 'wallet_address'],
   
   onIncompletePaymentFound: (payment: any) => {

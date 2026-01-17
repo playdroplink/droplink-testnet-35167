@@ -57,24 +57,18 @@ export const validatePiEnvironment = async (): Promise<void> => {
     errors.push('Failed to fetch or parse /manifest.json');
   }
 
-  try {
-    // Pi SDK availability is guaranteed in Pi Browser. Cross-origin HEAD often fails due to CORS.
-    // Perform a best-effort HEAD and never make this fatal (even on production).
-    const sdkUrl = import.meta.env.VITE_PI_SDK_URL || 'https://sdk.minepi.com/pi-sdk.js';
-    try {
-      const sdkResp = await fetch(sdkUrl, { method: 'HEAD', cache: 'no-store' });
-      if (!sdkResp.ok) {
-        console.warn(`Pi SDK HEAD returned ${sdkResp.status} on ${sdkUrl} — continuing`);
-      }
-    } catch (e) {
-      console.warn('Pi SDK HEAD failed (likely CORS/network) — skipping strict check', e);
-    }
-  } catch (err) {
-    console.warn('Unexpected error during Pi SDK check — continuing', err);
-  }
+  // Skip Pi SDK URL check entirely - it always fails due to CORS
+  // The SDK is loaded via script tag and will be available if in Pi Browser
+  console.log('[PI ENV CHECK] Skipping Pi SDK URL check (CORS always blocks it)');
 
+  // Only throw error if critical validations failed
+  // Make validation warnings instead of errors in production
   if (errors.length > 0) {
-    const message = `Pi environment validation failed:\n- ${errors.join('\n- ')}`;
-    throw new Error(message);
+    const message = `Pi environment validation warnings:\n- ${errors.join('\n- ')}`;
+    console.warn('[PI ENV CHECK]', message);
+    // Don't throw - these are warnings, not fatal errors
+    // The actual Pi authentication will fail if there's a real issue
+  } else {
+    console.log('[PI ENV CHECK] All validation checks passed');
   }
 };

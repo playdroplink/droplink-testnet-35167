@@ -81,117 +81,14 @@
     <!-- Pi CORS Fix for Development -->
     <script src="/pi-cors-fix.js"></script>
     
-    <!-- Pi Network SDK: Load script with CORS and error handling -->
+    <!-- Pi Network SDK Integration - Official Pattern -->
+    <!-- Following: https://pi-apps.github.io/community-developer-guide/docs/gettingStarted/piAppPlatform/piAppPlatformSDK/ -->
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script>
-      // Enhanced Pi SDK loader with CORS fallback
-      (function() {
-        console.log('[PI SDK] 🟢 Starting enhanced Pi SDK loader...');
-        
-        // Primary SDK load
-        const script = document.createElement('script');
-        script.src = 'https://sdk.minepi.com/pi-sdk.js';
-        script.crossOrigin = 'anonymous';
-        script.type = 'text/javascript';
-        
-        script.onload = function() {
-          console.log('[PI SDK] ✅ Pi SDK script loaded successfully');
-          window.piSDKLoaded = true;
-        };
-        
-        script.onerror = function(error) {
-          console.warn('[PI SDK] ⚠️ Pi SDK failed to load - this is normal outside Pi Browser');
-          
-          // Only create fallback if truly needed
-          if (typeof window.Pi === 'undefined') {
-            window.Pi = {
-              init: function() {
-                console.log('[PI SDK] 🔄 Fallback mode - not in Pi Browser');
-                return Promise.resolve();
-              },
-              authenticate: function() {
-                return Promise.reject('Pi Browser required');
-              }
-            };
-          }
-          window.piSDKLoaded = 'fallback';
-        };
-        
-        // Only append script if we might be in Pi Browser
-        const userAgent = navigator.userAgent || '';
-        if (userAgent.includes('PiBrowser') || userAgent.includes('Pi Browser')) {
-          document.head.appendChild(script);
-        } else {
-          console.log('[PI SDK] ℹ️ Not in Pi Browser - skipping SDK load');
-          script.onerror();
-        }
-        
-        // Set a timeout for loading
-        setTimeout(() => {
-          if (!window.piSDKLoaded) {
-            console.log('[PI SDK] ℹ️ SDK load timeout - not in Pi Browser');
-            if (typeof script.onerror === 'function') script.onerror();
-          }
-        }, 3000);
-      })();
-    </script>
-    <script>
-      // Enhanced Pi SDK loading with better error handling
-      console.log('[PI LOADER] 🟢 Starting Pi SDK loader...');
-      
-      if (typeof window !== 'undefined') {
-        // Track SDK loading status
-        window.piSDKLoaded = false;
-        window.piSDKError = null;
-        
-        // Method 1: Monitor for SDK availability
-        const checkPiAvailability = setInterval(() => {
-          if (typeof window.Pi !== 'undefined' && window.Pi !== null) {
-            console.log('[PI LOADER] ✅ Pi SDK detected and available');
-            window.piSDKLoaded = true;
-            clearInterval(checkPiAvailability);
-          }
-        }, 100);
-        
-        // Clear the check after 5 seconds
-        setTimeout(() => {
-          clearInterval(checkPiAvailability);
-          if (!window.piSDKLoaded) {
-            console.warn('[PI LOADER] ⚠️ Pi SDK not detected after 5 seconds - may not be in Pi Browser or SDK failed to load');
-          }
-        }, 5000);
-        
-        // Method 2: Wait for document ready
-        document.addEventListener('DOMContentLoaded', function() {
-          console.log('[PI LOADER] 📍 DOMContentLoaded fired');
-          if (typeof window.Pi !== 'undefined') {
-            console.log('[PI LOADER] ✅ Pi SDK available at DOMContentLoaded');
-            window.piSDKLoaded = true;
-          } else {
-            console.log('[PI LOADER] ⚠️ Pi SDK not available at DOMContentLoaded');
-          }
-        });
-        
-        // Method 3: Monitor window load event
-        window.addEventListener('load', function() {
-          console.log('[PI LOADER] 📍 Window load event fired');
-          if (typeof window.Pi !== 'undefined') {
-            console.log('[PI LOADER] ✅ Pi SDK available at window.load');
-            window.piSDKLoaded = true;
-          } else {
-            console.log('[PI LOADER] ⚠️ Pi SDK not available at window.load');
-            // Try one more time after a short delay
-            setTimeout(() => {
-              if (typeof window.Pi !== 'undefined') {
-                console.log('[PI LOADER] ✅ Pi SDK became available after window.load');
-                window.piSDKLoaded = true;
-              } else {
-                console.error('[PI LOADER] ❌ Pi SDK failed to load - you may not be in Pi Browser');
-                window.piSDKError = 'Pi SDK not loaded. You may not be in the official Pi Browser.';
-              }
-            }, 500);
-          }
-        });
-      }
+      // Initialize Pi SDK - Version 2.0 (Mainnet Production)
+      // This must be called before any other Pi SDK functions
+      Pi.init({ version: "2.0" });
+      console.log('[PI SDK] ✅ Pi SDK initialized with version 2.0');
     </script>
 
 

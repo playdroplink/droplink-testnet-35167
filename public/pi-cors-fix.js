@@ -60,8 +60,11 @@
   
   // Pi SDK environment detection without mocking
   function setupPiFallback() {
-    if (typeof window.Pi === 'undefined' && window.location.hostname === 'localhost') {
-      console.warn('[PI CORS FIX] ⚠️ Pi SDK not available on localhost. No mock installed. Use Pi Browser / real SDK.');
+    // Do NOT create any Pi SDK fallback/mock - it interferes with real SDK
+    if (typeof window.Pi === 'undefined') {
+      console.warn('[PI CORS FIX] ⚠️ Pi SDK not detected - app should only work in Pi Browser');
+    } else {
+      console.log('[PI CORS FIX] ✅ Pi SDK is available');
     }
   }
   

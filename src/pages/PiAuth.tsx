@@ -47,27 +47,40 @@ const PiAuth = () => {
 
     setLoading(true);
     try {
-      // Optional: Validate Pi environment (but don't block auth if it fails)
+      // Optional: Validate Pi environment (non-blocking)
       try {
         await validatePiEnvironment();
         console.log('[AUTH] Pi environment validation passed');
       } catch (validationError) {
-        console.warn('[AUTH] Pi environment validation failed (non-blocking):', validationError);
-        // Don't throw - continue with authentication even if validation fails
+        console.warn('[AUTH] Pi environment validation warnings (non-blocking):', validationError);
+        // Don't throw - validation warnings should not block authentication
       }
       
+      // Attempt Pi sign in - SDK will handle Pi Browser check
       await signIn();
       sessionStorage.setItem("piAuthJustSignedIn", "true");
       navigate("/", { replace: true });
     } catch (error: any) {
       console.error("Pi sign in error:", error);
-      if (String(error?.message || error).toLowerCase().includes("pi browser")) {
+      
+      // Check if error is related to Pi Browser requirement
+      const errorMsg = String(error?.message || error).toLowerCase();
+      const isPiBrowserError = errorMsg.includes("pi browser") || 
+                              errorMsg.includes("not in pi") || 
+                              errorMsg.includes("pi sdk");
+      
+      if (isPiBrowserError) {
         setShowPiBrowserNotice(true);
+        toast.error("Pi Browser Required", {
+          description: "This app only works in the official Pi Browser app",
+          duration: 8000,
+        });
+      } else {
+        toast.error("Authentication failed", {
+          description: error?.message || "Please try again",
+          duration: 6000,
+        });
       }
-      toast.error("Pi sign in failed", {
-        description: error?.message || "Please retry in Pi Browser",
-        duration: 6000,
-      });
     } finally {
       setLoading(false);
     }
