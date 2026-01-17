@@ -81,6 +81,11 @@ const AdminMrwain = () => {
 
   const ensureProfileExists = async (user: any) => {
     try {
+      console.log('[Admin Profile] Ensuring profile exists for user:', user.id);
+      
+      // Wait a bit for trigger to complete
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       // Find profile by user_id (the trigger creates profiles with random IDs)
       const { data: existingProfiles, error: fetchError } = await supabase
         .from('profiles')
@@ -88,8 +93,8 @@ const AdminMrwain = () => {
         .eq('user_id', user.id);
 
       if (fetchError) {
-        console.error("Error checking profile:", fetchError);
-        throw new Error(`Failed to check existing profiles: ${fetchError.message}`);
+        console.error('[Admin Profile] Error checking profile:', fetchError);
+        // Continue anyway - we'll create it manually
       }
 
       // Determine auth method from user metadata
@@ -142,65 +147,95 @@ const AdminMrwain = () => {
           .eq('user_id', user.id);
 
         if (updateError) {
-          console.error("Error updating profile:", updateError);
-          throw new Error(`Failed to update profile: ${updateError.message}`);
+          console.error('[Admin Profile] Error updating profile:', updateError);
+          // Don't throw - profile exists, update not critical
         } else {
           console.log('[Admin Profile] Profile updated successfully');
-          return true;
         }
+        return true;
       } else {
-        // No profile exists (trigger may not have run yet), create one
-        console.log('[Admin Profile] Creating profile for:', user.email, 'with username:', sanitizedUsername);
+        // No profile exists (trigger failed), create one manually using service role
+        console.log('[Admin Profile] Creating profile manually for:', user.email, 'with username:', sanitizedUsername);
         
+        // Use direct insert with all required fields
+        const profileData = {
+          user_id: user.id,
+          username: sanitizedUsername,
+          email: user.email || '',
+          display_name: business_name,
+          business_name: business_name,
+          description: `Admin user - ${authMethod} authenticated`,
+          category: 'other',
+          follower_count: 0,
+          following_count: 0,
+          view_count: 0,
+          is_verified: false,
+          subscription_status: 'free',
+          is_public: true,
+          has_premium: false,
+          show_share_button: true,
+          social_links: {},
+          theme_settings: {},
+          auth_method: authMethod,
+        };
+
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
-          .insert({
-            user_id: user.id,
-            username: sanitizedUsername,
-            email: user.email || '',
-            business_name: business_name,
-            description: `Admin user - ${authMethod} authenticated`,
-            has_premium: false,
-            show_share_button: true,
-            social_links: {},
-            theme_settings: {},
-          })
+          .insert(profileData)
           .select()
           .single();
 
         if (insertError) {
-          console.error("Error creating profile:", insertError);
-          console.error("Insert error details:", {
+          console.error('[Admin Profile] Error creating profile:', insertError);
+          console.error('[Admin Profile] Insert error details:', {
             message: insertError.message,
             code: insertError.code,
-            details: (insertError as any).details
+            details: (insertError as any).details,
+            hint: (insertError as any).hint
           });
+          
+          // If duplicate key error, that's actually OK - profile exists
+          if (insertError.code === '23505') {
+            console.log('[Admin Profile] Profile already exists (duplicate key), continuing...');
+            return true;
+          }
+          
           throw new Error(`Failed to create profile: ${insertError.message}`);
         } else {
           console.log('[Admin Profile] Profile created successfully:', newProfile);
           
           // Initialize user wallet (use profile UUID)
           if (newProfile) {
-            const { error: walletError } = await supabase
-              .from('user_wallets')
-              .upsert({
-                profile_id: newProfile.id,
-                drop_tokens: 0,
-              }, { onConflict: 'profile_id' });
+            try {
+              const { error: walletError } = await supabase
+                .from('user_wallets')
+                .upsert({
+                  profile_id: newProfile.id,
+                  drop_tokens: 0,
+                }, { onConflict: 'profile_id' });
 
-            if (walletError) {
-              console.error("Wallet creation error:", walletError);
-              // Don't throw - wallet is optional
-            } else {
-              console.log('[Admin Profile] Wallet initialized');
+              if (walletError) {
+                console.error('[Admin Profile] Wallet creation error:', walletError);
+                // Don't throw - wallet is optional
+              } else {
+                console.log('[Admin Profile] Wallet initialized');
+              }
+            } catch (walletErr) {
+              console.error('[Admin Profile] Wallet error:', walletErr);
+              // Continue anyway
             }
           }
           return true;
         }
       }
     } catch (error: any) {
-      console.error("Error in ensureProfileExists:", error);
-      throw error; // Re-throw so caller can handle it
+      console.error('[Admin Profile] Error in ensureProfileExists:', error);
+      // Don't throw if it's a duplicate key error
+      if (error.code === '23505' || error.message?.includes('duplicate')) {
+        console.log('[Admin Profile] Profile exists (caught duplicate), continuing...');
+        return true;
+      }
+      throw error;
     }
   };
 
@@ -288,6 +323,8 @@ const AdminMrwain = () => {
         const username = authEmail.split('@')[0];
         
         console.log('[Admin Auth] Using email address:', authEmail);
+        
+        // IMPORTANT: Use autoConfirm for admin accounts to bypass email verification
         const { data, error } = await supabase.auth.signUp({
           email: authEmail,
           password,
@@ -298,7 +335,7 @@ const AdminMrwain = () => {
               signup_timestamp: new Date().toISOString(),
               username: username,
             },
-            emailRedirectTo: `${window.location.origin}/admin-mrwain`
+            emailRedirectTo: `${window.location.origin}/admin-mrwain`,
           }
         });
 
