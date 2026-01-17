@@ -41,9 +41,11 @@
     }
   };
   
-  // Override fetch to add CORS headers for Pi SDK, but do not return mock data
+  // Override fetch to add CORS headers ONLY for Pi SDK requests
+  // DO NOT intercept Supabase, other APIs - they have their own CORS handling
   window.fetch = function(url, options = {}) {
-    if (typeof url === 'string' && url.includes('minepi.com')) {
+    // ONLY intercept Pi Network SDK requests
+    if (typeof url === 'string' && url.includes('minepi.com') && url.includes('/pi-sdk')) {
       console.log('[PI CORS FIX] 📡 Intercepting Pi SDK fetch request');
       const corsOptions = {
         ...options,
@@ -55,6 +57,7 @@
       };
       return originalFetch.call(this, url, corsOptions);
     }
+    // For all other requests (Supabase, etc.), use original fetch without modification
     return originalFetch.call(this, url, options);
   };
   

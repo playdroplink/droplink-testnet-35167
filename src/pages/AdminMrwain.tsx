@@ -241,6 +241,7 @@ const AdminMrwain = () => {
       if (isLogin) {
         // Sign In
         console.log('[Admin Auth] Attempting sign in for:', authEmail);
+        console.log('[Admin Auth] Using email address:', authEmail);
         const { data, error } = await supabase.auth.signInWithPassword({
           email: authEmail,
           password,
@@ -248,10 +249,24 @@ const AdminMrwain = () => {
         
         if (error) {
           console.error('[Admin Auth] Sign in error:', error);
+          console.error('[Admin Auth] Error details:', {
+            message: error.message,
+            status: error.status,
+            name: error.name
+          });
+          
           if (error.message.includes("Invalid login credentials")) {
-            toast.error("Invalid email or password");
+            toast.error("Invalid email or password. Please check your credentials or sign up if you're new.", {
+              duration: 6000,
+            });
+          } else if (error.message.includes("Email not confirmed")) {
+            toast.error("Please confirm your email address before signing in.", {
+              duration: 6000,
+            });
           } else {
-            toast.error(error.message);
+            toast.error(`Sign in failed: ${error.message}`, {
+              duration: 6000,
+            });
           }
           return;
         }
@@ -272,6 +287,7 @@ const AdminMrwain = () => {
         // Extract username for profile creation
         const username = authEmail.split('@')[0];
         
+        console.log('[Admin Auth] Using email address:', authEmail);
         const { data, error } = await supabase.auth.signUp({
           email: authEmail,
           password,
@@ -288,11 +304,25 @@ const AdminMrwain = () => {
 
         if (error) {
           console.error('[Admin Auth] Sign up error:', error);
-          if (error.message.includes("already registered")) {
-            toast.error("This email is already registered. Please sign in instead.");
+          console.error('[Admin Auth] Error details:', {
+            message: error.message,
+            status: error.status,
+            name: error.name
+          });
+          
+          if (error.message.includes("already registered") || error.message.includes("already been registered")) {
+            toast.error("This email is already registered. Please sign in instead.", {
+              duration: 6000,
+            });
             setIsLogin(true);
+          } else if (error.message.includes("Database error")) {
+            toast.error("Database error. Please contact the administrator or try again later.", {
+              duration: 8000,
+            });
           } else {
-            toast.error(error.message);
+            toast.error(`Sign up failed: ${error.message}`, {
+              duration: 6000,
+            });
           }
           return;
         }
