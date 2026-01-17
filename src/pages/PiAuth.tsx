@@ -47,7 +47,15 @@ const PiAuth = () => {
 
     setLoading(true);
     try {
-      await validatePiEnvironment();
+      // Optional: Validate Pi environment (but don't block auth if it fails)
+      try {
+        await validatePiEnvironment();
+        console.log('[AUTH] Pi environment validation passed');
+      } catch (validationError) {
+        console.warn('[AUTH] Pi environment validation failed (non-blocking):', validationError);
+        // Don't throw - continue with authentication even if validation fails
+      }
+      
       await signIn();
       sessionStorage.setItem("piAuthJustSignedIn", "true");
       navigate("/", { replace: true });
