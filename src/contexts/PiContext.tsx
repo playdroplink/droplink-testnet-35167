@@ -236,25 +236,17 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           }
 
           if (typeof window.Pi === 'undefined') {
-            // If we're in Pi Browser but SDK didn't load, this might be a network issue
-            const errorMsg = 'Pi SDK failed to load. Please refresh the page or check your internet connection.';
-            console.error('[PI INIT]', errorMsg);
-            setError(errorMsg);
+            // SDK not loaded - this is normal outside Pi Browser
+            console.warn('[PI INIT] Pi SDK not available - app requires Pi Browser');
+            setError('Pi Browser required to use this app');
             return;
           }
 
-          console.log('[PI INIT] Pi SDK found, initializing...');
-          try {
-            console.log('[PI INIT] Initializing Pi SDK with config:', PI_CONFIG.SDK);
-            await window.Pi.init(PI_CONFIG.SDK);
-            console.log('[PI INIT] ✅ Pi SDK initialized successfully');
-            setIsInitialized(true);
-          } catch (initErr: any) {
-            console.error('[PI INIT] ❌ Failed to initialize Pi SDK:', initErr);
-            setError(`Failed to initialize Pi SDK: ${initErr.message || initErr}`);
-            return;
-          }
+          console.log('[PI INIT] ✅ Pi SDK detected and ready');
+          // SDK is already initialized in index.html with Pi.init({ version: "2.0" })
+          setIsInitialized(true);
 
+          // Check for ad network support
           try {
             console.log('[AD NETWORK] Detecting ad network support...');
             let adSupported = false;
