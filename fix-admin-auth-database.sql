@@ -118,7 +118,7 @@ CREATE POLICY "Public can view public profiles"
   ON public.profiles
   FOR SELECT
   TO anon, authenticated
-  USING (is_public = true OR username IS NOT NULL);
+  USING (username IS NOT NULL);
 
 CREATE POLICY "Users can update own profile"
   ON public.profiles
