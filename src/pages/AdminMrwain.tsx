@@ -89,7 +89,7 @@ const AdminMrwain = () => {
 
       if (fetchError) {
         console.error("Error checking profile:", fetchError);
-        return;
+        throw new Error(`Failed to check existing profiles: ${fetchError.message}`);
       }
 
       // Determine auth method from user metadata
@@ -143,10 +143,10 @@ const AdminMrwain = () => {
 
         if (updateError) {
           console.error("Error updating profile:", updateError);
-          toast.error(`Failed to update profile: ${updateError.message}`);
+          throw new Error(`Failed to update profile: ${updateError.message}`);
         } else {
           console.log('[Admin Profile] Profile updated successfully');
-          toast.success("Profile updated successfully!");
+          return true;
         }
       } else {
         // No profile exists (trigger may not have run yet), create one
@@ -175,16 +175,9 @@ const AdminMrwain = () => {
             code: insertError.code,
             details: (insertError as any).details
           });
-          
-          // Show more specific error message
-          if (insertError.message.includes('duplicate') || insertError.message.includes('unique')) {
-            toast.error("Username already taken. Please try another.");
-          } else {
-            toast.error(`Failed to create user profile: ${insertError.message}`);
-          }
+          throw new Error(`Failed to create profile: ${insertError.message}`);
         } else {
           console.log('[Admin Profile] Profile created successfully:', newProfile);
-          toast.success("Profile created successfully!");
           
           // Initialize user wallet (use profile UUID)
           if (newProfile) {
@@ -197,14 +190,17 @@ const AdminMrwain = () => {
 
             if (walletError) {
               console.error("Wallet creation error:", walletError);
+              // Don't throw - wallet is optional
             } else {
               console.log('[Admin Profile] Wallet initialized');
             }
           }
+          return true;
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error in ensureProfileExists:", error);
+      throw error; // Re-throw so caller can handle it
     }
   };
 
@@ -229,9 +225,9 @@ const AdminMrwain = () => {
       authEmail = `${username}@droplink.space`;
       console.log('[Admin Auth] Converting @username to email:', authEmail);
     } else {
-      // Assume it's a username - try both droplink.space and original formats
-      // First try as-is in case it was registered with custom domain
-      console.log('[Admin Auth] Attempting with original input:', authEmail);
+      // Assume it's a username - convert to droplink.space email
+      authEmail = `${authEmail}@droplink.space`;
+      console.log('[Admin Auth] Converting username to email:', authEmail);
     }
 
     if (!isLogin && password.length < 6) {
@@ -305,7 +301,14 @@ const AdminMrwain = () => {
 
         if (data.user) {
           // Create complete user profile with all data
-          await ensureProfileExists(data.user);
+          try {
+            await ensureProfileExists(data.user);
+            console.log('[Admin Auth] User profile created successfully');
+          } catch (profileError: any) {
+            console.error('[Admin Auth] Profile creation failed:', profileError);
+            toast.error(`Profile setup failed: ${profileError.message}`);
+            return;
+          }
           
           // Save additional user metadata to localStorage for quick access
           localStorage.setItem('admin_user_email', email);
@@ -352,10 +355,18 @@ const AdminMrwain = () => {
   const handleGoogleSignIn = async () => {
     try {
       console.log('[Admin Auth] Initiating Google OAuth');
-      const { error } = await supabase.auth.signInWithOAuth({
+      
+      // Check if we have valid Supabase client
+      if (!supabase) {
+        toast.error("Supabase configuration missing");
+        return;
+      }
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/admin-mrwain`,
+          skipBrowserRedirect: false,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -363,12 +374,22 @@ const AdminMrwain = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[Admin Auth] Google OAuth error:', error);
+        if (error.message.includes('not enabled')) {
+          toast.error("Google OAuth is not enabled in Supabase. Contact administrator to configure it.");
+        } else if (error.message.includes('redirect URI')) {
+          toast.error("Redirect URI mismatch. Check Supabase Google OAuth settings.");
+        } else {
+          toast.error(error.message || "Failed to sign in with Google");
+        }
+        return;
+      }
       
-      console.log('[Admin Auth] Google OAuth initiated successfully');
+      console.log('[Admin Auth] Google OAuth initiated successfully', data);
       toast.info("Redirecting to Google...");
     } catch (error: any) {
-      console.error("[Admin Auth] Google sign in error:", error);
+      console.error("[Admin Auth] Google sign in exception:", error);
       toast.error(error.message || "Failed to sign in with Google");
     }
   };
@@ -1077,26 +1098,6 @@ const AdminMrwain = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Google Sign In Button */}
-          <Button 
-            variant="outline" 
-            className="w-full mb-4" 
-            onClick={handleGoogleSignIn}
-          >
-            <Mail className="w-4 h-4 mr-2" />
-            Sign in with Google
-          </Button>
-
-          <div className="relative mb-4">
-            <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or continue with email
-              </span>
-            </div>
-          </div>
 
           {/* Email Authentication Form */}
           <form onSubmit={handleAuth} className="space-y-4">

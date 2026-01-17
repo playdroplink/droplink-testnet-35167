@@ -347,11 +347,21 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       const inPiBrowser = isPiBrowserEnv();
       console.log('[SIGNIN] In Pi Browser:', inPiBrowser);
       
-      if (!isInitialized || typeof window.Pi === 'undefined') {
+      // If not in Pi Browser, fail immediately
+      if (!inPiBrowser) {
+        const msg = 'Pi Browser required: This app only works in the official Pi Browser';
+        console.error('[SIGNIN]', msg);
+        toast(msg, { duration: 12000 });
+        throw new Error(msg);
+      }
+      
+      // Ensure SDK is loaded
+      if (typeof window.Pi === 'undefined') {
         try {
           let attempts = 0;
           let piAvailable = false;
           
+          console.log('[SIGNIN] Waiting for Pi SDK to load...');
           while (!piAvailable && attempts < 20) {
             if (typeof window.Pi !== 'undefined' && window.Pi !== null) {
               piAvailable = true;
@@ -363,17 +373,16 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           }
           
           if (!piAvailable) {
-            // If we're supposedly in Pi Browser but SDK didn't load, give better error message
-            const msg = inPiBrowser 
-              ? `Pi SDK failed to load after ${attempts * 300}ms. Try refreshing the page.`
-              : `Pi Browser required: Pi SDK not available`;
+            const msg = `Pi SDK failed to load after ${attempts * 300}ms. Try refreshing the page.`;
             console.error('[SIGNIN]', msg);
             toast(msg, { duration: 12000 });
             throw new Error(msg);
           }
 
           console.log('[SIGNIN] Initializing Pi SDK...');
-          await window.Pi.init(PI_CONFIG.SDK);
+          console.log('[SIGNIN] SDK Config:', JSON.stringify(PI_CONFIG.SDK, null, 2));
+          const initResult = await window.Pi!.init(PI_CONFIG.SDK);
+          console.log('[SIGNIN] Pi.init() returned:', initResult);
           setIsInitialized(true);
           console.log('[SIGNIN] Pi SDK initialized successfully');
         } catch (reinitError: any) {
@@ -390,7 +399,21 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           throw new Error('window.Pi is undefined - SDK not loaded');
         }
 
-        const result = await window.Pi.authenticate(reqScopes, PI_CONFIG.onIncompletePaymentFound);
+        // Verify Pi SDK is properly initialized and has authenticate method
+        if (typeof window.Pi!.authenticate !== 'function') {
+          console.error('[SIGNIN] window.Pi.authenticate is not a function. window.Pi:', window.Pi);
+          throw new Error('Pi SDK authenticate method not available');
+        }
+
+        console.log('[SIGNIN] Calling Pi.authenticate with scopes:', reqScopes);
+        console.log('[SIGNIN] Pi SDK state:', {
+          hasAuthenticate: typeof window.Pi!.authenticate === 'function',
+          hasInit: typeof window.Pi!.init === 'function',
+          hasPi: typeof window.Pi !== 'undefined'
+        });
+        
+        const result = await window.Pi!.authenticate(reqScopes, PI_CONFIG.onIncompletePaymentFound);
+        console.log('[SIGNIN] Pi.authenticate returned:', result);
         
         // Validate response structure
         if (!result) {
@@ -403,6 +426,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
           throw new Error('Authentication succeeded but no user in response');
         }
         
+        console.log('[SIGNIN] Authentication validation passed');
         return result;
       };
 
@@ -432,21 +456,27 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       // Validate access token with Pi API (mainnet)
       if (!authResult) {
         const err = 'No authentication result received from Pi Network.';
+        console.error('[SIGNIN]', err);
         setError(err);
         throw new Error(err);
       }
       
       const accessToken = authResult.accessToken;
+      console.log('[SIGNIN] Got access token:', accessToken ? 'present' : 'missing');
+      
       if (!accessToken) {
         const err = 'No access token received from Pi Network.';
+        console.error('[SIGNIN]', err);
         setError(err);
         throw new Error(err);
       }
 
       // Use the Pi authentication service for proper validation and linking
+      console.log('[SIGNIN] Validating token with Pi API...');
       const authResult_fromService = await authenticatePiUser(accessToken, {
         createIfNotExists: true,
       });
+      console.log('[SIGNIN] Token validated successfully');
 
       const piUser = authResult_fromService.piUser;
       const supabaseProfile = authResult_fromService.supabaseProfile;
@@ -468,6 +498,13 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       } else if (err && typeof err === 'object' && 'message' in err) {
         errorMessage = String(err.message) || errorMessage;
       }
+      
+      console.error('[SIGNIN] Caught error in signIn:', {
+        message: errorMessage,
+        fullError: err,
+        stack: err?.stack
+      });
+      
       setError(errorMessage);
       setLoading(false);
       throw new Error(errorMessage);

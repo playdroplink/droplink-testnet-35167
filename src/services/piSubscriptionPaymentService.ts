@@ -60,7 +60,7 @@ export class PiSubscriptionPaymentService {
     const apiUrlBase = import.meta.env.VITE_PI_API_URL || "https://api.minepi.com";
     const apiVersion = import.meta.env.VITE_PI_API_VERSION || "v2";
     const apiController = "payments";
-    const apiKey = import.meta.env.VITE_PI_API_KEY || "qowpmsqwdemax5e27bsvld5h90hiqb0s7arw1uzp0uhm8un71ejxhrulirbrnosm";
+    const apiKey = import.meta.env.VITE_PI_API_KEY || "zmdsfbedi4idcsniyy7ee1twwulq2cbruighxqgtqozyk6ph1fjswft69cddgqwk";
 
     if (!apiKey) {
       throw new Error("Missing Pi API configuration. Please set VITE_PI_API_KEY");
