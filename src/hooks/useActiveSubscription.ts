@@ -83,20 +83,21 @@ export const useActiveSubscription = (): ActiveSubscription => {
       // Get profile
       const { data: profile } = await supabase
         .from("profiles")
-        .select("id, username")
+        .select("id, username, subscription_status, has_premium, auth_method")
         .eq("username", piUser.username)
         .maybeSingle();
 
-      // Check if profile has Gmail or is in VIP list
+      // Check if user is admin or has premium status
+      const isAdmin = profile?.auth_method === 'email' && (profile?.subscription_status === 'pro' || profile?.has_premium === true);
       const isGmailAdmin = profile?.username?.endsWith('@gmail.com');
       
-      if (isGmailAdmin || (profile?.username && vipTeamMembers.includes(profile.username))) {
+      if (isAdmin || isGmailAdmin || (profile?.username && vipTeamMembers.includes(profile.username))) {
         setProfileId(profile?.id || null);
         setPlan("pro");
-        setExpiresAt(null); // No expiration for VIP/Gmail users
+        setExpiresAt(null); // No expiration for admins/VIP/Gmail users
         setStatus("active");
         setSubscription({
-          id: 'vip',
+          id: isAdmin ? 'admin' : 'vip',
           profile_id: profile?.id || '',
           plan_type: 'pro',
           billing_period: 'lifetime',

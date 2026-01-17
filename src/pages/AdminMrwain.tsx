@@ -131,6 +131,7 @@ const AdminMrwain = () => {
       
       if (existingProfiles && existingProfiles.length > 0) {
         // Update existing profile with latest data
+        // Ensure admin users have PRO plan
         const existingProfile = existingProfiles[0];
         console.log('[Admin Profile] Profile exists, updating with latest data');
         
@@ -139,6 +140,8 @@ const AdminMrwain = () => {
           business_name: business_name,
           email: user.email || '',
           description: existingProfile.description || `Admin user - ${authMethod} authenticated`,
+          subscription_status: 'pro', // Ensure admin users have PRO plan
+          has_premium: true, // Ensure admin users have premium
         };
 
         const { error: updateError } = await supabase
@@ -158,6 +161,7 @@ const AdminMrwain = () => {
         console.log('[Admin Profile] Creating profile manually for:', user.email, 'with username:', sanitizedUsername);
         
         // Use direct insert with all required fields
+        // Admin users get PRO plan automatically
         const profileData = {
           user_id: user.id,
           username: sanitizedUsername,
@@ -170,9 +174,9 @@ const AdminMrwain = () => {
           following_count: 0,
           view_count: 0,
           is_verified: false,
-          subscription_status: 'free',
+          subscription_status: 'pro', // Admin users get PRO plan
           is_public: true,
-          has_premium: false,
+          has_premium: true, // Admin users have premium
           show_share_button: true,
           social_links: {},
           theme_settings: {},
