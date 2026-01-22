@@ -14,6 +14,11 @@ import { PiAdBanner } from "@/components/PiAdBanner";
 import { AdGatedFeature } from "@/components/AdGatedFeature";
 import { PlanGate } from "@/components/PlanGate";
 import { useActiveSubscription } from "@/hooks/useActiveSubscription";
+import { useMonetization } from "@/hooks/useMonetization";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { ProductManager } from "@/components/ProductManager";
+import { MembershipManager } from "@/components/MembershipManager";
+import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 // Removed duplicate Dialog imports to fix duplicate identifier errors
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { saveProfileToSupabase } from "@/lib/realtimeSync";
@@ -165,8 +170,14 @@ const Dashboard = () => {
   }, []);
 
   const subscription = useActiveSubscription();
-  const { plan, expiresAt, loading: subscriptionLoading } = subscription;
+  const { plan, expiresAt, loading: subscriptionLoading, profileId: subscriptionProfileId, refetch: refetchSubscription } = subscription;
   const [showRenewModal, setShowRenewModal] = useState(false);
+  const [cancelingPlan, setCancelingPlan] = useState(false);
+  
+  // State declarations (must come before any hooks that use them)
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
 
   // Check expiration and show modal if expired or near expiration
   useEffect(() => {
@@ -188,9 +199,6 @@ const Dashboard = () => {
   const { preferences, updateNestedPreference, updatePreference } = useUserPreferences();
   
   const isMobile = useIsMobile();
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [profileId, setProfileId] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(!preferences.dashboard_layout.sidebarCollapsed);
   const [showQRCode, setShowQRCode] = useState(false);
   const [piWalletQrData, setPiWalletQrData] = useState<string>("");
@@ -259,6 +267,13 @@ const Dashboard = () => {
     piWalletAddress: "",
     piDonationMessage: "Send me a coffee ☕",
   });
+
+  // Monetization hooks (now profileId state is declared above)
+  const { tiers, products, orders, leads, saveTier, saveProduct, deleteTier, deleteProduct, createOrder, captureLead, exportLeads } = useMonetization(profileId);
+  const { summary: analyticsSummary, logClickEvent, exportAnalytics } = useAnalytics(profileId);
+  
+  // Use profileId if available, otherwise fall back to subscriptionProfileId
+  const effectiveProfileId = profileId || subscriptionProfileId;
 
   // Auto-save functionality with enhanced database sync and robust Pi Browser/mobile error handling
   const autoSave = useAutoSave<ProfileData>({
@@ -1148,6 +1163,37 @@ const Dashboard = () => {
     saveProfileNow(updatedProfile);
   };
 
+  // Cancel current plan and fall back to free tier
+  const handleCancelPlan = async () => {
+    if (!effectiveProfileId) {
+      toast.error('Profile not loaded yet. Please try again.');
+      return;
+    }
+    try {
+      setCancelingPlan(true);
+      const nowIso = new Date().toISOString();
+
+      await supabase
+        .from('subscriptions')
+        .update({ status: 'canceled', end_date: nowIso, plan_type: 'free', auto_renew: false })
+        .eq('profile_id', effectiveProfileId);
+
+      await supabase
+        .from('profiles')
+        .update({ subscription_status: 'free', has_premium: false })
+        .eq('id', effectiveProfileId);
+
+      await refetchSubscription?.();
+      toast.success('Plan canceled. You are now on the Free plan.');
+      setShowPlanModal(false);
+    } catch (error) {
+      console.error('Cancel plan failed', error);
+      toast.error('Unable to cancel the plan right now. Please try again.');
+    } finally {
+      setCancelingPlan(false);
+    }
+  };
+
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -1315,6 +1361,15 @@ const Dashboard = () => {
 
   // Removed Pi Authentication Required modal to allow dashboard access without blocking
 
+  // Smoothly focus the builder section and optionally activate a tab by label
+  const focusTab = (label: string) => {
+    const tab = Array.from(document.querySelectorAll('[role="tab"]'))
+      .find((t) => t.textContent?.trim().includes(label));
+    (tab as HTMLElement | undefined)?.click();
+    const builder = document.getElementById('dashboard-builder');
+    builder?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
     <div className="relative min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-x-hidden pb-24">
       <div className="pointer-events-none absolute inset-0 opacity-70" aria-hidden="true" style={{ background: "radial-gradient(circle at 20% 20%, rgba(14,165,233,0.15) 0, transparent 40%), radial-gradient(circle at 80% 0%, rgba(124,58,237,0.12) 0, transparent 35%), radial-gradient(circle at 50% 80%, rgba(59,130,246,0.12) 0, transparent 45%)" }} />
@@ -1458,7 +1513,10 @@ const Dashboard = () => {
 
         <div className="grid gap-6 xl:grid-cols-[1.45fr_minmax(360px,1fr)] items-start">
           {/* Builder Panel */}
-          <section className={`${showPreview ? 'hidden lg:block' : 'block'} rounded-2xl border border-slate-200/80 dark:border-slate-800/70 bg-white/95 dark:bg-slate-900/70 shadow-sm`}>
+          <section
+            id="dashboard-builder"
+            className={`${showPreview ? 'hidden lg:block' : 'block'} rounded-2xl border border-slate-200/80 dark:border-slate-800/70 bg-white/95 dark:bg-slate-900/70 shadow-sm`}
+          >
             <div className="p-3 sm:p-5">
               <Tabs 
                 defaultValue={preferences.dashboard_layout.activeTab}
@@ -1493,6 +1551,14 @@ const Dashboard = () => {
                   <TabsTrigger value="ad-network" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
                     <PlayCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                     <span className="hidden sm:inline">Ads</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="monetization" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
+                    <Store className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    <span className="hidden sm:inline">Monetize</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="memberships" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
+                    <Crown className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    <span className="hidden sm:inline">Tiers</span>
                   </TabsTrigger>
                   <TabsTrigger value="subscription" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
                     <Crown className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
@@ -2457,10 +2523,12 @@ const Dashboard = () => {
             </PlanGate>
 
                 {/* Action Buttons */}
-                <Card className="border-0 rounded-none shadow-none sticky bottom-0 z-[100] w-full p-0 m-0" style={{ boxShadow: '0 4px 24px 0 #0002', background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(8px)' }}>
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 border-t border-border w-full p-2 sm:p-3 m-0" style={{ background: 'transparent' }}>
+                <Card
+                  className="sticky bottom-0 z-[100] w-full p-0 m-0 border border-white/50 dark:border-slate-800/70 bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl shadow-[0_12px_40px_-16px_rgba(0,0,0,0.35)] rounded-2xl"
+                >
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 border-t border-white/40 dark:border-slate-800/80 w-full p-2 sm:p-3 m-0">
                     <Button
-                      className="flex-1 h-11 sm:h-12 rounded-lg bg-white text-sky-400 font-medium border border-sky-200 hover:bg-sky-50"
+                      className="flex-1 h-11 sm:h-12 rounded-xl bg-white/70 dark:bg-slate-900/70 text-sky-500 font-medium border border-sky-200/70 hover:bg-white/90 dark:hover:bg-slate-900"
                       onClick={() => {
                         toast.info('No changes were saved.');
                       }}
@@ -2469,8 +2537,8 @@ const Dashboard = () => {
                     </Button>
                     <Button 
                       onClick={handleSave}
-                      className="flex-1 h-11 sm:h-12 bg-sky-400 hover:bg-sky-500 text-white font-medium rounded-lg border-none shadow-md"
-                      style={{ transition: 'box-shadow 0.2s', boxShadow: '0 2px 8px #0284c71a' }}
+                      className="flex-1 h-11 sm:h-12 bg-sky-400/90 hover:bg-sky-500 text-white font-semibold rounded-xl border border-sky-300/60 shadow-[0_8px_20px_-10px_rgba(56,189,248,0.9)]"
+                      style={{ transition: 'box-shadow 0.2s' }}
                       disabled={saving}
                     >
                       {saving ? "Saving..." : "Save changes"}
@@ -2489,14 +2557,14 @@ const Dashboard = () => {
                         onThemeChange={(newTheme) => setProfile({ ...profile, theme: newTheme })}
                       />
                       {/* Save Button */}
-                      <div className={`flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 pb-6 sm:pb-8 border-t border-border sticky bottom-0 z-[100] w-full bg-background/95 backdrop-blur-sm shadow-lg rounded-lg`} style={{ boxShadow: '0 4px 24px 0 #0002', background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(8px)' }}>
-                        <Button variant="outline" className="flex-1 h-11 sm:h-12 rounded-lg">
+                      <div className={`flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 pb-6 sm:pb-8 border-t border-white/40 dark:border-slate-800/80 sticky bottom-0 z-[100] w-full bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl shadow-[0_12px_40px_-16px_rgba(0,0,0,0.35)] rounded-2xl`}>
+                        <Button variant="outline" className="flex-1 h-11 sm:h-12 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-sky-200/70 hover:bg-white/90 dark:hover:bg-slate-900 text-sky-500">
                           Cancel
                         </Button>
                         <Button 
                           onClick={handleSave} 
-                          className="flex-1 h-11 sm:h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-md rounded-lg" 
-                          style={{ transition: 'box-shadow 0.2s', boxShadow: '0 2px 8px #0284c71a' }}
+                          className="flex-1 h-11 sm:h-12 bg-sky-400/90 hover:bg-sky-500 text-white font-semibold shadow-[0_8px_20px_-10px_rgba(56,189,248,0.9)] rounded-xl border border-sky-300/60" 
+                          style={{ transition: 'box-shadow 0.2s' }}
                           disabled={saving}
                         >
                           {saving ? "Saving..." : "Save changes"}
@@ -2565,9 +2633,18 @@ const Dashboard = () => {
 
               {/* Subscription Tab */}
               <TabsContent value="subscription" className="pb-8">
-                <Button variant="outline" onClick={() => setShowPlanModal(true)}>
-                  View My Plan / Renew
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between mb-4">
+                  <Button variant="outline" onClick={() => setShowPlanModal(true)}>
+                    View My Plan / Renew
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleCancelPlan}
+                    disabled={cancelingPlan}
+                  >
+                    {cancelingPlan ? 'Canceling...' : 'Cancel Plan (back to Free)'}
+                  </Button>
+                </div>
                 <SubscriptionStatus />
               </TabsContent>
 
@@ -2581,9 +2658,16 @@ const Dashboard = () => {
                   <div className="my-4">
                     <SubscriptionStatus />
                   </div>
-                  <DialogFooter>
+                  <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
                     <Button onClick={() => setShowPlanModal(false)} variant="secondary">Close</Button>
-                  </DialogFooter>
+                    <Button
+                      variant="destructive"
+                      onClick={handleCancelPlan}
+                      disabled={cancelingPlan}
+                    >
+                      {cancelingPlan ? 'Canceling...' : 'Cancel Plan (back to Free)'}
+                    </Button>
+                  </div>
                 </DialogContent>
               </Dialog>
 
@@ -2591,6 +2675,44 @@ const Dashboard = () => {
               {/* <TabsContent value="voting" className="pb-8">
                 <VotingSystem />
               </TabsContent> */}
+
+              {/* Monetization Tab - Products & Selling */}
+              <TabsContent value="monetization" className="pb-8 space-y-6">
+                <PlanGate minPlan="basic" featureName="Monetization">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Products & Tips</h3>
+                    <ProductManager
+                      products={products}
+                      onSave={saveProduct}
+                      onDelete={deleteProduct}
+                      profileId={profileId || ''}
+                    />
+                  </div>
+                </PlanGate>
+              </TabsContent>
+
+              {/* Memberships Tab - Tiers */}
+              <TabsContent value="memberships" className="pb-8 space-y-6">
+                <PlanGate minPlan="premium" featureName="Membership Tiers">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Membership Tiers</h3>
+                    <MembershipManager
+                      tiers={tiers}
+                      onSave={saveTier}
+                      onDelete={deleteTier}
+                      profileId={profileId || ''}
+                    />
+                  </div>
+                </PlanGate>
+              </TabsContent>
+
+              {/* Analytics Tab - Dashboard */}
+              <TabsContent value="analytics" className="pb-8">
+                <AnalyticsDashboard
+                  summary={analyticsSummary}
+                  onExport={exportAnalytics}
+                />
+              </TabsContent>
 
               {/* User Preferences Tab */}
               <TabsContent value="preferences" className="pb-8">
@@ -2738,7 +2860,7 @@ const Dashboard = () => {
           <div className="flex justify-around items-center">
             {/* My Linktree */}
             <button
-              onClick={() => navigate('/profile')}
+              onClick={() => focusTab('Profile')}
               className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
             >
               <Users className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
@@ -2747,7 +2869,7 @@ const Dashboard = () => {
 
             {/* Earn */}
             <button
-              onClick={() => navigate('/wallet')}
+              onClick={() => focusTab('DropPay')}
               className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
             >
               <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
@@ -2756,11 +2878,7 @@ const Dashboard = () => {
 
             {/* Insights */}
             <button
-              onClick={() => {
-                const el = document.querySelector('[role="tablist"]');
-                const analyticsTab = Array.from(el?.querySelectorAll('[role="tab"]') || []).find(t => t.textContent?.includes('Analytics'));
-                (analyticsTab as HTMLElement)?.click();
-              }}
+              onClick={() => focusTab('Analytics')}
               className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
             >
               <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
@@ -2769,7 +2887,7 @@ const Dashboard = () => {
 
             {/* Audience */}
             <button
-              onClick={() => navigate('/followers')}
+              onClick={() => focusTab('Analytics')}
               className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
             >
               <Users className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />

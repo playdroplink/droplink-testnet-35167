@@ -18,6 +18,11 @@ import { VirtualCard } from "@/components/VirtualCard";
 import { PiAdBanner } from "@/components/PiAdBanner";
 import PiAdsBanner from "@/components/PiAdsBanner";
 import PiAdNetwork from "@/components/PiAdNetwork";
+import { useMonetization } from "@/hooks/useMonetization";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { EmailCaptureDisplay } from "@/components/EmailCaptureDisplay";
+import { ProductDisplay } from "@/components/ProductDisplay";
+import { MembershipGate } from "@/components/MembershipGate";
 import type { UserPreferences } from "@/contexts/UserPreferencesContext";
 import {
   Twitter,
@@ -90,6 +95,10 @@ const PublicBio = () => {
   const [message, setMessage] = useState("");
   // State to trigger auto-refresh after Pi Auth if Profile Not Found
   const [shouldAutoRefresh, setShouldAutoRefresh] = useState(false);
+
+  // Monetization features
+  const { products, tiers, captureLead, createOrder } = useMonetization(profileId);
+  const { logClickEvent } = useAnalytics(profileId);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -1321,6 +1330,64 @@ const PublicBio = () => {
           </div>
         )}
 
+
+        {/* Email Capture Block - from monetization */}
+        {products && products.length > 0 && (
+          <EmailCaptureDisplay
+            title="Get Exclusive Updates"
+            description="Subscribe to stay in the loop"
+            onSubmit={async (email) => {
+              if (profileId) {
+                await captureLead({
+                  profile_id: profileId,
+                  email,
+                  source: 'capture_block',
+                  metadata: {}
+                });
+                toast.success('Thanks for subscribing!');
+              }
+            }}
+          />
+        )}
+
+        {/* Membership Tiers - from monetization */}
+        {tiers && tiers.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-white text-center mb-6">Membership Tiers</h2>
+            <div className="grid gap-4">
+              {tiers.map((tier) => (
+                <MembershipGate
+                  key={tier.id}
+                  requiredTier={tier}
+                  hasAccess={false}
+                  onUnlock={async () => {
+                    if (profileId) {
+                      try {
+                        await createOrder({
+                          profile_id: profileId,
+                          product_id: tier.id,
+                          buyer_email: piUser?.username || 'unknown@droplink.io',
+                          amount: tier.price,
+                          currency: 'PI',
+                          status: 'pending',
+                          metadata: { tier_id: tier.id }
+                        });
+                        toast.success(`Welcome to ${tier.name}!`);
+                      } catch (error) {
+                        console.error('Failed to create membership:', error);
+                        toast.error('Failed to create membership');
+                      }
+                    }
+                  }}
+                >
+                  <div className="p-4 bg-slate-900/50 rounded-lg">
+                    <p className="text-sm text-slate-300">Unlock this tier to see exclusive content</p>
+                  </div>
+                </MembershipGate>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Followers Section */}
         {profileId && (
