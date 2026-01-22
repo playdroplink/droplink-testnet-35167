@@ -20,13 +20,13 @@ export const useAnalytics = (profileId: string | null) => {
     if (!profileId) return;
     const loadEvents = async () => {
       try {
-        const { data } = await supabase
-          .from('link_events')
+        const { data } = await (supabase
+          .from('link_events' as any) as any)
           .select('*')
           .eq('profile_id', profileId)
           .order('created_at', { ascending: false })
           .limit(1000);
-        setEvents(data || []);
+        setEvents((data as LinkEvent[]) || []);
       } catch (e) {
         console.error('Failed to load events:', e);
       }
@@ -40,20 +40,20 @@ export const useAnalytics = (profileId: string | null) => {
     const computeSummary = async () => {
       try {
         // Load summary data
-        const { data: clickData } = await supabase
-          .from('link_events')
+        const { data: clickData } = await (supabase
+          .from('link_events' as any) as any)
           .select('*')
           .eq('profile_id', profileId)
           .eq('event_type', 'click');
 
-        const { data: orderData } = await supabase
-          .from('orders')
+        const { data: orderData } = await (supabase
+          .from('orders' as any) as any)
           .select('*')
           .eq('profile_id', profileId)
           .eq('status', 'paid');
 
-        const { count: leadCount } = await supabase
-          .from('email_leads')
+        const { count: leadCount } = await (supabase
+          .from('email_leads' as any) as any)
           .select('*', { count: 'exact' })
           .eq('profile_id', profileId);
 
@@ -62,7 +62,7 @@ export const useAnalytics = (profileId: string | null) => {
         const countries: Record<string, number> = {};
         const links: Record<string, { clicks: number; revenue: number }> = {};
 
-        clickData?.forEach(evt => {
+        (clickData as any)?.forEach((evt: any) => {
           if (evt.device) devices[evt.device] = (devices[evt.device] || 0) + 1;
           if (evt.country) countries[evt.country] = (countries[evt.country] || 0) + 1;
           links[evt.link_id] = links[evt.link_id] || { clicks: 0, revenue: 0 };
@@ -70,7 +70,7 @@ export const useAnalytics = (profileId: string | null) => {
         });
 
         let totalRevenue = 0;
-        orderData?.forEach(order => {
+        (orderData as any)?.forEach((order: any) => {
           totalRevenue += order.amount || 0;
           if (order.source_link_id) {
             links[order.source_link_id] = links[order.source_link_id] || { clicks: 0, revenue: 0 };
@@ -107,7 +107,7 @@ export const useAnalytics = (profileId: string | null) => {
   const logClickEvent = async (linkId: string, metadata?: Partial<LinkEvent>) => {
     if (!profileId) return;
     try {
-      await supabase.from('link_events').insert({
+      await (supabase.from('link_events' as any) as any).insert({
         profile_id: profileId,
         link_id: linkId,
         event_type: 'click',

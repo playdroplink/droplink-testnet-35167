@@ -36,7 +36,7 @@ export const PublicProfile = () => {
           .maybeSingle();
 
         if (profile) {
-          setProfile(profile);
+          setProfile(profile as any as ProfileData);
           setProfileId(profile.id);
         }
       } catch (error) {
