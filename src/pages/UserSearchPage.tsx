@@ -510,7 +510,7 @@ const UserSearchPage = () => {
           <span role="img" aria-label="party">🎉</span> <b>New Feature!</b> Create your personalized virtual business card with QR code! <a href="/card-generator" style={{ textDecoration: 'underline', color: '#0070f3' }}>Try Card Generator →</a>
         </Alert>
       </div>
-      <div className="min-h-screen bg-sky-100 flex flex-col items-center py-4 px-1 sm:py-8 sm:px-2">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center py-4 px-1 sm:py-8 sm:px-2">
         <Card className="w-full max-w-2xl p-2 sm:p-6 shadow-lg rounded-xl">
           {/* User Count and View All */}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">

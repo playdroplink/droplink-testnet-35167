@@ -111,7 +111,7 @@ const ProductDetail: React.FC = () => {
   const price = parseFloat(product.price || "0");
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
       <Button
         variant="ghost"
         className="mb-6"

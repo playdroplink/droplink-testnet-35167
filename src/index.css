@@ -157,19 +157,189 @@ All colors MUST be HSL.
     @apply transition-all duration-200 ease-in-out;
   }
 
+  /* ============================================================================ */
+  /* GLASSMORPHISM DESIGN SYSTEM - COMPREHENSIVE GLASS EFFECTS */
+  /* ============================================================================ */
+
+  /* Base Glassmorphism Classes - Ultra premium look */
   .glass {
-    @apply border border-border bg-background/95 shadow-xl backdrop-blur-md;
+    @apply border border-border/40 bg-background/75 shadow-2xl backdrop-blur-xl;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+  }
+
+  .glass:hover {
+    @apply bg-background/80 border-border/60;
   }
 
   .glass-card {
-    @apply border border-border bg-card/80 shadow-xl backdrop-blur-sm;
+    @apply border border-white/10 bg-white/5 shadow-2xl backdrop-blur-3xl;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  }
+
+  .glass-card:hover {
+    @apply bg-white/10 border-white/20 shadow-lg;
   }
 
   .glass-surface {
-    @apply bg-background/70 backdrop-blur-lg border border-border/50;
+    @apply bg-white/5 backdrop-blur-3xl border border-white/10;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 100%);
   }
 
-  /* Scrollbar styling for phone preview and overflow containers */
+  /* Premium Glassmorphism - Maximum blur and transparency */
+  .glass-premium {
+    @apply border border-white/20 backdrop-blur-3xl shadow-2xl;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%);
+  }
+
+  .glass-premium:hover {
+    @apply border-white/30 bg-white/10;
+  }
+
+  /* Frosted Glass Effect */
+  .glass-frosted {
+    @apply border border-white/20 backdrop-blur-2xl shadow-xl;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+    position: relative;
+  }
+
+  .glass-frosted::before {
+    @apply absolute inset-0 -z-10 rounded-lg;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+    filter: blur(8px);
+  }
+
+  /* Soft Glassmorphism - Subtle effect */
+  .glass-soft {
+    @apply border border-white/10 bg-white/5 backdrop-blur-lg shadow-lg;
+  }
+
+  /* Deep Glassmorphism - Strong frosted look */
+  .glass-deep {
+    @apply border border-white/40 bg-white/20 backdrop-blur-3xl shadow-2xl;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 100%);
+  }
+
+  /* Transparent Surface */
+  .transparent-surface {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10;
+  }
+
+  /* Glassmorphism Modal/Dialog */
+  .glass-modal {
+    @apply border border-white/20 bg-white/5 backdrop-blur-3xl shadow-2xl;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  }
+
+  /* Glassmorphism Button */
+  .glass-btn {
+    @apply border border-white/20 bg-white/10 hover:bg-white/20 backdrop-blur-xl;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%);
+    transition: all 0.3s ease;
+  }
+
+  .glass-btn:hover {
+    @apply border-white/30 shadow-lg;
+  }
+
+  .glass-btn-secondary {
+    @apply border border-white/20 bg-white/5 hover:bg-white/10 backdrop-blur-xl;
+    transition: all 0.3s ease;
+  }
+
+  .glass-btn-secondary:hover {
+    @apply border-white/40;
+  }
+
+  /* Glassmorphism Input Field */
+  .glass-input {
+    @apply border border-white/20 bg-white/10 backdrop-blur-xl focus:border-white/50 focus:bg-white/20;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 100%);
+  }
+
+  /* Glassmorphism Badge */
+  .glass-badge {
+    @apply border border-white/30 bg-white/20 backdrop-blur-lg;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.08) 100%);
+  }
+
+  /* Glassmorphism Tooltip */
+  .glass-tooltip {
+    @apply border border-white/40 bg-white/20 backdrop-blur-2xl shadow-xl;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 100%);
+  }
+
+  /* Glassmorphism Backdrop */
+  .glass-backdrop {
+    @apply backdrop-blur-sm bg-black/20;
+  }
+
+  /* Glassmorphism Container */
+  .glass-container {
+    @apply bg-white/5 backdrop-blur-2xl border border-white/15;
+  }
+
+  /* Glassmorphism Panel */
+  .glass-panel {
+    @apply border border-white/20 bg-white/5 backdrop-blur-2xl shadow-2xl;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  }
+
+  /* Glassmorphism Header */
+  .glass-header {
+    @apply border-b border-white/10 bg-white/5 backdrop-blur-2xl;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  }
+
+  /* Glassmorphism Navbar */
+  .glass-navbar {
+    @apply border-b border-white/10 bg-white/5 backdrop-blur-3xl sticky top-0 z-40;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+  }
+
+  /* Glassmorphism List Item */
+  .glass-list-item {
+    @apply border border-white/10 bg-white/5 backdrop-blur-lg hover:bg-white/20 hover:border-white/25;
+    transition: all 0.2s ease;
+  }
+
+  /* Glassmorphism Divider */
+  .glass-divider {
+    @apply bg-gradient-to-r from-white/0 via-white/30 to-white/0;
+    height: 1px;
+  }
+
+  /* Dark Mode Glassmorphism Adjustments */
+  .dark {
+    .glass-card {
+      @apply border-white/10 bg-white/5;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+    }
+
+    .glass-premium {
+      @apply border-white/20 bg-white/5;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.04) 100%);
+    }
+
+    .glass-deep {
+      @apply border-white/25 bg-white/10;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.06) 100%);
+    }
+
+    .glass-input {
+      @apply border-white/10 bg-white/5;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+    }
+
+    .glass-btn {
+      @apply border-white/25 bg-white/10;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%);
+    }
+  }
+
+  /* ============================================================================ */
+  /* SCROLLBAR STYLING FOR PHONE PREVIEW AND OVERFLOW CONTAINERS */
+  /* ============================================================================ */
+
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
@@ -208,6 +378,10 @@ All colors MUST be HSL.
     background: transparent;
   }
 
+  /* ============================================================================ */
+  /* UTILITY CLASSES */
+  /* ============================================================================ */
+
   /* Prevent horizontal scroll */
   .no-scrollbar-x {
     overflow-x: hidden;
@@ -220,27 +394,108 @@ All colors MUST be HSL.
     overflow-x: hidden;
   }
 
+  /* ============================================================================ */
+  /* MOBILE-SPECIFIC ADJUSTMENTS */
+  /* ============================================================================ */
 
-  .transparent-surface {
-    @apply bg-background/30 backdrop-blur-xl border border-border/30;
-  }
-
-  /* Mobile-specific solid backgrounds */
   @media (max-width: 768px) {
     .glass-card {
       @apply bg-card border border-border shadow-md;
-      backdrop-filter: none;
+      backdrop-filter: blur(4px);
+    }
+
+    .glass-premium {
+      @apply bg-card border border-border shadow-md;
+      backdrop-filter: blur(4px);
     }
 
     .glass-surface {
       @apply bg-background border border-border;
-      backdrop-filter: none;
+      backdrop-filter: blur(2px);
+    }
+
+    .glass-modal {
+      @apply bg-card border border-border shadow-md;
+      backdrop-filter: blur(4px);
     }
 
     .transparent-surface {
       @apply bg-background border border-border;
-      backdrop-filter: none;
+      backdrop-filter: blur(2px);
     }
   }
 }
 
+/* Glassmorphism Animation Delays */
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+/* ===== REUSABLE GLASSMORPHISM CLASSES ===== */
+
+/* Ultra-transparent glass container for light mode */
+.glass-container-light {
+  @apply backdrop-blur-2xl bg-white/20 border border-white/25 rounded-3xl shadow-2xl;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+}
+
+.glass-container-light:hover {
+  @apply shadow-lg transition-all duration-300;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
+}
+
+/* Ultra-transparent glass container for dark mode */
+.glass-container-dark {
+  @apply backdrop-blur-2xl bg-white/10 border border-white/15 rounded-3xl shadow-2xl;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+}
+
+.glass-container-dark:hover {
+  @apply shadow-lg transition-all duration-300;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.07) 100%);
+}
+
+/* Combined glass container (auto light/dark) */
+.glass-container {
+  @apply backdrop-blur-2xl border rounded-3xl shadow-2xl hover:shadow-lg transition-all duration-300;
+  @apply bg-white/20 border-white/25 dark:bg-white/10 dark:border-white/15;
+}
+
+/* Glassmorphism page wrapper */
+.glassmorphism-page {
+  @apply min-h-screen relative overflow-hidden;
+}
+
+/* Light mode background with animated blobs */
+.glassmorphism-page-light {
+  @apply bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50;
+}
+
+/* Dark mode background */
+.glassmorphism-page-dark {
+  @apply dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950;
+}
+
+/* Glass card overlay effect */
+.glass-overlay {
+  @apply absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-3xl;
+}
+
+.dark .glass-overlay {
+  @apply from-white/10 via-transparent to-transparent;
+}
+
+/* Glass border glow */
+.glass-border-glow {
+  @apply absolute inset-0 rounded-3xl border border-white/40 dark:border-white/20 pointer-events-none;
+}
+
+/* Glass inner glow */
+.glass-inner-glow {
+  @apply absolute inset-0 pointer-events-none rounded-3xl opacity-50 dark:opacity-30;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+}

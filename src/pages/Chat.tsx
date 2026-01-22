@@ -261,16 +261,24 @@ export default function ChatPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-sky-100 to-blue-200 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="glassmorphism-page glassmorphism-page-light dark:glassmorphism-page-dark flex items-center justify-center relative">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-100 to-blue-200 flex flex-col">
+    <div className="glassmorphism-page glassmorphism-page-light dark:glassmorphism-page-dark flex flex-col relative">
+      {/* Background decorative elements - Light Mode */}
+      <div className="dark:hidden absolute top-0 left-10 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob\"></div>
+      <div className="dark:hidden absolute bottom-0 right-10 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000\"></div>
+
+      {/* Background decorative elements - Dark Mode */}
+      <div className="hidden dark:block absolute top-0 left-10 w-80 h-80 bg-blue-900 rounded-full mix-blend-screen filter blur-3xl opacity-10 animate-blob\"></div>
+      <div className="hidden dark:block absolute bottom-0 right-10 w-80 h-80 bg-purple-900 rounded-full mix-blend-screen filter blur-3xl opacity-10 animate-blob animation-delay-2000\"></div>
+
       {/* Header */}
-      <div className="bg-white border-b shadow-sm sticky top-0 z-10">
+      <div className="glass-container border-b rounded-b-3xl mx-4 mt-4 relative z-10">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
           <Button
             variant="ghost"
@@ -286,8 +294,8 @@ export default function ChatPage() {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <div className="font-semibold">@{otherProfile?.username}</div>
-            <div className="text-xs text-muted-foreground">
+            <div className="font-semibold text-gray-900 dark:text-white">@{otherProfile?.username}</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">
               {otherProfile?.business_name || 'User'}
             </div>
           </div>
@@ -295,7 +303,7 @@ export default function ChatPage() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4 relative z-10">
         <div className="max-w-4xl mx-auto space-y-3">
           {messages.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
@@ -312,8 +320,8 @@ export default function ChatPage() {
                   <div
                     className={`max-w-[70%] ${
                       isMyMessage
-                        ? 'bg-primary text-primary-foreground rounded-tl-2xl rounded-tr-sm rounded-b-2xl'
-                        : 'bg-white rounded-tr-2xl rounded-tl-sm rounded-b-2xl'
+                        ? 'glass-btn text-white rounded-tl-2xl rounded-tr-sm rounded-b-2xl'
+                        : 'glass-card rounded-tr-2xl rounded-tl-sm rounded-b-2xl'
                     } p-3 shadow-sm`}
                   >
                     {!isMyMessage && (
@@ -357,7 +365,7 @@ export default function ChatPage() {
       </div>
 
       {/* Input Area */}
-      <div className="bg-white border-t shadow-lg sticky bottom-0">
+      <div className="glass-container rounded-t-3xl border-t mx-4 mb-4 sticky bottom-0 relative z-10">
         <div className="max-w-4xl mx-auto p-4">
           {imagePreview && (
             <div className="mb-3 relative inline-block">

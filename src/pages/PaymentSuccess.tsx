@@ -127,8 +127,8 @@ export default function PaymentSuccess() {
   // Handle subscription activation UI
   if (isSubscription && isActivating) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+        <Card className="glass-card w-full max-w-md">
           <CardHeader className="text-center">
             <Loader className="w-16 h-16 mx-auto text-blue-600 animate-spin mb-4" />
             <CardTitle className="text-2xl text-blue-900">Activating Subscription</CardTitle>
@@ -147,8 +147,8 @@ export default function PaymentSuccess() {
 
   if (isSubscription && error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md border-red-200">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+        <Card className="glass-card w-full max-w-md border-red-200/20">
           <CardHeader className="text-center">
             <div className="w-16 h-16 mx-auto bg-red-100 rounded-full flex items-center justify-center mb-4">
               <Gift className="w-8 h-8 text-red-600" />
@@ -189,8 +189,8 @@ export default function PaymentSuccess() {
 
   if (isSubscription && subscriptionActivated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md border-green-200">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+        <Card className="glass-card w-full max-w-md border-green-200/20">
           <CardHeader className="text-center">
             <CheckCircle className="w-16 h-16 mx-auto text-green-600 mb-4" />
             <CardTitle className="text-2xl text-green-900">Payment Successful! 🎉</CardTitle>

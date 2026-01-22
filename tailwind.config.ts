@@ -55,6 +55,21 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      backdropBlur: {
+        xs: "2px",
+        sm: "4px",
+        DEFAULT: "8px",
+        md: "12px",
+        lg: "16px",
+        xl: "24px",
+        "2xl": "32px",
+        "3xl": "40px",
+      },
+      boxShadow: {
+        "glass": "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
+        "glass-lg": "0 8px 32px 0 rgba(31, 38, 135, 0.5)",
+        "glass-sm": "0 4px 16px 0 rgba(31, 38, 135, 0.2)",
+      },
       keyframes: {
         "accordion-down": {
           from: {
@@ -72,10 +87,36 @@ export default {
             height: "0",
           },
         },
+        "glass-shimmer": {
+          "0%": {
+            backgroundPosition: "-1000px 0",
+          },
+          "100%": {
+            backgroundPosition: "1000px 0",
+          },
+        },
+        blob: {
+          "0%, 100%": {
+            transform: "translate(0, 0) scale(1)",
+          },
+          "33%": {
+            transform: "translate(30px, -50px) scale(1.1)",
+          },
+          "66%": {
+            transform: "translate(-20px, 20px) scale(0.9)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "glass-shimmer": "glass-shimmer 2s infinite linear",
+        blob: "blob 7s infinite",
+      },
+      transitionDelay: {
+        0: "0ms",
+        2000: "2000ms",
+        4000: "4000ms",
       },
     },
   },

@@ -87,7 +87,7 @@ const AISupport = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <p>Loading...</p>
       </div>
     );
@@ -95,7 +95,7 @@ const AISupport = () => {
 
   return (
     <PlanGate minPlan="pro" featureName="AI Support">
-      <div className="min-h-screen bg-background p-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
         <div className="max-w-4xl mx-auto">
           <Button
             variant="ghost"

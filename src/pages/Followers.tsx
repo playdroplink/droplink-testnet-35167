@@ -198,19 +198,19 @@ const Followers = () => {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-muted-foreground">
+              <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-gray-700 dark:text-gray-300">
                 {profile.business_name.charAt(0).toUpperCase()}
               </div>
             )}
           </div>
 
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-lg truncate">
+            <h3 className="font-semibold text-lg truncate text-gray-900 dark:text-white">
               {profile.business_name}
             </h3>
-            <p className="text-sm text-muted-foreground">@{profile.username}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">@{profile.username}</p>
             {profile.description && (
-              <p className="text-sm text-muted-foreground truncate mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 truncate mt-1">
                 {profile.description}
               </p>
             )}
@@ -255,24 +255,31 @@ const Followers = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <p className="text-muted-foreground">Loading...</p>
+      <div className="glassmorphism-page glassmorphism-page-light dark:glassmorphism-page-dark container mx-auto p-6 relative overflow-hidden">
+        <div className="flex items-center justify-center min-h-[400px] relative z-10">
+          <p className="text-gray-900 dark:text-white">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-6 h-6" />
-            Community
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+    <div className="glassmorphism-page glassmorphism-page-light dark:glassmorphism-page-dark relative overflow-hidden">
+      {/* Background decorative elements - Light Mode */}
+      <div className="dark:hidden absolute top-0 left-10 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-blob"></div>
+      <div className="dark:hidden absolute top-40 right-10 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-blob animation-delay-2000"></div>
+
+      {/* Background decorative elements - Dark Mode */}
+      <div className="hidden dark:block absolute top-0 left-10 w-80 h-80 bg-blue-900 rounded-full mix-blend-screen filter blur-3xl opacity-15 animate-blob"></div>
+      <div className="hidden dark:block absolute top-40 right-10 w-80 h-80 bg-purple-900 rounded-full mix-blend-screen filter blur-3xl opacity-15 animate-blob animation-delay-2000"></div>
+
+      <div className="container mx-auto p-6 max-w-4xl relative z-10">
+        <div className="glass-container p-6 rounded-3xl">
+          <div className="flex items-center gap-2 mb-6">
+            <Users className="w-6 h-6 text-gray-900 dark:text-white" />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Community</h2>
+          </div>
+          
           <Tabs defaultValue="followers" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="followers">
@@ -287,13 +294,13 @@ const Followers = () => {
 
             <TabsContent value="followers" className="space-y-4 mt-4">
               {followers.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <h3 className="text-lg font-semibold mb-2">No followers yet</h3>
-                  <p className="text-sm">Share your store URL to get followers:</p>
+                <div className="text-center py-12">
+                  <Users className="w-12 h-12 mx-auto mb-4 opacity-50 text-gray-600 dark:text-gray-400" />
+                  <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">No followers yet</h3>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">Share your store URL to get followers:</p>
                   {currentUsername && (
                     <div className="mt-3 p-3 bg-muted rounded-lg">
-                      <p className="font-mono text-sm break-all">
+                      <p className="font-mono text-sm break-all text-gray-900 dark:text-white">
                         {window.location.origin}/u/{currentUsername}
                       </p>
                       <Button 
@@ -312,10 +319,10 @@ const Followers = () => {
               ) : (
                 <>
                   <div className="text-center mb-4 p-3 bg-muted rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-2">Your Store URL:</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">Your Store URL:</p>
                     {currentUsername && (
                       <>
-                        <p className="font-mono text-sm break-all mb-2">
+                        <p className="font-mono text-sm break-all mb-2 text-gray-900 dark:text-white">
                           {window.location.origin}/u/{currentUsername}
                         </p>
                         <Button 
@@ -340,10 +347,10 @@ const Followers = () => {
 
             <TabsContent value="following" className="space-y-4 mt-4">
               {following.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <UserPlus className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <h3 className="text-lg font-semibold mb-2">Not following anyone yet</h3>
-                  <p className="text-sm">Visit other stores and click the follow button to connect with creators!</p>
+                <div className="text-center py-12">
+                  <UserPlus className="w-12 h-12 mx-auto mb-4 opacity-50 text-gray-600 dark:text-gray-400" />
+                  <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Not following anyone yet</h3>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">Visit other stores and click the follow button to connect with creators!</p>
                 </div>
               ) : (
                 following.map((follow) =>
@@ -352,10 +359,10 @@ const Followers = () => {
               )}
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <div className="mt-6 text-center">
+      <div className="mt-6 text-center relative z-10">
         <Button variant="outline" onClick={() => navigate("/")}>
           Back to Dashboard
         </Button>

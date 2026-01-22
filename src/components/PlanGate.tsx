@@ -18,6 +18,7 @@ export const PlanGate = ({
   featureName?: string;
 }) => {
   const { plan, loading } = useActiveSubscription();
+  const targetPlanName = minPlan.charAt(0).toUpperCase() + minPlan.slice(1);
   const navigate = useNavigate();
   if (loading) return null;
   if (planOrder.indexOf(plan) >= planOrder.indexOf(minPlan)) {
@@ -25,12 +26,17 @@ export const PlanGate = ({
   }
   // Locked: show upgrade prompt
   return (
-    <Card className="mb-6 border-dashed border-2 border-sky-400 bg-sky-400">
-      <CardContent className="py-8 flex flex-col items-center justify-center">
-        <div className="text-center mb-4">
-          <span className="text-lg font-semibold text-white">{featureName || "This feature"} is available on {minPlan.charAt(0).toUpperCase() + minPlan.slice(1)} plan</span>
+    <Card className="mb-6 border-2 border-dashed border-sky-200 bg-sky-50 text-sky-900 shadow-md dark:border-sky-700/70 dark:bg-sky-900/40 dark:text-sky-50">
+      <CardContent className="py-8 flex flex-col items-center justify-center space-y-3 text-center">
+        <div className="text-base font-semibold leading-6">
+          {featureName || "This feature"} is available on {targetPlanName} plan
         </div>
-        <Button onClick={() => navigate("/subscription")} className="bg-white text-sky-400 font-semibold hover:bg-gray-100">Upgrade to {minPlan.charAt(0).toUpperCase() + minPlan.slice(1)}</Button>
+        <Button
+          onClick={() => navigate("/subscription")}
+          className="bg-sky-500 text-white shadow hover:bg-sky-600 dark:bg-sky-500/90 dark:hover:bg-sky-500"
+        >
+          Upgrade to {targetPlanName}
+        </Button>
       </CardContent>
     </Card>
   );

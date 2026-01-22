@@ -1291,7 +1291,7 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <p>Loading...</p>
       </div>
     );
@@ -1300,8 +1300,8 @@ const Dashboard = () => {
   // Show Pi Auth button if not authenticated, not loading, and no Supabase session
   if (!isAuthenticated && !piLoading && !hasSupabaseSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="max-w-md w-full p-6 bg-white rounded-lg shadow border mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="max-w-md w-full p-6 glass-card rounded-lg shadow border mx-auto">
           <div className="mb-6 text-center">
             <div className="text-red-500 text-lg font-semibold mb-2">Pi Network is not available.</div>
             <div className="text-gray-700 mb-4">Please open this app in <b>Pi Browser</b> or ensure the Pi SDK is loaded.</div>
@@ -1316,547 +1316,254 @@ const Dashboard = () => {
   // Removed Pi Authentication Required modal to allow dashboard access without blocking
 
   return (
-    <div
-      className="min-h-screen bg-sky-100 overflow-x-hidden"
-      style={{
-        position: "relative",
-        overflow: "hidden",
-        overflowX: "hidden",
-        maxWidth: "100vw",
-      }}
-    >
-      {/* Material You Glow Effect */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          pointerEvents: "none",
-          zIndex: 0,
-          background:
-            "radial-gradient(circle at 60% 20%, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 60%, transparent 100%)",
-          filter: "blur(32px)",
-        }}
-      />
-      {/* Greeting Section */}
-      <div className="px-2 sm:px-4 lg:px-6 pt-2 sm:pt-3 lg:pt-4 pb-1 sm:pb-2 relative z-10">
-        {greeting && displayUsername && (
-          <h2
-            className="text-xl font-semibold mb-2 animate-fade-in text-sky-700"
-          >
-            {greeting}, {displayUsername}!
-          </h2>
-        )}
-        {greeting && !displayUsername && (
-          <h2
-            className="text-xl font-semibold mb-2 animate-fade-in text-sky-700"
-          >
-            {greeting}!
-          </h2>
-        )}
-        
-        {/* Card Generator Feature Notice */}
-        {displayUsername && (
-          <Alert className="mb-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border-blue-200 dark:border-blue-800">
-            <CreditCard className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-sm">
-              <strong>🎉 New Feature!</strong> Create your personalized virtual business card with QR code! 
-              <Button
-                onClick={() => navigate("/card-generator")}
-                variant="link"
-                className="h-auto p-0 ml-1 text-blue-600 font-semibold"
-              >
-                Try Card Generator →
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
-      </div>
-      <header className={`px-2 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 shadow-sm border-b border-border relative z-10 ${isMobile ? 'bg-background' : 'glass-surface'} overflow-x-hidden`}>
-        <div className="flex items-center justify-between max-w-full">
-          <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
-            <h1 className="text-lg sm:text-xl font-semibold text-sky-500 animate-pulse">DropLink</h1>
-            {displayUsername && (
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="text-xs sm:text-sm text-muted-foreground truncate max-w-[80px] sm:max-w-none">@{displayUsername}</span>
-                {isAuthenticated && (
-                  <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-sky-100 text-sky-700 text-xs rounded-full font-medium whitespace-nowrap">
-                    π Auth
-                  </span>
-                )}
-              </div>
+    <div className="relative min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-x-hidden pb-24">
+      <div className="pointer-events-none absolute inset-0 opacity-70" aria-hidden="true" style={{ background: "radial-gradient(circle at 20% 20%, rgba(14,165,233,0.15) 0, transparent 40%), radial-gradient(circle at 80% 0%, rgba(124,58,237,0.12) 0, transparent 35%), radial-gradient(circle at 50% 80%, rgba(59,130,246,0.12) 0, transparent 45%)" }} />
+
+      <header className="sticky top-0 z-30 border-b border-slate-200/70 dark:border-slate-800/70 bg-white/85 dark:bg-slate-900/85 backdrop-blur">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-900/60 dark:text-sky-100 flex items-center justify-center font-semibold shadow-sm">
+              DL
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Link Hub</span>
+              <span className="text-sm font-semibold">
+                {displayUsername ? `@${displayUsername}` : 'Dashboard'}
+              </span>
+            </div>
+            {isAuthenticated && (
+              <span className="ml-1 inline-flex items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200 px-2 py-0.5 text-[11px] font-semibold">
+                π Auth
+              </span>
             )}
             {!isAuthenticated && piLoading && (
-              <span className="text-xs text-orange-600 animate-pulse">Connecting Pi...</span>
-            )}
-            {!isAuthenticated && !piLoading && (
-              <span className="text-xs text-gray-500 hidden sm:inline">Pi Network Ready</span>
+              <span className="text-xs text-amber-600 animate-pulse">Connecting Pi...</span>
             )}
           </div>
-          <div className="flex items-center gap-1 sm:gap-2 lg:gap-3">
-                        {/* Inbox Button (Desktop) */}
-                        <Button
-                          type="button"
-                          onClick={() => navigate("/inbox")}
-                          size="sm"
-                          className="hidden md:inline-flex gap-2 bg-sky-400 text-white hover:bg-sky-500 border-none"
-                        >
-                          <Mail className="w-4 h-4" />
-                          Inbox
-                        </Button>
-            {isMobile && (
-              <Button
-                type="button"
-                onClick={() => setShowPreview(!showPreview)}
-                size="sm"
-                className="h-9 w-9 mr-0.5 sm:mr-1 bg-sky-400 text-white hover:bg-sky-500 border-none p-0"
-              >
-                {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </Button>
-            )}
-            {/* Theme controls removed: dark mode and seasonal themes disabled */}
-            {/* Add Plan button to header for both mobile and desktop */}
+          <div className="flex items-center gap-1.5">
+            <Button type="button" variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={handleShowQRCode}>
+              <QrCode className="w-4 h-4 mr-2" />
+              QR
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={handleCopyLink}>
+              <Share2 className="w-4 h-4 mr-2" />
+              Share
+            </Button>
             <Button
               type="button"
-              variant="outline"
-              size={isMobile ? "icon" : "sm"}
-              className="ml-0.5 sm:ml-1 border-sky-400 text-sky-600 hover:bg-sky-50 h-9 sm:h-10 w-9 sm:w-auto px-0 sm:px-3"
+              variant="secondary"
+              size="sm"
+              className="hidden lg:inline-flex"
+              onClick={() => setShowPreview(!showPreview)}
+            >
+              {showPreview ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+              {showPreview ? 'Hide preview' : 'Show preview'}
+            </Button>
+            <Button
+              type="button"
+              variant="default"
+              size="sm"
+              className="bg-sky-500 hover:bg-sky-600 text-white"
               onClick={() => setShowPlanModal(true)}
             >
-              <Crown className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="hidden sm:inline ml-1.5 text-xs sm:text-sm">My Plan</span>
+              <Crown className="w-4 h-4 mr-2" />
+              Plan
             </Button>
-            {isMobile ? (
-              <Drawer>
-                <DrawerTrigger asChild>
-                  <Button size="sm" className="h-9 w-9 sm:h-10 sm:w-auto sm:px-3 bg-sky-400 text-white hover:bg-sky-500 border-none ml-0.5 sm:ml-1 p-0 sm:p-auto z-50">
-                    <Menu className="w-4 h-4" />
-                    <span className="hidden sm:inline ml-1.5 text-xs sm:text-sm">Menu</span>
-                  </Button>
-                </DrawerTrigger>
-                <DrawerContent className="bg-background border-t border-border fixed bottom-0 left-0 right-0 max-h-[90vh] z-50">
-                  <DrawerHeader className="border-b pb-3">
-                    <DrawerTitle className="text-base sm:text-lg font-semibold">DropLink Menu</DrawerTitle>
-                    <DrawerDescription className="text-xs sm:text-sm">Quick actions and settings</DrawerDescription>
-                  </DrawerHeader>
-                  <div className="p-3 sm:p-4 space-y-3 max-h-[calc(90vh-100px)] overflow-y-auto w-full">
-                                        {/* Plan Button in Drawer */}
-                  <div className="space-y-2">
-                                          <Button
-                                            type="button"
-                                            onClick={() => { setShowPlanModal(true); }}
-                                            size="sm"
-                                            className="w-full justify-center gap-1 sm:gap-2 h-10 sm:h-12 bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-300 border text-xs sm:text-sm"
-                                          >
-                                            <Crown className="w-3 sm:w-4 h-3 sm:h-4" />
-                                            <span>My Plan / Renew</span>
-                                          </Button>
-                                        </div>
-                    {/* User Info Section */}
-                    <div className="space-y-2">
-                      <div className="bg-sky-50 border border-sky-200 rounded-lg p-3">
-                        <div className="flex items-center justify-between">
-                          <div className="space-y-1">
-                            <p className="text-sm font-medium text-sky-900">
-                              {displayUsername ? `@${displayUsername}` : 'Welcome'}
-                            </p>
-                            <div className="flex items-center gap-2">
-                              {isAuthenticated ? (
-                                <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
-                                  <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>
-                                  Pi Connected
-                                </span>
-                              ) : piLoading ? (
-                                <span className="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full font-medium animate-pulse">
-                                  <span className="w-1.5 h-1.5 bg-orange-500 rounded-full mr-1.5"></span>
-                                  Connecting...
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full font-medium">
-                                  <span className="w-1.5 h-1.5 bg-gray-500 rounded-full mr-1.5"></span>
-                                  Pi Ready
-                                </span>
-                              )}
-                              {hasSupabaseSession && (
-                                <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
-                                  Email Auth
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          {isAuthenticated && (
-                            <div className="text-sky-600">
-                              <Wallet className="w-5 h-5" />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Profile & Share Section */}
-                    <div className="space-y-2">
-                      <h3 className="font-medium text-sm text-muted-foreground px-2">Profile & Share</h3>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button type="button" onClick={() => navigate("/inbox")}
-                          size="sm"
-                          className="inline-flex justify-center gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-sm">
-                          <Mail className="w-4 h-4" />
-                          <span>Inbox</span>
-                        </Button>
-                        <Button type="button" onClick={handleShowQRCode} size="sm" className="inline-flex justify-center gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-sm">
-                          <QrCode className="w-4 h-4" />
-                          <span>QR Code</span>
-                        </Button>
-                        <Button type="button" onClick={handleCopyLink} size="sm" className="inline-flex justify-center gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-sm col-span-2">
-                          <Share2 className="w-4 h-4" />
-                          <span>Share</span>
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Navigation Section */}
-                    <div className="space-y-2">
-                      <h3 className="font-medium text-xs sm:text-sm text-muted-foreground px-2">Navigation</h3>
-                      <div className="grid grid-cols-2 gap-1 sm:gap-2">
-                        <Button type="button" onClick={() => navigate("/followers")} size="sm" className="inline-flex justify-center gap-1 sm:gap-2 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
-                          <Users className="w-3 sm:w-4 h-3 sm:h-4" />
-                          <span>Followers</span>
-                        </Button>
-                        <Button type="button" onClick={() => navigate("/wallet")} size="sm" className="inline-flex justify-center gap-1 sm:gap-2 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
-                          <Wallet className="w-3 sm:w-4 h-3 sm:h-4" />
-                          <span>Wallet</span>
-                        </Button>
-                        <Button type="button" onClick={() => navigate("/profile")} size="sm" className="inline-flex justify-center gap-1 sm:gap-2 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
-                          <User className="w-3 sm:w-4 h-3 sm:h-4" />
-                          <span>Profile</span>
-                        </Button>
-                        <Button type="button" onClick={() => navigate("/domain")} size="sm" className="inline-flex justify-center gap-1 sm:gap-2 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
-                          <Globe className="w-3 sm:w-4 h-3 sm:h-4" />
-                          <span>Domain</span>
-                        </Button>
-                        <Button type="button" onClick={() => navigate("/card-generator")} size="sm" className="inline-flex justify-center gap-1 sm:gap-2 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm">
-                          <CreditCard className="w-3 sm:w-4 h-3 sm:h-4" />
-                          <span>My Card</span>
-                        </Button>
-                        <Button type="button" onClick={() => navigate("/search-users")} size="sm" className="inline-flex justify-center gap-1 sm:gap-2 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm col-span-2">
-                          <Users className="w-3 sm:w-4 h-3 sm:h-4" />
-                          <span>User Search</span>
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Settings Section */}
-                    <div className="space-y-2">
-                      <h3 className="font-medium text-sm text-muted-foreground px-2">Settings</h3>
-                      <div className="space-y-2">
-                        <Button
-                          type="button"
-                          onClick={() => setShowPreview(!showPreview)}
-                          size="sm"
-                          className="w-full justify-center gap-2 h-10 sm:h-12 bg-sky-400 text-white hover:bg-sky-500 border-none text-xs sm:text-sm"
-                        >
-                          {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          {showPreview ? 'Hide Preview' : 'Show Preview'}
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Pi Network Section */}
-                    {hasSupabaseSession && !isAuthenticated && (
-                      <div className="space-y-2">
-                        <h3 className="font-medium text-sm text-muted-foreground px-2">Pi Network</h3>
-                        <Button 
-                          type="button"
-                          onClick={() => navigate("/auth")} 
-                          size="sm"
-                          className="w-full justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none"
-                        >
-                          <Wallet className="w-4 h-4" />
-                          Connect Pi Network
-                        </Button>
-                      </div>
-                    )}
-
-                    {/* Organization Links Section */}
-                    <div className="space-y-2">
-                      <h3 className="font-medium text-sm text-muted-foreground px-2">Mrwain Organization</h3>
-                      <div className="grid grid-cols-1 gap-2">
-                        <Button 
-                          type="button" 
-                          onClick={() => window.open('https://dropshops.space/', '_blank')} 
-                          size="sm" 
-                          className="inline-flex justify-start gap-2 h-12 bg-purple-500 text-white hover:bg-purple-600 border-none"
-                        >
-                          <Store className="w-4 h-4" />
-                          <div className="text-left">
-                            <div className="text-sm font-medium">DropStore</div>
-                            <div className="text-xs opacity-90">Online marketplace</div>
-                          </div>
-                        </Button>
-                        <Button 
-                          type="button" 
-                          onClick={() => window.open('https://droppay.space/', '_blank')} 
-                          size="sm" 
-                          className="inline-flex justify-start gap-2 h-12 bg-green-500 text-white hover:bg-green-600 border-none"
-                        >
-                          <CreditCard className="w-4 h-4" />
-                          <div className="text-left">
-                            <div className="text-sm font-medium">DropPay</div>
-                            <div className="text-xs opacity-90">Payment solutions</div>
-                          </div>
-                        </Button>
-                        <Button 
-                          type="button" 
-                          onClick={() => window.open('https://dropshare.space/', '_blank')} 
-                          size="sm" 
-                          className="inline-flex justify-start gap-2 h-12 bg-blue-500 text-white hover:bg-blue-600 border-none"
-                        >
-                          <Share2 className="w-4 h-4" />
-                          <div className="text-left">
-                            <div className="text-sm font-medium">DropShare</div>
-                            <div className="text-xs opacity-90">Social sharing</div>
-                          </div>
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Support & Help Section */}
-                    <div className="space-y-2">
-                      <h3 className="font-medium text-sm text-muted-foreground px-2">Support & Help</h3>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button type="button" onClick={() => navigate("/ai-support")} size="sm" className="inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
-                          <Bot className="w-4 h-4" />
-                          AI Support
-                        </Button>
-                        <Button
-                          onClick={() => setShowAboutModal(true)}
-                          size="sm"
-                          className="justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none"
-                        >
-                          <Info className="w-4 h-4" />
-                          About
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Subscription Section */}
-                    <div className="space-y-2">
-                      <h3 className="font-medium text-sm text-muted-foreground px-2">Subscription</h3>
-                      <Button onClick={() => navigate("/subscription")} size="sm" className="w-full inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
-                        <Crown className="w-4 h-4" />
-                        Upgrade Plan
-                      </Button>
-                    </div>
-
-                    {/* Account Section */}
-                    <div className="space-y-2 pt-2 border-t border-border">
-                      <Button type="button" onClick={handleLogout} size="sm" className="w-full inline-flex justify-start gap-2 h-12 bg-sky-400 text-white hover:bg-sky-500 border-none">
-                        <LogOut className="w-4 h-4" />
-                        Sign Out
-                      </Button>
-                    </div>
-                  </div>
-                </DrawerContent>
-              </Drawer>
-            ) : (
-              <>
-                <Button type="button" onClick={handleShowQRCode} size="sm" className="hidden sm:inline-flex gap-2 bg-sky-400 text-white hover:bg-sky-500 border-none">
-                  <QrCode className="w-4 h-4" />
-                  QR Code
-                </Button>
-                <Button type="button" onClick={handleCopyLink} size="sm" className="hidden sm:inline-flex gap-2 bg-sky-400 text-white hover:bg-sky-500 border-none">
-                  <Share2 className="w-4 h-4" />
-                  Share
-                </Button>
-                <Button 
-                  type="button"
-                  onClick={() => navigate("/followers")} 
-                  size="sm" 
-                  className="hidden md:inline-flex gap-2 bg-sky-400 text-white hover:bg-sky-500 border-none"
-                >
-                  <Users className="w-4 h-4" />
-                  Followers
-                </Button>
-                <Button 
-                  type="button"
-                  onClick={() => navigate("/wallet")} 
-                  size="sm" 
-                  className="hidden md:inline-flex gap-2 bg-sky-400 text-white hover:bg-sky-500 border-none"
-                >
-                  <Wallet className="w-4 h-4" />
-                  Wallet
-                </Button>
-                <Button 
-                  type="button"
-                  onClick={() => navigate("/subscription")} 
-                  size="sm" 
-                  className="hidden md:inline-flex bg-sky-400 text-white hover:bg-sky-500 border-none"
-                >
-                  Upgrade
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => setShowAboutModal(true)}
-                  size="sm"
-                  className="hidden lg:inline-flex gap-2 bg-sky-400 text-white hover:bg-sky-500 border-none"
-                >
-                  <Info className="w-4 h-4" />
-                  About
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => setShowPreview(!showPreview)} 
-                  size="sm"
-                  className="lg:hidden inline-flex bg-sky-400 text-white hover:bg-sky-500 border-none"
-                >
-                  {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </Button>
-                <Button type="button" onClick={handleLogout} size="sm" className="inline-flex items-center justify-center gap-2 bg-sky-400 h-9 rounded-md px-3 text-white hover:text-red-500 hover:bg-sky-500">
-                  <LogOut className="w-4 h-4" />
-                </Button>
-                
-                {/* Pi Auth Button for Email Users */}
-                {hasSupabaseSession && !isAuthenticated && (
-                  <Button 
-                    type="button"
-                    onClick={() => navigate("/auth")} 
-                    size="sm"
-                    className="gap-2 inline-flex bg-sky-400 text-white hover:bg-sky-500 border-none"
-                  >
-                    <Wallet className="w-4 h-4" />
-                    Connect Pi
-                  </Button>
-                )}
-              </>
-            )}
+            <Button type="button" variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 dark:text-slate-300">
+              <LogOut className="w-4 h-4" />
+            </Button>
           </div>
         </div>
       </header>
 
-      <div className="flex flex-col lg:flex-row h-[calc(100vh-73px)] overflow-x-hidden max-w-full">
-        {/* Editor Panel */}
-        <div className={`flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-4 lg:p-8 ${isMobile ? 'bg-background' : 'glass-card'} m-1 sm:m-2 rounded-lg sm:rounded-xl ${showPreview ? 'hidden lg:block' : 'block'} max-w-full`} style={{ position: 'relative', minHeight: 0 }}>
-          <div className="max-w-2xl mx-auto overflow-x-hidden">
-            <Tabs 
-              defaultValue={preferences.dashboard_layout.activeTab}
-              className="w-full overflow-x-hidden"
-              onValueChange={(value) => {
-                // All menu/tabs should work regardless of profile state
-                // Refresh payment links when payments tab is accessed
-                if (value === 'payments' && piUser?.uid) {
-                  const paymentLinks = loadPaymentLinks();
-                  setProfile(prev => ({
-                    ...prev,
-                    paymentLinks
-                  }));
-                }
-              }}
-            >
-              <TabsList className="flex flex-wrap gap-1 sm:gap-2 w-full bg-muted p-1.5 sm:p-2 rounded-lg mb-4 sm:mb-6 min-h-fit overflow-x-auto max-w-full" style={{ scrollbarWidth: 'thin' }}>
-                <TabsTrigger value="profile" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
-                  <Settings className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                  <span className="hidden sm:inline">Profile</span>
-                </TabsTrigger>
-                <TabsTrigger value="design" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
-                  <Palette className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                  <span className="hidden sm:inline">Design</span>
-                </TabsTrigger>
-                <TabsTrigger value="analytics" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
-                  <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                  <span className="hidden sm:inline">Analytics</span>
-                </TabsTrigger>
-                {/* <TabsTrigger value="features" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
-                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                  <span className="hidden sm:inline">Features</span>
-                </TabsTrigger> */}
-                <TabsTrigger value="drop-tokens" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
-                  <Droplets className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                  <span className="hidden sm:inline">DROP</span>
-                </TabsTrigger>
-                <TabsTrigger value="ad-network" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
-                  <PlayCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                  <span className="hidden sm:inline">Ads</span>
-                </TabsTrigger>
-                {/* <TabsTrigger value="payments" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
-                  <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                  <span className="hidden sm:inline">Pay</span>
-                </TabsTrigger> */}
-                <TabsTrigger value="subscription" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
-                  <Crown className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                  <span className="hidden sm:inline">Sub</span>
-                </TabsTrigger>
-                {/* <TabsTrigger value="voting" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
-                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                  <span className="hidden sm:inline">Vote</span>
-                </TabsTrigger> */}
-                <TabsTrigger value="merchant" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
-                  <Store className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                  <span className="hidden sm:inline">Merchant</span>
-                </TabsTrigger>
-                <TabsTrigger value="droppay" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
-                  <Wallet className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                  <span className="hidden sm:inline">DropPay</span>
-                </TabsTrigger>
-                <TabsTrigger value="preferences" className="flex-shrink-0 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
-                  <User className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                  <span className="hidden sm:inline">Settings</span>
-                </TabsTrigger>
-                              {/* Merchant Tab */}
-                              <TabsContent value="merchant" className="pb-6 sm:pb-8">
-                                <div className="max-w-lg mx-auto mt-12 sm:mt-20 p-4 sm:p-8 bg-white rounded-lg sm:rounded-xl shadow border text-center">
-                                  <Store className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-sky-500 mb-4" />
-                                  <h2 className="text-2xl sm:text-3xl font-bold mb-2">Dropstore: Digital Marketplace Platform</h2>
-                                  <p className="text-base sm:text-lg text-gray-700 mb-2">
-                                    Dropstore empowers anyone to launch a digital storefront, accept Pi payments on mainnet, and reach a global audience. Sell digital products, services, and experiences with ease. Join the decentralized commerce revolution!
-                                  </p>
-                                  <a href="https://dropshops.space/" target="_blank" rel="noopener noreferrer">
-                                    <button className="mt-4 px-6 py-2 bg-sky-500 text-white rounded-lg font-semibold shadow hover:bg-sky-600 transition">
-                                      Start Selling on Dropstore
-                                    </button>
-                                  </a>
-                                  <div className="mt-6 text-sm text-gray-500">
-                                    <strong>Live Features:</strong> Advanced storefronts, marketplace discovery, Pi Network mainnet integration, analytics, and more!
-                                  </div>
-                                </div>
-                              </TabsContent>
+      <main className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 lg:py-10 space-y-6">
+        <div className="grid gap-3 lg:grid-cols-[2fr_1fr] items-start">
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800/70 bg-white/90 dark:bg-slate-900/70 shadow-sm p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Welcome back</p>
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-white leading-tight">
+                  {greeting || 'Hello'}, {displayUsername || 'creator'}
+                </h2>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Curate your link-in-bio page with a clean, Linktree-inspired builder.</p>
+              </div>
+              <Button variant="link" size="sm" className="px-0 text-sky-600" onClick={() => navigate('/card-generator')}>
+                <CreditCard className="w-4 h-4 mr-2" />
+                Card Generator
+              </Button>
+            </div>
+            {displayUsername && (
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/70 bg-slate-50/80 dark:bg-slate-900/60 p-3">
+                  <p className="text-xs text-slate-500">Profile URL</p>
+                  <div className="flex items-center justify-between gap-2 mt-1">
+                    <span className="text-sm font-medium truncate">{window.location.origin}/{profile.storeUrl || 'your-link'}</span>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleCopyLink}>
+                      <Share2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/70 bg-slate-50/80 dark:bg-slate-900/60 p-3">
+                  <p className="text-xs text-slate-500">Status</p>
+                  <div className="flex items-center gap-2 mt-1 text-sm font-medium text-emerald-600 dark:text-emerald-300">
+                    <Sparkles className="w-4 h-4" />
+                    {plan ? `${plan.toUpperCase()} plan` : 'No plan yet'}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/70 bg-slate-50/80 dark:bg-slate-900/60 p-3">
+                  <p className="text-xs text-slate-500">Preview</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => setShowPreview((prev) => !prev)}
+                    >
+                      {showPreview ? 'Hide preview' : 'Show preview'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800/70 bg-white/90 dark:bg-slate-900/70 shadow-sm p-4 sm:p-5 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Quick actions</p>
+              <div className="inline-flex items-center gap-2 text-xs text-slate-500">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                Live
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <Button type="button" variant="secondary" className="justify-start" onClick={handleShowQRCode}>
+                <QrCode className="w-4 h-4 mr-2" />
+                QR Code
+              </Button>
+              <Button type="button" variant="secondary" className="justify-start" onClick={handleCopyLink}>
+                <Share2 className="w-4 h-4 mr-2" />
+                Copy link
+              </Button>
+              <Button type="button" variant="secondary" className="justify-start" onClick={() => navigate('/subscription')}>
+                <Crown className="w-4 h-4 mr-2" />
+                Upgrade
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-slate-500">
+              <span className="inline-flex items-center gap-2 rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2"><Users className="w-4 h-4" /> Audience</span>
+              <span className="inline-flex items-center gap-2 rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2"><Palette className="w-4 h-4" /> Theme</span>
+              <span className="inline-flex items-center gap-2 rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2"><BarChart3 className="w-4 h-4" /> Insights</span>
+            </div>
+          </div>
+        </div>
 
-                              {/* DropPay Tab */}
-                              <TabsContent value="droppay" className="pb-6 sm:pb-8">
-                                <div className="max-w-lg mx-auto mt-12 sm:mt-20 p-4 sm:p-8 bg-white rounded-lg sm:rounded-xl shadow border text-center">
-                                  <Wallet className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-sky-500 mb-4" />
-                                  <h2 className="text-2xl sm:text-3xl font-bold mb-2">DropPay: Seamless Pi Payment Modal</h2>
-                                  <p className="text-base sm:text-lg text-gray-700 mb-2">
-                                    DropPay provides a beautiful, ready-to-use payment modal interface for accepting Pi and Drop cryptocurrency payments on Pi Network Mainnet. Integrate seamless checkout experiences with QR codes, real-time verification, and a polished UI that matches modern web standards.
-                                  </p>
-                                  <a href="https://droppay.space/" target="_blank" rel="noopener noreferrer">
-                                    <button className="mt-4 px-6 py-2 bg-sky-500 text-white rounded-lg font-semibold shadow hover:bg-sky-600 transition">
-                                      Launch DropPay Platform
-                                    </button>
-                                  </a>
-                                  <div className="mt-6 text-sm text-gray-500">
-                                    <strong>Features:</strong> Payment modal UI, Pi & Drop support, QR code payments, real-time verification, customizable branding, transaction tracking, and developer-friendly API!
-                                  </div>
-                                </div>
-                              </TabsContent>
-                               {/* Pi Data tab removed for production */}
-              </TabsList>
+        <div className="grid gap-6 xl:grid-cols-[1.45fr_minmax(360px,1fr)] items-start">
+          {/* Builder Panel */}
+          <section className={`${showPreview ? 'hidden lg:block' : 'block'} rounded-2xl border border-slate-200/80 dark:border-slate-800/70 bg-white/95 dark:bg-slate-900/70 shadow-sm`}>
+            <div className="p-3 sm:p-5">
+              <Tabs 
+                defaultValue={preferences.dashboard_layout.activeTab}
+                className="w-full"
+                onValueChange={(value) => {
+                  if (value === 'payments' && piUser?.uid) {
+                    const paymentLinks = loadPaymentLinks();
+                    setProfile(prev => ({
+                      ...prev,
+                      paymentLinks
+                    }));
+                  }
+                }}
+              >
+                <TabsList className="w-full flex flex-wrap gap-2 bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 p-2 rounded-xl mb-4 sm:mb-6">
+                  <TabsTrigger value="profile" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
+                    <Settings className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    <span className="hidden sm:inline">Profile</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="design" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
+                    <Palette className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    <span className="hidden sm:inline">Design</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="analytics" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
+                    <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    <span className="hidden sm:inline">Analytics</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="drop-tokens" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
+                    <Droplets className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    <span className="hidden sm:inline">DROP</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="ad-network" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
+                    <PlayCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    <span className="hidden sm:inline">Ads</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="subscription" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
+                    <Crown className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    <span className="hidden sm:inline">Sub</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="merchant" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
+                    <Store className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    <span className="hidden sm:inline">Merchant</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="droppay" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
+                    <Wallet className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    <span className="hidden sm:inline">DropPay</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="preferences" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
+                    <User className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    <span className="hidden sm:inline">Settings</span>
+                  </TabsTrigger>
+                </TabsList>
 
-              {/* Profile Tab */}
-              <TabsContent value="profile" className="space-y-6 sm:space-y-8">
+                {/* Merchant Tab */}
+                <TabsContent value="merchant" className="pb-6 sm:pb-8">
+                  <div className="max-w-lg mx-auto mt-8 sm:mt-12 p-4 sm:p-6 bg-white dark:bg-slate-900 rounded-xl shadow border border-slate-200/70 dark:border-slate-800/70 text-center space-y-3">
+                    <Store className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-sky-500" />
+                    <h2 className="text-2xl font-bold">Dropstore: Digital Marketplace Platform</h2>
+                    <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300">
+                      Dropstore empowers anyone to launch a digital storefront, accept Pi payments on mainnet, and reach a global audience.
+                    </p>
+                    <a href="https://dropshops.space/" target="_blank" rel="noopener noreferrer">
+                      <button className="mt-2 px-6 py-2 bg-sky-500 text-white rounded-lg font-semibold shadow hover:bg-sky-600 transition">
+                        Start Selling on Dropstore
+                      </button>
+                    </a>
+                    <div className="text-xs sm:text-sm text-slate-500">
+                      <strong>Live Features:</strong> Advanced storefronts, marketplace discovery, Pi Network mainnet integration, analytics, and more.
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* DropPay Tab */}
+                <TabsContent value="droppay" className="pb-6 sm:pb-8">
+                  <div className="max-w-lg mx-auto mt-8 sm:mt-12 p-4 sm:p-6 bg-white dark:bg-slate-900 rounded-xl shadow border border-slate-200/70 dark:border-slate-800/70 text-center space-y-3">
+                    <Wallet className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-sky-500" />
+                    <h2 className="text-2xl font-bold">DropPay: Seamless Pi Payment Modal</h2>
+                    <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300">
+                      DropPay provides a ready-to-use payment modal for accepting Pi and Drop cryptocurrency payments on Pi Network Mainnet.
+                    </p>
+                    <a href="https://droppay.space/" target="_blank" rel="noopener noreferrer">
+                      <button className="mt-2 px-6 py-2 bg-sky-500 text-white rounded-lg font-semibold shadow hover:bg-sky-600 transition">
+                        Launch DropPay Platform
+                      </button>
+                    </a>
+                    <div className="text-xs sm:text-sm text-slate-500">
+                      <strong>Features:</strong> Payment modal UI, Pi & Drop support, QR payments, real-time verification, customizable branding, and analytics.
+                    </div>
+                  </div>
+                </TabsContent>
+                {/* Pi Data tab removed for production */}
+
+                {/* Profile Tab */}
+                <TabsContent value="profile" className="space-y-6 sm:space-y-8">
                 {/* Pi Ad Banner for free users */}
                 <PiAdBanner />
                 
                 <div>
-                  <h2 className="text-lg font-semibold mb-4 sm:mb-6">Business details</h2>
+                  <h2 className="text-lg font-semibold mb-4 sm:mb-6 text-gray-900 dark:text-white">Business details</h2>
               
 
               {/* Logo Upload, AI Logo, and Random Avatar Generator */}
               <div className="mb-6 flex flex-col gap-4">
                 <div>
-                  <Label className="mb-3 block text-sm">Business logo</Label>
+                  <Label className="mb-3 block text-sm text-gray-900 dark:text-white">Business logo</Label>
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                     <div
                       className={
@@ -1968,7 +1675,7 @@ const Dashboard = () => {
                 </div>
                 {/* Random Avatar Generator */}
                 <div>
-                  <Label className="mb-2 block text-sm">Or generate a random avatar</Label>
+                  <Label className="mb-2 block text-sm text-gray-900 dark:text-white">Or generate a random avatar</Label>
                   <RandomAvatarGenerator onAvatarGenerated={(url) => setProfile(prev => ({ ...prev, logo: url }))} />
                 </div>
               </div>
@@ -1976,7 +1683,7 @@ const Dashboard = () => {
 
               {/* Business Name */}
               <div className="mb-6">
-                <Label htmlFor="business-name" className="mb-2 sm:mb-3 block text-sm">Business name</Label>
+                <Label htmlFor="business-name" className="mb-2 sm:mb-3 block text-sm text-gray-900 dark:text-white">Business name</Label>
                 <Input
                   id="business-name"
                   value={profile.businessName}
@@ -1993,7 +1700,7 @@ const Dashboard = () => {
 
               {/* Email */}
               <div className="mb-6">
-                <Label htmlFor="email" className="mb-2 sm:mb-3 block text-sm">Email</Label>
+                <Label htmlFor="email" className="mb-2 sm:mb-3 block text-sm text-gray-900 dark:text-white">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -2009,7 +1716,7 @@ const Dashboard = () => {
 
               {/* Store URL */}
               <div className="mb-6">
-                <Label htmlFor="store-url" className="mb-2 sm:mb-3 block text-sm">Store URL (Username)</Label>
+                <Label htmlFor="store-url" className="mb-2 sm:mb-3 block text-sm text-gray-900 dark:text-white">Store URL (Username)</Label>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-0">
                   <span className="text-muted-foreground text-xs sm:text-sm hidden sm:inline whitespace-nowrap">{window.location.origin}/</span>
                   <div className="flex items-center gap-2 w-full sm:flex-1">
@@ -2030,7 +1737,7 @@ const Dashboard = () => {
 
               {/* Description */}
               <div className="mb-6">
-                <Label htmlFor="description" className="mb-2 sm:mb-3 block text-sm">Business description</Label>
+                <Label htmlFor="description" className="mb-2 sm:mb-3 block text-sm text-gray-900 dark:text-white">Business description</Label>
                 <Textarea
                   id="description"
                   value={profile.description}
@@ -2051,7 +1758,7 @@ const Dashboard = () => {
 
               {/* User Category */}
               <div className="mb-6">
-                <Label htmlFor="category" className="mb-2 sm:mb-3 block text-sm">Profile Category</Label>
+                <Label htmlFor="category" className="mb-2 sm:mb-3 block text-sm text-gray-900 dark:text-white">Profile Category</Label>
                 <select
                   id="category"
                   value={(profile as any).category || 'other'}
@@ -2103,7 +1810,7 @@ const Dashboard = () => {
               {/* YouTube Video URL - Premium/Pro only */}
               <PlanGate minPlan="premium" featureName="YouTube Video">
                 <div className="mb-6">
-                  <Label htmlFor="youtube-video" className="mb-2 sm:mb-3 block text-sm">YouTube Video</Label>
+                  <Label htmlFor="youtube-video" className="mb-2 sm:mb-3 block text-sm text-gray-900 dark:text-white">YouTube Video</Label>
                   <Input
                     id="youtube-video"
                     value={profile.youtubeVideoUrl}
@@ -2139,7 +1846,7 @@ const Dashboard = () => {
             {/* Social Links */}
             <div>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-2">
-                <h2 className="text-lg font-semibold">Social links</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Social links</h2>
                 {/* Social link plan gating */}
                 {(() => {
                   let maxLinks = 1;
@@ -2345,7 +2052,7 @@ const Dashboard = () => {
                     />
                   </div>
                   <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
                       <Wallet className="w-5 h-5 text-blue-500" />
                       Pi Wallet for Tips
                     </h2>
@@ -2484,7 +2191,7 @@ const Dashboard = () => {
             <PlanGate minPlan="premium" featureName="Custom Links">
               <div className="border-t pt-4 sm:pt-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-2 sm:gap-4">
-                  <h2 className="text-lg font-semibold">Custom Links</h2>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Custom Links</h2>
                   <div className="flex items-center gap-2 w-full sm:w-auto">
                     {autoSave.isSaving && (
                       <span className="text-xs text-muted-foreground whitespace-nowrap">Saving...</span>
@@ -2514,13 +2221,13 @@ const Dashboard = () => {
 
             {/* Share Button Settings */}
             <div className="border-t pt-4 sm:pt-6">
-              <h2 className="text-lg font-semibold mb-3 sm:mb-6">Public Profile Settings</h2>
+              <h2 className="text-lg font-semibold mb-3 sm:mb-6 text-gray-900 dark:text-white">Public Profile Settings</h2>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 bg-card border border-border rounded-lg gap-3">
                 <div className="space-y-0.5 flex-1">
-                  <Label htmlFor="share-button" className="text-sm sm:text-base font-medium">
+                  <Label htmlFor="share-button" className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">
                     Show Share Button
                   </Label>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     Allow visitors to share your profile with a button
                   </p>
                 </div>
@@ -2535,11 +2242,11 @@ const Dashboard = () => {
             {/* Theme Customization - Premium/Pro only */}
             <PlanGate minPlan="premium" featureName="Theme Customization">
               <div className="border-t pt-6">
-                <h2 className="text-lg font-semibold mb-4 sm:mb-6">Theme Customization</h2>
+                <h2 className="text-lg font-semibold mb-4 sm:mb-6 text-gray-900 dark:text-white">Theme Customization</h2>
                 
                 {/* Quick Template Picker */}
                 <div className="mb-6">
-                  <Label className="mb-3 block text-sm">Quick Templates (Linktree-style)</Label>
+                  <Label className="mb-3 block text-sm text-gray-900 dark:text-white">Quick Templates (Linktree-style)</Label>
                   <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
                     {[
                       { id: 'midnight', name: 'Midnight', primary: '#3b82f6', bg: '#0f0f23' },
@@ -2586,7 +2293,7 @@ const Dashboard = () => {
                 
               <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <Label htmlFor="primary-color" className="mb-2 sm:mb-3 block text-sm">Primary Color</Label>
+                  <Label htmlFor="primary-color" className="mb-2 sm:mb-3 block text-sm text-gray-900 dark:text-white">Primary Color</Label>
                   <Input
                     id="primary-color"
                     type="color"
@@ -2604,7 +2311,7 @@ const Dashboard = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="background-color" className="mb-2 sm:mb-3 block text-sm">Background Color</Label>
+                  <Label htmlFor="background-color" className="mb-2 sm:mb-3 block text-sm text-gray-900 dark:text-white">Background Color</Label>
                   <Input
                     id="background-color"
                     type="color"
@@ -2617,7 +2324,7 @@ const Dashboard = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="text-color" className="mb-2 sm:mb-3 block text-sm">Text Color</Label>
+                  <Label htmlFor="text-color" className="mb-2 sm:mb-3 block text-sm text-gray-900 dark:text-white">Text Color</Label>
                   <Input
                     id="text-color"
                     type="color"
@@ -2630,7 +2337,7 @@ const Dashboard = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="icon-style" className="mb-2 sm:mb-3 block text-sm">Icon Style</Label>
+                  <Label htmlFor="icon-style" className="mb-2 sm:mb-3 block text-sm text-gray-900 dark:text-white">Icon Style</Label>
                   <select
                     id="icon-style"
                     value={profile.theme.iconStyle}
@@ -2662,7 +2369,7 @@ const Dashboard = () => {
             {/* Digital Products - Premium/Pro only */}
             <PlanGate minPlan="premium" featureName="Digital Products">
               <div>
-                <h2 className="text-lg font-semibold mb-4 sm:mb-6">Digital Products</h2>
+                <h2 className="text-lg font-semibold mb-4 sm:mb-6 text-gray-900 dark:text-white">Digital Products</h2>
               <div className="space-y-3 sm:space-y-4">
                 {profile.products.map((product, index) => (
                   <div key={product.id} className="p-3 sm:p-4 bg-card border border-border rounded-lg space-y-2 sm:space-y-3">
@@ -2940,30 +2647,28 @@ const Dashboard = () => {
               {/* Pi Data content removed for production */}
             </Tabs>
           </div>
-        </div>
+        </section>
 
         {/* Preview Panel */}
-        <div
-          className={`w-full lg:w-[380px] xl:w-[420px] 2xl:w-[480px] ${isMobile ? 'bg-background border-t' : 'glass-surface border-l'} border-border/30 flex flex-col items-center justify-center overflow-hidden overflow-x-hidden max-w-full ${showPreview ? 'flex' : 'hidden lg:flex'}`}
-          style={{ minHeight: 0, maxWidth: '100vw' }}
+        <aside
+          className={`w-full ${showPreview ? 'flex' : 'hidden lg:flex'} lg:w-[380px] xl:w-[420px] 2xl:w-[480px] border border-slate-200/80 dark:border-slate-800/70 bg-white/90 dark:bg-slate-900/70 rounded-2xl shadow-sm flex-col items-center justify-start overflow-hidden`}
+          style={{ minHeight: 0 }}
         >
-          <div className="mb-2 sm:mb-3 md:mb-4 flex items-center justify-between w-full max-w-full px-3 sm:px-4 md:px-6 py-2">
-            <h3 className="text-xs sm:text-sm md:text-base font-medium text-muted-foreground">Live Preview</h3>
-            <Button variant="ghost" size="sm" onClick={handleCopyLink} className="text-xs sm:text-sm h-8 sm:h-9">
-              Copy link
-            </Button>
+          <div className="w-full border-b border-slate-200/70 dark:border-slate-800/60 px-4 py-3 flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Live preview</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">Link-in-bio page</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleCopyLink}>
+                <Share2 className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate('/search-users')}>
+                <Users className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
-          <div className="w-full px-3 sm:px-4 md:px-6 mb-3">
-            <Button 
-              onClick={() => navigate('/search-users')} 
-              className="w-full bg-sky-500 hover:bg-sky-600 text-white"
-              size="sm"
-            >
-              <Users className="w-4 h-4 mr-2" />
-              Search Droplink Profiles
-            </Button>
-          </div>
-          <div className="w-full px-3 sm:px-4 md:px-6 mb-3">
+          <div className="w-full px-4 py-3 space-y-2">
             <Button 
               onClick={() => window.open('https://droppay.space/', '_blank')} 
               className="w-full bg-sky-500 hover:bg-sky-600 text-white"
@@ -2972,11 +2677,20 @@ const Dashboard = () => {
               <Store className="w-4 h-4 mr-2" />
               Sell Digital Products
             </Button>
+            <Button 
+              onClick={() => navigate('/subscription')} 
+              variant="secondary"
+              className="w-full"
+              size="sm"
+            >
+              <Crown className="w-4 h-4 mr-2" />
+              Upgrade plan
+            </Button>
           </div>
-          <div className="flex-1 flex items-center justify-center w-full overflow-hidden px-2 sm:px-3 md:px-4 py-2 sm:py-3">
+          <div className="flex-1 flex items-center justify-center w-full overflow-hidden px-3 pb-4">
             <PhonePreview profile={profile} />
           </div>
-        </div>
+        </aside>
       </div>
       
 
@@ -3015,6 +2729,126 @@ const Dashboard = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      </main>
+
+      {/* Bottom Navigation Bar - Linktree Style */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 shadow-2xl z-50">
+        <div className="max-w-6xl mx-auto px-4 py-2">
+          <div className="flex justify-around items-center">
+            {/* My Linktree */}
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
+            >
+              <Users className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
+              <span className="hidden sm:inline">My Link</span>
+            </button>
+
+            {/* Earn */}
+            <button
+              onClick={() => navigate('/wallet')}
+              className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
+            >
+              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
+              <span className="hidden sm:inline">Earn</span>
+            </button>
+
+            {/* Insights */}
+            <button
+              onClick={() => {
+                const el = document.querySelector('[role="tablist"]');
+                const analyticsTab = Array.from(el?.querySelectorAll('[role="tab"]') || []).find(t => t.textContent?.includes('Analytics'));
+                (analyticsTab as HTMLElement)?.click();
+              }}
+              className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
+            >
+              <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
+              <span className="hidden sm:inline">Insights</span>
+            </button>
+
+            {/* Audience */}
+            <button
+              onClick={() => navigate('/followers')}
+              className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
+            >
+              <Users className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
+              <span className="hidden sm:inline">Audience</span>
+            </button>
+
+            {/* More Menu */}
+            <Drawer>
+              <DrawerTrigger asChild>
+                <button className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group">
+                  <Menu className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
+                  <span className="hidden sm:inline">More</span>
+                </button>
+              </DrawerTrigger>
+              <DrawerContent className="bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 fixed bottom-16 left-0 right-0 max-h-[70vh] z-50">
+                <DrawerHeader className="border-b pb-3">
+                  <DrawerTitle className="text-base sm:text-lg font-semibold">More Options</DrawerTitle>
+                </DrawerHeader>
+                <div className="p-4 space-y-2 max-h-[calc(70vh-100px)] overflow-y-auto">
+                  <Button 
+                    onClick={() => { navigate('/card-generator'); }} 
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start gap-2 h-10"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    My Card
+                  </Button>
+                  <Button 
+                    onClick={() => { navigate('/followers'); }} 
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start gap-2 h-10"
+                  >
+                    <Users className="w-4 h-4" />
+                    My Followers
+                  </Button>
+                  <Button 
+                    onClick={() => { navigate('/inbox'); }} 
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start gap-2 h-10"
+                  >
+                    <Mail className="w-4 h-4" />
+                    Inbox
+                  </Button>
+                  <Button 
+                    onClick={() => { navigate('/search-users'); }} 
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start gap-2 h-10"
+                  >
+                    <Users className="w-4 h-4" />
+                    Discover Users
+                  </Button>
+                  <Button 
+                    onClick={() => { navigate('/subscription'); }} 
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start gap-2 h-10"
+                  >
+                    <Crown className="w-4 h-4" />
+                    Upgrade Plan
+                  </Button>
+                  <Button 
+                    onClick={handleLogout}
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start gap-2 h-10 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </Button>
+                </div>
+              </DrawerContent>
+            </Drawer>
+          </div>
+        </div>
+      </nav>
     </div>
   );
 };
