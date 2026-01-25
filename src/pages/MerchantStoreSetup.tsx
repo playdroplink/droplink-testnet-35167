@@ -50,11 +50,11 @@ const MerchantStoreSetup: React.FC = () => {
           <div className="absolute inset-0 bg-radial from-white/5 to-transparent pointer-events-none rounded-3xl"></div>
           
           <div className="relative z-10">
-            <h2 className="text-3xl font-bold mb-4 text-white drop-shadow-md">Merchant Section</h2>
-            <p className="text-lg text-gray-100 mb-2 drop-shadow-md">Feature Coming Soon</p>
-            <p className="text-gray-200 drop-shadow-md">We are working hard to bring you powerful merchant tools. Stay tuned!</p>
+            <h2 className="text-3xl font-bold mb-4 text-foreground drop-shadow-md">Merchant Section</h2>
+            <p className="text-lg text-muted-foreground mb-2 drop-shadow-md">Feature Coming Soon</p>
+            <p className="text-muted-foreground drop-shadow-md">We are working hard to bring you powerful merchant tools. Stay tuned!</p>
             
-            <button className="mt-6 w-full px-4 py-3 bg-gradient-to-r from-blue-500/25 to-purple-500/25 backdrop-blur-lg border border-white/25 rounded-xl text-white font-semibold hover:from-blue-500/40 hover:to-purple-500/40 hover:border-white/40 transition-all duration-200 hover:shadow-lg drop-shadow-md">
+            <button className="mt-6 w-full px-4 py-3 bg-gradient-to-r from-blue-500/25 to-purple-500/25 backdrop-blur-lg border border-border rounded-xl text-foreground font-semibold hover:from-blue-500/40 hover:to-purple-500/40 hover:border-border transition-all duration-200 hover:shadow-lg drop-shadow-md">
               Learn More
             </button>
           </div>

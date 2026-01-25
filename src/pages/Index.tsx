@@ -35,8 +35,8 @@ const Index = () => {
           <div className="glass-border-glow"></div>
           <div className="glass-inner-glow"></div>
           <div className="relative z-10">
-            <h1 className="mb-4 text-4xl font-bold text-white drop-shadow-md">Welcome to DropLink</h1>
-            <p className="text-xl text-gray-100 mb-6 drop-shadow-md">Start building your amazing project here!</p>
+            <h1 className="mb-4 text-4xl font-bold text-foreground drop-shadow-md">Welcome to DropLink</h1>
+            <p className="text-xl text-muted-foreground mb-6 drop-shadow-md">Start building your amazing project here!</p>
             <PiAuthButton />
           </div>
         </div>

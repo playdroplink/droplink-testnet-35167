@@ -13,9 +13,9 @@ const Privacy = () => {
           variant="ghost" 
           size="sm" 
           onClick={() => navigate(-1)}
-          className="mb-4 text-white"
+          className="mb-4 text-foreground"
         >
-          <ArrowLeft className="w-4 h-4 mr-2 text-white" />
+          <ArrowLeft className="w-4 h-4 mr-2 text-foreground" />
           Back
         </Button>
 
