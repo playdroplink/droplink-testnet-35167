@@ -123,6 +123,7 @@ const Subscription = () => {
   const [pendingPlanData, setPendingPlanData] = useState<{planName: string, price: number} | null>(null);
   const piConfigured = !!import.meta.env.VITE_PI_API_KEY;
   const dropPayConfigured = !!import.meta.env.VITE_DROPPAY_API_KEY;
+  const isDTopPayComingSoon = true; // Temporarily mark DTopPay as coming soon
   const navigate = useNavigate();
   const { piUser, signIn, loading: piLoading } = usePi() as any;
   const { processPayment, isProcessing, paymentProgress } = useRealPiPayment();
@@ -770,8 +771,8 @@ const Subscription = () => {
               <span className={`px-3 py-1 rounded-full border ${piConfigured ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-600 border-gray-200'}`}>
                 Pi Payments: {piConfigured ? '✓ Online' : 'Not configured'}
               </span>
-              <span className={`px-3 py-1 rounded-full border ${dropPayConfigured ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-600 border-gray-200'}`}>
-                DropPay: {dropPayConfigured ? '✓ Online' : 'Not configured'}
+              <span className={`px-3 py-1 rounded-full border ${isDTopPayComingSoon ? 'bg-gray-100 text-gray-600 border-gray-200' : (dropPayConfigured ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-600 border-gray-200')}`}>
+                DTopPay: {isDTopPayComingSoon ? 'Coming soon' : (dropPayConfigured ? '✓ Online' : 'Not configured')}
               </span>
             </div>
           </div>
@@ -852,10 +853,10 @@ const Subscription = () => {
                       {dropPayConfigured && (
                         <Button 
                           className="w-full bg-orange-600 hover:bg-orange-700 text-white border-orange-600" 
-                          disabled={isCurrent || loading || isProcessing || dropPayLoading || isSubscriptionProcessing} 
-                          onClick={() => handleSubscribeWithDropPay(plan.name, price)}
+                          disabled={true}
+                          onClick={() => toast.info('DTopPay subscription is coming soon')}
                         >
-                          {isCurrent ? '✓ Current Plan' : dropPayLoading ? '⏳ Redirecting to DropPay...' : 'Subscribe with DropPay'}
+                          {isCurrent ? '✓ Current Plan' : 'Subscribe with DTopPay (Coming Soon)'}
                         </Button>
                       )}
                       

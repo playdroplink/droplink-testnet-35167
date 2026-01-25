@@ -98,68 +98,76 @@ const SubscriptionStatus: React.FC = () => {
       free: {
         name: 'Free',
         features: [
-          '1 bio page link',
-          '1 social media link', 
+          'Social media link only (no custom links)',
+          'Basic profile customization',
           'Basic QR code sharing',
-          'DropLink watermark',
-          'Limited customization',
-          'Community support only',
-          'Basic analytics (views only)'
+          'Public bio page visibility',
+          'DropLink watermark displayed',
+          'Pi Ad Network banners shown',
+          'Limited theme options (basic templates)',
+          'Community support',
+          'Watch ads to temporarily access premium features'
         ],
         color: 'bg-gray-50 border-gray-200',
-        limitedFeatures: ['Ad-supported experience', 'Limited themes', 'No custom domain']
+        limitedFeatures: ['Ad-supported experience', 'No custom links', 'No custom domain']
       },
-      premium: {
-        name: 'Premium',
+      basic: {
+        name: 'Basic',
         features: [
-          'Unlimited bio page links',
-          'Unlimited social media links',
-          'YouTube video integration', 
-          'Pi Network wallet tips',
-          'Custom themes & colors',
-          'Remove DropLink watermark',
-          'Advanced analytics dashboard',
-          'Priority email support',
-          'Custom domain support',
-          'Ad-free experience'
+          'Up to 5 custom links',
+          'Up to 3 social media links',
+          'Pi Wallet for tips & donations',
+          'DROP token management and earning',
+          'Standard QR code sharing',
+          'No DropLink watermark',
+          'Basic analytics dashboard access',
+          'Email support (standard)',
+          '1GB storage space',
+          'Priority for new features',
+          'Pi Ad Network still shown'
         ],
         color: 'bg-blue-50 border-blue-200',
         priceMonthly: '10π',
         priceYearly: '96π (save 20%)'
       },
-      pro: {
-        name: 'Pro', 
+      premium: {
+        name: 'Premium',
         features: [
-          'Everything in Premium',
-          'AI-powered analytics insights',
-          'Advanced visitor tracking',
-          'Location-based analytics', 
-          'A/B testing for links',
-          'API access for integrations',
-          'White-label solutions',
-          '24/7 priority support',
-          'Bulk link management',
-          'Export analytics data'
+          'Everything in Basic, plus:',
+          'Unlimited custom links (up to 25 with management)',
+          'Unlimited social media links (up to 99)',
+          'YouTube video integration',
+          'Advanced theme customization and GIF backgrounds',
+          'Background music player',
+          'Digital product listings',
+          'Virtual card generation and management',
+          'Advanced analytics dashboard',
+          'Pi Network wallet integration with QR codes',
+          'Priority email support',
+          'AI features and logo generation',
+          '5GB storage space',
+          'Ad-free experience'
         ],
         color: 'bg-purple-50 border-purple-200',
         priceMonthly: '20π',
         priceYearly: '192π (save 20%)'
       },
-      enterprise: {
-        name: 'Enterprise',
+      pro: {
+        name: 'Pro', 
         features: [
-          'Everything in Pro',
-          'Multi-team collaboration',
-          'Advanced security features',
-          'Custom integrations',
-          'Dedicated account manager',
-          'SLA guarantee (99.9% uptime)',
-          'Custom feature development', 
-          'Advanced compliance tools',
-          'Unlimited API calls',
-          'Phone support'
+          'Everything in Premium, plus:',
+          'Custom domain support (Pro exclusive)',
+          'Advanced virtual card features and customization',
+          'Advanced QR access/API for integrations',
+          'White‑label solutions (no DropLink branding)',
+          '24/7 priority support with dedicated channel',
+          'Advanced security and team collaboration',
+          'Custom integrations and enterprise features',
+          '10GB storage for media and files',
+          'Bulk management and export capabilities',
+          'Complete feature unlock across all dashboard tabs'
         ],
-        color: 'bg-gradient-to-r from-yellow-50 to-amber-50 border-amber-200',
+        color: 'bg-orange-50 border-orange-200',
         priceMonthly: '30π',
         priceYearly: '288π (save 20%)'
       }
