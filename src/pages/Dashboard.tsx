@@ -2918,10 +2918,10 @@ const Dashboard = () => {
                 if (window.location.pathname !== '/') {
                   navigate('/');
                   setTimeout(() => {
-                    focusTab('custom-links');
+                    focusTab('profile');
                   }, 500);
                 } else {
-                  focusTab('custom-links');
+                  focusTab('profile');
                 }
               }}
               className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
