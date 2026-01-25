@@ -1,6 +1,7 @@
 import { Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 
 interface ThemeToggleProps {
   variant?: "outline" | "ghost" | "default";
@@ -15,31 +16,27 @@ export const ThemeToggle = ({
   className = "",
   showText = false 
 }: ThemeToggleProps) => {
+  const { preferences, updatePreference, loading } = useUserPreferences();
   const [isDark, setIsDark] = useState(false);
 
-  // Initialize theme from localStorage or system preference
+  // Sync local toggle with stored preference
   useEffect(() => {
-    const root = document.documentElement;
-    const savedTheme = localStorage.getItem("theme_mode") || "light";
-    const shouldBeDark = savedTheme === "dark";
+    if (loading) return;
+    const shouldBeDark = preferences.theme_mode === "dark";
     setIsDark(shouldBeDark);
-    
-    root.classList.remove("light", "dark");
-    root.classList.add(shouldBeDark ? "dark" : "light");
-  }, []);
+  }, [preferences.theme_mode, loading]);
 
-  const toggleTheme = () => {
+  const applyThemeClass = (nextIsDark: boolean) => {
     const root = document.documentElement;
-    const newIsDark = !isDark;
-    
-    setIsDark(newIsDark);
-    
-    // Update localStorage
-    localStorage.setItem("theme_mode", newIsDark ? "dark" : "light");
-    
-    // Update DOM
     root.classList.remove("light", "dark");
-    root.classList.add(newIsDark ? "dark" : "light");
+    root.classList.add(nextIsDark ? "dark" : "light");
+  };
+
+  const toggleTheme = async () => {
+    const nextIsDark = !isDark;
+    setIsDark(nextIsDark);
+    applyThemeClass(nextIsDark);
+    await updatePreference("theme_mode", nextIsDark ? "dark" : "light");
   };
 
   return (
