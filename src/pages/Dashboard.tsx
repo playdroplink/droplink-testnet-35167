@@ -1579,10 +1579,7 @@ const Dashboard = () => {
                     <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                     <span className="hidden sm:inline">Analytics</span>
                   </TabsTrigger>
-                  <TabsTrigger value="drop-tokens" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
-                    <Droplets className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                    <span className="hidden sm:inline">DROP</span>
-                  </TabsTrigger>
+                  {/* DROP tokens tab hidden for now */}
                   <TabsTrigger value="ad-network" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
                     <PlayCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                     <span className="hidden sm:inline">Ads</span>
@@ -2651,11 +2648,12 @@ const Dashboard = () => {
                 <FutureFeaturesDashboard />
               </TabsContent> */}
 
-              <TabsContent value="drop-tokens" className="pb-8">
+              {/* DROP tokens tab content hidden for now */}
+              {/* <TabsContent value="drop-tokens" className="pb-8">
                 <PlanGate minPlan="basic" featureName="Pi Wallet for Tips">
                   <DropTokenManager piUser={piUser} piWallet={piUser?.wallet_address} />
                 </PlanGate>
-              </TabsContent>
+              </TabsContent> */}
 
               <TabsContent value="ad-network" className="pb-8">
                 <PiAdNetwork />

@@ -807,7 +807,7 @@ const Subscription = () => {
                 <CardHeader>
                   <CardTitle className="text-2xl">{plan.name}</CardTitle>
                   <CardDescription>
-                    <span className="text-3xl font-bold text-foreground">{price} Pi</span>
+                    <span className="text-3xl font-bold text-foreground">π {price}</span>
                     <span className="text-muted-foreground">/{period}</span>
                   </CardDescription>
                 </CardHeader>

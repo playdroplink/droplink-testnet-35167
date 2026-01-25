@@ -244,12 +244,9 @@ const Wallet = () => {
 
       {/* Main Wallet Tabs */}
       <Card>
-        <Tabs defaultValue="drop-wallet" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="drop-wallet" className="flex items-center gap-2">
-              <Droplets className="h-4 w-4" />
-              <span className="hidden sm:inline">DROP Wallet</span>
-            </TabsTrigger>
+        <Tabs defaultValue="earn" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            {/* DROP Wallet tab hidden for now */}
             <TabsTrigger value="earn" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
               <span className="hidden sm:inline">Earn</span>
@@ -264,30 +261,8 @@ const Wallet = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* DROP Wallet Tab */}
-          <TabsContent value="drop-wallet" className="mt-6">
-            {isAuthenticated ? (
-              <DropTokenManager piUser={piUser} piWallet={piUser?.wallet_address} />
-            ) : (
-              <Card>
-                <CardContent className="pt-6">
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      Please authenticate with Pi Network to access your DROP wallet.
-                    </AlertDescription>
-                  </Alert>
-                  <Button 
-                    onClick={() => navigate("/auth")} 
-                    className="w-full mt-4"
-                    style={{ backgroundColor: DROP_TOKEN.colors.primary }}
-                  >
-                    Authenticate with Pi Network
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
+          {/* DROP Wallet Tab - Hidden for now */}
+          {/* Temporarily disabled DROP wallet feature */}
 
           {/* Earn Tab */}
           <TabsContent value="earn" className="mt-6 space-y-4">

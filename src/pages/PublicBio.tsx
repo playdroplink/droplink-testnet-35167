@@ -696,11 +696,14 @@ const PublicBio = () => {
 
   if (loading) {
     return (
-      <div 
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: "#000000" }}
-      >
-        <p className="text-white">Loading...</p>
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center gap-4">
+          <div className="relative w-12 h-12">
+            <div className="absolute inset-0 rounded-full border-4 border-slate-200 dark:border-slate-700"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-sky-500 dark:border-t-sky-400 animate-spin"></div>
+          </div>
+          <p className="text-slate-600 dark:text-slate-400 font-medium">Loading profile...</p>
+        </div>
       </div>
     );
   }
