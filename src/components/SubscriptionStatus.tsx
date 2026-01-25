@@ -122,7 +122,6 @@ const SubscriptionStatus: React.FC = () => {
           'No DropLink watermark',
           'Basic analytics dashboard access',
           'Email support (standard)',
-          '1GB storage space',
           'Priority for new features',
           'Pi Ad Network still shown'
         ],
@@ -145,7 +144,6 @@ const SubscriptionStatus: React.FC = () => {
           'Pi Network wallet integration with QR codes',
           'Priority email support',
           'AI features and logo generation',
-          '5GB storage space',
           'Ad-free experience'
         ],
         color: 'bg-purple-50 border-purple-200',
@@ -163,7 +161,6 @@ const SubscriptionStatus: React.FC = () => {
           '24/7 priority support with dedicated channel',
           'Advanced security and team collaboration',
           'Custom integrations and enterprise features',
-          '10GB storage for media and files',
           'Bulk management and export capabilities',
           'Complete feature unlock across all dashboard tabs'
         ],

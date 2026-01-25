@@ -193,28 +193,28 @@ const Wallet = () => {
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       {/* Header Card with Gradient Background */}
-      <Card className="mb-6 border-0 shadow-lg bg-sky-400" style={{ background: DROP_TOKEN.colors.background, color: '#fff' }}>
+      <Card className="mb-6 border-0 shadow-lg" style={{ background: DROP_TOKEN.colors.background }}>
         <CardHeader className="text-center">
-          <CardTitle className="flex items-center justify-center gap-2 text-white text-2xl">
-            <Droplets className="w-8 h-8 text-white" />
-            <span className="text-white">DropLink Wallet</span>
+          <CardTitle className="flex items-center justify-center gap-2 text-foreground text-2xl">
+            <Droplets className="w-8 h-8 text-foreground" />
+            <span className="text-foreground">DropLink Wallet</span>
           </CardTitle>
-          <p className="text-white/90">Manage your DROP tokens and gift transactions</p>
+          <p className="text-muted-foreground">Manage your DROP tokens and gift transactions</p>
         </CardHeader>
-        <CardContent className="text-center text-white">
+        <CardContent className="text-center text-foreground">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Pi Network DROP Balance */}
             <div className="bg-card border border-border rounded-lg p-6">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <Droplets className="w-6 h-6 text-white" />
-                <span className="text-white font-medium">Pi Network</span>
+                <Droplets className="w-6 h-6 text-foreground" />
+                <span className="text-foreground font-medium">Pi Network</span>
               </div>
-              <div className="text-3xl font-bold text-white mb-1">
+              <div className="text-3xl font-bold text-foreground mb-1">
                 {parseFloat(dropTokenBalance).toLocaleString()} DROP
               </div>
               <div className="flex items-center justify-center gap-2">
                 {piNetworkConnected ? (
-                  <Badge variant="outline" className="border-white text-white">
+                  <Badge variant="outline" className="border-border text-foreground">
                     <CheckCircle className="h-3 w-3 mr-1" />
                     Connected
                   </Badge>
@@ -230,13 +230,13 @@ const Wallet = () => {
             {/* Legacy Platform Balance */}
             <div className="bg-card border border-border rounded-lg p-6">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <Droplets className="w-6 h-6 text-white" />
-                <span className="text-white font-medium">Platform</span>
+                <Droplets className="w-6 h-6 text-foreground" />
+                <span className="text-foreground font-medium">Platform</span>
               </div>
-              <div className="text-3xl font-bold text-white mb-1">
+              <div className="text-3xl font-bold text-foreground mb-1">
                 {balance.toLocaleString()}
               </div>
-              <p className="text-white/70 text-sm">Legacy DropTokens</p>
+              <p className="text-muted-foreground text-sm">Legacy DropTokens</p>
             </div>
           </div>
         </CardContent>

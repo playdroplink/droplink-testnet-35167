@@ -59,7 +59,6 @@ const plans: Plan[] = [
       'No DropLink watermark',
       'Basic analytics dashboard access',
       'Email support (standard)',
-      '1GB storage space',
       'Priority for new features',
       'Pi Ad Network still shown (Premium+ for ad-free)'
     ]
@@ -85,7 +84,6 @@ const plans: Plan[] = [
       'Pi Network wallet integration with QR codes',
       'Priority email support',
       'AI features and logo generation',
-      '5GB storage space',
       'Ad-free experience'
     ]
   },

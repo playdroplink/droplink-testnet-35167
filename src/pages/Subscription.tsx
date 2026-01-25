@@ -58,7 +58,6 @@ const PLANS: Plan[] = [
       "No DropLink watermark",
       "Basic analytics dashboard access",
       "Email support (standard)",
-      "1GB storage space",
       "Priority for new features",
       "Pi Ad Network still shown (Premium+ for ad-free)"
     ],
@@ -81,7 +80,6 @@ const PLANS: Plan[] = [
       "Pi Network wallet integration with QR codes",
       "Priority email support",
       "AI features and logo generation",
-      "5GB storage space",
       "Ad-free experience",
       "Full Design tab access with color customization"
     ],
@@ -103,7 +101,6 @@ const PLANS: Plan[] = [
       "24/7 priority support with dedicated channel",
       "Advanced security and team collaboration",
       "Custom integrations and enterprise features",
-      "10GB storage for media and files",
       "Bulk management and export capabilities",
       "Complete feature unlock across all dashboard tabs"
     ]
@@ -123,7 +120,7 @@ const Subscription = () => {
   const [pendingPlanData, setPendingPlanData] = useState<{planName: string, price: number} | null>(null);
   const piConfigured = !!import.meta.env.VITE_PI_API_KEY;
   const dropPayConfigured = !!import.meta.env.VITE_DROPPAY_API_KEY;
-  const isDTopPayComingSoon = true; // Temporarily mark DTopPay as coming soon
+  const isDropPayComingSoon = true; // Temporarily mark DropPay as coming soon
   const navigate = useNavigate();
   const { piUser, signIn, loading: piLoading } = usePi() as any;
   const { processPayment, isProcessing, paymentProgress } = useRealPiPayment();
@@ -771,8 +768,8 @@ const Subscription = () => {
               <span className={`px-3 py-1 rounded-full border ${piConfigured ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-600 border-gray-200'}`}>
                 Pi Payments: {piConfigured ? '✓ Online' : 'Not configured'}
               </span>
-              <span className={`px-3 py-1 rounded-full border ${isDTopPayComingSoon ? 'bg-gray-100 text-gray-600 border-gray-200' : (dropPayConfigured ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-600 border-gray-200')}`}>
-                DTopPay: {isDTopPayComingSoon ? 'Coming soon' : (dropPayConfigured ? '✓ Online' : 'Not configured')}
+              <span className={`px-3 py-1 rounded-full border ${isDropPayComingSoon ? 'bg-gray-100 text-gray-600 border-gray-200' : (dropPayConfigured ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-600 border-gray-200')}`}>
+                DropPay: {isDropPayComingSoon ? 'Coming soon' : (dropPayConfigured ? '✓ Online' : 'Not configured')}
               </span>
             </div>
           </div>
@@ -854,9 +851,9 @@ const Subscription = () => {
                         <Button 
                           className="w-full bg-orange-600 hover:bg-orange-700 text-white border-orange-600" 
                           disabled={true}
-                          onClick={() => toast.info('DTopPay subscription is coming soon')}
+                          onClick={() => toast.info('DropPay subscription is coming soon')}
                         >
-                          {isCurrent ? '✓ Current Plan' : 'Subscribe with DTopPay (Coming Soon)'}
+                          {isCurrent ? '✓ Current Plan' : 'Subscribe with DropPay (Coming Soon)'}
                         </Button>
                       )}
                       
