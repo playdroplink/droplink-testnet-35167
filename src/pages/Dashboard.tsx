@@ -87,6 +87,8 @@ import {
   Mail,
   Moon,
   Sun,
+  Home,
+  Plus,
 } from "lucide-react";
 import { 
   FaTwitter, 
@@ -1367,13 +1369,40 @@ const Dashboard = () => {
 
   // Removed Pi Authentication Required modal to allow dashboard access without blocking
 
-  // Smoothly focus the builder section and optionally activate a tab by label
-  const focusTab = (label: string) => {
-    const tab = Array.from(document.querySelectorAll('[role="tab"]'))
-      .find((t) => t.textContent?.trim().includes(label));
-    (tab as HTMLElement | undefined)?.click();
-    const builder = document.getElementById('dashboard-builder');
-    builder?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Smoothly focus the builder section and optionally activate a tab by value
+  const focusTab = (tabValue: string) => {
+    console.log(`[Footer Nav] Attempting to focus tab: ${tabValue}`);
+    
+    // Give DOM time to settle
+    setTimeout(() => {
+      // Try to find tab by data-value or textContent
+      const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+      console.log(`[Footer Nav] Found ${tabs.length} tabs on page`);
+      
+      // Radix UI stores the value in data-value attribute
+      const targetTab = tabs.find((t) => {
+        const value = (t as HTMLElement).getAttribute('data-value');
+        const text = t.textContent?.trim() || '';
+        console.log(`[Footer Nav] Tab - value: "${value}", text: "${text}"`);
+        return value === tabValue || text.includes(tabValue);
+      });
+      
+      if (targetTab) {
+        console.log(`[Footer Nav] Found target tab, clicking it`);
+        (targetTab as HTMLElement).click();
+        
+        // Scroll to the builder section
+        setTimeout(() => {
+          const builder = document.getElementById('dashboard-builder');
+          if (builder) {
+            console.log(`[Footer Nav] Scrolling to builder section`);
+            builder.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 300);
+      } else {
+        console.log(`[Footer Nav] Tab not found for value: ${tabValue}`);
+      }
+    }, 150);
   };
 
   return (
@@ -2864,64 +2893,121 @@ const Dashboard = () => {
       <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 shadow-2xl z-50">
         <div className="max-w-6xl mx-auto px-4 py-2">
           <div className="flex justify-around items-center">
-            {/* My Droplink */}
+            {/* Home / My Droplink */}
             <button
-              onClick={() => focusTab('Profile')}
+              onClick={() => {
+                if (window.location.pathname !== '/') {
+                  navigate('/');
+                  setTimeout(() => {
+                    focusTab('profile');
+                  }, 500);
+                } else {
+                  focusTab('profile');
+                }
+              }}
               className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
+              title="Home"
             >
-              <Users className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:inline">My Link</span>
+              <Home className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
+              <span className="hidden sm:inline">Home</span>
             </button>
 
-            {/* Earn */}
+            {/* Create / Products */}
             <button
-              onClick={() => focusTab('DropPay')}
+              onClick={() => {
+                if (window.location.pathname !== '/') {
+                  navigate('/');
+                  setTimeout(() => {
+                    focusTab('custom-links');
+                  }, 500);
+                } else {
+                  focusTab('custom-links');
+                }
+              }}
               className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
+              title="Create Links"
             >
-              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:inline">Earn</span>
+              <Plus className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
+              <span className="hidden sm:inline">Create</span>
             </button>
 
-            {/* Insights */}
+            {/* Analytics / Insights */}
             <button
-              onClick={() => focusTab('Analytics')}
+              onClick={() => {
+                if (window.location.pathname !== '/') {
+                  navigate('/');
+                  setTimeout(() => {
+                    focusTab('analytics');
+                  }, 500);
+                } else {
+                  focusTab('analytics');
+                }
+              }}
               className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
+              title="Analytics"
             >
               <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:inline">Insights</span>
+              <span className="hidden sm:inline">Analytics</span>
             </button>
 
-            {/* Audience */}
+            {/* Design / Customize */}
             <button
-              onClick={() => focusTab('Analytics')}
+              onClick={() => {
+                if (window.location.pathname !== '/') {
+                  navigate('/');
+                  setTimeout(() => {
+                    focusTab('design');
+                  }, 500);
+                } else {
+                  focusTab('design');
+                }
+              }}
               className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
+              title="Design"
             >
-              <Users className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:inline">Audience</span>
+              <Palette className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
+              <span className="hidden sm:inline">Design</span>
             </button>
 
             {/* More Menu */}
             <Drawer>
               <DrawerTrigger asChild>
-                <button className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group">
+                <button 
+                  className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
+                  title="More Options"
+                >
                   <Menu className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
                   <span className="hidden sm:inline">More</span>
                 </button>
               </DrawerTrigger>
               <DrawerContent className="bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 fixed bottom-16 left-0 right-0 max-h-[70vh] z-50">
                 <DrawerHeader className="border-b pb-3">
-                  <DrawerTitle className="text-base sm:text-lg font-semibold">More Options</DrawerTitle>
+                  <DrawerTitle className="text-base sm:text-lg font-semibold">Droplink Menu</DrawerTitle>
                 </DrawerHeader>
                 <div className="p-4 space-y-2 max-h-[calc(70vh-100px)] overflow-y-auto">
+                  {/* Profile & Account */}
+                  <div className="text-xs uppercase tracking-wide text-slate-500 px-2 py-1 font-semibold">Profile</div>
                   <Button 
-                    onClick={() => { navigate('/card-generator'); }} 
+                    onClick={() => { navigate('/'); }} 
                     variant="outline"
                     size="sm"
                     className="w-full justify-start gap-2 h-10"
                   >
-                    <CreditCard className="w-4 h-4" />
-                    My Card
+                    <Home className="w-4 h-4" />
+                    Dashboard
                   </Button>
+                  <Button 
+                    onClick={() => { navigate('/profile'); }} 
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start gap-2 h-10"
+                  >
+                    <User className="w-4 h-4" />
+                    My Profile
+                  </Button>
+                  
+                  {/* Social & Engagement */}
+                  <div className="text-xs uppercase tracking-wide text-slate-500 px-2 py-1 font-semibold mt-4">Social</div>
                   <Button 
                     onClick={() => { navigate('/followers'); }} 
                     variant="outline"
@@ -2929,16 +3015,7 @@ const Dashboard = () => {
                     className="w-full justify-start gap-2 h-10"
                   >
                     <Users className="w-4 h-4" />
-                    My Followers
-                  </Button>
-                  <Button 
-                    onClick={() => { navigate('/inbox'); }} 
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-start gap-2 h-10"
-                  >
-                    <Mail className="w-4 h-4" />
-                    Inbox
+                    Followers
                   </Button>
                   <Button 
                     onClick={() => { navigate('/search-users'); }} 
@@ -2949,6 +3026,85 @@ const Dashboard = () => {
                     <Users className="w-4 h-4" />
                     Discover Users
                   </Button>
+                  
+                  {/* Messaging & Monetization */}
+                  <div className="text-xs uppercase tracking-wide text-slate-500 px-2 py-1 font-semibold mt-4">Messaging & Earn</div>
+                  <Button 
+                    onClick={() => { navigate('/inbox'); }} 
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start gap-2 h-10"
+                  >
+                    <Mail className="w-4 h-4" />
+                    Inbox & Messages
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      if (window.location.pathname !== '/') {
+                        navigate('/');
+                        setTimeout(() => focusTab('droppay'), 500);
+                      } else {
+                        focusTab('droppay');
+                      }
+                    }} 
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start gap-2 h-10"
+                  >
+                    <TrendingUp className="w-4 h-4" />
+                    Earn & Monetize
+                  </Button>
+                  <Button 
+                    onClick={() => { navigate('/sales-earnings'); }} 
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start gap-2 h-10"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    Sales & Earnings
+                  </Button>
+                  
+                  {/* Tools & Features */}
+                  <div className="text-xs uppercase tracking-wide text-slate-500 px-2 py-1 font-semibold mt-4">Tools</div>
+                  <Button 
+                    onClick={() => { navigate('/card-generator'); }} 
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start gap-2 h-10"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    Card Generator
+                  </Button>
+                  <Button 
+                    onClick={() => { navigate('/ai-support'); }} 
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start gap-2 h-10"
+                  >
+                    <Bot className="w-4 h-4" />
+                    AI Support
+                  </Button>
+                  <Button 
+                    onClick={() => { navigate('/wallet'); }} 
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start gap-2 h-10"
+                  >
+                    <Wallet className="w-4 h-4" />
+                    Wallet
+                  </Button>
+                  <Button 
+                    onClick={() => { navigate('/domain'); }} 
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start gap-2 h-10"
+                  >
+                    <Globe className="w-4 h-4" />
+                    Custom Domain
+                  </Button>
+                  
+                  {/* Account & Settings */}
+                  <div className="text-xs uppercase tracking-wide text-slate-500 px-2 py-1 font-semibold mt-4">Account</div>
                   <Button 
                     onClick={() => { navigate('/subscription'); }} 
                     variant="outline"
@@ -2959,10 +3115,28 @@ const Dashboard = () => {
                     Upgrade Plan
                   </Button>
                   <Button 
+                    onClick={() => { navigate('/privacy'); }} 
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start gap-2 h-10"
+                  >
+                    <Info className="w-4 h-4" />
+                    Privacy Policy
+                  </Button>
+                  <Button 
+                    onClick={() => { navigate('/terms'); }} 
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start gap-2 h-10"
+                  >
+                    <Info className="w-4 h-4" />
+                    Terms of Service
+                  </Button>
+                  <Button 
                     onClick={handleLogout}
                     variant="outline"
                     size="sm"
-                    className="w-full justify-start gap-2 h-10 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="w-full justify-start gap-2 h-10 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
                   >
                     <LogOut className="w-4 h-4" />
                     Sign Out

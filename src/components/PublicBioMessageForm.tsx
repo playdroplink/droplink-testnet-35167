@@ -142,17 +142,17 @@ export default function PublicBioMessageForm({
 
   if (!isAuthenticated) {
     return (
-      <Card>
+      <Card className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
             <MessageSquare className="h-5 w-5" />
             Send a Message
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
+          <Alert className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+            <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <AlertDescription className="text-blue-800 dark:text-blue-200 ml-2">
               Please sign in with Pi Network to send messages to @{receiverUsername}
             </AlertDescription>
           </Alert>
@@ -162,9 +162,9 @@ export default function PublicBioMessageForm({
   }
 
   return (
-    <Card>
+    <Card className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
           <MessageSquare className="h-5 w-5" />
           Send a Message to @{receiverUsername}
         </CardTitle>
@@ -176,7 +176,7 @@ export default function PublicBioMessageForm({
             value={message}
             onChange={e => setMessage(e.target.value)}
             rows={3}
-            className="resize-none"
+            className="resize-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-gray-300 dark:border-slate-600 placeholder:text-gray-500 dark:placeholder:text-gray-400"
           />
           
           {/* Image preview */}
