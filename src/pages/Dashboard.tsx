@@ -1412,9 +1412,11 @@ const Dashboard = () => {
       <header className="sticky top-0 z-30 border-b border-slate-200/70 dark:border-slate-800/70 bg-white/85 dark:bg-slate-900/85 backdrop-blur">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-900/60 dark:text-sky-100 flex items-center justify-center font-semibold shadow-sm">
-              DL
-            </div>
+            <img 
+              src="https://i.ibb.co/wrCQpZk9/Gemini-Generated-Image-ar8t52ar8t52ar8t.png" 
+              alt="Droplink" 
+              className="h-10 w-10 rounded-xl shadow-sm object-contain"
+            />
             <div className="flex flex-col">
               <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Droplink</span>
               <span className="text-sm font-semibold">
