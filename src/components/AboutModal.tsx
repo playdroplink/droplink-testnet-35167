@@ -122,7 +122,7 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
 
         <div className="space-y-6">
           {/* Demo Video */}
-          <Card className="glass-card border-primary/20">
+          <Card className="border-primary/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Play className="w-5 h-5 text-sky-500" />
@@ -163,7 +163,7 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
           </Card>
 
           {/* Organization Info */}
-          <Card className="glass-card border-primary/20">
+          <Card className="border-primary/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Building className="w-5 h-5 text-sky-500" />

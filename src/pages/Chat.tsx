@@ -261,14 +261,14 @@ export default function ChatPage() {
 
   if (loading) {
     return (
-      <div className="glassmorphism-page glassmorphism-page-light dark:glassmorphism-page-dark flex items-center justify-center relative">
+      <div className="min-h-screen bg-white flex items-center justify-center relative">
         <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
       </div>
     );
   }
 
   return (
-    <div className="glassmorphism-page glassmorphism-page-light dark:glassmorphism-page-dark flex flex-col relative">
+    <div className="min-h-screen bg-white flex flex-col relative">
       {/* Background decorative elements - Light Mode */}
       <div className="dark:hidden absolute top-0 left-10 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob\"></div>
       <div className="dark:hidden absolute bottom-0 right-10 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000\"></div>

@@ -90,10 +90,10 @@ const PiAuth = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-sky-400 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-white" />
+          <p className="text-white">Loading...</p>
         </div>
       </div>
     );
@@ -101,7 +101,7 @@ const PiAuth = () => {
 
   return (
 
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-sky-400 flex items-center justify-center p-4 relative overflow-hidden">
 
       <Card className="w-full max-w-md relative z-10">
         {/* Pi Browser Notice */}
