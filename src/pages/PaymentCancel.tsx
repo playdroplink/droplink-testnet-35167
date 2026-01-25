@@ -33,7 +33,7 @@ const PaymentCancel = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md border-orange-200">
         <CardHeader className="text-center">
           <XCircle className="w-16 h-16 mx-auto text-orange-600 mb-4" />

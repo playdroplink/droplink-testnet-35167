@@ -262,7 +262,7 @@ const PaymentPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 flex items-center justify-center p-4">
         <Card>
           <CardContent className="p-8 text-center">
             <Clock className="w-8 h-8 mx-auto mb-4 animate-spin" />
@@ -275,7 +275,7 @@ const PaymentPage: React.FC = () => {
 
   if (error || !paymentLink) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardContent className="p-8">
             <Alert variant="destructive">
@@ -299,7 +299,7 @@ const PaymentPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl shadow-2xl">
         <CardHeader className="text-center space-y-4 border-b">
           <div className="mx-auto w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">

@@ -1354,7 +1354,7 @@ const Dashboard = () => {
   // Show Pi Auth button if not authenticated, not loading, and no Supabase session
   if (!isAuthenticated && !piLoading && !hasSupabaseSession) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 flex items-center justify-center">
         <div className="max-w-md w-full p-6 rounded-lg shadow border mx-auto bg-card">
           <div className="mb-6 text-center">
             <div className="text-red-500 text-lg font-semibold mb-2">Pi Network is not available.</div>

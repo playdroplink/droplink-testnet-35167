@@ -603,7 +603,7 @@ const AdminMrwain = () => {
 
   if (isCheckingAuth) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
           <p className="text-muted-foreground">Checking authentication...</p>
@@ -615,7 +615,7 @@ const AdminMrwain = () => {
   // If user is logged in, show admin dashboard
   if (currentUser) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 p-8">
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
@@ -1150,7 +1150,7 @@ const AdminMrwain = () => {
 
   // Authentication form
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 flex items-center justify-center p-4">
       <Card className="glass-card w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">

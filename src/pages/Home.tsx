@@ -8,7 +8,7 @@ const Home = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 flex items-center justify-center">
       <div className="text-center space-y-6 max-w-md mx-auto p-6">
         <div className="flex justify-center">
           <Loader2 className="h-12 w-12 animate-spin text-sky-500" />

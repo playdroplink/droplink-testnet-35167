@@ -103,14 +103,14 @@ const CustomDomain = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 flex items-center justify-center">
         <p>Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100">
       <header className="border-b border-border px-4 lg:px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={() => navigate("/")}>

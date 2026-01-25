@@ -220,7 +220,7 @@ const SalesEarnings: React.FC = () => {
   // Show authentication required if not authenticated
   if (!isAuthenticated || !piUser) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 flex items-center justify-center p-6">
         <Card className="max-w-md w-full bg-white border-slate-200">
           <CardHeader>
             <CardTitle className="text-center text-slate-900">Authentication Required</CardTitle>
@@ -243,7 +243,7 @@ const SalesEarnings: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
