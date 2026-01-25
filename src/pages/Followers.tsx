@@ -255,16 +255,16 @@ const Followers = () => {
 
   if (loading) {
     return (
-      <div className="glassmorphism-page glassmorphism-page-light dark:glassmorphism-page-dark container mx-auto p-6 relative overflow-hidden">
+      <div className="container mx-auto p-6 relative overflow-hidden bg-background">
         <div className="flex items-center justify-center min-h-[400px] relative z-10">
-          <p className="text-gray-900 dark:text-white">Loading...</p>
+          <p className="text-foreground">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="glassmorphism-page glassmorphism-page-light dark:glassmorphism-page-dark relative overflow-hidden">
+    <div className="relative overflow-hidden bg-background">
       {/* Background decorative elements - Light Mode */}
       <div className="dark:hidden absolute top-0 left-10 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-blob"></div>
       <div className="dark:hidden absolute top-40 right-10 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-blob animation-delay-2000"></div>
@@ -274,10 +274,10 @@ const Followers = () => {
       <div className="hidden dark:block absolute top-40 right-10 w-80 h-80 bg-purple-900 rounded-full mix-blend-screen filter blur-3xl opacity-15 animate-blob animation-delay-2000"></div>
 
       <div className="container mx-auto p-6 max-w-4xl relative z-10">
-        <div className="glass-container p-6 rounded-3xl">
+        <div className="p-6 rounded-3xl bg-card border border-border">
           <div className="flex items-center gap-2 mb-6">
-            <Users className="w-6 h-6 text-gray-900 dark:text-white" />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Community</h2>
+            <Users className="w-6 h-6 text-foreground" />
+            <h2 className="text-2xl font-bold text-foreground">Community</h2>
           </div>
           
           <Tabs defaultValue="followers" className="w-full">

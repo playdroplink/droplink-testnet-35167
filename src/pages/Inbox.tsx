@@ -10,7 +10,7 @@ export default function InboxPage() {
   const navigate = useNavigate();
   
   return (
-    <div className="glassmorphism-page glassmorphism-page-light dark:glassmorphism-page-dark p-4 relative overflow-hidden">
+    <div className="p-4 relative overflow-hidden bg-background">
       {/* Background decorative elements - Light Mode */}
       <div className="dark:hidden absolute top-0 left-10 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-blob"></div>
       <div className="dark:hidden absolute top-40 right-10 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-blob animation-delay-2000"></div>

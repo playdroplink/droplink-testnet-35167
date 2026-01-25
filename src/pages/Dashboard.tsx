@@ -1355,7 +1355,7 @@ const Dashboard = () => {
   if (!isAuthenticated && !piLoading && !hasSupabaseSession) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="max-w-md w-full p-6 glass-card rounded-lg shadow border mx-auto">
+        <div className="max-w-md w-full p-6 rounded-lg shadow border mx-auto bg-card">
           <div className="mb-6 text-center">
             <div className="text-red-500 text-lg font-semibold mb-2">Pi Network is not available.</div>
             <div className="text-gray-700 mb-4">Please open this app in <b>Pi Browser</b> or ensure the Pi SDK is loaded.</div>

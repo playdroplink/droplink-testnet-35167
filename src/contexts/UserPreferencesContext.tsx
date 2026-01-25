@@ -49,7 +49,7 @@ export interface UserPreferences {
   id?: string;
   user_id?: string;
   profile_id?: string;
-  theme_mode: 'light' | 'dark' | 'system';
+  theme_mode: 'light';
   primary_color: string;
   background_color: string;
   font_size: 'small' | 'medium' | 'large';
@@ -139,31 +139,13 @@ export const UserPreferencesProvider = ({ children }: { children: ReactNode }) =
     }
   }, [preferences, loading]);
 
-  // Apply theme to HTML element
+  // Apply theme to HTML element - LIGHT MODE ONLY
   useEffect(() => {
     const root = document.documentElement;
-    const theme = preferences.theme_mode;
-    
-    const applyTheme = (isDark: boolean) => {
-      root.classList.remove('light', 'dark');
-      root.classList.add(isDark ? 'dark' : 'light');
-    };
-    
-    if (theme === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      applyTheme(mediaQuery.matches);
-      
-      // Listen for system theme changes
-      const handleChange = (e: MediaQueryListEvent) => {
-        applyTheme(e.matches);
-      };
-      
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    } else {
-      applyTheme(theme === 'dark');
-    }
-  }, [preferences.theme_mode]);
+    // Always apply light mode, disable dark mode completely
+    root.classList.remove('dark');
+    root.classList.add('light');
+  }, []);
 
   const loadPreferences = () => {
     try {
