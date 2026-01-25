@@ -1,6 +1,6 @@
-import { Sun } from "lucide-react";
+import { Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface ThemeToggleProps {
   variant?: "outline" | "ghost" | "default";
@@ -15,34 +15,52 @@ export const ThemeToggle = ({
   className = "",
   showText = false 
 }: ThemeToggleProps) => {
-  // Always ensure light mode is applied
+  const [isDark, setIsDark] = useState(false);
+
+  // Initialize theme from localStorage or system preference
   useEffect(() => {
     const root = document.documentElement;
+    const savedTheme = localStorage.getItem("theme_mode") || "light";
+    const shouldBeDark = savedTheme === "dark";
+    setIsDark(shouldBeDark);
     
-    // Remove all theme classes and ensure light mode
-    root.classList.remove("dark", "black", "white");
-    
-    // Set light mode in localStorage
-    localStorage.setItem("theme", "light");
-    
-    // Clear any dark mode transitions
-    root.style.transition = "";
+    root.classList.remove("light", "dark");
+    root.classList.add(shouldBeDark ? "dark" : "light");
   }, []);
 
-  // This component now just shows a disabled sun icon
+  const toggleTheme = () => {
+    const root = document.documentElement;
+    const newIsDark = !isDark;
+    
+    setIsDark(newIsDark);
+    
+    // Update localStorage
+    localStorage.setItem("theme_mode", newIsDark ? "dark" : "light");
+    
+    // Update DOM
+    root.classList.remove("light", "dark");
+    root.classList.add(newIsDark ? "dark" : "light");
+  };
+
   return (
     <Button 
       variant={variant} 
       size={size}
-      className={`transition-smooth ${showText ? 'gap-2' : ''} ${className} opacity-50 cursor-not-allowed`}
-      disabled={true}
-      title="Light mode only"
+      className={`transition-smooth ${showText ? 'gap-2' : ''} ${className}`}
+      onClick={toggleTheme}
+      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
     >
-      <Sun className="h-4 w-4" />
-      {showText && (
-        <span>Light Mode</span>
+      {isDark ? (
+        <>
+          <Moon className="h-4 w-4" />
+          {showText && <span>Dark Mode</span>}
+        </>
+      ) : (
+        <>
+          <Sun className="h-4 w-4" />
+          {showText && <span>Light Mode</span>}
+        </>
       )}
-      <span className="sr-only">Light mode only</span>
     </Button>
   );
 };
