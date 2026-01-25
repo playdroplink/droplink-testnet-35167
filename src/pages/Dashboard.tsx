@@ -1406,8 +1406,8 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-x-hidden pb-24">
-      <div className="pointer-events-none absolute inset-0 opacity-70" aria-hidden="true" style={{ background: "radial-gradient(circle at 20% 20%, rgba(14,165,233,0.15) 0, transparent 40%), radial-gradient(circle at 80% 0%, rgba(124,58,237,0.12) 0, transparent 35%), radial-gradient(circle at 50% 80%, rgba(59,130,246,0.12) 0, transparent 45%)" }} />
+    <div className="relative min-h-screen bg-sky-400 text-slate-900 overflow-x-hidden pb-24">
+      <div className="pointer-events-none absolute inset-0 opacity-0" aria-hidden="true" style={{ background: "none" }} />
 
       <header className="sticky top-0 z-30 border-b border-slate-200/70 dark:border-slate-800/70 bg-white/85 dark:bg-slate-900/85 backdrop-blur">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">

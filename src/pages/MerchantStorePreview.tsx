@@ -120,11 +120,11 @@ const MerchantStorePreview: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 flex items-center justify-center">Loading store...</div>;
+    return <div className="min-h-screen bg-sky-400 flex items-center justify-center">Loading store...</div>;
   }
   
   if (error) {
-    return <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 flex items-center justify-center text-destructive">{error}</div>;
+    return <div className="min-h-screen bg-sky-400 flex items-center justify-center text-destructive">{error}</div>;
   }
   
   return (

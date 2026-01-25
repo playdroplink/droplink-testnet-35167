@@ -262,7 +262,7 @@ const PaymentPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-sky-400 flex items-center justify-center p-4">
         <Card>
           <CardContent className="p-8 text-center">
             <Clock className="w-8 h-8 mx-auto mb-4 animate-spin" />
@@ -275,7 +275,7 @@ const PaymentPage: React.FC = () => {
 
   if (error || !paymentLink) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-sky-400 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardContent className="p-8">
             <Alert variant="destructive">

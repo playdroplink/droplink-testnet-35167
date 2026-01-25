@@ -193,7 +193,7 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-sky-400 flex items-center justify-center">
         <p>Loading...</p>
       </div>
     );
@@ -201,7 +201,7 @@ const Profile = () => {
 
   if (!isAuthenticated || !piUser) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen bg-sky-400 flex flex-col items-center justify-center gap-4">
         <p className="text-lg font-semibold text-white">You must sign in with Pi Network to access your profile.</p>
         <Button onClick={() => window.location.href = '/auth'}>Sign in with Pi Network</Button>
       </div>
@@ -209,7 +209,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-sky-400 flex flex-col items-center justify-center">
       <div className="py-8">
         <PhonePreview profile={profileData} />
       </div>
