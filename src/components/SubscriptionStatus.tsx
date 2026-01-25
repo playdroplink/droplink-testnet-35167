@@ -143,8 +143,7 @@ const SubscriptionStatus: React.FC = () => {
           'Advanced analytics dashboard',
           'Pi Network wallet integration with QR codes',
           'Priority email support',
-          'AI features and logo generation',
-          'Ad-free experience'
+          'AI features and logo generation'
         ],
         color: 'bg-purple-50 border-purple-200',
         priceMonthly: '20π',
@@ -161,6 +160,7 @@ const SubscriptionStatus: React.FC = () => {
           '24/7 priority support with dedicated channel',
           'Advanced security and team collaboration',
           'Custom integrations and enterprise features',
+          'No watch ads - Ad-free experience',
           'Bulk management and export capabilities',
           'Complete feature unlock across all dashboard tabs'
         ],

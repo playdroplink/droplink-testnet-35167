@@ -80,7 +80,6 @@ const PLANS: Plan[] = [
       "Pi Network wallet integration with QR codes",
       "Priority email support",
       "AI features and logo generation",
-      "Ad-free experience",
       "Full Design tab access with color customization"
     ],
     popular: true,
@@ -102,6 +101,7 @@ const PLANS: Plan[] = [
       "Advanced security and team collaboration",
       "Custom integrations and enterprise features",
       "Bulk management and export capabilities",
+      "No watch ads - Ad-free experience",
       "Complete feature unlock across all dashboard tabs"
     ]
   }

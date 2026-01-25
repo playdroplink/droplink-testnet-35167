@@ -137,7 +137,6 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, SubscriptionPlan> = {
       "Virtual card generation and management",
       "Priority email support",
       "AI features and logo generation",
-      "Ad-free experience",
     ],
     features: {
       profileCustomization: true,
@@ -183,6 +182,7 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, SubscriptionPlan> = {
       "White‑label options (remove DropLink branding)",
       "Advanced security & team collaboration",
       "Bulk management and exports",
+      "No watch ads - Ad-free experience",
       "Custom enterprise integrations",
     ],
     features: {

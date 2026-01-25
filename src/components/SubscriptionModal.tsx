@@ -83,8 +83,7 @@ const plans: Plan[] = [
       'Advanced analytics dashboard',
       'Pi Network wallet integration with QR codes',
       'Priority email support',
-      'AI features and logo generation',
-      'Ad-free experience'
+      'AI features and logo generation'
     ]
   },
   {
