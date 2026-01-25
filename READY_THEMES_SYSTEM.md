@@ -104,7 +104,7 @@ interface ReadyTheme {
 - ✅ **Inspiration**: Ideas for further customization
 
 ### **Competitive Advantage**
-- **vs Linktree**: More theme variety and customization
+- **vs Droplink**: More theme variety and customization
 - **vs Bio.link**: Better categorization and targeting
 - **vs Campsite**: Superior design quality and options
 

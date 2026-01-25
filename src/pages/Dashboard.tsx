@@ -1337,8 +1337,14 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <p>Loading...</p>
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center gap-4">
+          <div className="relative w-12 h-12">
+            <div className="absolute inset-0 rounded-full border-4 border-slate-200 dark:border-slate-700"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-sky-500 dark:border-t-sky-400 animate-spin"></div>
+          </div>
+          <p className="text-slate-600 dark:text-slate-400 font-medium">Loading Droplink...</p>
+        </div>
       </div>
     );
   }
@@ -1381,7 +1387,7 @@ const Dashboard = () => {
               DL
             </div>
             <div className="flex flex-col">
-              <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Link Hub</span>
+              <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Droplink</span>
               <span className="text-sm font-semibold">
                 {displayUsername ? `@${displayUsername}` : 'Dashboard'}
               </span>
@@ -1440,7 +1446,7 @@ const Dashboard = () => {
                 <h2 className="text-xl font-semibold text-slate-900 dark:text-white leading-tight">
                   {greeting || 'Hello'}, {displayUsername || 'creator'}
                 </h2>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Curate your link-in-bio page with a clean, Linktree-inspired builder.</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Curate your link-in-bio page with a clean, Droplink builder.</p>
               </div>
               <Button variant="link" size="sm" className="px-0 text-sky-600" onClick={() => navigate('/card-generator')}>
                 <CreditCard className="w-4 h-4 mr-2" />
@@ -2312,7 +2318,7 @@ const Dashboard = () => {
                 
                 {/* Quick Template Picker */}
                 <div className="mb-6">
-                  <Label className="mb-3 block text-sm text-gray-900 dark:text-white">Quick Templates (Linktree-style)</Label>
+                  <Label className="mb-3 block text-sm text-gray-900 dark:text-white">Quick Templates (Droplink-style)</Label>
                   <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
                     {[
                       { id: 'midnight', name: 'Midnight', primary: '#3b82f6', bg: '#0f0f23' },
@@ -2854,11 +2860,11 @@ const Dashboard = () => {
 
       </main>
 
-      {/* Bottom Navigation Bar - Linktree Style */}
+      {/* Bottom Navigation Bar - Droplink Style */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 shadow-2xl z-50">
         <div className="max-w-6xl mx-auto px-4 py-2">
           <div className="flex justify-around items-center">
-            {/* My Linktree */}
+            {/* My Droplink */}
             <button
               onClick={() => focusTab('Profile')}
               className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"

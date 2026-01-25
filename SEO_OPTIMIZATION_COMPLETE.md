@@ -61,7 +61,7 @@ Three types implemented:
 
 ### Primary Keywords:
 - link in bio
-- linktree alternative
+- droplink platform
 - pi network
 - digital products
 - sell online
@@ -344,7 +344,7 @@ Add to `package.json`:
 | link in bio pi network | New | Top 10 |
 | pi network link page | New | Top 10 |
 | sell digital products pi | New | Top 20 |
-| linktree pi alternative | New | Top 20 |
+| droplink pi alternative | New | Top 20 |
 | pi network creator tools | New | Top 10 |
 
 ---

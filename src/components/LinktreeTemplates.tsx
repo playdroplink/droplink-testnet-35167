@@ -1,5 +1,5 @@
 /**
- * Linktree-Style Template Themes for DropLink Public Bio
+ * Droplink-Style Template Themes for DropLink Public Bio
  * Provides pre-built visual templates for enhanced profile customization
  */
 

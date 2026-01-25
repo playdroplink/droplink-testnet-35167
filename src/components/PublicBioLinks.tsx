@@ -1,6 +1,6 @@
 /**
  * Public Bio Links Component
- * Linktree-style link cards with animations
+ * Droplink-style link cards with animations
  */
 
 import { ExternalLink, ShoppingBag, Mail, Phone, Calendar, Download, Heart, Star, Zap, Link as LinkIcon, Play, Music, FileText, MapPin } from "lucide-react";

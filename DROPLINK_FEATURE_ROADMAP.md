@@ -1,7 +1,7 @@
 # DropLink Full Feature Roadmap
 
 ## 1. Core Platform Features
-- LinkTree-style layouts: Stack, Grid, Carousel, Showcase
+- Droplink-style layouts: Stack, Grid, Carousel, Showcase
 - Smart link categories: Suggested, Commerce, Social, Media, Contact, Events, Text
 - Advanced link customization: backgrounds, icons, favicons, metadata, animations
 - Real-time preview and mobile optimization

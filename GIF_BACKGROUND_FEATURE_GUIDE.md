@@ -1,7 +1,7 @@
 # 🎨 GIF Background Feature Guide
 
 ## Overview
-DropLink now supports animated GIF backgrounds for your storefront, similar to popular link-in-bio platforms like Linktree. This feature allows you to create dynamic, engaging profile pages that capture your brand's personality.
+DropLink now supports animated GIF backgrounds for your storefront, similar to popular link-in-bio platforms like Droplink. This feature allows you to create dynamic, engaging profile pages that capture your brand's personality.
 
 ## How to Add GIF Backgrounds
 
@@ -129,7 +129,7 @@ DropLink now supports animated GIF backgrounds for your storefront, similar to p
 
 ## Feature Comparison
 
-| Feature | DropLink | Linktree | Other Platforms |
+| Feature | DropLink | Droplink | Other Platforms |
 |---------|----------|----------|-----------------|
 | **GIF Backgrounds** | ✅ Full Support | ✅ Premium Only | ❌ Limited |
 | **Direct Upload** | ✅ Free Feature | ❌ Not Available | ❌ Varies |

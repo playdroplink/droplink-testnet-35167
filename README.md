@@ -1,7 +1,7 @@
 
 # 🚀 **Droplink — Pi Network Link-in-Bio Storefront Builder**
 
-*A modern, customizable LinkTree-style storefront built for the Pi Network ecosystem.*
+*A modern, customizable Droplink-style storefront built for the Pi Network ecosystem.*
 
 Droplink lets creators, sellers, businesses, and Pi Pioneers build a **personal storefront**, connect their **.pi domain**, sell products, accept Pi payments, and manage all links in one beautiful page.
 
