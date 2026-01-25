@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Card } from "@/components/ui/card";
 import { CreditCard } from "lucide-react";
@@ -20,83 +20,29 @@ export const VirtualCard = ({
   textColor = "#000000",
   accentColor = "#fafafa",
 }: VirtualCardProps) => {
-  const [isFlipped, setIsFlipped] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
-
+  // Ensure any legacy theme styles exist so the card renders consistently
   useEffect(() => {
-    // Add custom CSS for 3D effects
-    const style = document.createElement("style");
-    style.textContent = `
-      .perspective-1000 {
-        perspective: 1000px;
-        -webkit-perspective: 1000px;
-      }
-      
-      .transform-style-3d {
-        transform-style: preserve-3d;
-        -webkit-transform-style: preserve-3d;
-      }
-      
-      .backface-hidden {
-        backface-visibility: hidden;
-        -webkit-backface-visibility: hidden;
-      }
-      
-      .rotate-y-180 {
-        transform: rotateY(180deg);
-        -webkit-transform: rotateY(180deg);
-      }
-      
-      @media print {
-        .perspective-1000 {
-          break-inside: avoid;
-          page-break-inside: avoid;
+    if (!document.getElementById("virtual-card-styles")) {
+      const style = document.createElement("style");
+      style.id = "virtual-card-styles";
+      style.textContent = `
+        .card-no-flip {
+          transform: none !important;
         }
-        
-        body {
-          margin: 0;
-          padding: 20mm;
-        }
-        
-        .no-print {
-          display: none;
-        }
-      }
-    `;
-    
-    if (!document.getElementById('virtual-card-styles')) {
-      style.id = 'virtual-card-styles';
+      `;
       document.head.appendChild(style);
     }
-
-    return () => {
-      const existingStyle = document.getElementById('virtual-card-styles');
-      if (existingStyle) {
-        document.head.removeChild(existingStyle);
-      }
-    };
   }, []);
 
   return (
-    <div className="perspective-1000 w-full mx-auto">
-      <div
-        ref={cardRef}
-        className={`relative w-full aspect-[1.586/1] transition-transform duration-700 transform-style-3d cursor-pointer ${
-          isFlipped ? "rotate-y-180" : ""
-        }`}
-        onClick={() => setIsFlipped(!isFlipped)}
-        style={{ transformStyle: "preserve-3d", WebkitTransformStyle: "preserve-3d" }}
+    <div className="w-full mx-auto">
+      <Card
+        className="relative w-full aspect-[1.586/1] rounded-2xl shadow-2xl p-6 flex flex-col justify-between overflow-hidden card-no-flip"
+        style={{
+          backgroundColor: frontColor,
+          color: textColor,
+        }}
       >
-        {/* Front Side */}
-        <Card
-          className="absolute inset-0 backface-hidden rounded-2xl shadow-2xl p-6 flex flex-col justify-between overflow-hidden"
-          style={{
-            backgroundColor: frontColor,
-            color: textColor,
-            backfaceVisibility: "hidden",
-            WebkitBackfaceVisibility: "hidden",
-          }}
-        >
           {/* Card Header */}
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
@@ -156,57 +102,6 @@ export const VirtualCard = ({
             style={{ backgroundColor: accentColor }}
           />
         </Card>
-
-        {/* Back Side */}
-        <Card
-          className="absolute inset-0 backface-hidden rounded-2xl shadow-2xl p-6 flex flex-col justify-between overflow-hidden rotate-y-180"
-          style={{
-            backgroundColor: backColor,
-            color: textColor,
-            backfaceVisibility: "hidden",
-            WebkitBackfaceVisibility: "hidden",
-            transform: "rotateY(180deg)",
-            WebkitTransform: "rotateY(180deg)",
-          }}
-        >
-          {/* Magnetic Strip at top */}
-          <div className="absolute top-12 left-0 right-0 h-12 bg-black" />
-          
-          {/* Center Content */}
-          <div className="relative z-10 flex-1 flex flex-col items-center justify-center mt-8">
-            <h1 className="text-4xl font-bold mb-2" style={{ color: accentColor }}>Droplink</h1>
-            <p className="text-sm font-medium mb-4" style={{ color: textColor, opacity: 0.9 }}>droplink.space</p>
-            
-            <div className="text-center space-y-1 mb-6">
-              <p className="text-lg font-semibold" style={{ color: textColor }}>@{username}</p>
-              <p className="text-xs" style={{ color: textColor, opacity: 0.8 }}>Digital Commerce Card</p>
-            </div>
-          </div>
-          
-          {/* Bottom Info */}
-          <div className="relative z-10 text-center space-y-1">
-            <p className="text-xs font-medium" style={{ color: textColor, opacity: 0.8 }}>Powered by Pi Network</p>
-            <p className="text-xs" style={{ color: textColor, opacity: 0.7 }}>Scan QR code to visit store</p>
-          </div>
-          
-          {/* Signature Strip */}
-          <div className="absolute bottom-16 left-6 right-6 h-10 bg-white/20 rounded" />
-          {/* Decorative Pattern */}
-          <div
-            className="absolute bottom-0 right-0 w-48 h-48 rounded-full blur-3xl opacity-20"
-            style={{ backgroundColor: accentColor }}
-          />
-          <div
-            className="absolute top-0 left-0 w-32 h-32 rounded-full blur-2xl opacity-15"
-            style={{ backgroundColor: accentColor }}
-          />
-        </Card>
-      </div>
-
-      {/* Flip Instruction */}
-      <div className="text-center mt-4 text-sm text-muted-foreground">
-        Click card to flip
-      </div>
     </div>
   );
 };
