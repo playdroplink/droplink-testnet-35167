@@ -190,17 +190,12 @@ export const BackgroundMusicPlayer = ({
     const embed = buildYouTubeEmbed(musicUrl);
     if (!embed) return null;
     return (
-      <div className={`flex flex-col gap-3 p-4 bg-gradient-to-br from-gray-900 via-gray-800 to-black border border-gray-700 rounded-xl shadow-2xl ${className}`}>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg">
-            <Music className="w-5 h-5 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide">YouTube Music</div>
-            <div className="text-sm font-bold text-white truncate">{titleFromUrl}</div>
-          </div>
+      <div className={`flex flex-col gap-3 p-4 bg-transparent border border-white/20 rounded-xl backdrop-blur-sm ${className}`}>
+        <div className="text-center">
+          <div className="text-xs font-semibold text-gray-300 uppercase tracking-wide">YouTube Music</div>
+          <div className="text-sm font-bold text-white">{titleFromUrl}</div>
         </div>
-        <div className="aspect-video w-full overflow-hidden rounded-lg shadow-xl">
+        <div className="aspect-video w-full overflow-hidden rounded-lg shadow-xl border border-white/10">
           <iframe
             src={embed}
             allow="autoplay; encrypted-media"
@@ -217,13 +212,13 @@ export const BackgroundMusicPlayer = ({
     const embed = buildSpotifyEmbed(musicUrl);
     if (!embed) return null;
     return (
-      <div className={`flex flex-col gap-3 p-4 bg-gradient-to-br from-gray-900 via-[#121212] to-black border border-gray-800 rounded-xl shadow-2xl ${className}`}>
+      <div className={`flex flex-col gap-3 p-4 bg-transparent border border-white/20 rounded-xl backdrop-blur-sm ${className}`}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
             <Music className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Spotify</div>
+            <div className="text-xs font-semibold text-gray-300 uppercase tracking-wide">Spotify</div>
             <div className="text-sm font-bold text-white truncate">{titleFromUrl}</div>
           </div>
         </div>
@@ -235,7 +230,7 @@ export const BackgroundMusicPlayer = ({
           allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
           loading="lazy"
           title="Spotify background music"
-          className="rounded-lg shadow-xl"
+          className="rounded-lg shadow-xl border border-white/10"
         />
       </div>
     );

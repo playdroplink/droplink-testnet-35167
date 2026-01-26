@@ -106,6 +106,9 @@ const PublicBio = () => {
   const [followerCount, setFollowerCount] = useState(0);
   const [visitCount, setVisitCount] = useState(0);
   const [message, setMessage] = useState("");
+  const [scrollY, setScrollY] = useState(0);
+  const [connectEmail, setConnectEmail] = useState("");
+  const [connectSubmitting, setConnectSubmitting] = useState(false);
   // State to trigger auto-refresh after Pi Auth if Profile Not Found
   const [shouldAutoRefresh, setShouldAutoRefresh] = useState(false);
 
@@ -150,6 +153,15 @@ const PublicBio = () => {
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Parallax scroll effect for cover image
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Auto-follow after redirect from auth if needed
@@ -579,7 +591,6 @@ const PublicBio = () => {
         .eq("profile_id", profileData.id);
 
       const socialLinks = profileData.social_links as any;
-      const themeSettings = profileData.theme_settings as any;
       
       // Load financial data from secure table (public read access)
       let financialData = {
@@ -1096,24 +1107,32 @@ const PublicBio = () => {
           </div>
         )}
         
-        {/* Cover Image */}
+        {/* Link.me Style Cover Image - Fixed Background with Fade on Scroll */}
         {profile.theme?.coverImage && (
-          <div className="relative w-full max-w-3xl mx-auto -mt-4 sm:-mt-6 mb-4 rounded-3xl overflow-hidden border border-white/15 shadow-2xl">
+          <div 
+            className="fixed top-0 left-0 w-full h-screen overflow-hidden z-0"
+            style={{
+              opacity: Math.max(0, 1 - scrollY / 300),
+              pointerEvents: 'none'
+            }}
+          >
             <img
               src={profile.theme.coverImage}
               alt="Profile cover"
-              className="w-full h-56 sm:h-72 object-cover"
+              className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/35 to-black/65" />
+            {/* Dark overlay gradient */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/80" />
           </div>
         )}
         
-        {/* Logo and Business Info */}
-        <div className="text-center space-y-4">
+        {/* Link.me Style Hero Section */}
+        <div className="text-center space-y-4 pt-32 relative z-10">
+          {/* Large Profile Image - Positioned on cover */}
           {profile.logo && (
-            <div className="flex justify-center mb-6">
+            <div className="flex justify-center mb-4">
               <div 
-                className={`w-24 h-24 ${getIconStyle(profile.theme.iconStyle)} overflow-hidden`}
+                className={`relative w-32 h-32 md:w-40 md:h-40 ${getIconStyle(profile.theme.iconStyle)} overflow-hidden shadow-2xl ring-4 ring-white/30`}
                 style={{ backgroundColor: profile.theme.primaryColor }}
               >
                 <img 
@@ -1125,57 +1144,127 @@ const PublicBio = () => {
             </div>
           )}
           
-          <div className="flex items-center justify-center gap-2">
-            <h1 className="text-3xl font-bold text-white">
-              {profile.businessName}
-            </h1>
-            {profile.isVerified && (
-              <img 
-                src={getVerifiedBadgeUrl(profile.username)} 
-                alt="Verified" 
-                className="w-7 h-7 inline-block" 
-                title="Verified Account"
-              />
-            )}
+          {/* Name with Badge - Large and Bold */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-center gap-2">
+              <h1 className="text-5xl md:text-6xl font-bold text-white drop-shadow-2xl tracking-tight">
+                {profile.businessName}
+              </h1>
+              {profile.isVerified && (
+                <img 
+                  src={getVerifiedBadgeUrl(profile.username)} 
+                  alt="Verified" 
+                  className="w-8 h-8" 
+                  title="Verified Account"
+                />
+              )}
+            </div>
+            
+            {/* Username - Right below name */}
+            <p className="text-white/80 text-base md:text-lg font-normal">@{profile.username || 'user'}</p>
           </div>
           
-          {/* Follower and Visit Counts - Controlled by Preferences */}
-          <div className="flex gap-6 justify-center text-sm text-white flex-wrap">
-            {userPreferences?.store_settings?.showFollowerCount !== false && (
-              <div className="text-center">
-                <div className="font-semibold text-lg text-white">
-                  {followerCount.toLocaleString()}
-                </div>
-                <div className="text-white">Followers</div>
-              </div>
-            )}
-            {totalSocialFollowers > 0 && (
-              <div className="text-center">
-                <div className="font-semibold text-lg text-white">
-                  {formatCompactNumber(totalSocialFollowers)}
-                </div>
-                <div className="text-white">Total Social Followers</div>
-              </div>
-            )}
-            {userPreferences?.store_settings?.showVisitCount !== false && (
-              <div className="text-center">
-                <div className="font-semibold text-lg text-white">
-                  {visitCount.toLocaleString()}
-                </div>
-                <div className="text-white">Views</div>
-              </div>
-            )}
-          </div>
+          {/* Social Links - Compact circular style */}
+          {Array.isArray(socialLinksArray) && socialLinksArray.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-3 pt-3">
+              {socialLinksArray.map((link) => {
+                const glassMode = profile.theme?.glassMode;
+                const bgStyle = glassMode
+                  ? {
+                      backgroundColor: 'rgba(255,255,255,0.12)',
+                      border: '1px solid rgba(255,255,255,0.22)',
+                      backdropFilter: 'blur(14px)',
+                    }
+                  : { backgroundColor: profile.theme.primaryColor };
+
+                return (
+                  <a
+                    key={link.platform}
+                    href={typeof link.url === 'string' ? link.url : ''}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => profileId && handleSocialClick(link.platform, profileId)}
+                    className="w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-lg"
+                    style={bgStyle}
+                    title={link.platform}
+                  >
+                    <span className="text-white text-xl">
+                      {getSocialIcon(link.platform)}
+                    </span>
+                  </a>
+                );
+              })}
+            </div>
+          )}
           
+          {/* Bio Description */}
           {profile.description && (
-            <p className="text-white max-w-md mx-auto">
+            <p className="text-white/90 text-sm md:text-base max-w-lg mx-auto font-light mt-4 px-4">
               {profile.description}
             </p>
+          )}
+          
+          {/* Email Capture / Connect Section */}
+          {userPreferences?.store_settings?.showEmailCapture !== false && (
+            <div className="max-w-md mx-auto mt-6 px-4">
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                if (!connectEmail || !connectEmail.includes('@')) {
+                  toast.error('Please enter a valid email');
+                  return;
+                }
+                if (!profileId) return;
+                
+                setConnectSubmitting(true);
+                try {
+                  // Capture email in database
+                  const { error } = await supabase
+                    .from('email_captures')
+                    .insert({
+                      profile_id: profileId,
+                      email: connectEmail,
+                      source: 'connect_button',
+                      captured_from_page: 'public_bio'
+                    });
+                  
+                  if (error) throw error;
+                  
+                  toast.success('✅ Thanks for connecting!');
+                  setConnectEmail('');
+                } catch (error) {
+                  console.error('Email capture error:', error);
+                  toast.error('Failed to connect. Please try again.');
+                } finally {
+                  setConnectSubmitting(false);
+                }
+              }} className="flex items-center gap-2 bg-white rounded-full p-2 shadow-lg">
+                <input
+                  type="email"
+                  placeholder="your@email.com"
+                  value={connectEmail}
+                  onChange={(e) => setConnectEmail(e.target.value)}
+                  disabled={connectSubmitting}
+                  className="flex-1 px-4 py-2 bg-transparent outline-none text-gray-800 placeholder-gray-400"
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={connectSubmitting}
+                  className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-full font-medium flex items-center gap-2 transition-all disabled:opacity-50"
+                  style={{ backgroundColor: profile.theme.primaryColor }}
+                >
+                  {connectSubmitting ? 'Connecting...' : 'Connect with'}
+                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                    <UserPlus className="w-4 h-4" />
+                  </div>
+                </button>
+              </form>
+            </div>
           )}
 
           {/* Background Music Player */}
           {profile.backgroundMusicUrl && profile.backgroundMusicUrl.trim() && (
-            <div className="max-w-md mx-auto w-full">
+            <div className="max-w-md mx-auto w-full mt-6 px-4">
               <BackgroundMusicPlayer 
                 musicUrl={profile.backgroundMusicUrl}
                 autoPlay={false}
@@ -1212,13 +1301,13 @@ const PublicBio = () => {
             </div>
           )}
 
-          {/* Follow/Sign In and Gift Buttons */}
-          <div className="flex gap-3 justify-center pt-4">
-            {/* Show Sign In button if user is not authenticated, otherwise show Follow */}
+          {/* Primary Action Buttons - Link.me Style */}
+          <div className="flex flex-col gap-3 justify-center pt-4 max-w-md mx-auto w-full">
+            {/* Sign In / Follow Button - Primary CTA */}
             {!currentUserProfileId && isPiAuthenticated === false && typeof window !== 'undefined' && window.Pi ? (
               <Button
                 onClick={handlePiSignIn}
-                className={`${getIconStyle(profile.theme.iconStyle)} gap-2 px-6 py-3 text-white`}
+                className={`${getIconStyle(profile.theme.iconStyle)} gap-2 w-full py-3 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300`}
                 style={{ 
                   backgroundColor: profile.theme.primaryColor,
                   color: '#fff',
@@ -1231,7 +1320,7 @@ const PublicBio = () => {
             ) : currentUserProfileId && currentUserProfileId !== profileId ? (
               <Button
                 onClick={handleFollow}
-                className={`${getIconStyle(profile.theme.iconStyle)} gap-2 px-6 py-3 text-white`}
+                className={`${getIconStyle(profile.theme.iconStyle)} gap-2 w-full py-3 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300`}
                 style={isFollowing ? { 
                   backgroundColor: 'rgba(255, 255, 255, 0.15)',
                   border: `2px solid ${profile.theme.primaryColor}`,
@@ -1258,11 +1347,11 @@ const PublicBio = () => {
               </Button>
             ) : null}
             
-            {/* Gift button - only show if user is authenticated */}
+            {/* Gift Button - Secondary CTA */}
             {currentUserProfileId && currentUserProfileId !== profileId && userPreferences?.store_settings?.allowGifts !== false && (
               <Button
                 onClick={() => setShowGiftDialog(true)}
-                className={`${getIconStyle(profile.theme.iconStyle)} gap-2 px-6 py-3 text-white`}
+                className={`${getIconStyle(profile.theme.iconStyle)} gap-2 w-full py-3 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300`}
                 style={{ 
                   backgroundColor: 'rgba(255, 255, 255, 0.15)',
                   border: `2px solid ${profile.theme.primaryColor}`,
@@ -1272,7 +1361,7 @@ const PublicBio = () => {
                 variant="outline"
               >
                 <Gift className="w-5 h-5" />
-                Gift
+                Send Gift
               </Button>
             )}
           </div>
@@ -1302,54 +1391,24 @@ const PublicBio = () => {
 
         {/* YouTube Video */}
         {profile.youtubeVideoUrl && extractYouTubeVideoId(profile.youtubeVideoUrl) && (
-          <div className="w-full max-w-2xl">
-            <div className="relative pb-[56.25%] h-0 overflow-hidden rounded-xl">
-              <iframe
-                src={`https://www.youtube.com/embed/${extractYouTubeVideoId(profile.youtubeVideoUrl)}`}
-                className="absolute top-0 left-0 w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                title="YouTube video"
-              />
+          <div className="w-full max-w-2xl px-4">
+            <div className="bg-transparent border border-white/20 rounded-xl backdrop-blur-sm overflow-hidden p-3">
+              <div className="relative pb-[56.25%] h-0 overflow-hidden rounded-lg">
+                <iframe
+                  src={`https://www.youtube.com/embed/${extractYouTubeVideoId(profile.youtubeVideoUrl)}`}
+                  className="absolute top-0 left-0 w-full h-full border border-white/10 rounded-lg"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title="YouTube video"
+                />
+              </div>
             </div>
           </div>
         )}
 
-        {/* Social Links */}
-        {Array.isArray(socialLinksArray) && socialLinksArray.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-3">
-            {socialLinksArray.map((link) => {
-              const glassMode = profile.theme?.glassMode;
-              const bgStyle = glassMode
-                ? {
-                    backgroundColor: 'rgba(255,255,255,0.12)',
-                    border: '1px solid rgba(255,255,255,0.22)',
-                    backdropFilter: 'blur(14px)',
-                  }
-                : { backgroundColor: profile.theme.primaryColor };
-
-              return (
-                <a
-                  key={link.platform}
-                  href={typeof link.url === 'string' ? link.url : ''}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => profileId && handleSocialClick(link.platform, profileId)}
-                  className={`w-12 h-12 ${getIconStyle(profile.theme.iconStyle)} flex items-center justify-center transition-opacity hover:opacity-80`}
-                  style={bgStyle}
-                >
-                  <span className="text-white">
-                    {getSocialIcon(link.platform)}
-                  </span>
-                </a>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Custom Links */}
+        {/* Custom Links - Link.me Style */}
         {Array.isArray(profile.customLinks) && profile.customLinks.length > 0 && (
-          <div className="space-y-3">
+          <div className="space-y-3 max-w-md mx-auto w-full pt-4">
             {profile.customLinks.map((link) => {
               const buttonStyles = getButtonStyles(profile.theme.primaryColor, profile.theme.buttonStyle, profile.theme?.glassMode);
               return (
@@ -1358,9 +1417,10 @@ const PublicBio = () => {
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`flex items-center justify-center gap-3 w-full py-4 px-6 ${getIconStyle(profile.theme.iconStyle)} font-medium text-white transition-all hover:opacity-90`}
+                  className={`flex items-center justify-center gap-3 w-full py-4 px-6 ${getIconStyle(profile.theme.iconStyle)} font-semibold text-white transition-all hover:shadow-xl hover:scale-105 shadow-lg`}
                   style={buttonStyles}
                 >
+                  <ExternalLink className="w-5 h-5" />
                   <span>{link.title}</span>
                 </a>
               );
@@ -1368,105 +1428,111 @@ const PublicBio = () => {
           </div>
         )}
 
-        {/* Products */}
+        {/* Products - Professional Showcase */}
         {Array.isArray(profile.products) && profile.products.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-white text-center mb-6">
-              Digital Products
+          <div className="mt-8 pt-8 border-t border-white/10">
+            <h2 className="text-2xl font-bold text-white text-center mb-8 drop-shadow-lg">
+              📦 Digital Products
             </h2>
-            {profile.products.map((product) => (
-              <div
-                key={product.id}
-                className="p-6 rounded-lg border"
-                style={{ 
-                  backgroundColor: "rgba(255, 255, 255, 0.05)",
-                  borderColor: "rgba(255, 255, 255, 0.1)"
-                }}
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white mb-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+              {profile.products.map((product) => (
+                <div
+                  key={product.id}
+                  className="p-6 rounded-2xl border backdrop-blur-sm hover:border-white/40 hover:bg-white/10 transition-all duration-300 transform hover:scale-105 shadow-lg"
+                  style={{ 
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    borderColor: "rgba(255, 255, 255, 0.1)"
+                  }}
+                >
+                  <div className="flex flex-col h-full">
+                    <h3 className="text-lg font-bold text-white mb-2">
                       {product.title}
                     </h3>
                     {product.description && (
-                      <p className="text-white text-sm mb-3">
+                      <p className="text-white/80 text-sm mb-4 flex-grow">
                         {product.description}
                       </p>
                     )}
-                    <p 
-                      className="text-xl font-bold"
-                      style={{ color: profile.theme.primaryColor }}
-                    >
-                      {product.price}
-                    </p>
+                    <div className="flex items-center justify-between mt-4">
+                      <p 
+                        className="text-2xl font-bold"
+                        style={{ color: profile.theme.primaryColor }}
+                      >
+                        {product.price}
+                      </p>
+                      {product.fileUrl && (
+                        <a
+                          href={product.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => profileId && handleProductClick(product.id, product.title, profileId)}
+                          className={`px-4 py-2 ${getIconStyle(profile.theme.iconStyle)} font-semibold text-white text-sm transition-all hover:shadow-lg shadow-md`}
+                          style={{ backgroundColor: profile.theme.primaryColor }}
+                        >
+                          Get Now
+                        </a>
+                      )}
+                    </div>
                   </div>
-                  {product.fileUrl && (
-                    <a
-                      href={product.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => profileId && handleProductClick(product.id, product.title, profileId)}
-                      className={`px-6 py-3 ${getIconStyle(profile.theme.iconStyle)} font-medium text-white transition-opacity hover:opacity-90`}
-                      style={{ backgroundColor: profile.theme.primaryColor }}
-                    >
-                      Purchase
-                    </a>
-                  )}
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Donation Wallets */}
+        {/* Donation Wallets - Professional Section */}
         {(Array.isArray(profile.wallets?.crypto) && profile.wallets.crypto.length > 0 || Array.isArray(profile.wallets?.bank) && profile.wallets.bank.length > 0) && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-white text-center mb-6 flex items-center justify-center gap-2">
-              <Wallet className="w-5 h-5" />
-              Support with Tips & Donations
+          <div className="mt-8 pt-8 border-t border-white/10">
+            <h2 className="text-2xl font-bold text-white text-center mb-8 flex items-center justify-center gap-2 drop-shadow-lg">
+              <Wallet className="w-6 h-6" />
+              Support & Donations
             </h2>
             
-            {Array.isArray(profile.wallets?.crypto) && profile.wallets.crypto.length > 0 && (
-              <div className="space-y-3">
-                <p className="text-white text-sm text-center">Crypto Wallets</p>
-                {profile.wallets.crypto.map((wallet) => (
-                   <button
-                     key={wallet.id}
-                     onClick={() => handleWalletClick('crypto', wallet.name, wallet.address)}
-                     className={`w-full p-4 ${getIconStyle(profile.theme.iconStyle)} border glass transition-all hover:opacity-90`}
-                     style={{ 
-                       borderColor: profile.theme.primaryColor
-                     }}
-                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-white font-medium">{wallet.name}</span>
-                      <span className="text-white text-sm">Tap for QR</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-            
-            {Array.isArray(profile.wallets?.bank) && profile.wallets.bank.length > 0 && (
-              <div className="space-y-3 mt-6">
-                <p className="text-white text-sm text-center">Bank Accounts</p>
-                {profile.wallets.bank.map((account) => (
-                  <button
-                    key={account.id}
-                    onClick={() => handleWalletClick('bank', account.bankName, account.details)}
-                    className={`w-full p-4 ${getIconStyle(profile.theme.iconStyle)} border glass transition-all hover:opacity-90`}
-                    style={{ 
-                      borderColor: profile.theme.primaryColor
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-white font-medium">{account.bankName}</span>
-                      <span className="text-white text-sm">Tap for details</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+              {Array.isArray(profile.wallets?.crypto) && profile.wallets.crypto.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-white/80 text-sm text-center font-semibold mb-3">💰 Crypto Wallets</p>
+                  {profile.wallets.crypto.map((wallet) => (
+                     <button
+                       key={wallet.id}
+                       onClick={() => handleWalletClick('crypto', wallet.name, wallet.address)}
+                       className={`w-full p-4 ${getIconStyle(profile.theme.iconStyle)} border rounded-xl backdrop-blur-sm transition-all hover:shadow-lg hover:scale-105 shadow-md`}
+                       style={{ 
+                         borderColor: profile.theme.primaryColor,
+                         backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                       }}
+                     >
+                      <div className="flex items-center justify-between">
+                        <span className="text-white font-semibold text-left flex-1">{wallet.name}</span>
+                        <span className="text-white/70 text-xs">QR Code</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {Array.isArray(profile.wallets?.bank) && profile.wallets.bank.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-white/80 text-sm text-center font-semibold mb-3">🏦 Bank Accounts</p>
+                  {profile.wallets.bank.map((account) => (
+                    <button
+                      key={account.id}
+                      onClick={() => handleWalletClick('bank', account.bankName, account.details)}
+                      className={`w-full p-4 ${getIconStyle(profile.theme.iconStyle)} border rounded-xl backdrop-blur-sm transition-all hover:shadow-lg hover:scale-105 shadow-md`}
+                      style={{ 
+                        borderColor: profile.theme.primaryColor,
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-white font-semibold text-left flex-1">{account.bankName}</span>
+                        <span className="text-white/70 text-xs">Details</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
