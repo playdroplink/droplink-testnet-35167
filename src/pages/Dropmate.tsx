@@ -4,6 +4,7 @@ import { usePi } from "@/contexts/PiContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquare } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { FooterNav } from "@/components/FooterNav";
 
 interface Message {
   id: string;

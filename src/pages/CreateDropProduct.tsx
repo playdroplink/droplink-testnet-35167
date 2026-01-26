@@ -8,6 +8,7 @@ import { usePi } from "@/contexts/PiContext";
 import { toast } from "sonner";
 import { Package } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { FooterNav } from "@/components/FooterNav";
 
 export default function CreateDropProduct() {
   const { piUser } = usePi();

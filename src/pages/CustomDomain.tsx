@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePi } from "@/contexts/PiContext";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/PageHeader";
+import { FooterNav } from "@/components/FooterNav";
 import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 
 const CustomDomain = () => {

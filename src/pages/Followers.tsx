@@ -7,6 +7,7 @@ import { Users, UserCheck, UserPlus, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/PageHeader";
+import { FooterNav } from "@/components/FooterNav";
 
 interface FollowerProfile {
   id: string;
@@ -352,6 +353,8 @@ const Followers = () => {
           Back to Dashboard
         </Button>
       </div>
+      </div>
+      <FooterNav />
     </div>
   );
 };

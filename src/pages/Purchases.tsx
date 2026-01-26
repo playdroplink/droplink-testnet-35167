@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ShoppingCart } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { FooterNav } from "@/components/FooterNav";
 
 interface PaymentRow {
   id?: string;

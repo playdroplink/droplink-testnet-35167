@@ -2,6 +2,7 @@
 import React from "react";
 import { Wrench } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { FooterNav } from "@/components/FooterNav";
 
 const MerchantStoreSetup: React.FC = () => {
   return (

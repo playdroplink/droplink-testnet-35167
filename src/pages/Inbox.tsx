@@ -5,6 +5,7 @@ import { Info, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PageHeader } from "@/components/PageHeader";
+import { FooterNav } from "@/components/FooterNav";
 
 export default function InboxPage() {
   const { piUser, isAuthenticated } = usePi();
@@ -31,6 +32,7 @@ export default function InboxPage() {
           <InboxConversations />
         </div>
       </div>
+      <FooterNav />
     </div>
   );
 }

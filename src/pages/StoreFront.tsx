@@ -11,6 +11,7 @@ import StoreCustomizer from "../components/StoreCustomizer";
 import ProductCategoryManager from "../components/ProductCategoryManager";
 import ThemeCustomizer from "../components/ThemeCustomizer";
 import { PageHeader } from "@/components/PageHeader";
+import { FooterNav } from "@/components/FooterNav";
 import { Store } from "lucide-react";
 
 const getStoreUrl = () => {

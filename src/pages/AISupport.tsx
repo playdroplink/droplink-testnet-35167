@@ -13,6 +13,7 @@ import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 import { PlanGate } from "@/components/PlanGate";
 import { usePi } from "@/contexts/PiContext";
 import { PageHeader } from "@/components/PageHeader";
+import { FooterNav } from "@/components/FooterNav";
 
 const STORAGE_KEY = 'droplink_ai_config';
 

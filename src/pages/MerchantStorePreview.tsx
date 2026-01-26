@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Store } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { FooterNav } from "@/components/FooterNav";
 import type { ProductItem, CartItem, Order } from "@/types/profile";
 
 const MerchantStorePreview: React.FC = () => {

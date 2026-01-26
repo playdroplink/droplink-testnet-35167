@@ -9,6 +9,7 @@ import { PurchaseButton } from "@/components/PurchaseButton";
 import { toast } from "sonner";
 import { ShoppingBag } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { FooterNav } from "@/components/FooterNav";
 
 interface Product {
   id: string;

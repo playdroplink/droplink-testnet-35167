@@ -14,6 +14,7 @@ import { useSubscriptionPayment } from "@/hooks/useSubscriptionPayment";
 import { validateMainnetConfig } from "@/config/pi-config";
 import { GiftCardModal } from "@/components/GiftCardModal";
 import { PageHeader } from "@/components/PageHeader";
+import { FooterNav } from "@/components/FooterNav";
 import { createDroppayPaymentViaApi } from "@/lib/droppay";
 
 interface Plan {
@@ -1001,6 +1002,7 @@ const Subscription = () => {
         </DialogContent>
       </Dialog>
       </div>
+      <FooterNav />
     </div>
   );
 };

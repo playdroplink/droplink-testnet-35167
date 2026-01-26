@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { uploadMessageImage } from '@/lib/supabase-storage';
 import { PageHeader } from '@/components/PageHeader';
+import { FooterNav } from '@/components/FooterNav';
 
 interface Message {
   id: string;
@@ -425,6 +426,7 @@ export default function ChatPage() {
         </div>
       </div>
       </div>
+      <FooterNav />
     </>
   );
 }

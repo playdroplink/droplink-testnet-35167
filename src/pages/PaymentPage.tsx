@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { usePiNetwork } from '@/hooks/usePiNetwork';
 import { PageHeader } from '@/components/PageHeader';
+import { FooterNav } from '@/components/FooterNav';
 
 interface PaymentLink {
   id: string;

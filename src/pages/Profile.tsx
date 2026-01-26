@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { usePi } from "@/contexts/PiContext";
 import { User } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { FooterNav } from "@/components/FooterNav";
 import type { ProfileData, ThemeData, CustomLink, SocialLinks, Product, PaymentLink, ShortenedLink } from "@/types/profile";
 
 const Profile = () => {

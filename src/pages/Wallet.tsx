@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { usePi } from "@/contexts/PiContext";
 import { DropTokenManager } from "@/components/DropTokenManager";
 import { PageHeader } from "@/components/PageHeader";
+import { FooterNav } from "@/components/FooterNav";
 import { PI_CONFIG } from '@/config/pi-config';
 
 interface Transaction {
@@ -482,6 +483,7 @@ const Wallet = () => {
         </Button>
       </div>
       </div>
+      <FooterNav />
     </div>
   );
 };

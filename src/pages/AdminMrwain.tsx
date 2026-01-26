@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { uploadProfileLogo, uploadAvatar, uploadBackground, deleteFile, STORAGE_BUCKETS } from "@/lib/supabase-storage";
 import { PageHeader } from "@/components/PageHeader";
+import { FooterNav } from "@/components/FooterNav";
 
 const AdminMrwain = () => {
   const navigate = useNavigate();

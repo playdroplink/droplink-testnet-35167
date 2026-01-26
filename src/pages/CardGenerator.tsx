@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button as UIButton } from "@/components/ui/button";
 import { usePi } from "@/contexts/PiContext";
 import { PageHeader } from "@/components/PageHeader";
+import { FooterNav } from "@/components/FooterNav";
 import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 
 export default function CardGenerator() {
