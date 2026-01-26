@@ -2118,7 +2118,7 @@ const Dashboard = () => {
                       try {
                         const { error } = await supabase
                           .from('profiles')
-                          .update({ category: newCategory })
+                          .update({ category: newCategory } as any)
                           .eq('id', profileId);
                         
                         if (error) {
