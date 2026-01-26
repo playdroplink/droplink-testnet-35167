@@ -159,7 +159,6 @@ const ProfileFeed = () => {
       )}
       <div className="relative z-10 flex flex-col items-center px-4 pb-16" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.85) 40%, rgba(0,0,0,0.9) 100%)" }}>
         <div className="w-full max-w-3xl text-center pt-16 space-y-4">
-          <button onClick={() => navigate(-1)} className="text-sm text-white/70 hover:text-white">← Back</button>
           {profile.logo && (
             <div className="mx-auto w-28 h-28 rounded-3xl overflow-hidden shadow-2xl ring-4 ring-white/20">
               <img src={profile.logo} alt={profile.businessName} className="w-full h-full object-cover" />
