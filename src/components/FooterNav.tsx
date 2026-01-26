@@ -143,10 +143,6 @@ export const FooterNav: React.FC = () => {
                 <Button onClick={() => navigate('/ai-support')} variant="outline" size="sm" className="w-full justify-start">
                   AI Support
                 </Button>
-                <Button onClick={() => setAboutOpen(true)} variant="secondary" size="sm" className="w-full justify-start gap-2">
-                  <Info className="w-4 h-4" />
-                  About Droplink
-                </Button>
               </div>
             </DrawerContent>
           </Drawer>
