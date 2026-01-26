@@ -289,6 +289,7 @@ const Dashboard = () => {
       backgroundVideo: "",
       iconStyle: "rounded",
       buttonStyle: "filled",
+      glassMode: false,
     },
     products: [],
     paymentLinks: [],
@@ -343,6 +344,7 @@ const Dashboard = () => {
             social_links: data.socialLinks as any,
             theme_settings: {
               ...data.theme,
+              glassMode: data.theme?.glassMode ?? false,
               customLinks: data.customLinks || [],
               paymentLinks: (data.paymentLinks || []).map(link => ({
                 id: link.id,
@@ -856,6 +858,7 @@ const Dashboard = () => {
             backgroundGif: themeSettings?.backgroundGif || "",
             iconStyle: themeSettings?.iconStyle || "rounded",
             buttonStyle: themeSettings?.buttonStyle || "filled",
+              glassMode: themeSettings?.glassMode ?? false,
           },
           products: productsData?.map((p: any) => ({
             id: p.id,

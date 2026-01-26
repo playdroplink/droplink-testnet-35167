@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Palette, Sparkles, Upload, Image, Monitor, X, Settings, Sliders, Link } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 // Giphy API key from environment (fallback to public beta key for demo)
 const GIPHY_API_KEY = import.meta.env.VITE_GIPHY_API_KEY || "dc6zaTOxFJmzC";
@@ -113,8 +114,9 @@ interface DesignCustomizerProps {
     backgroundVideo?: string;
     iconStyle: string;
     buttonStyle: string;
+    glassMode?: boolean;
   };
-  onThemeChange: (theme: { primaryColor: string; backgroundColor: string; backgroundType: 'color' | 'gif' | 'video'; backgroundGif: string; backgroundVideo?: string; iconStyle: string; buttonStyle: string }) => void;
+  onThemeChange: (theme: { primaryColor: string; backgroundColor: string; backgroundType: 'color' | 'gif' | 'video'; backgroundGif: string; backgroundVideo?: string; iconStyle: string; buttonStyle: string; glassMode?: boolean }) => void;
 }
 
 export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps) => {
@@ -836,6 +838,17 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
                 </Label>
               </div>
             </RadioGroup>
+          </div>
+
+          <div className="flex items-center justify-between rounded-xl border border-border/50 bg-white/5 dark:bg-white/5 px-4 py-3">
+            <div>
+              <Label className="text-sm">Transparent / Glass Links & Icons</Label>
+              <p className="text-xs text-muted-foreground">Applies glassmorphism to social icons and buttons on your public bio.</p>
+            </div>
+            <Switch
+              checked={!!theme.glassMode}
+              onCheckedChange={(checked) => onThemeChange({ ...theme, glassMode: checked })}
+            />
           </div>
         </div>
       </div>

@@ -49,6 +49,7 @@ export interface ThemeData {
   iconStyle: string;
   buttonStyle: string;
   textColor?: string;
+  glassMode?: boolean;
 }
 
 export interface ProductItem {

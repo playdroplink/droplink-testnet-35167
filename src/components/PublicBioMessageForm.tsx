@@ -103,6 +103,10 @@ export default function PublicBioMessageForm({
 
     setSending(true);
     try {
+      // Check if we have a Supabase session; fall back to anonymous insert when absent
+      const { data: sessionData } = await supabase.auth.getSession();
+      const hasSupabaseSession = !!sessionData.session?.user;
+
       let imageUrl: string | null = null;
       
       // Upload image if selected
@@ -117,7 +121,7 @@ export default function PublicBioMessageForm({
       const { error } = await (supabase
         .from('messages' as any)
         .insert({
-          sender_profile_id: senderProfileId || null,
+          sender_profile_id: hasSupabaseSession ? senderProfileId || null : null,
           receiver_profile_id: receiverProfileId,
           content: message.trim() || (imageUrl ? '[Image]' : ''),
           image_url: imageUrl,
@@ -142,9 +146,9 @@ export default function PublicBioMessageForm({
 
   if (!isAuthenticated) {
     return (
-      <Card className="bg-white/70 dark:bg-white/10 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-xl shadow-blue-500/10 dark:shadow-sky-900/40">
+      <Card className="bg-white/8 dark:bg-white/5 backdrop-blur-2xl border border-white/12 dark:border-white/10 shadow-2xl shadow-sky-500/15 dark:shadow-sky-900/35 rounded-2xl">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+          <CardTitle className="flex items-center gap-2 text-white drop-shadow-sm">
             <MessageSquare className="h-5 w-5" />
             Send a Message
           </CardTitle>
@@ -162,9 +166,9 @@ export default function PublicBioMessageForm({
   }
 
   return (
-    <Card className="bg-white/75 dark:bg-white/10 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-xl shadow-sky-500/10 dark:shadow-sky-900/40">
+    <Card className="bg-white/8 dark:bg-white/5 backdrop-blur-2xl border border-white/12 dark:border-white/10 shadow-2xl shadow-sky-500/15 dark:shadow-sky-900/35 rounded-2xl">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+        <CardTitle className="flex items-center gap-2 text-white drop-shadow-sm">
           <MessageSquare className="h-5 w-5" />
           Send a Message to @{receiverUsername}
         </CardTitle>
@@ -176,7 +180,7 @@ export default function PublicBioMessageForm({
             value={message}
             onChange={e => setMessage(e.target.value)}
             rows={3}
-            className="resize-none bg-white/80 dark:bg-white/5 backdrop-blur-md text-slate-900 dark:text-white border border-white/40 dark:border-white/10 placeholder:text-gray-500 dark:placeholder:text-gray-400 shadow-inner shadow-slate-900/5"
+            className="resize-none bg-white/10 dark:bg-white/8 backdrop-blur-xl text-white border border-white/15 dark:border-white/15 placeholder:text-white/70 shadow-inner shadow-slate-900/10"
           />
           
           {/* Image preview */}

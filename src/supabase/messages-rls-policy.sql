@@ -45,10 +45,17 @@ CREATE POLICY "Authenticated users can send messages"
 ON public.messages
 FOR INSERT
 WITH CHECK (
-  sender_profile_id = (
-    SELECT id FROM public.profiles 
-    WHERE user_id = auth.uid() 
-    LIMIT 1
+  (
+    auth.uid() IS NOT NULL
+    AND sender_profile_id = (
+      SELECT id FROM public.profiles 
+      WHERE user_id = auth.uid() 
+      LIMIT 1
+    )
+  )
+  OR (
+    auth.uid() IS NULL
+    AND sender_profile_id IS NULL
   )
 );
 

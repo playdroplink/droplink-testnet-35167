@@ -631,7 +631,18 @@ const PublicBio = () => {
     }
   };
 
-  const getButtonStyles = (primaryColor: string, buttonStyle: string) => {
+  const getButtonStyles = (primaryColor: string, buttonStyle: string, glassMode?: boolean) => {
+    // Glass override
+    if (glassMode) {
+      return {
+        backgroundColor: 'rgba(255, 255, 255, 0.12)',
+        border: '1px solid rgba(255, 255, 255, 0.22)',
+        color: '#fff',
+        textShadow: '0 1px 4px rgba(0,0,0,0.45)',
+        backdropFilter: 'blur(14px)',
+      };
+    }
+
     if (buttonStyle === 'outlined') {
       return {
         backgroundColor: 'rgba(255, 255, 255, 0.15)',
@@ -1005,21 +1016,32 @@ const PublicBio = () => {
         {/* Social Links */}
         {Array.isArray(socialLinksArray) && socialLinksArray.length > 0 && (
           <div className="flex flex-wrap justify-center gap-3">
-            {socialLinksArray.map((link) => (
-              <a
-                key={link.platform}
-                href={typeof link.url === 'string' ? link.url : ''}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => profileId && handleSocialClick(link.platform, profileId)}
-                className={`w-12 h-12 ${getIconStyle(profile.theme.iconStyle)} flex items-center justify-center transition-opacity hover:opacity-80`}
-                style={{ backgroundColor: profile.theme.primaryColor }}
-              >
-                <span className="text-white">
-                  {getSocialIcon(link.platform)}
-                </span>
-              </a>
-            ))}
+            {socialLinksArray.map((link) => {
+              const glassMode = profile.theme?.glassMode;
+              const bgStyle = glassMode
+                ? {
+                    backgroundColor: 'rgba(255,255,255,0.12)',
+                    border: '1px solid rgba(255,255,255,0.22)',
+                    backdropFilter: 'blur(14px)',
+                  }
+                : { backgroundColor: profile.theme.primaryColor };
+
+              return (
+                <a
+                  key={link.platform}
+                  href={typeof link.url === 'string' ? link.url : ''}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => profileId && handleSocialClick(link.platform, profileId)}
+                  className={`w-12 h-12 ${getIconStyle(profile.theme.iconStyle)} flex items-center justify-center transition-opacity hover:opacity-80`}
+                  style={bgStyle}
+                >
+                  <span className="text-white">
+                    {getSocialIcon(link.platform)}
+                  </span>
+                </a>
+              );
+            })}
           </div>
         )}
 
@@ -1027,7 +1049,7 @@ const PublicBio = () => {
         {Array.isArray(profile.customLinks) && profile.customLinks.length > 0 && (
           <div className="space-y-3">
             {profile.customLinks.map((link) => {
-              const buttonStyles = getButtonStyles(profile.theme.primaryColor, profile.theme.buttonStyle);
+              const buttonStyles = getButtonStyles(profile.theme.primaryColor, profile.theme.buttonStyle, profile.theme?.glassMode);
               return (
                 <a
                   key={link.id}
