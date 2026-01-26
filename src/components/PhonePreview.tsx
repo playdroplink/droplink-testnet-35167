@@ -20,6 +20,7 @@ import {
   QrCode,
   Copy
 } from "lucide-react";
+import { getVerifiedBadgeUrl } from "@/utils/verifiedUsers";
 import { 
   FaTwitter, 
   FaInstagram, 
@@ -233,7 +234,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
             </h1>
             {profile.isVerified && (
               <img
-                src="https://i.ibb.co/Kcz0w18P/verify-6.png"
+                src={getVerifiedBadgeUrl(profile.username)}
                 alt="Verified"
                 className="w-5 h-5 sm:w-6 sm:h-6"
               />

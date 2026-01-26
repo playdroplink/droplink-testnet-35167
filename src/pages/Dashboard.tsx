@@ -106,6 +106,7 @@ import {
 } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import { toast } from "sonner";
+import { isVerifiedUser, getVerifiedBadgeUrl } from "@/utils/verifiedUsers";
 
 // Utility: Check if running in Pi Browser
 function isPiBrowserMobile() {
@@ -2245,17 +2246,17 @@ const Dashboard = () => {
               <div className="mb-6 p-4 border border-blue-200 dark:border-blue-800 rounded-xl bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-950/30 dark:to-purple-950/30">
                 <div className="flex items-start gap-3">
                   <img 
-                    src="https://i.ibb.co/Kcz0w18P/verify-6.png" 
+                    src={getVerifiedBadgeUrl(profile?.username)} 
                     alt="Verified badge" 
                     className="w-8 h-8 flex-shrink-0 mt-0.5"
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <Label className="text-sm font-semibold">Get Verified</Label>
+                      <Label className="text-sm font-semibold">Get Verified - Blue Badge</Label>
                       <span className="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full font-medium">30 Pi</span>
                     </div>
                     <p className="text-xs text-muted-foreground mb-3">
-                      Show the verified badge next to your name and stand out as a trusted creator.
+                      Get a <strong className="text-blue-600">blue verified badge</strong> next to your name and stand out as a trusted creator. VIP members receive exclusive gold badges automatically.
                     </p>
                     <div className="flex items-center gap-2">
                       <Switch
@@ -2264,7 +2265,7 @@ const Dashboard = () => {
                         disabled={!profile.isVerified}
                       />
                       <span className="text-xs text-muted-foreground">
-                        {profile.isVerified ? "Verified ✓" : "Not verified · Pay 30 Pi to verify"}
+                        {profile.isVerified ? "Verified ✓" : "Not verified · Pay 30 Pi for blue badge"}
                       </span>
                     </div>
                   </div>

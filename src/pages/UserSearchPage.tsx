@@ -9,7 +9,7 @@ import { usePi } from "@/contexts/PiContext";
 import { toast } from "sonner";
 import { Alert } from "@/components/ui/alert";
 import { FooterNav } from "@/components/FooterNav";
-import { isVerifiedUser } from "@/utils/verifiedUsers";
+import { isVerifiedUser, getVerifiedBadgeUrl } from "@/utils/verifiedUsers";
 
 // Notifications bell intentionally omitted on Search page to avoid noise when following
 
@@ -686,7 +686,7 @@ const UserSearchPage = () => {
                       </div>
                       {isVerifiedUser(profile.username) && (
                         <img 
-                          src="https://i.ibb.co/Kcz0w18P/verify-6.png" 
+                          src={getVerifiedBadgeUrl(profile.username)} 
                           alt="Verified" 
                           className="w-5 h-5 inline-block" 
                           title="Verified Account"
@@ -756,7 +756,7 @@ const UserSearchPage = () => {
                   <div className="font-semibold text-lg text-sky-700">@{selectedProfile.username || ""}</div>
                   {isVerifiedUser(selectedProfile.username) && (
                     <img 
-                      src="https://i.ibb.co/Kcz0w18P/verify-6.png" 
+                      src={getVerifiedBadgeUrl(selectedProfile.username)} 
                       alt="Verified" 
                       className="w-5 h-5 inline-block" 
                       title="Verified Account"
