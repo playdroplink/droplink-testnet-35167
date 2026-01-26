@@ -89,6 +89,7 @@ import {
   Sun,
   Home,
   Plus,
+  Search,
 } from "lucide-react";
 import { 
   FaTwitter, 
@@ -549,6 +550,23 @@ const Dashboard = () => {
       if (!isAuthenticated || !piUser || subscriptionLoading || hasCheckedSubscription) return;
       
       try {
+        // Check for subscription activation flag
+        const activatedFlag = sessionStorage.getItem('subscription_activated');
+        if (activatedFlag) {
+          try {
+            const { plan, billing } = JSON.parse(activatedFlag);
+            toast.success(`🎉 Plan Activated!`, {
+              description: `Your ${plan.charAt(0).toUpperCase() + plan.slice(1)} ${billing === 'yearly' ? 'Annual' : 'Monthly'} plan is now active. Enjoy premium features!`,
+              duration: 5000,
+            });
+            // Refetch subscription to ensure UI reflects new plan
+            await refetchSubscription();
+          } catch (e) {
+            console.warn('Failed to parse activation flag:', e);
+          }
+          sessionStorage.removeItem('subscription_activated');
+        }
+        
         // Check if user has any subscription (even free counts as a selection)
         const { data: profile } = await supabase
           .from("profiles")
@@ -581,7 +599,7 @@ const Dashboard = () => {
     };
 
     checkSubscription();
-  }, [isAuthenticated, piUser, subscriptionLoading, hasCheckedSubscription, navigate]);
+  }, [isAuthenticated, piUser, subscriptionLoading, hasCheckedSubscription, navigate, refetchSubscription]);
 
   const checkAuthAndLoadProfile = async () => {
     try {
@@ -2889,9 +2907,9 @@ const Dashboard = () => {
 
       </main>
 
-      {/* Bottom Navigation Bar - Updated */}
+      {/* Bottom Navigation Bar - Mobile & Desktop Unified */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 shadow-2xl z-50">
-        <div className="max-w-6xl mx-auto px-4 py-2">
+        <div className="max-w-6xl mx-auto px-2 sm:px-4 py-2">
           <div className="flex justify-around items-center">
             {/* Home */}
             <button
@@ -2905,52 +2923,52 @@ const Dashboard = () => {
                   focusTab('profile');
                 }
               }}
-              className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
+              className="flex flex-col items-center justify-center py-2 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
               title="Home"
             >
-              <Home className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:inline">Home</span>
+              <Home className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1 group-hover:scale-110 transition-transform" />
+              <span className="text-xs sm:text-xs">Home</span>
             </button>
 
             {/* Inbox */}
             <button
               onClick={() => navigate('/inbox')}
-              className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
+              className="flex flex-col items-center justify-center py-2 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
               title="Inbox"
             >
-              <Mail className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:inline">Inbox</span>
+              <Mail className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1 group-hover:scale-110 transition-transform" />
+              <span className="text-xs sm:text-xs">Inbox</span>
             </button>
 
             {/* Search Users */}
             <button
               onClick={() => navigate('/search-users')}
-              className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
+              className="flex flex-col items-center justify-center py-2 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
               title="Search Users"
             >
-              <Users className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:inline">Search</span>
+              <Search className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1 group-hover:scale-110 transition-transform" />
+              <span className="text-xs sm:text-xs">Search</span>
             </button>
 
             {/* Followers */}
             <button
               onClick={() => navigate('/followers')}
-              className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
+              className="flex flex-col items-center justify-center py-2 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
               title="Followers"
             >
-              <Users className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:inline">Followers</span>
+              <Users className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1 group-hover:scale-110 transition-transform" />
+              <span className="text-xs sm:text-xs">Followers</span>
             </button>
 
-            {/* Menu remains accessible via Drawer (optional) */}
+            {/* Menu */}
             <Drawer>
               <DrawerTrigger asChild>
                 <button 
-                  className="hidden sm:flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
+                  className="flex flex-col items-center justify-center py-2 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
                   title="More Options"
                 >
-                  <Menu className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
-                  <span className="hidden sm:inline">More</span>
+                  <Menu className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1 group-hover:scale-110 transition-transform" />
+                  <span className="text-xs sm:text-xs">Menu</span>
                 </button>
               </DrawerTrigger>
               <DrawerContent className="bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 fixed bottom-16 left-0 right-0 max-h-[70vh] z-50">

@@ -182,9 +182,10 @@ const Wallet = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <p className="text-muted-foreground">Loading wallet...</p>
+      <div className="min-h-screen bg-sky-400 flex items-center justify-center p-4">
+        <div className="flex flex-col items-center justify-center gap-4">
+          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-white font-medium">Loading wallet...</p>
         </div>
       </div>
     );

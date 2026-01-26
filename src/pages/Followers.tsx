@@ -255,9 +255,10 @@ const Followers = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6 relative overflow-hidden bg-background">
-        <div className="flex items-center justify-center min-h-[400px] relative z-10">
-          <p className="text-foreground">Loading...</p>
+      <div className="min-h-screen bg-sky-400 flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center gap-4">
+          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-white font-medium">Loading followers...</p>
         </div>
       </div>
     );

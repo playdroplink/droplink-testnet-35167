@@ -261,8 +261,11 @@ export default function ChatPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center relative">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+      <div className="min-h-screen bg-sky-400 flex items-center justify-center p-4">
+        <div className="flex flex-col items-center justify-center gap-4">
+          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-white font-medium">Loading messages...</p>
+        </div>
       </div>
     );
   }

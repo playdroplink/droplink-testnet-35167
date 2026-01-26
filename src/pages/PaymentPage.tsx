@@ -124,6 +124,8 @@ const PaymentPage: React.FC = () => {
       } else {
         // Mark as activated to avoid duplicate inserts
         setActivated(true);
+        // Set flag for Dashboard to show confirmation toast
+        sessionStorage.setItem('subscription_activated', JSON.stringify({ plan, billing }));
       }
     } catch (e) {
       console.error('Activate subscription error:', e);
@@ -342,12 +344,10 @@ const PaymentPage: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-sky-400 flex items-center justify-center p-4">
-        <Card>
-          <CardContent className="p-8 text-center">
-            <Clock className="w-8 h-8 mx-auto mb-4 animate-spin" />
-            <p>Loading payment details...</p>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center justify-center gap-4">
+          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-white font-medium">Loading payment details...</p>
+        </div>
       </div>
     );
   }
