@@ -241,12 +241,14 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
             )}
           </div>
 
-          {/* Stats: Total Social Followers */}
+          {/* Stats: Total Social Followers - Enhanced */}
           {Array.isArray(profile.socialLinks) && profile.socialLinks.some(l => Number(l.followers) > 0) && (
-            <div className="flex items-center gap-1 text-[11px] sm:text-xs text-white/80">
-              <Users className="w-3.5 h-3.5" />
-              <span>{formatCompactNumber(profile.socialLinks.reduce((sum, l) => sum + (Number(l.followers) || 0), 0))}</span>
-              <span className="opacity-75">Total Followers</span>
+            <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-all duration-300 animate-fade-in">
+              <Users className="w-4 h-4 text-sky-400 animate-pulse" />
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-bold text-sm text-white">{formatCompactNumber(profile.socialLinks.reduce((sum, l) => sum + (Number(l.followers) || 0), 0))}</span>
+                <span className="text-xs text-white/70">Followers</span>
+              </div>
             </div>
           )}
 
@@ -314,19 +316,21 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
             )}
 
 
-          {/* Social Links */}
+          {/* Social Links - Enhanced */}
           {socialLinkData.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-2 sm:gap-2.5 md:gap-3 pt-2">
-              {socialLinkData.map(({ key, icon: Icon }) => (
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-2.5 md:gap-3 pt-4 px-2">
+              <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-2"></div>
+              {socialLinkData.map(({ key, icon: Icon }, idx) => (
                 <div
                   key={key}
-                  className={`w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 ${iconRadius} flex items-center justify-center transition-smooth cursor-pointer shadow-lg hover:shadow-xl`}
+                  className={`w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 ${iconRadius} flex items-center justify-center transition-all duration-300 cursor-pointer shadow-lg hover:shadow-2xl hover:scale-110 active:scale-95 transform`}
                   style={{ 
                     backgroundColor: profile.theme?.primaryColor || '#3b82f6',
-                    border: '1px solid rgba(255,255,255,0.2)'
+                    border: '2px solid rgba(255,255,255,0.15)',
+                    animation: `slideUp 0.4s ease-out ${idx * 0.05}s both`
                   }}
                 >
-                  <Icon className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5 text-white" />
+                  <Icon className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5 text-white transition-transform duration-300 hover:rotate-12" />
                 </div>
               ))}
             </div>
@@ -495,32 +499,80 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
             </div>
           )}
 
+          {/* Image Link Cards - Enhanced */}
+          {profile.imageLinkCards && profile.imageLinkCards.length > 0 && (
+            <div className="w-full pt-4 sm:pt-5">
+              <div className="px-2 mb-3">
+                <div className="flex items-center gap-2 text-white text-xs sm:text-sm font-semibold drop-shadow-md mb-2">
+                  <Image className="w-4 h-4 text-sky-400" />
+                  <span>Featured Links ({profile.imageLinkCards.length})</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 px-2">
+                {profile.imageLinkCards.slice(0, 4).map((card: any, idx: number) => (
+                  <a
+                    key={card.id}
+                    href={card.linkUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group relative block rounded-xl sm:rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95"
+                    style={{ 
+                      aspectRatio: '4 / 3',
+                      animation: `slideUp 0.4s ease-out ${idx * 0.08}s both`
+                    }}
+                  >
+                    <img
+                      src={card.imageUrl}
+                      alt={card.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent group-hover:from-black/90" />
+                    <div className="absolute inset-0 flex items-end justify-center p-3">
+                      <p className="text-white font-bold text-[11px] sm:text-xs text-center drop-shadow-lg truncate group-hover:line-clamp-2 transition-all duration-300">
+                        {card.title}
+                      </p>
+                    </div>
+                  </a>
+                ))}
+              </div>
+              {profile.imageLinkCards.length > 4 && (
+                <p className="text-[9px] sm:text-[10px] text-white/60 text-center pt-3 drop-shadow-sm font-medium">
+                  +{profile.imageLinkCards.length - 4} more cards
+                </p>
+              )}
+            </div>
+          )}
+
           
           {profile.paymentLinks && profile.paymentLinks.filter(link => link.active).length > 0 && (
-            <div className="w-full space-y-1.5 sm:space-y-2 pt-3 sm:pt-4">
-              <div className="flex items-center gap-2 text-white text-xs sm:text-sm font-medium drop-shadow-md">
-                <CreditCard className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                <span>Payment Links ({profile.paymentLinks.filter(link => link.active).length})</span>
+            <div className="w-full space-y-1.5 sm:space-y-2 pt-4 sm:pt-5 px-2">
+              <div className="flex items-center gap-2 text-white text-xs sm:text-sm font-semibold drop-shadow-md">
+                <CreditCard className="w-4 h-4 text-amber-400" />
+                <span>Tips & Donations ({profile.paymentLinks.filter(link => link.active).length})</span>
               </div>
-              {profile.paymentLinks.filter(link => link.active).slice(0, 3).map((link) => (
+              {profile.paymentLinks.filter(link => link.active).slice(0, 3).map((link, idx) => (
                 <button
                   key={link.id}
                   {...getButtonStyles()}
-                  className={`${getButtonStyles().className} flex items-center justify-between gap-2 group hover:scale-[1.02] transition-transform shadow-md`}
+                  className={`${getButtonStyles().className} flex items-center justify-between gap-2 group hover:scale-[1.02] transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95`}
+                  style={{
+                    ...getButtonStyles().style,
+                    animation: `slideUp 0.4s ease-out ${idx * 0.08}s both`
+                  }}
                 >
                   <div className="flex items-center gap-2">
                     {getPaymentIcon(link.type)}
-                    <span className="truncate drop-shadow-sm">{link.description}</span>
+                    <span className="truncate drop-shadow-sm font-medium text-sm">{link.description}</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5 bg-white/10 px-2 py-1 rounded-lg">
                     <span className="text-xs font-bold drop-shadow-sm">{formatPiAmount(link.amount)}</span>
-                    <Pi className="w-3 h-3" />
+                    <Pi className="w-3.5 h-3.5" />
                   </div>
                 </button>
               ))}
               {profile.paymentLinks.filter(link => link.active).length > 3 && (
-                <p className="text-[10px] text-white/60 text-center drop-shadow-sm">
-                  +{profile.paymentLinks.filter(link => link.active).length - 3} more payment options
+                <p className="text-[10px] text-white/60 text-center drop-shadow-sm font-medium">
+                  +{profile.paymentLinks.filter(link => link.active).length - 3} more options
                 </p>
               )}
             </div>
@@ -528,25 +580,26 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
 
           
           {profile.products && profile.products.length > 0 && (
-            <div className="w-full space-y-2 sm:space-y-3 pt-3 sm:pt-4">
-              <div className="flex items-center gap-2 text-white text-xs sm:text-sm font-medium drop-shadow-md">
-                <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <div className="w-full space-y-2 sm:space-y-3 pt-4 sm:pt-5">
+              <div className="px-2 flex items-center gap-2 text-white text-xs sm:text-sm font-semibold drop-shadow-md">
+                <ShoppingBag className="w-4 h-4 text-emerald-400" />
                 <span>Products ({profile.products.length})</span>
               </div>
-              {profile.products.slice(0, 2).map((product) => (
+              {profile.products.slice(0, 2).map((product, idx) => (
                 <div 
                   key={product.id}
-                  className="bg-muted border border-border rounded-lg sm:rounded-xl p-2 sm:p-3 text-left shadow-md"
+                  className="mx-2 bg-gradient-to-r from-white/5 to-white/10 border border-white/10 rounded-lg sm:rounded-xl p-3 sm:p-4 text-left shadow-lg hover:shadow-xl hover:border-white/20 transition-all duration-300 backdrop-blur-sm"
+                  style={{ animation: `slideUp 0.4s ease-out ${idx * 0.1}s both` }}
                 >
-                  <div className="flex justify-between items-start mb-1">
-                    <h4 className="text-[10px] sm:text-xs font-semibold text-white truncate drop-shadow-sm">{product.title || "Untitled"}</h4>
-                    <span className="text-[10px] sm:text-xs font-bold text-white/90 drop-shadow-sm">{product.price ? product.price : "0"}</span>
+                  <div className="flex justify-between items-start mb-2 gap-2">
+                    <h4 className="text-xs sm:text-sm font-bold text-white truncate drop-shadow-sm flex-1">{product.title || "Untitled"}</h4>
+                    <span className="text-xs sm:text-sm font-bold text-emerald-400 drop-shadow-sm whitespace-nowrap">${product.price || "0"}</span>
                   </div>
-                  <p className="text-[9px] sm:text-[10px] text-white/70 line-clamp-2 drop-shadow-sm">{product.description || "No description"}</p>
+                  <p className="text-[10px] sm:text-xs text-white/70 line-clamp-2 drop-shadow-sm">{product.description || "No description"}</p>
                 </div>
               ))}
               {profile.products.length > 2 && (
-                <p className="text-[9px] sm:text-[10px] text-white/60 drop-shadow-sm">+{profile.products.length - 2} more</p>
+                <p className="text-[9px] sm:text-[10px] text-white/60 text-center drop-shadow-sm px-2">+{profile.products.length - 2} more products</p>
               )}
             </div>
           )}
@@ -640,3 +693,67 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
     </div>
   );
 };
+
+// Add animations style
+const animationStyles = `
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-4px);
+    }
+  }
+
+  @keyframes glow {
+    0%, 100% {
+      box-shadow: 0 0 5px rgba(255, 255, 255, 0.1);
+    }
+    50% {
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+    }
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite;
+  }
+`;
+
+// Inject styles
+if (typeof document !== 'undefined') {
+  const styleElement = document.createElement('style');
+  styleElement.textContent = animationStyles;
+  document.head.appendChild(styleElement);
+}

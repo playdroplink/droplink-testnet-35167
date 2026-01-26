@@ -354,6 +354,7 @@ const Dashboard = () => {
               ...data.theme,
               glassMode: data.theme?.glassMode ?? false,
               customLinks: data.customLinks || [],
+              imageLinkCards: data.imageLinkCards || [],
               paymentLinks: (data.paymentLinks || []).map(link => ({
                 id: link.id,
                 amount: link.amount,
@@ -865,6 +866,7 @@ const Dashboard = () => {
             { type: "website", url: "", icon: "website", followers: 0 },
           ],
           customLinks: (themeSettings?.customLinks as any) || [],
+          imageLinkCards: (themeSettings?.imageLinkCards as any) || [],
           theme: {
             primaryColor: themeSettings?.primaryColor || "#38bdf8",
             backgroundColor: themeSettings?.backgroundColor || "#000000",
@@ -1923,6 +1925,26 @@ const Dashboard = () => {
 
                 {/* Profile Tab */}
                 <TabsContent value="profile" className="space-y-6 sm:space-y-8 max-w-xl w-full mx-auto">
+                {/* Floating Preview Button - Mobile & Tablet */}
+                <div className="lg:hidden sticky top-16 z-20 mb-2 flex gap-2 justify-end">
+                  <button
+                    onClick={() => setShowPreview(!showPreview)}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-sky-500 hover:bg-sky-600 text-white font-medium text-sm shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95 backdrop-blur-sm border border-sky-400/50"
+                  >
+                    {showPreview ? (
+                      <>
+                        <EyeOff className="w-4 h-4" />
+                        <span>Hide Preview</span>
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-4 h-4" />
+                        <span>Show Preview</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
                 {/* Pi Ad Banner for free users */}
                 <PiAdBanner />
                 
