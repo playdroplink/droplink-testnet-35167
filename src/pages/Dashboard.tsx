@@ -2889,11 +2889,11 @@ const Dashboard = () => {
 
       </main>
 
-      {/* Bottom Navigation Bar - Droplink Style */}
+      {/* Bottom Navigation Bar - Updated */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 shadow-2xl z-50">
         <div className="max-w-6xl mx-auto px-4 py-2">
           <div className="flex justify-around items-center">
-            {/* Home / My Droplink */}
+            {/* Home */}
             <button
               onClick={() => {
                 if (window.location.pathname !== '/') {
@@ -2912,68 +2912,41 @@ const Dashboard = () => {
               <span className="hidden sm:inline">Home</span>
             </button>
 
-            {/* Create / Products */}
+            {/* Inbox */}
             <button
-              onClick={() => {
-                if (window.location.pathname !== '/') {
-                  navigate('/');
-                  setTimeout(() => {
-                    focusTab('profile');
-                  }, 500);
-                } else {
-                  focusTab('profile');
-                }
-              }}
+              onClick={() => navigate('/inbox')}
               className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
-              title="Create Links"
+              title="Inbox"
             >
-              <Plus className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:inline">Create</span>
+              <Mail className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
+              <span className="hidden sm:inline">Inbox</span>
             </button>
 
-            {/* Analytics / Insights */}
+            {/* Search Users */}
             <button
-              onClick={() => {
-                if (window.location.pathname !== '/') {
-                  navigate('/');
-                  setTimeout(() => {
-                    focusTab('analytics');
-                  }, 500);
-                } else {
-                  focusTab('analytics');
-                }
-              }}
+              onClick={() => navigate('/search-users')}
               className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
-              title="Analytics"
+              title="Search Users"
             >
-              <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:inline">Analytics</span>
+              <Users className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
+              <span className="hidden sm:inline">Search</span>
             </button>
 
-            {/* Design / Customize */}
+            {/* Followers */}
             <button
-              onClick={() => {
-                if (window.location.pathname !== '/') {
-                  navigate('/');
-                  setTimeout(() => {
-                    focusTab('design');
-                  }, 500);
-                } else {
-                  focusTab('design');
-                }
-              }}
+              onClick={() => navigate('/followers')}
               className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
-              title="Design"
+              title="Followers"
             >
-              <Palette className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:inline">Design</span>
+              <Users className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />
+              <span className="hidden sm:inline">Followers</span>
             </button>
 
-            {/* More Menu */}
+            {/* Menu remains accessible via Drawer (optional) */}
             <Drawer>
               <DrawerTrigger asChild>
                 <button 
-                  className="flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
+                  className="hidden sm:flex flex-col items-center justify-center py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
                   title="More Options"
                 >
                   <Menu className="w-5 h-5 sm:w-6 sm:h-6 mb-1 group-hover:scale-110 transition-transform" />

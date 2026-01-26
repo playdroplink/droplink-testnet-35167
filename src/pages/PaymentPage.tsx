@@ -54,6 +54,81 @@ const PaymentPage: React.FC = () => {
   const [transactionHash, setTransactionHash] = useState<string>('');
   const [error, setError] = useState<string>('');
   const { createPayment, isAuthenticated, authenticate } = usePiNetwork();
+  const [activated, setActivated] = useState(false);
+
+  // Helper: parse plan and billing from memo/description
+  const parsePlanAndBilling = (text: string | undefined) => {
+    const t = (text || '').toLowerCase();
+    let plan: 'basic' | 'premium' | 'pro' = 'premium';
+    if (t.includes('basic')) plan = 'basic';
+    else if (t.includes('pro')) plan = 'pro';
+    else if (t.includes('premium')) plan = 'premium';
+
+    let billing: 'monthly' | 'yearly' = 'monthly';
+    if (t.includes('annual') || t.includes('yearly')) billing = 'yearly';
+    return { plan, billing };
+  };
+
+  // Activate subscription in Supabase when payment is completed
+  const activateSubscription = async (txid: string) => {
+    try {
+      if (!paymentLink || paymentLink.type !== 'subscription') return;
+      // Get Pi auth user from local storage (set by Pi SDK auth)
+      const storedAuth = localStorage.getItem('pi-auth-state');
+      const username = storedAuth ? JSON.parse(storedAuth)?.user?.username : null;
+      if (!username) {
+        // Attempt to authenticate to retrieve username
+        try { await authenticate(); } catch {}
+      }
+      const finalAuth = localStorage.getItem('pi-auth-state');
+      const finalUsername = finalAuth ? JSON.parse(finalAuth)?.user?.username : null;
+      if (!finalUsername) {
+        console.warn('Could not determine Pi username for subscription activation');
+        return;
+      }
+
+      // Lookup profile by username
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .eq('username', finalUsername)
+        .maybeSingle();
+      if (!profile?.id) {
+        console.warn('Profile not found for username:', finalUsername);
+        return;
+      }
+
+      const { plan, billing } = parsePlanAndBilling(paymentLink.description || paymentLink.memo);
+      const now = new Date();
+      const end = new Date(now);
+      if (billing === 'yearly') end.setDate(end.getDate() + 365);
+      else end.setDate(end.getDate() + 30);
+
+      const insertPayload: any = {
+        profile_id: profile.id,
+        plan_type: plan,
+        billing_period: billing,
+        start_date: now.toISOString(),
+        end_date: end.toISOString(),
+        status: 'active',
+        pi_amount: paymentLink.amount,
+        auto_renew: false,
+        txid,
+      };
+
+      const { error: insertError } = await supabase
+        .from('subscriptions')
+        .insert(insertPayload);
+      if (insertError) {
+        console.error('Failed to activate subscription:', insertError);
+      } else {
+        // Mark as activated to avoid duplicate inserts
+        setActivated(true);
+      }
+    } catch (e) {
+      console.error('Activate subscription error:', e);
+    }
+  };
 
   useEffect(() => {
     if (linkId) {
@@ -70,6 +145,10 @@ const PaymentPage: React.FC = () => {
       // Payment completed successfully
       setPaymentStatus('completed');
       setTransactionHash(txid);
+      // Activate subscription when applicable (run once)
+      if (!activated) {
+        activateSubscription(txid);
+      }
       
       // Redirect to dashboard after 3 seconds to show results of subscription unlock
       const timer = setTimeout(() => {
