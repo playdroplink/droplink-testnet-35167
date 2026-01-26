@@ -1634,6 +1634,41 @@ const Dashboard = () => {
                   </TabsTrigger>
                 </TabsList>
 
+                {/* Setup & Quick Links Section */}
+                <div className="mb-8 p-4 sm:p-6 bg-gradient-to-r from-sky-50 to-blue-50 dark:from-sky-950/30 dark:to-blue-950/30 rounded-xl border border-sky-200/50 dark:border-sky-800/50">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Get Started</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <button 
+                      onClick={() => document.getElementById('dashboard-builder')?.scrollIntoView({ behavior: 'smooth' })}
+                      className="flex flex-col items-center gap-2 p-3 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
+                    >
+                      <Palette className="w-5 h-5 text-sky-600" />
+                      <span className="text-xs font-medium text-center text-slate-900 dark:text-white">Customize</span>
+                    </button>
+                    <button 
+                      onClick={handleShowQRCode}
+                      className="flex flex-col items-center gap-2 p-3 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
+                    >
+                      <QrCode className="w-5 h-5 text-sky-600" />
+                      <span className="text-xs font-medium text-center text-slate-900 dark:text-white">QR Code</span>
+                    </button>
+                    <button 
+                      onClick={handleCopyLink}
+                      className="flex flex-col items-center gap-2 p-3 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
+                    >
+                      <Share2 className="w-5 h-5 text-sky-600" />
+                      <span className="text-xs font-medium text-center text-slate-900 dark:text-white">Share</span>
+                    </button>
+                    <button 
+                      onClick={() => navigate('/subscription')}
+                      className="flex flex-col items-center gap-2 p-3 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
+                    >
+                      <Crown className="w-5 h-5 text-sky-600" />
+                      <span className="text-xs font-medium text-center text-slate-900 dark:text-white">Upgrade</span>
+                    </button>
+                  </div>
+                </div>
+
                 {/* Merchant Tab */}
                 <TabsContent value="merchant" className="pb-6 sm:pb-8">
                   <div className="max-w-lg mx-auto mt-8 sm:mt-12 p-4 sm:p-6 bg-white dark:bg-slate-900 rounded-xl shadow border border-slate-200/70 dark:border-slate-800/70 text-center space-y-3">

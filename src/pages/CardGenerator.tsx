@@ -572,10 +572,10 @@ export default function CardGenerator() {
 
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2 text-slate-900">
+          <h1 className="text-4xl font-bold mb-2 text-white">
             Virtual Card Generator
           </h1>
-          <p className="text-slate-700">
+          <p className="text-white/90">
             Create your personalized Droplink card with QR code
           </p>
         </div>
