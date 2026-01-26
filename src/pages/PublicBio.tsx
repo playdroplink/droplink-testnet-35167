@@ -63,6 +63,7 @@ import {
 } from "react-icons/si";
 
 import type { ProfileData } from "@/types/profile";
+import { BioTemplate, DEFAULT_TEMPLATE } from "@/config/bioTemplates";
 
 const PREFERENCES_STORAGE_KEY = 'droplink_user_preferences';
 
@@ -101,6 +102,7 @@ const PublicBio = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [piAdsOpen, setPiAdsOpen] = useState(false);
   const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
+  const [bioTemplate, setBioTemplate] = useState<BioTemplate>(DEFAULT_TEMPLATE);
   const [followerCount, setFollowerCount] = useState(0);
   const [visitCount, setVisitCount] = useState(0);
   const [message, setMessage] = useState("");
@@ -682,6 +684,10 @@ const PublicBio = () => {
         card_accent_color: (profileData as any).card_accent_color || "#fafafa",
         isVerified: (profileData as any).is_verified || hasActiveSubscription || isSpecialVerified,
       };
+      
+      // Load template preference
+      const themeSettings = (profileData as any).theme_settings || {};
+      setBioTemplate((themeSettings.bioTemplate as BioTemplate) || DEFAULT_TEMPLATE);
       
       console.log('Setting profile with backgroundMusicUrl:', profileObj.backgroundMusicUrl);
       setProfile(profileObj);

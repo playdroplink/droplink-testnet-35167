@@ -46,6 +46,8 @@ import { PiAuthTest } from "@/components/PiAuthTest";
 import { AccountDeletion } from "@/components/AccountDeletion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ComingSoonModal } from "@/components/ComingSoonModal";
+import { TemplateSelector } from "@/components/TemplateSelector";
+import { BioTemplate, DEFAULT_TEMPLATE } from "@/config/bioTemplates";
 import {
   Drawer,
   DrawerClose,
@@ -233,6 +235,8 @@ const Dashboard = () => {
   
   const isMobile = useIsMobile();
   const [showPreview, setShowPreview] = useState(!preferences.dashboard_layout.sidebarCollapsed);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [bioTemplate, setBioTemplate] = useState<BioTemplate>(DEFAULT_TEMPLATE);
   const [showQRCode, setShowQRCode] = useState(false);
   const [piWalletQrData, setPiWalletQrData] = useState<string>("");
   const [showPiWalletQR, setShowPiWalletQR] = useState(false);
@@ -243,6 +247,21 @@ const Dashboard = () => {
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [showDropStoreModal, setShowDropStoreModal] = useState(false);
   const [showDropPayModal, setShowDropPayModal] = useState(false);
+
+  // Manual save function
+  const handleManualSave = async () => {
+    setSaveStatus('saving');
+    try {
+      await autoSave.save();
+      setSaveStatus('saved');
+      toast.success('Profile saved successfully!');
+      // Reset to idle after 2 seconds
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (error) {
+      setSaveStatus('idle');
+      toast.error('Failed to save profile');
+    }
+  };
 
   // Check for Supabase session on mount
   useEffect(() => {
@@ -355,6 +374,7 @@ const Dashboard = () => {
               glassMode: data.theme?.glassMode ?? false,
               customLinks: data.customLinks || [],
               imageLinkCards: data.imageLinkCards || [],
+              bioTemplate: bioTemplate,
               paymentLinks: (data.paymentLinks || []).map(link => ({
                 id: link.id,
                 amount: link.amount,
@@ -878,6 +898,12 @@ const Dashboard = () => {
             glassMode: themeSettings?.glassMode ?? false,
             coverImage: themeSettings?.coverImage || "",
           },
+        };
+        // Set template from saved data
+        setBioTemplate((themeSettings?.bioTemplate as BioTemplate) || DEFAULT_TEMPLATE);
+        
+        const profileDataToReturn: ProfileData = {
+          ...profileDataFromDb,
           products: productsData?.map((p: any) => ({
             id: p.id,
             title: p.title,
@@ -1793,6 +1819,10 @@ const Dashboard = () => {
                     <Palette className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                     <span className="hidden sm:inline">Design</span>
                   </TabsTrigger>
+                  <TabsTrigger value="templates" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
+                    <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    <span className="hidden sm:inline">Templates</span>
+                  </TabsTrigger>
                   <TabsTrigger value="analytics" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
                     <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                     <span className="hidden sm:inline">Analytics</span>
@@ -1925,8 +1955,44 @@ const Dashboard = () => {
 
                 {/* Profile Tab */}
                 <TabsContent value="profile" className="space-y-6 sm:space-y-8 max-w-xl w-full mx-auto">
-                {/* Floating Preview Button - Mobile & Tablet */}
-                <div className="lg:hidden sticky top-16 z-20 mb-2 flex gap-2 justify-end">
+                {/* Floating Action Bar - Mobile & Tablet */}
+                <div className="lg:hidden sticky top-16 z-20 mb-4 flex gap-2 justify-end items-center flex-wrap">
+                  {/* Save Status Indicator */}
+                  {saveStatus !== 'idle' && (
+                    <div className={`text-xs font-medium px-3 py-2 rounded-full flex items-center gap-1.5 transition-all duration-300 ${
+                      saveStatus === 'saving' 
+                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' 
+                        : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                    }`}>
+                      {saveStatus === 'saving' ? (
+                        <>
+                          <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></div>
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span>Saved</span>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Save Button */}
+                  <button
+                    onClick={handleManualSave}
+                    disabled={saveStatus === 'saving'}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-400 text-white font-medium text-sm shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95 backdrop-blur-sm border border-emerald-400/50 disabled:opacity-75 disabled:cursor-not-allowed"
+                  >
+                    <svg className={`w-4 h-4 ${saveStatus === 'saving' ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>{saveStatus === 'saving' ? 'Saving' : 'Save'}</span>
+                  </button>
+                  
+                  {/* Preview Toggle Button */}
                   <button
                     onClick={() => setShowPreview(!showPreview)}
                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-sky-500 hover:bg-sky-600 text-white font-medium text-sm shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95 backdrop-blur-sm border border-sky-400/50"
@@ -2804,6 +2870,14 @@ const Dashboard = () => {
                     </>
                   )}
                 </PlanGate>
+              </TabsContent>
+
+              {/* Templates Tab */}
+              <TabsContent value="templates" className="space-y-6 sm:space-y-8 pb-6 sm:pb-8">
+                <TemplateSelector
+                  selectedTemplate={bioTemplate}
+                  onTemplateChange={(template) => setBioTemplate(template)}
+                />
               </TabsContent>
 
               {/* Analytics Tab - locked for Free plan */}
