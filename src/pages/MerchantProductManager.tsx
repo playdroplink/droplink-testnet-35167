@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { Eye, Trash2, Edit2, TrendingUp } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 interface Product {
   id: string;
@@ -147,14 +148,14 @@ const MerchantProductManager: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-sky-400 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-slate-900 mb-2">Product Dashboard</h1>
-            <p className="text-slate-600">Create and manage your digital products</p>
-          </div>
+    <>
+      <PageHeader 
+        title="Product Manager" 
+        description="Create and manage your digital products"
+        icon={<TrendingUp />}
+      />
+      <div className="min-h-screen bg-sky-400 p-6 pb-24">
+        <div className="max-w-7xl mx-auto">
           <Link to="/sales-earnings">
             <Button className="bg-green-600 hover:bg-green-700 flex items-center gap-2">
               <TrendingUp size={18} />
@@ -267,7 +268,7 @@ const MerchantProductManager: React.FC = () => {
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

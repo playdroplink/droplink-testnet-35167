@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Check, Gift, AlertTriangle, CreditCard } from "lucide-react";
+import { Check, Gift, AlertTriangle, CreditCard, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
@@ -13,6 +13,7 @@ import { useRealPiPayment } from "@/hooks/useRealPiPayment";
 import { useSubscriptionPayment } from "@/hooks/useSubscriptionPayment";
 import { validateMainnetConfig } from "@/config/pi-config";
 import { GiftCardModal } from "@/components/GiftCardModal";
+import { PageHeader } from "@/components/PageHeader";
 import { createDroppayPaymentViaApi } from "@/lib/droppay";
 
 interface Plan {
@@ -732,19 +733,24 @@ const Subscription = () => {
   };
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-8 pb-24">
-      <div className="mb-6 flex items-center justify-between">
-        <Button variant="outline" onClick={() => navigate('/')}> ← Back to Dashboard</Button>
-        <Button
-          type="button"
-          variant="outline"
-          className="gap-2 border-pink-500 text-pink-600 hover:bg-pink-50"
-          onClick={() => setShowGiftCardModal(true)}
-        >
-          <Gift className="w-4 h-4" />
-          Gift Cards
-        </Button>
-      </div>
+    <div>
+      <PageHeader 
+        title="Subscriptions" 
+        description="Choose your plan"
+        icon={<Zap className="w-6 h-6" />}
+      />
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-8 pb-24">
+        <div className="mb-6 flex items-center justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2 border-pink-500 text-pink-600 hover:bg-pink-50"
+            onClick={() => setShowGiftCardModal(true)}
+          >
+            <Gift className="w-4 h-4" />
+            Gift Cards
+          </Button>
+        </div>
       {/* Pi Auth Sign In Button */}
       {!piUser && (
         <div className="flex justify-center mb-8">
@@ -773,9 +779,9 @@ const Subscription = () => {
               </span>
             </div>
           </div>
-          <div className="mt-4 p-4 bg-sky-400 border-2 border-sky-600 rounded-lg max-w-2xl mx-auto">
-            <p className="text-sm font-semibold text-white mb-1">⚠️ REAL Pi Network Payments</p>
-            <p className="text-xs text-white">All prices are in Pi (π) - Real Pi Network cryptocurrency. These are MAINNET transactions, not test payments. You will be charged actual Pi coins from your Pi wallet.</p>
+          <div className="mt-4 p-4 bg-white/95 backdrop-blur-sm border-2 border-sky-500 rounded-xl shadow-lg max-w-2xl mx-auto">
+            <p className="text-sm font-semibold text-sky-700 mb-1">⚠️ REAL Pi Network Payments</p>
+            <p className="text-xs text-slate-700">All prices are in Pi (π) - Real Pi Network cryptocurrency. These are MAINNET transactions, not test payments. You will be charged actual Pi coins from your Pi wallet.</p>
           </div>
         </div>
 
@@ -994,6 +1000,7 @@ const Subscription = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 };

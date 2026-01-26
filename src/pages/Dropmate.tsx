@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePi } from "@/contexts/PiContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MessageSquare } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 interface Message {
   id: string;
@@ -63,7 +65,13 @@ const Dropmate = () => {
   };
 
   return (
-    <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 max-w-4xl mx-auto pb-24">
+    <>
+      <PageHeader 
+        title="Dropmate" 
+        description="View your chat history"
+        icon={<MessageSquare />}
+      />
+      <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 max-w-4xl mx-auto pb-24">
       <Card>
         <CardHeader>
           <CardTitle>Messages & Chat History</CardTitle>
@@ -96,7 +104,8 @@ const Dropmate = () => {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </>
   );
 };
 

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Store } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import type { ProductItem, CartItem, Order } from "@/types/profile";
 
 const MerchantStorePreview: React.FC = () => {
@@ -128,10 +130,16 @@ const MerchantStorePreview: React.FC = () => {
   }
   
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-start p-4 md:p-8"
-      style={{ background: store.backgroundColor, color: store.textColor }}
-    >
+    <>
+      <PageHeader 
+        title="Store Preview" 
+        description="View merchant storefront"
+        icon={<Store />}
+      />
+      <div
+        className="min-h-screen flex flex-col items-center justify-start p-4 md:p-8 pb-24"
+        style={{ background: store.backgroundColor, color: store.textColor }}
+      >
       <div className="w-full max-w-4xl bg-white/80 rounded-xl shadow-lg p-6 mb-8">
         {username && (
           <div className="flex justify-end mb-4">
@@ -216,7 +224,8 @@ const MerchantStorePreview: React.FC = () => {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

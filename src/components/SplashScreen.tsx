@@ -70,11 +70,11 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
-            className="text-center"
+            className="text-center flex flex-col items-center"
           >
             {/* Logo */}
             <motion.div
-              className="mx-auto mb-6 h-24 w-24 rounded-xl bg-white p-4 shadow-lg relative"
+              className="mb-6 h-24 w-24 rounded-xl bg-white p-4 shadow-lg relative flex items-center justify-center"
               initial={{ scale: 0.8, rotate: -5 }}
               animate={{ 
                 scale: [0.8, 1.05, 1],

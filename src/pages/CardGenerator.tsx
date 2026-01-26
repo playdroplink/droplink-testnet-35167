@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { VirtualCard } from "@/components/VirtualCard";
-import { Download, Printer, RefreshCw, Palette, Share2, Link, AlertCircle, Eye, X } from "lucide-react";
+import { Download, Printer, RefreshCw, Palette, Share2, Link, AlertCircle, Eye, X, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import html2canvas from "html2canvas";
@@ -12,6 +12,7 @@ import jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
 import { Button as UIButton } from "@/components/ui/button";
 import { usePi } from "@/contexts/PiContext";
+import { PageHeader } from "@/components/PageHeader";
 import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 
 export default function CardGenerator() {
@@ -546,7 +547,13 @@ export default function CardGenerator() {
   };
 
   return (
-    <div className="min-h-screen bg-sky-400 py-3 sm:py-4 md:py-8 px-3 sm:px-4">
+    <div>
+      <PageHeader 
+        title="Card Generator" 
+        description="Create your virtual business card"
+        icon={<CreditCard className="w-6 h-6" />}
+      />
+      <div className="min-h-screen bg-sky-400 py-3 sm:py-4 md:py-8 px-3 sm:px-4">
       {/* View Card Only Mode */}
       {viewCardOnly && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
@@ -990,6 +997,7 @@ export default function CardGenerator() {
           }
         }
       `}</style>
+      </div>
     </div>
   );
 }

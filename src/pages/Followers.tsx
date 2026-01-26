@@ -3,9 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, UserCheck, UserPlus, ExternalLink, ArrowLeft } from "lucide-react";
+import { Users, UserCheck, UserPlus, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/PageHeader";
 
 interface FollowerProfile {
   id: string;
@@ -257,21 +258,13 @@ const Followers = () => {
 
   return (
     <div>
+      <PageHeader 
+        title="Community" 
+        description="Manage your followers and following"
+        icon={<Users className="w-6 h-6" />}
+      />
       <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 max-w-4xl pb-24">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="mb-4"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
         <div className="p-3 sm:p-4 md:p-6 rounded-3xl bg-card border border-border">
-          <div className="flex items-center gap-2 mb-6">
-            <Users className="w-6 h-6 text-foreground" />
-            <h2 className="text-2xl font-bold text-foreground">Community</h2>
-          </div>
-          
           <Tabs defaultValue="followers" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="followers">

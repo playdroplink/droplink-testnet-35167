@@ -1,9 +1,17 @@
 
 import React from "react";
+import { Wrench } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 const MerchantStoreSetup: React.FC = () => {
   return (
-    <div className="min-h-screen dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-4 relative overflow-hidden">
+    <>
+      <PageHeader 
+        title="Store Setup" 
+        description="Configure your merchant store (coming soon)"
+        icon={<Wrench />}
+      />
+      <div className="min-h-screen dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-4 relative overflow-hidden pb-24">
       {/* Background decorative elements - Light Mode */}
       <div className="dark:hidden absolute top-0 left-10 w-96 h-96 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
       <div className="dark:hidden absolute top-40 right-10 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
@@ -60,7 +68,8 @@ const MerchantStoreSetup: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

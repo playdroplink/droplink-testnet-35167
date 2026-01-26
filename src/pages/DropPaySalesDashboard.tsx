@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePi } from "@/contexts/PiContext";
 import { supabase } from "@/integrations/supabase/client";
+import { TrendingUp } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 interface Sale {
   id: string;
@@ -73,7 +75,13 @@ export default function DropPaySalesDashboard() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-8">
+    <>
+      <PageHeader 
+        title="Sales & Balance" 
+        description="View your DropPay sales"
+        icon={<TrendingUp />}
+      />
+      <div className="max-w-2xl mx-auto py-8 px-3 sm:px-4 md:px-6 pb-24">
       <Card>
         <CardHeader>
           <CardTitle>DropPay Sales & Balance</CardTitle>
@@ -97,6 +105,7 @@ export default function DropPaySalesDashboard() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </>
   );
 }

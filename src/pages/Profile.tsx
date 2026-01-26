@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { usePi } from "@/contexts/PiContext";
+import { User } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import type { ProfileData, ThemeData, CustomLink, SocialLinks, Product, PaymentLink, ShortenedLink } from "@/types/profile";
 
 const Profile = () => {
@@ -209,11 +211,18 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-sky-400 flex flex-col items-center justify-center">
+    <>
+      <PageHeader 
+        title="Profile" 
+        description="Edit your profile and settings"
+        icon={<User />}
+      />
+      <div className="min-h-screen bg-sky-400 flex flex-col items-center justify-center pb-24">
       <div className="py-8">
         <PhonePreview profile={profileData} />
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

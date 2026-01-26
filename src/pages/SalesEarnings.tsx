@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { DollarSign, TrendingUp, Download, Wallet, Eye } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 interface Sale {
   id: string;
@@ -243,15 +244,14 @@ const SalesEarnings: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-sky-400 px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 pb-24">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-slate-900 mb-2">Sales & Earnings</h1>
-            <p className="text-slate-600">Track your revenue and manage withdrawals</p>
-          </div>
-        </div>
+    <>
+      <PageHeader 
+        title="Sales & Earnings" 
+        description="Track your revenue and manage withdrawals"
+        icon={<DollarSign />}
+      />
+      <div className="min-h-screen bg-sky-400 px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 pb-24">
+        <div className="max-w-7xl mx-auto">
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -442,7 +442,8 @@ const SalesEarnings: React.FC = () => {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

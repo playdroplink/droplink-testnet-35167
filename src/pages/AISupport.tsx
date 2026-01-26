@@ -8,10 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { ArrowLeft, Bot, Sparkles } from "lucide-react";
+import { Bot, Sparkles } from "lucide-react";
 import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 import { PlanGate } from "@/components/PlanGate";
 import { usePi } from "@/contexts/PiContext";
+import { PageHeader } from "@/components/PageHeader";
 
 const STORAGE_KEY = 'droplink_ai_config';
 
@@ -89,20 +90,15 @@ const AISupport = () => {
 
   return (
     <PlanGate minPlan="pro" featureName="AI Support">
+      <PageHeader 
+        title="AI Support" 
+        description="Configure AI chat assistant"
+        icon={<Bot className="w-6 h-6" />}
+      />
       <div className="min-h-screen bg-sky-400 p-3 sm:p-4 md:p-6 pb-24">
         <div className="max-w-4xl mx-auto">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            className="mb-4 sm:mb-6"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-
           <div className="flex items-center gap-3 mb-4 sm:mb-6">
-            <Bot className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl sm:text-3xl font-bold">AI Support Configuration</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">Configuration</h1>
           </div>
 
           <Card className="p-4 sm:p-6 space-y-6">

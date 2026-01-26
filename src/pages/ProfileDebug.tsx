@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, AlertCircle, Database, Users, Eye } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 interface DebugInfo {
   tablesExist: boolean;
@@ -141,8 +142,14 @@ const ProfileDebug = () => {
   }
 
   return (
-    <div className="space-y-4">
-      <Card>
+    <>
+      <PageHeader 
+        title="Profile Debug" 
+        description="Database and profile information"
+        icon={<Database />}
+      />
+      <div className="space-y-4 px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 pb-24">
+        <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Database className="w-5 h-5" />
@@ -269,7 +276,8 @@ const ProfileDebug = () => {
           </Tabs>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </>
   );
 };
 

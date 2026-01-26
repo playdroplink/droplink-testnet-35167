@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { usePi } from "@/contexts/PiContext";
 import { toast } from "sonner";
+import { Package } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 export default function CreateDropProduct() {
   const { piUser } = usePi();
@@ -67,7 +69,13 @@ export default function CreateDropProduct() {
   };
 
   return (
-    <div className="max-w-xl mx-auto py-8">
+    <>
+      <PageHeader 
+        title="Create Product" 
+        description="Create a new DropPay product"
+        icon={<Package />}
+      />
+      <div className="max-w-xl mx-auto py-8 px-3 sm:px-4 md:px-6 pb-24">
       <Card>
         <CardHeader>
           <CardTitle>Create a Product (DropPay)</CardTitle>
@@ -88,6 +96,7 @@ export default function CreateDropProduct() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </>
   );
 }

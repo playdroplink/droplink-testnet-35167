@@ -11,6 +11,7 @@ import droplinkLogo from "@/assets/droplink-logo.png";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { uploadProfileLogo, uploadAvatar, uploadBackground, deleteFile, STORAGE_BUCKETS } from "@/lib/supabase-storage";
+import { PageHeader } from "@/components/PageHeader";
 
 const AdminMrwain = () => {
   const navigate = useNavigate();
@@ -1150,8 +1151,14 @@ const AdminMrwain = () => {
 
   // Authentication form
   return (
-    <div className="min-h-screen bg-sky-400 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <>
+      <PageHeader 
+        title="Admin" 
+        description="Administrator panel"
+        icon={<Shield />}
+      />
+      <div className="min-h-screen bg-sky-400 flex items-center justify-center p-4 pb-24">
+        <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <img
@@ -1256,7 +1263,8 @@ const AdminMrwain = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </>
   );
 };
 

@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { usePi } from "@/contexts/PiContext";
 import { DropTokenManager } from "@/components/DropTokenManager";
+import { PageHeader } from "@/components/PageHeader";
 import { PI_CONFIG } from '@/config/pi-config';
 
 interface Transaction {
@@ -183,9 +184,15 @@ const Wallet = () => {
 
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 max-w-4xl pb-24\">
-      {/* Header Card with Gradient Background */}
-      <Card className="mb-6 border-0 shadow-lg" style={{ background: DROP_TOKEN.colors.background }}>
+    <div>
+      <PageHeader 
+        title="Wallet" 
+        description="Manage your DROP tokens and gifts"
+        icon={<WalletIcon className="w-6 h-6" />}
+      />
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 max-w-4xl pb-24">
+        {/* Header Card with Gradient Background */}
+        <Card className="mb-6 border-0 shadow-lg" style={{ background: DROP_TOKEN.colors.background }}>
         <CardHeader className="text-center">
           <CardTitle className="flex items-center justify-center gap-2 text-foreground text-2xl">
             <Droplets className="w-8 h-8 text-foreground" />
@@ -473,6 +480,7 @@ const Wallet = () => {
         <Button variant="outline" onClick={() => navigate("/")}>
           Back to Dashboard
         </Button>
+      </div>
       </div>
     </div>
   );

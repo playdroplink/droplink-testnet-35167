@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, Globe, AlertCircle, Info } from "lucide-react";
+import { Globe, AlertCircle, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePi } from "@/contexts/PiContext";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/PageHeader";
 import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 
 const CustomDomain = () => {
@@ -105,17 +106,13 @@ const CustomDomain = () => {
 
   return (
     <div className="min-h-screen bg-sky-400">
-      <header className="border-b border-border px-3 sm:px-4 md:px-6 py-3 sm:py-4\">
-        <div className="max-w-4xl mx-auto flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          <h1 className="text-lg sm:text-xl font-semibold\">Custom Domain</h1>
-        </div>
-      </header>
+      <PageHeader 
+        title="Custom Domain" 
+        description="Set your own domain"
+        icon={<Globe className="w-6 h-6" />}
+      />
 
-      <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-8 space-y-4 pb-24\">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-8 space-y-4 pb-24">
         {!isPremiumPlan && (
           <Alert className="border-primary/40 bg-primary/5">
             <AlertCircle className="h-4 w-4 text-primary" />

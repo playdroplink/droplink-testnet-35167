@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import StoreCustomizer from "../components/StoreCustomizer";
 import ProductCategoryManager from "../components/ProductCategoryManager";
 import ThemeCustomizer from "../components/ThemeCustomizer";
+import { PageHeader } from "@/components/PageHeader";
+import { Store } from "lucide-react";
 
 const getStoreUrl = () => {
   if (typeof window === "undefined") return "";
@@ -68,7 +70,13 @@ const StoreFront: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen relative" style={{ background: !useVideoBg ? theme.background : undefined }}>
+    <>
+      <PageHeader 
+        title="StoreFront" 
+        description="Manage your digital storefront"
+        icon={<Store />}
+      />
+      <div className="min-h-screen relative" style={{ background: !useVideoBg ? theme.background : undefined }}>
       {/* MP4 Video Background */}
       {useVideoBg && videoUrl && (
         <video
@@ -287,7 +295,8 @@ const StoreFront: React.FC = () => {
             </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

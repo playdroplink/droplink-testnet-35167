@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { ShoppingCart } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 interface PaymentRow {
   id?: string;
@@ -79,7 +81,13 @@ const Purchases: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 space-y-4 pb-24">
+    <>
+      <PageHeader 
+        title="Purchases" 
+        description="View your purchase history"
+        icon={<ShoppingCart />}
+      />
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 space-y-4 pb-24">
       <Card>
         <CardHeader>
           <CardTitle>Your Purchases</CardTitle>
@@ -128,7 +136,8 @@ const Purchases: React.FC = () => {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </>
   );
 };
 

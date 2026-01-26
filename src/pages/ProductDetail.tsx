@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PurchaseButton } from "@/components/PurchaseButton";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 interface Product {
   id: string;
@@ -111,17 +112,14 @@ const ProductDetail: React.FC = () => {
   const price = parseFloat(product.price || "0");
 
   return (
-    <div className="min-h-screen bg-sky-400 px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 pb-24">
-      <Button
-        variant="ghost"
-        className="mb-6"
-        onClick={() => navigate(-1)}
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back
-      </Button>
-
-      <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+    <>
+      <PageHeader 
+        title="Product Details" 
+        description="View product information"
+        icon={<ShoppingBag />}
+      />
+      <div className="min-h-screen bg-sky-400 px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 pb-24">
+        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Product Image */}
         <div>
           {product.image_url ? (
@@ -197,8 +195,9 @@ const ProductDetail: React.FC = () => {
             <p>Created: {new Date(product.created_at).toLocaleDateString()}</p>
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

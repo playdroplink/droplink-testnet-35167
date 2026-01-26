@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Send, Image as ImageIcon, Loader2, X } from 'lucide-react';
+import { Send, Image as ImageIcon, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { uploadMessageImage } from '@/lib/supabase-storage';
+import { PageHeader } from '@/components/PageHeader';
 
 interface Message {
   id: string;
@@ -262,7 +263,13 @@ export default function ChatPage() {
 
 
   return (
-    <div className="min-h-screen bg-sky-400 flex flex-col relative">
+    <>
+      <PageHeader 
+        title="Chat" 
+        description="Send and receive messages"
+        icon={<Send />}
+      />
+      <div className="min-h-screen bg-sky-400 flex flex-col relative pb-24">
       {/* Background decorative elements - Light Mode */}
       <div className="dark:hidden absolute top-0 left-10 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob\"></div>
       <div className="dark:hidden absolute bottom-0 right-10 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000\"></div>
@@ -417,6 +424,7 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
