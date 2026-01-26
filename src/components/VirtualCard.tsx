@@ -119,7 +119,7 @@ export const VirtualCard = ({
 
         {/* Back Side */}
         <Card
-          className="absolute inset-0 backface-hidden rounded-2xl shadow-2xl p-6 flex flex-col justify-between overflow-hidden rotate-y-180"
+          className="absolute inset-0 backface-hidden rounded-2xl shadow-2xl p-6 flex flex-col justify-between overflow-hidden"
           style={{
             backgroundColor: backColor,
             color: textColor,

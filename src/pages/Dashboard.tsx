@@ -1833,10 +1833,10 @@ const Dashboard = () => {
               
 
               {/* Logo Upload, AI Logo, and Random Avatar Generator */}
-              <div className="mb-6 flex flex-col gap-4">
+              <div className="mb-6 flex flex-col gap-4 w-full">
                 <div>
                   <Label className="mb-3 block text-sm text-gray-900 dark:text-white">Business logo</Label>
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                  <div className="flex flex-col gap-3 sm:gap-4 w-full">
                     <div
                       className={
                         `w-20 h-20 flex-shrink-0 bg-card border border-border flex items-center justify-center overflow-hidden ` +
@@ -1853,10 +1853,10 @@ const Dashboard = () => {
                         <Upload className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
                       )}
                     </div>
-                    <div className="flex flex-col gap-2 w-full sm:w-auto">
-                      <div className="flex gap-2 flex-col sm:flex-row">
+                    <div className="flex flex-col gap-2 w-full">
+                      <div className="flex gap-2 flex-col w-full">
                         <label htmlFor="logo-upload">
-                          <Button variant="secondary" size="sm" asChild className="w-full sm:w-auto">
+                          <Button variant="secondary" size="sm" asChild className="w-full">
                             <span>{profile.logo ? "Change" : "Upload"}</span>
                           </Button>
                           <input
@@ -1872,7 +1872,7 @@ const Dashboard = () => {
                             variant="outline" 
                             size="sm"
                             onClick={() => setProfile({ ...profile, logo: "" })}
-                            className="w-full sm:w-auto"
+                            className="w-full"
                           >
                             Remove
                           </Button>
@@ -1880,7 +1880,7 @@ const Dashboard = () => {
                       </div>
                       {/* AI Logo Generation */}
                       <div className="flex flex-col gap-2">
-                        <div className="flex gap-2 flex-col sm:flex-row">
+                        <div className="flex gap-2 flex-col w-full">
                           <input
                             type="text"
                             placeholder="Describe your logo..."
@@ -1915,7 +1915,7 @@ const Dashboard = () => {
                               }
                             }}
                             disabled={aiLogoLoading || !aiLogoPrompt}
-                            className="w-full sm:w-auto"
+                            className="w-full"
                           >
                             {aiLogoLoading ? "Generating..." : "AI"}
                           </Button>
@@ -1923,7 +1923,7 @@ const Dashboard = () => {
                         <div className="text-xs text-muted-foreground">Generate a logo using AI</div>
                       </div>
                       {/* Logo Style Selector */}
-                      <div className="flex gap-2 items-center flex-wrap">
+                      <div className="flex gap-2 items-center flex-wrap w-full">
                         <Label htmlFor="logo-style" className="text-xs whitespace-nowrap">Logo style:</Label>
                         <select
                           id="logo-style"
@@ -1935,7 +1935,7 @@ const Dashboard = () => {
                               iconStyle: e.target.value as 'rounded' | 'square' | 'circle',
                             },
                           })}
-                          className="border rounded px-2 py-1 text-xs flex-1 sm:flex-initial"
+                          className="border rounded px-2 py-1 text-xs flex-1"
                         >
                           <option value="rounded">Rounded</option>
                           <option value="square">Square</option>
@@ -1989,10 +1989,9 @@ const Dashboard = () => {
               {/* Store URL */}
               <div className="mb-6">
                 <Label htmlFor="store-url" className="mb-2 sm:mb-3 block text-sm text-gray-900 dark:text-white">Store URL (Username)</Label>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-0">
-                  <span className="text-muted-foreground text-xs sm:text-sm hidden sm:inline whitespace-nowrap">{window.location.origin}/</span>
-                  <div className="flex items-center gap-2 w-full sm:flex-1">
-                    <span className="text-muted-foreground text-xs sm:hidden">{window.location.origin}/</span>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2 w-full">
+                    <span className="text-muted-foreground text-xs truncate">{window.location.origin}/</span>
                     <Input
                       id="store-url"
                       value={profile.storeUrl}
