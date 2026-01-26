@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 // User Preferences Types - stored in localStorage only
 export interface DashboardLayout {
@@ -129,13 +130,44 @@ const UserPreferencesContext = createContext<UserPreferencesContextType | undefi
 
 const STORAGE_KEY = 'droplink_user_preferences';
 
+const mergeWithDefaults = (partial: Partial<UserPreferences>): UserPreferences => ({
+  ...defaultPreferences,
+  ...partial,
+  dashboard_layout: {
+    ...defaultPreferences.dashboard_layout,
+    ...(partial.dashboard_layout || {})
+  },
+  store_settings: {
+    ...defaultPreferences.store_settings,
+    ...(partial.store_settings || {})
+  },
+  social_settings: {
+    ...defaultPreferences.social_settings,
+    ...(partial.social_settings || {})
+  },
+  content_settings: {
+    ...defaultPreferences.content_settings,
+    ...(partial.content_settings || {})
+  },
+  privacy_settings: {
+    ...defaultPreferences.privacy_settings,
+    ...(partial.privacy_settings || {})
+  },
+  notification_settings: {
+    ...defaultPreferences.notification_settings,
+    ...(partial.notification_settings || {})
+  }
+});
+
 export const UserPreferencesProvider = ({ children }: { children: ReactNode }) => {
   const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);
   const [loading, setLoading] = useState(true);
+  const [authUserId, setAuthUserId] = useState<string | null>(null);
+  const [profileId, setProfileId] = useState<string | null>(null);
 
   // Load preferences from localStorage on mount
   useEffect(() => {
-    loadPreferences();
+    hydratePreferences();
   }, []);
 
   // Save preferences to localStorage when they change
@@ -153,21 +185,102 @@ export const UserPreferencesProvider = ({ children }: { children: ReactNode }) =
     root.classList.add('light');
   }, []);
 
-  const loadPreferences = () => {
+  const hydratePreferences = async () => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setPreferences({ ...defaultPreferences, ...parsed });
-        console.log('✅ User preferences loaded from localStorage');
-      } else {
-        setPreferences(defaultPreferences);
+      let nextPreferences: UserPreferences = defaultPreferences;
+
+      // Start with any locally cached preferences
+      const cached = localStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        nextPreferences = mergeWithDefaults(JSON.parse(cached));
       }
+
+      // Attempt to load the authenticated user and profile so we can pull remote prefs
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData.user?.id || null;
+      setAuthUserId(userId);
+
+      let resolvedProfileId: string | null = null;
+      if (userId) {
+        const { data: profileRow, error: profileError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error('Error loading profile for preferences:', profileError);
+        }
+        resolvedProfileId = profileRow?.id || null;
+        setProfileId(resolvedProfileId);
+      }
+
+      // Pull remote preferences if available for this profile
+      if (resolvedProfileId) {
+        const { data: remotePrefs, error } = await (supabase as any)
+          .from('user_preferences')
+          .select('theme_mode, primary_color, background_color, store_settings, social_settings, content_settings, privacy_settings, notification_settings')
+          .eq('profile_id', resolvedProfileId)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Failed to load remote preferences:', error);
+        } else if (remotePrefs) {
+          nextPreferences = mergeWithDefaults(remotePrefs as Partial<UserPreferences>);
+        }
+      }
+
+      setPreferences(nextPreferences);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(nextPreferences));
     } catch (error) {
       console.error('Error loading preferences:', error);
       setPreferences(defaultPreferences);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const persistToSupabase = async (next: UserPreferences) => {
+    if (!authUserId) return;
+
+    const payload = {
+      user_id: authUserId,
+      profile_id: profileId,
+      theme_mode: next.theme_mode,
+      primary_color: next.primary_color,
+      background_color: next.background_color,
+      store_settings: next.store_settings,
+      social_settings: next.social_settings,
+      content_settings: next.content_settings,
+      privacy_settings: next.privacy_settings,
+      notification_settings: next.notification_settings
+    };
+
+    try {
+      const { data: existing } = await (supabase as any)
+        .from('user_preferences')
+        .select('id')
+        .eq('user_id', authUserId)
+        .maybeSingle();
+
+      if (existing?.id) {
+        const { error } = await (supabase as any)
+          .from('user_preferences')
+          .update(payload)
+          .eq('id', existing.id);
+        if (error) {
+          console.error('Failed to update preferences in Supabase:', error);
+        }
+      } else {
+        const { error } = await (supabase as any)
+          .from('user_preferences')
+          .insert(payload);
+        if (error) {
+          console.error('Failed to insert preferences in Supabase:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Supabase preference sync error:', error);
     }
   };
 
@@ -180,10 +293,14 @@ export const UserPreferencesProvider = ({ children }: { children: ReactNode }) =
   };
 
   const updatePreference = async <K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) => {
-    setPreferences(prev => ({
-      ...prev,
-      [key]: value
-    }));
+    setPreferences(prev => {
+      const next = {
+        ...prev,
+        [key]: value
+      };
+      void persistToSupabase(next);
+      return next;
+    });
     console.log(`Updated preference: ${String(key)}`);
   };
 
@@ -192,19 +309,24 @@ export const UserPreferencesProvider = ({ children }: { children: ReactNode }) =
     nestedKey: NK, 
     value: UserPreferences[K][NK]
   ) => {
-    setPreferences(prev => ({
-      ...prev,
-      [key]: {
-        ...(prev[key] as any),
-        [nestedKey]: value
-      }
-    }));
+    setPreferences(prev => {
+      const next = {
+        ...prev,
+        [key]: {
+          ...(prev[key] as any),
+          [nestedKey]: value
+        }
+      };
+      void persistToSupabase(next);
+      return next;
+    });
     console.log(`Updated nested preference: ${String(key)}.${String(nestedKey)}`);
   };
 
   const resetToDefaults = async () => {
     setPreferences(defaultPreferences);
     localStorage.removeItem(STORAGE_KEY);
+    await persistToSupabase(defaultPreferences);
     toast.success('Preferences reset to defaults');
   };
 

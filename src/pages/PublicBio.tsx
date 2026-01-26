@@ -24,6 +24,7 @@ import { EmailCaptureDisplay } from "@/components/EmailCaptureDisplay";
 import { ProductDisplay } from "@/components/ProductDisplay";
 import { MembershipGate } from "@/components/MembershipGate";
 import type { UserPreferences } from "@/contexts/UserPreferencesContext";
+import { defaultPreferences } from "@/contexts/UserPreferencesContext";
 import {
   Twitter,
   Music,
@@ -52,6 +53,8 @@ import {
 import { FaInstagram, FaFacebook, FaYoutube, FaGlobe, FaLinkedin, FaTiktok, FaTwitch, FaXTwitter } from "react-icons/fa6";
 
 import type { ProfileData } from "@/types/profile";
+
+const PREFERENCES_STORAGE_KEY = 'droplink_user_preferences';
 
 const PublicBio = () => {
     // ...existing code...
@@ -177,7 +180,6 @@ const PublicBio = () => {
   useEffect(() => {
     loadProfile();
     loadCurrentUserProfile();
-    loadUserPreferences();
     loadVisitorCounts();
     // Fetch profileId for store link
     const fetchProfileId = async () => {
@@ -191,6 +193,12 @@ const PublicBio = () => {
     };
     fetchProfileId();
   }, [username, isPiAuthenticated, piUser]);
+
+  useEffect(() => {
+    if (profileId) {
+      loadUserPreferences(profileId);
+    }
+  }, [profileId]);
 
   useEffect(() => {
     if (profileId && currentUserProfileId) {
@@ -259,20 +267,55 @@ const PublicBio = () => {
     }
   };
 
-  const loadUserPreferences = async () => {
-    // Public bio should respect local preference toggles saved in dashboard
+  const mergePreferences = (incoming: Partial<UserPreferences>): UserPreferences => ({
+    ...defaultPreferences,
+    ...incoming,
+    store_settings: {
+      ...defaultPreferences.store_settings,
+      ...(incoming.store_settings || {})
+    },
+    privacy_settings: {
+      ...defaultPreferences.privacy_settings,
+      ...(incoming.privacy_settings || {})
+    },
+    notification_settings: {
+      ...defaultPreferences.notification_settings,
+      ...(incoming.notification_settings || {})
+    }
+  });
+
+  const loadUserPreferences = async (ownerProfileId?: string) => {
     if (typeof window === 'undefined') return;
     try {
-      const stored = localStorage.getItem('droplink_user_preferences');
+      if (ownerProfileId) {
+        const { data: remotePrefs, error } = await (supabase as any)
+          .from('user_preferences')
+          .select('theme_mode, primary_color, background_color, store_settings, privacy_settings, notification_settings')
+          .eq('profile_id', ownerProfileId)
+          .maybeSingle();
+
+        if (!error && remotePrefs) {
+          const merged = mergePreferences(remotePrefs as Partial<UserPreferences>);
+          setUserPreferences(merged);
+          localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(merged));
+          return;
+        }
+
+        if (error) {
+          console.error('Failed to load remote preferences for public bio:', error);
+        }
+      }
+
+      const stored = localStorage.getItem(PREFERENCES_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        setUserPreferences(parsed);
+        setUserPreferences(mergePreferences(parsed));
       } else {
-        setUserPreferences(null);
+        setUserPreferences(defaultPreferences);
       }
     } catch (error) {
       console.error('Failed to load user preferences:', error);
-      setUserPreferences(null);
+      setUserPreferences(defaultPreferences);
     }
   };
 
@@ -288,9 +331,7 @@ const PublicBio = () => {
         .maybeSingle();
       
       if (profileData) {
-        // Load user preferences for the profile owner
-        await loadUserPreferences();
-        
+        setProfileId(profileData.id);
         // Load follower count
         const followerQuery: any = (supabase as any)
           .from('followers')
@@ -567,6 +608,7 @@ const PublicBio = () => {
         businessName: profileData.business_name || "",
         description: profileData.description || "",
         youtubeVideoUrl: profileData.youtube_video_url || "",
+        backgroundMusicUrl: (profileData as any).background_music_url || "",
         socialLinks: socialLinksArr,
         customLinks: customLinksArr,
         theme: {
@@ -574,8 +616,12 @@ const PublicBio = () => {
           backgroundColor: themeSettingsObj.backgroundColor || "#FFFFFF",
           backgroundType: themeSettingsObj.backgroundType || "color",
           backgroundGif: themeSettingsObj.backgroundGif || "",
+          backgroundVideo: themeSettingsObj.backgroundVideo || "",
           iconStyle: themeSettingsObj.iconStyle || "default",
           buttonStyle: themeSettingsObj.buttonStyle || "default",
+          glassMode: themeSettingsObj.glassMode ?? false,
+          coverImage: themeSettingsObj.coverImage || "",
+          textColor: themeSettingsObj.textColor || undefined,
         },
         wallets: walletsObj,
         hasPremium: profileData.has_premium || false,

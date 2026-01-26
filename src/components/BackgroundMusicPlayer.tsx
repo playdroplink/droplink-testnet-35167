@@ -9,12 +9,60 @@ interface BackgroundMusicPlayerProps {
   className?: string;
 }
 
+type MusicProvider = 'spotify' | 'youtube' | 'audio';
+
+const getMusicProvider = (url?: string): MusicProvider => {
+  if (!url) return 'audio';
+  const lowered = url.toLowerCase();
+  if (lowered.includes('spotify.com')) return 'spotify';
+  if (lowered.includes('youtube.com') || lowered.includes('youtu.be')) return 'youtube';
+  return 'audio';
+};
+
+const buildYouTubeEmbed = (url?: string) => {
+  if (!url) return null;
+  try {
+    const yt = new URL(url);
+    let id = '';
+    if (yt.hostname.includes('youtu.be')) {
+      id = yt.pathname.replace('/', '');
+    } else {
+      id = yt.searchParams.get('v') || '';
+    }
+    return id ? `https://www.youtube.com/embed/${id}?rel=0` : null;
+  } catch (error) {
+    console.error('Failed to parse YouTube URL', error);
+    return null;
+  }
+};
+
+const buildSpotifyEmbed = (url?: string) => {
+  if (!url) return null;
+  try {
+    const sp = new URL(url);
+    // Convert open.spotify.com/track/{id} -> /embed/track/{id}
+    if (sp.hostname.includes('spotify.com')) {
+      const parts = sp.pathname.split('/').filter(Boolean);
+      if (parts.length >= 2) {
+        const type = parts[0];
+        const id = parts[1];
+        return `https://open.spotify.com/embed/${type}/${id}`;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error('Failed to parse Spotify URL', error);
+    return null;
+  }
+};
+
 export const BackgroundMusicPlayer = ({
   musicUrl,
   autoPlay = true,
   loop = true,
   className = ''
 }: BackgroundMusicPlayerProps) => {
+  const provider = getMusicProvider(musicUrl);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.3); // Default to 30% volume
@@ -23,27 +71,21 @@ export const BackgroundMusicPlayer = ({
   const [currentTime, setCurrentTime] = useState(0);
   const [error, setError] = useState(false);
 
-  // Initialize audio element
+  // Initialize audio element for direct audio URLs only
   useEffect(() => {
-    if (!musicUrl || !audioRef.current) return;
+    if (provider !== 'audio' || !musicUrl || !audioRef.current) return;
 
     const audio = audioRef.current;
     audio.src = musicUrl;
     audio.volume = volume;
     audio.loop = loop;
 
-    // Auto-play if specified
     if (autoPlay) {
       const playPromise = audio.play();
       if (playPromise !== undefined) {
         playPromise
-          .then(() => {
-            setIsPlaying(true);
-          })
-          .catch(() => {
-            // Auto-play prevented by browser
-            setIsPlaying(false);
-          });
+          .then(() => setIsPlaying(true))
+          .catch(() => setIsPlaying(false)); // Auto-play might be blocked
       }
     }
 
@@ -51,12 +93,11 @@ export const BackgroundMusicPlayer = ({
       audio.pause();
       audio.currentTime = 0;
     };
-  }, [musicUrl, autoPlay, loop]);
+  }, [musicUrl, autoPlay, loop, provider, volume]);
 
-  // Handle play/pause
+  // Handle play/pause (audio provider only)
   const handlePlayPause = () => {
-    if (!audioRef.current) return;
-    
+    if (provider !== 'audio' || !audioRef.current) return;
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
@@ -70,8 +111,9 @@ export const BackgroundMusicPlayer = ({
     }
   };
 
-  // Handle volume change
+  // Handle volume change (audio provider only)
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (provider !== 'audio') return;
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
     if (audioRef.current) {
@@ -80,10 +122,9 @@ export const BackgroundMusicPlayer = ({
     }
   };
 
-  // Handle mute/unmute
+  // Handle mute/unmute (audio provider only)
   const handleMuteToggle = () => {
-    if (!audioRef.current) return;
-    
+    if (provider !== 'audio' || !audioRef.current) return;
     if (isMuted) {
       audioRef.current.volume = volume;
       setIsMuted(false);
@@ -95,6 +136,7 @@ export const BackgroundMusicPlayer = ({
 
   // Update current time as audio plays
   const handleTimeUpdate = () => {
+    if (provider !== 'audio') return;
     if (audioRef.current) {
       setCurrentTime(audioRef.current.currentTime);
     }
@@ -102,6 +144,7 @@ export const BackgroundMusicPlayer = ({
 
   // Set duration when metadata loads
   const handleLoadedMetadata = () => {
+    if (provider !== 'audio') return;
     if (audioRef.current) {
       setDuration(audioRef.current.duration);
     }
@@ -132,9 +175,64 @@ export const BackgroundMusicPlayer = ({
     );
   }
 
+  const titleFromUrl = (() => {
+    if (!musicUrl) return 'Background Music';
+    try {
+      const u = new URL(musicUrl);
+      const name = decodeURIComponent(u.pathname.split('/').filter(Boolean).pop() || u.hostname);
+      return name || 'Background Music';
+    } catch {
+      return 'Background Music';
+    }
+  })();
+
+  if (provider === 'youtube') {
+    const embed = buildYouTubeEmbed(musicUrl);
+    if (!embed) return null;
+    return (
+      <div className={`flex flex-col gap-2 p-3 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg ${className}`}>
+        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <Music className="w-4 h-4 text-red-500" />
+          <span>YouTube • {titleFromUrl}</span>
+        </div>
+        <div className="aspect-video w-full overflow-hidden rounded-lg border border-blue-200">
+          <iframe
+            src={embed}
+            allow="autoplay; encrypted-media"
+            allowFullScreen
+            className="w-full h-full"
+            title="YouTube background music"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (provider === 'spotify') {
+    const embed = buildSpotifyEmbed(musicUrl);
+    if (!embed) return null;
+    return (
+      <div className={`flex flex-col gap-2 p-3 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg ${className}`}>
+        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <Music className="w-4 h-4 text-green-600" />
+          <span>Spotify • {titleFromUrl}</span>
+        </div>
+        <iframe
+          src={embed}
+          width="100%"
+          height="152"
+          frameBorder="0"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          loading="lazy"
+          title="Spotify background music"
+          className="rounded-lg border border-green-200"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={`flex flex-col gap-2 p-3 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg ${className}`}>
-      {/* Hidden audio element */}
       <audio
         ref={audioRef}
         onTimeUpdate={handleTimeUpdate}
@@ -144,21 +242,19 @@ export const BackgroundMusicPlayer = ({
         crossOrigin="anonymous"
       />
 
-      {/* Player Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Music className="w-4 h-4 text-blue-600" />
-          <span className="text-xs font-medium text-gray-700">Background Music</span>
+          <span className="text-xs font-medium text-gray-700">{titleFromUrl}</span>
         </div>
         <span className="text-xs text-gray-500">
           {formatTime(currentTime)} / {formatTime(duration)}
         </span>
       </div>
 
-      {/* Progress bar */}
       <div className="w-full h-1 bg-gray-200 rounded-full overflow-hidden cursor-pointer" 
         onClick={(e) => {
-          if (!audioRef.current) return;
+          if (!audioRef.current || duration === 0) return;
           const rect = e.currentTarget.getBoundingClientRect();
           const percent = (e.clientX - rect.left) / rect.width;
           audioRef.current.currentTime = percent * duration;
@@ -170,9 +266,7 @@ export const BackgroundMusicPlayer = ({
         />
       </div>
 
-      {/* Controls */}
       <div className="flex items-center justify-between gap-2">
-        {/* Play/Pause Button */}
         <Button
           size="sm"
           variant="outline"
@@ -187,9 +281,7 @@ export const BackgroundMusicPlayer = ({
           )}
         </Button>
 
-        {/* Volume Control */}
         <div className="flex items-center gap-1 flex-1">
-          {/* Mute/Unmute Button */}
           <Button
             size="sm"
             variant="ghost"
@@ -204,7 +296,6 @@ export const BackgroundMusicPlayer = ({
             )}
           </Button>
 
-          {/* Volume Slider */}
           <input
             type="range"
             min="0"
@@ -220,7 +311,6 @@ export const BackgroundMusicPlayer = ({
           />
         </div>
 
-        {/* Playing indicator */}
         {isPlaying && (
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
