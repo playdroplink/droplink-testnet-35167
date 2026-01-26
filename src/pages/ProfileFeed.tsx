@@ -303,6 +303,12 @@ const ProfileFeed = () => {
     loadProfile();
   }, [username]);
 
+  useEffect(() => {
+    if (profileId) {
+      checkFollowStatus();
+    }
+  }, [profileId, currentUserProfileId]);
+
   const bgStyle = useMemo(() => {
     if (!profile) return {};
     if (profile.theme?.backgroundType === "gif" && profile.theme.backgroundGif) {

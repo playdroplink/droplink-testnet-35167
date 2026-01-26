@@ -225,7 +225,7 @@ const PublicBio = () => {
   }, [profileId]);
 
   useEffect(() => {
-    if (profileId && currentUserProfileId) {
+    if (profileId) {
       checkFollowStatus();
     }
   }, [profileId, currentUserProfileId]);
@@ -380,17 +380,22 @@ const PublicBio = () => {
   };
 
   const checkFollowStatus = async () => {
-    if (!currentUserProfileId || !profileId) return;
+    if (!profileId) return false;
+    const cached = getCachedProfileFromStorage();
+    const followerProfileId = currentUserProfileId || cached?.id || null;
+    if (!followerProfileId) return false;
     
     const query: any = (supabase as any)
       .from("followers")
       .select("id")
-      .eq("follower_profile_id", currentUserProfileId)
+      .eq("follower_profile_id", followerProfileId)
       .eq("following_profile_id", profileId)
       .maybeSingle();
     const { data } = await query as any;
     
-    setIsFollowing(!!data);
+    const following = !!data;
+    setIsFollowing(following);
+    return following;
   };
 
   const handleSignUpToFollow = () => {
