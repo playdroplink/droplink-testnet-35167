@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Mail, Search, Users, Menu, Info } from 'lucide-react';
+import { Home, Mail, Search, Users, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -9,13 +9,11 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
-import { AboutModal } from '@/components/AboutModal';
 
 export const FooterNav: React.FC = () => {
   const navigate = useNavigate();
   const [showFooter, setShowFooter] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [aboutOpen, setAboutOpen] = useState(false);
 
   useEffect(() => {
     let scrollTimeout: NodeJS.Timeout;
@@ -101,18 +99,6 @@ export const FooterNav: React.FC = () => {
             <span className="absolute inset-0 rounded-xl bg-gradient-to-t from-sky-400/0 to-sky-400/0 group-hover:from-sky-400/10 group-hover:to-transparent transition-all duration-300"></span>
           </button>
 
-          {/* About */}
-          <button
-            onClick={() => setAboutOpen(true)}
-            className="relative flex flex-col items-center justify-center py-2 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-sky-700 dark:hover:text-sky-300 active:scale-95 transition-all duration-300 group rounded-xl hover:bg-sky-50 dark:hover:bg-sky-950/30"
-            title="About Droplink"
-          >
-            <span className="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-200 shadow-sm group-hover:scale-105 transition-all">
-              <Info className="w-4 h-4 sm:w-5 sm:h-5" />
-            </span>
-            <span className="text-[11px] sm:text-xs mt-1 leading-tight">About</span>
-          </button>
-
           {/* Menu */}
           <Drawer>
             <DrawerTrigger asChild>
@@ -146,8 +132,6 @@ export const FooterNav: React.FC = () => {
               </div>
             </DrawerContent>
           </Drawer>
-
-          <AboutModal open={aboutOpen} onOpenChange={setAboutOpen} />
         </div>
       </div>
     </nav>
