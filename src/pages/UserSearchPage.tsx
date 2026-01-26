@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { usePi } from "@/contexts/PiContext";
 import { toast } from "sonner";
 import { Alert } from "@/components/ui/alert";
+import { FooterNav } from "@/components/FooterNav";
 
 // Notifications bell intentionally omitted on Search page to avoid noise when following
 
@@ -926,6 +927,7 @@ const UserSearchPage = () => {
         </DialogContent>
       </Dialog>
       </div>
+      <FooterNav />
     </>
   );
 };

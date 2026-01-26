@@ -211,6 +211,7 @@ const CustomDomain = () => {
           </CardContent>
         </Card>
       </div>
+      <FooterNav />
     </div>
   );
 };

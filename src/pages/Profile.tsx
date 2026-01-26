@@ -223,6 +223,7 @@ const Profile = () => {
         <PhonePreview profile={profileData} />
       </div>
       </div>
+      <FooterNav />
     </>
   );
 };

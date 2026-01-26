@@ -353,6 +353,7 @@ const Followers = () => {
           Back to Dashboard
         </Button>
       </div>
+        </div>
       </div>
       <FooterNav />
     </div>

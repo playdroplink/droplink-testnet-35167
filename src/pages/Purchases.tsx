@@ -138,6 +138,7 @@ const Purchases: React.FC = () => {
         </CardContent>
       </Card>
       </div>
+      <FooterNav />
     </>
   );
 };

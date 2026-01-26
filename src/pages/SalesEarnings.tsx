@@ -444,6 +444,7 @@ const SalesEarnings: React.FC = () => {
         </div>
       </div>
       </div>
+      <FooterNav />
     </>
   );
 };
