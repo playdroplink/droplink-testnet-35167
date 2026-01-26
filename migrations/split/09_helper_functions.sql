@@ -1,6 +1,18 @@
 -- 09_helper_functions.sql
 -- Shared helper functions
 
+-- Drop existing helpers to allow signature changes when re-running
+DROP FUNCTION IF EXISTS public.get_follower_count(UUID);
+DROP FUNCTION IF EXISTS public.get_following_count(UUID);
+DROP FUNCTION IF EXISTS public.get_view_count(UUID);
+DROP FUNCTION IF EXISTS public.is_user_following(UUID, UUID);
+DROP FUNCTION IF EXISTS public.get_active_subscription(UUID) CASCADE;
+DROP FUNCTION IF EXISTS public.get_profile_badges(UUID);
+DROP FUNCTION IF EXISTS public.has_badge(UUID, TEXT);
+DROP FUNCTION IF EXISTS public.grant_badge(UUID, TEXT, TEXT, TEXT, TEXT);
+DROP FUNCTION IF EXISTS public.create_notification(UUID, TEXT, TEXT, TEXT, UUID, UUID);
+DROP FUNCTION IF EXISTS public.get_profile_stats(UUID);
+
 -- Get follower count
 CREATE OR REPLACE FUNCTION get_follower_count(p_profile_id UUID)
 RETURNS INTEGER AS $$
