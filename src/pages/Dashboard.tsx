@@ -1772,7 +1772,7 @@ const Dashboard = () => {
                 <TabsContent value="merchant" className="pb-6 sm:pb-8">
                   <div className="max-w-lg mx-auto mt-8 sm:mt-12 p-4 sm:p-6 bg-white dark:bg-slate-900 rounded-xl shadow border border-sky-200/80 dark:border-sky-800/60 text-center space-y-3">
                     <div className="relative inline-block">
-                      <Store className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-blue-600 dark:text-blue-400" />
+                      <Store className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-sky-600 dark:text-sky-400" />
                     </div>
                     <h2 className="text-2xl font-bold text-blue-900 dark:text-blue-100">DropStore (Coming Soon)</h2>
                     <p className="text-sm sm:text-base text-blue-800 dark:text-blue-200">
