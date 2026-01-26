@@ -1,5 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { FooterNav } from "@/components/FooterNav";
 
 const NotFound = () => {
   const location = useLocation();
@@ -29,6 +30,9 @@ const NotFound = () => {
           </a>
         </div>
       </div>
+
+      {/* Footer Navigation */}
+      <FooterNav />
     </div>
   );
 };

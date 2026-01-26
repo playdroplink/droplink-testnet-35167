@@ -1,6 +1,7 @@
 
 
 import { PiAuthButton } from "@/components/PiAuthButton";
+import { FooterNav } from "@/components/FooterNav";
 
 const Index = () => {
 
@@ -41,6 +42,9 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      {/* Footer Navigation */}
+      <FooterNav />
     </div>
   );
 };
