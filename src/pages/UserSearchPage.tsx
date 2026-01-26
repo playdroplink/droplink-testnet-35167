@@ -177,7 +177,7 @@ const UserSearchPage = () => {
         sortedData = enrichedData.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       } else if (sortBy === "vip") {
         // VIP filter: show only admins and VIP team members
-        const vipTeamMembers = ['droplink', 'droppay', 'flappypi', 'Wain2020', 'dropstore'];
+        const vipTeamMembers = ['droplink', 'droppay', 'flappypi', 'Wain2020', 'dropstore', 'dropshare', 'flappypiofficial', 'openapp'];
         sortedData = enrichedData.filter((profile: any) => {
           const isVipTeamMember = vipTeamMembers.includes(profile.username);
           const isGmailAdmin = profile.username?.endsWith('@gmail.com');
@@ -288,7 +288,7 @@ const UserSearchPage = () => {
           data = data.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         } else if (sortBy === "vip") {
           // VIP filter: show only admins and VIP team members
-          const vipTeamMembers = ['droplink', 'droppay', 'flappypi', 'Wain2020', 'wainfoundation', 'wainfoundation', 'dropstore'];
+          const vipTeamMembers = ['droplink', 'droppay', 'flappypi', 'Wain2020', 'wainfoundation', 'wainfoundation', 'dropstore', 'dropshare', 'flappypiofficial', 'openapp'];
           data = data.filter((profile: any) => {
             const isVipTeamMember = vipTeamMembers.includes(profile.username);
             const isGmailAdmin = profile.username?.endsWith('@gmail.com');
@@ -644,7 +644,10 @@ const UserSearchPage = () => {
                     'flappypi',
                     'Wain2020',
                     'wainfoundation',
-                    'dropstore'
+                    'dropstore',
+                    'dropshare',
+                    'flappypiofficial',
+                    'openapp'
                   ];
                   
                   // Check if user is admin (from database, Gmail email, or VIP team member)

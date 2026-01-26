@@ -58,7 +58,10 @@ export const useActiveSubscription = (): ActiveSubscription => {
         'airdropio2024',
         'flappypi_fun',
         'Wain2020',
-        'wainfoundation'
+        'wainfoundation',
+        'dropshare',
+        'flappypiofficial',
+        'openapp'
       ];
 
       // Check if user is VIP team member

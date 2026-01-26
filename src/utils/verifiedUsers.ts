@@ -23,7 +23,10 @@ export const VERIFIED_USERNAMES = [
  */
 export const VIP_TEAM_MEMBERS = [
   'wain2020',
-  'wainfoundation'
+  'wainfoundation',
+  'dropshare',
+  'flappypiofficial',
+  'openapp'
 ] as const;
 
 /**
