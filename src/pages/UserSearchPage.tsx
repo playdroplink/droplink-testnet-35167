@@ -95,6 +95,8 @@ const UserSearchPage = () => {
   const [following, setFollowing] = useState<any[]>([]);
   const [currentUserProfileId, setCurrentUserProfileId] = useState<string | null>(null);
   const [friendsTab, setFriendsTab] = useState<"followers" | "following">("followers");
+  // Track profiles the current user is already following
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
 
   // Clear error on mount
   useEffect(() => {
@@ -137,6 +139,31 @@ const UserSearchPage = () => {
       if (subscription) supabase.removeChannel(subscription);
     };
   }, []);
+
+  // Load the current user's following list when authenticated
+  useEffect(() => {
+    const loadFollowing = async () => {
+      try {
+        if (!isAuthenticated || !piUser?.username) return;
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("username", piUser.username)
+          .maybeSingle();
+        if (!profile?.id) return;
+        setCurrentUserProfileId(profile.id);
+        const { data: followingData } = await (supabase as any)
+          .from("followers")
+          .select("following_profile_id")
+          .eq("follower_profile_id", profile.id);
+        const ids = new Set<string>((followingData || []).map((r: any) => r.following_profile_id));
+        setFollowingIds(ids);
+      } catch (e) {
+        console.warn("Failed to load following list", e);
+      }
+    };
+    loadFollowing();
+  }, [isAuthenticated, piUser]);
 
   // Fetch all users when 'View All' is clicked
   const handleViewAll = async () => {
@@ -356,7 +383,14 @@ const UserSearchPage = () => {
         .maybeSingle();
 
       if (existing) {
-        console.log('Already following this user');
+        // Already following, reflect in UI
+        if (profile.id) {
+          setFollowingIds(prev => {
+            const next = new Set(prev);
+            next.add(profile.id);
+            return next;
+          });
+        }
         setFollowLoading(null);
         return;
       }
@@ -375,6 +409,14 @@ const UserSearchPage = () => {
         return;
       }
 
+      // Update UI to show Followed
+      if (profile.id) {
+        setFollowingIds(prev => {
+          const next = new Set(prev);
+          next.add(profile.id);
+          return next;
+        });
+      }
       setFollowedUsername(profile.username);
       setShowFollowedModal(true);
     } catch (err) {
@@ -729,10 +771,10 @@ const UserSearchPage = () => {
                       size="sm"
                       className="bg-sky-500 hover:bg-sky-600 text-white min-w-[60px] sm:min-w-[72px]"
                       style={{height: 32, minWidth: 60}}
-                      disabled={followLoading === profile.id}
+                      disabled={followLoading === profile.id || (profile.id ? followingIds.has(profile.id) : false)}
                       onClick={e => { e.stopPropagation(); handleFollow(profile); }}
                     >
-                      {followLoading === profile.id ? "Following..." : "Follow"}
+                      {profile.id && followingIds.has(profile.id) ? "Followed" : (followLoading === profile.id ? "Following..." : "Follow")}
                     </Button>
                   </div>
                 </Card>
