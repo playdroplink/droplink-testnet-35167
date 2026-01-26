@@ -49,6 +49,14 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
   
   const buttonStyle = profile.theme?.buttonStyle || 'filled';
 
+  const formatCompactNumber = (value: number) => {
+    if (!Number.isFinite(value)) return "0";
+    if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1).replace(/\.0$/, '')}B`;
+    if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
+    if (value >= 1_000) return `${(value / 1_000).toFixed(1).replace(/\.0$/, '')}K`;
+    return value.toLocaleString();
+  };
+
   const socialLinkData = [
     { key: 'twitter', icon: FaTwitter, url: Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === 'twitter')?.url : undefined },
     { key: 'instagram', icon: FaInstagram, url: Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === 'instagram')?.url : undefined },
@@ -134,33 +142,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
              : { backgroundColor: profile.theme?.backgroundColor || '#000000' }
          }>
 
-      {/* Report Modal */}
-      {showReportModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-xs w-full relative">
-            <button
-              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
-              onClick={() => setShowReportModal(false)}
-              aria-label="Close"
-            >
-              ×
-            </button>
-            <div className="flex flex-col items-center gap-3">
-              <Flag className="w-8 h-8 text-red-500 mb-2" />
-              <h2 className="text-lg font-bold text-red-600">Report Unwanted Content</h2>
-              <p className="text-sm text-gray-700 text-center mb-2">If you see inappropriate, abusive, or unwanted content on this profile, please report it. Your feedback helps keep Droplink safe for everyone.</p>
-              <a
-                href="https://www.droplink.space/report-abuse"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 px-4 py-2 bg-red-500 text-white rounded-lg font-semibold shadow hover:bg-red-600 transition"
-              >
-                Go to Report Page
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
+      
 
       {/* Video Background for Phone Preview */}
       {profile.theme?.backgroundType === 'video' && profile.theme?.backgroundVideo && (
@@ -224,6 +206,17 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
       {/* Phone Screen Content - Scrollable with proper flex layout */}
       <div className="flex-1 overflow-y-auto pt-6 sm:pt-8 px-3 sm:px-4 md:px-6 pb-4 sm:pb-6 relative z-10 w-full flex flex-col scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
         <div className="flex flex-col items-center text-center space-y-4 sm:space-y-5 md:space-y-6 w-full min-w-0">
+          {/* Cover Image */}
+          {profile.theme?.coverImage && (
+            <div className="relative w-full rounded-2xl overflow-hidden border border-white/15 shadow-xl">
+              <img
+                src={profile.theme.coverImage}
+                alt="Profile cover"
+                className="w-full h-24 sm:h-28 md:h-32 object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/30 to-black/60" />
+            </div>
+          )}
           {/* Logo */}
           <div className={`w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 ${iconRadius} bg-muted border border-border flex items-center justify-center overflow-hidden shadow-lg`}>
             {profile.logo ? (
@@ -233,10 +226,28 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
             )}
           </div>
 
-          {/* Business Name */}
-          <h1 className="text-base sm:text-lg md:text-xl px-3 sm:px-4 font-bold text-white drop-shadow-lg shadow-black/50">
-            {profile.businessName || "YOUR BUSINESS NAME"}
-          </h1>
+          {/* Business Name + Verified Badge */}
+          <div className="flex items-center justify-center gap-2">
+            <h1 className="text-base sm:text-lg md:text-xl px-3 sm:px-4 font-bold text-white drop-shadow-lg shadow-black/50">
+              {profile.businessName || "YOUR BUSINESS NAME"}
+            </h1>
+            {profile.isVerified && (
+              <img
+                src="https://i.ibb.co/Kcz0w18P/verify-6.png"
+                alt="Verified"
+                className="w-5 h-5 sm:w-6 sm:h-6"
+              />
+            )}
+          </div>
+
+          {/* Stats: Total Social Followers */}
+          {Array.isArray(profile.socialLinks) && profile.socialLinks.some(l => Number(l.followers) > 0) && (
+            <div className="flex items-center gap-1 text-[11px] sm:text-xs text-white/80">
+              <Users className="w-3.5 h-3.5" />
+              <span>{formatCompactNumber(profile.socialLinks.reduce((sum, l) => sum + (Number(l.followers) || 0), 0))}</span>
+              <span className="opacity-75">Total Followers</span>
+            </div>
+          )}
 
           {/* Description */}
           {profile.description && (
@@ -266,6 +277,41 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
               </div>
             </div>
           )}
+            {showReportModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+                <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 text-center shadow-2xl relative">
+                  <button
+                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+                    onClick={() => setShowReportModal(false)}
+                    aria-label="Close"
+                  >
+                    ×
+                  </button>
+                  <div className="mb-4 flex flex-col items-center">
+                    <Flag className="w-8 h-8 text-red-500 mb-2" />
+                    <h2 className="text-xl font-bold mb-1 text-gray-800">Report Profile</h2>
+                  </div>
+                  <p className="text-gray-700 mb-4 text-sm">
+                    If you see unwanted, abusive, or inappropriate content on this profile, please let us know. Your report is confidential and helps keep the community safe.
+                  </p>
+                  <a
+                    href="https://www.droplink.space/report-abuse"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-xl shadow-lg transition-colors mb-2"
+                  >
+                    Go to Report Abuse Form
+                  </a>
+                  <button
+                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 rounded-xl transition-colors"
+                    onClick={() => setShowReportModal(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
 
           {/* Social Links */}
           {socialLinkData.length > 0 && (
@@ -448,7 +494,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
             </div>
           )}
 
-          {/* Payment Checkout Links */}
+          
           {profile.paymentLinks && profile.paymentLinks.filter(link => link.active).length > 0 && (
             <div className="w-full space-y-1.5 sm:space-y-2 pt-3 sm:pt-4">
               <div className="flex items-center gap-2 text-white text-xs sm:text-sm font-medium drop-shadow-md">
@@ -479,7 +525,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
             </div>
           )}
 
-          {/* Products Preview */}
+          
           {profile.products && profile.products.length > 0 && (
             <div className="w-full space-y-2 sm:space-y-3 pt-3 sm:pt-4">
               <div className="flex items-center gap-2 text-white text-xs sm:text-sm font-medium drop-shadow-md">
@@ -505,7 +551,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
           )}
 
 
-          {/* Pi Wallet QR Code and Tip Section (always visible if wallet set) */}
+          
           {profile.piWalletAddress && (
             <div className="w-full flex flex-col items-center pt-4 sm:pt-5 md:pt-6 pb-2">
               <div className="relative w-[100px] h-[100px] sm:w-[110px] sm:h-[110px] md:w-[120px] md:h-[120px] mb-2 shadow-lg rounded">
@@ -523,7 +569,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
             </div>
           )}
 
-          {/* Droplink Branding */}
+          
           {!profile.hasPremium && profile.storeUrl && (
             <div className="w-full pt-6 pb-2 text-center">
               <p className="text-xs text-white/50 drop-shadow-md">
@@ -532,7 +578,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
             </div>
           )}
 
-          {/* Report Button in Footer */}
+          
           <div className="w-full pt-4 pb-2 flex justify-center">
             <button
               className="bg-white/80 hover:bg-red-100 rounded-full p-3 shadow-lg border border-red-300 inline-flex items-center gap-2 px-6 transition-all"
@@ -544,7 +590,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
             </button>
           </div>
 
-          {/* Placeholder when empty */}
+          
           {!profile.businessName && !profile.description && socialLinkData.length === 0 && profile.products?.length === 0 && (
             <div className="text-center py-8">
               <p className="text-sm text-white/70 drop-shadow-md">
@@ -555,9 +601,6 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
         </div>
       </div>
 
-      {/* ...existing code... */}
-
-      {/* Report Modal */}
       {showReportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 text-center shadow-2xl relative">
@@ -592,6 +635,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
           </div>
         </div>
       )}
+
     </div>
   );
 };

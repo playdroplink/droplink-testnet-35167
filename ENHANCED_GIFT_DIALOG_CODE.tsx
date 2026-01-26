@@ -2,13 +2,13 @@
 // File: src/components/GiftDialog.tsx
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./src/components/ui/dialog";
+import { Button } from "./src/components/ui/button";
+import { supabase } from "./src/integrations/supabase/client";
 import { toast } from "sonner";
 import { Gift as GiftIcon, Droplets, Send } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
-import StorefrontWalletQR from "./StorefrontWalletQR";
+import { Textarea } from "./src/components/ui/textarea";
+import { QRCodeSVG } from "qrcode.react";
 
 interface Gift {
   id: string;
@@ -173,8 +173,15 @@ export const GiftDialog = ({
 
         {/* Show QR code and wallet address for tips */}
         {walletAddress && (
-          <div className="mb-4">
-            <StorefrontWalletQR walletAddress={walletAddress} tipText={tipText} />
+          <div className="mb-4 p-3 border border-border rounded-lg bg-muted/40 flex items-center gap-3">
+            <QRCodeSVG value={walletAddress} size={88} />
+            <div className="text-xs">
+              <div className="font-medium">Tip via Pi Wallet</div>
+              <div className="break-all opacity-80">{walletAddress}</div>
+              {tipText && (
+                <div className="mt-1 text-muted-foreground">{tipText}</div>
+              )}
+            </div>
           </div>
         )}
 
@@ -197,10 +204,10 @@ export const GiftDialog = ({
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">Choose a gift:</p>
             <div className="grid grid-cols-3 gap-3 max-h-48 overflow-y-auto">
-              {gifts.map((gift) => (
+              {gifts.map((gift: Gift) => (
                 <Button
                   key={gift.id}
-                  variant={selectedGift?.id === gift.id ? "default" : "outline"}
+                  variant={selectedGift === gift ? "default" : "outline"}
                   className="h-24 flex flex-col items-center justify-center gap-2 hover:border-rose-500 transition-colors"
                   onClick={() => setSelectedGift(gift)}
                   disabled={loading || balance < gift.drop_token_cost}
@@ -235,7 +242,7 @@ export const GiftDialog = ({
               <Textarea
                 placeholder="Write a special message for the creator..."
                 value={personalMessage}
-                onChange={(e) => setPersonalMessage(e.target.value.slice(0, 200))}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPersonalMessage(e.target.value.slice(0, 200))}
                 className="resize-none h-20"
                 maxLength={200}
               />

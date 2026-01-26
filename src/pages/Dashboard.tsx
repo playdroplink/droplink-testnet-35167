@@ -92,6 +92,7 @@ import {
   Plus,
   Search,
   Image,
+  ExternalLink,
 } from "lucide-react";
 import { 
   FaTwitter, 
@@ -1456,6 +1457,15 @@ const Dashboard = () => {
     toast.success("Public link copied! Ready to share.");
   };
 
+  const handleOpenPublicBio = () => {
+    if (!profile.storeUrl) {
+      toast.error("Please set your store URL first");
+      return;
+    }
+    const link = `${window.location.origin}/${profile.storeUrl}`;
+    window.open(link, "_blank");
+  };
+
   const handleShowQRCode = () => {
     // Allow QR code dialog to open even if profile is not set up
     if (!profile || !profile.storeUrl) {
@@ -1634,9 +1644,14 @@ const Dashboard = () => {
                   <p className="text-xs text-slate-500">Profile URL</p>
                   <div className="flex items-center justify-between gap-2 mt-1">
                     <span className="text-sm font-medium truncate">{window.location.origin}/{profile.storeUrl || 'your-link'}</span>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleCopyLink}>
-                      <Share2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleOpenPublicBio} title="View">
+                        <ExternalLink className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleCopyLink} title="Copy">
+                        <Share2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/70 bg-slate-50/80 dark:bg-slate-900/60 p-3">
@@ -1678,6 +1693,10 @@ const Dashboard = () => {
               <Button type="button" variant="secondary" className="justify-start" onClick={handleCopyLink}>
                 <Share2 className="w-4 h-4 mr-2" />
                 Copy link
+              </Button>
+              <Button type="button" variant="secondary" className="justify-start" onClick={handleOpenPublicBio}>
+                <ExternalLink className="w-4 h-4 mr-2" />
+                View Public Bio
               </Button>
               <Button type="button" variant="secondary" className="justify-start" onClick={() => navigate('/subscription')}>
                 <Crown className="w-4 h-4 mr-2" />
