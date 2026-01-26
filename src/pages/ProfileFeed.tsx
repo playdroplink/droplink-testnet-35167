@@ -265,6 +265,8 @@ const ProfileFeed = () => {
         if (error) throw error;
         setIsFollowing(false);
         setFollowerCount((prev) => Math.max(0, prev - 1));
+        // Sync follow state across pages
+        localStorage.setItem(`follow_status_${profileId}`, 'false');
       } else {
         const { error } = await supabase
           .from("followers")
@@ -272,6 +274,8 @@ const ProfileFeed = () => {
         if (error) throw error;
         setIsFollowing(true);
         setFollowerCount((prev) => prev + 1);
+        // Sync follow state across pages
+        localStorage.setItem(`follow_status_${profileId}`, 'true');
       }
     } catch (error) {
       console.error("Follow error:", error);
