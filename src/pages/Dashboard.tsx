@@ -1213,22 +1213,50 @@ const Dashboard = () => {
       toast.error('Profile not loaded yet. Please try again.');
       return;
     }
+
+    // Confirm with user before canceling
+    const confirmed = window.confirm(
+      '⚠️ WARNING: Canceling your plan will:\n\n' +
+      '• Delete ALL active subscriptions\n' +
+      '• Remove any unused gift card plans\n' +
+      '• Reset your account to FREE tier\n' +
+      '• Remove premium features immediately\n\n' +
+      'This action CANNOT be undone. Are you sure you want to continue?'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     try {
       setCancelingPlan(true);
       const nowIso = new Date().toISOString();
 
+      // Delete all subscriptions for this profile
       await supabase
         .from('subscriptions')
-        .update({ status: 'canceled', end_date: nowIso, plan_type: 'free', auto_renew: false })
+        .delete()
         .eq('profile_id', effectiveProfileId);
 
+      // Delete any unredeemed gift cards purchased by this user
+      await supabase
+        .from('gift_cards')
+        .delete()
+        .eq('purchased_by_profile_id', effectiveProfileId)
+        .eq('status', 'available');
+
+      // Reset profile to free tier
       await supabase
         .from('profiles')
-        .update({ subscription_status: 'free', has_premium: false })
+        .update({ 
+          subscription_status: 'free', 
+          has_premium: false,
+          card_customization_enabled: false
+        })
         .eq('id', effectiveProfileId);
 
       await refetchSubscription?.();
-      toast.success('Plan canceled. You are now on the Free plan.');
+      toast.success('Plan canceled. All subscriptions and gift cards have been deleted. You are now on the Free plan.');
       setShowPlanModal(false);
     } catch (error) {
       console.error('Cancel plan failed', error);
@@ -2774,6 +2802,20 @@ const Dashboard = () => {
 
               {/* Subscription Tab */}
               <TabsContent value="subscription" className="pb-8">
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-yellow-700">
+                        <strong>Important:</strong> Canceling your plan will permanently delete all active subscriptions, unused gift cards, and reset your account to the free tier. This action cannot be undone.
+                      </p>
+                    </div>
+                  </div>
+                </div>
                 <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between mb-4">
                   <Button variant="outline" onClick={() => setShowPlanModal(true)}>
                     View My Plan / Renew
@@ -2798,6 +2840,20 @@ const Dashboard = () => {
                   </DialogDescription>
                   <div className="my-4">
                     <SubscriptionStatus />
+                  </div>
+                  <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-xs text-yellow-700">
+                          Canceling will delete all subscriptions, gift cards, and reset to free tier.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
                     <Button onClick={() => setShowPlanModal(false)} variant="secondary">Close</Button>
