@@ -1,6 +1,7 @@
 // Verify Social Followers Edge Function
 // This function fetches real follower counts from social media platforms
 // deno-lint-ignore-file no-explicit-any
+/// <reference lib="deno.window" />
 
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
