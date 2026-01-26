@@ -346,13 +346,11 @@ const Followers = () => {
             </TabsContent>
           </Tabs>
         </div>
-      </div>
 
-      <div className="mt-6 text-center">
-        <Button variant="outline" onClick={() => navigate("/")}>
-          Back to Dashboard
-        </Button>
-      </div>
+        <div className="mt-6 text-center">
+          <Button variant="outline" onClick={() => navigate("/")}>
+            Back to Dashboard
+          </Button>
         </div>
       </div>
       <FooterNav />
