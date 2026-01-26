@@ -9,13 +9,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
+import { AboutModal } from '@/components/AboutModal';
 
 export const FooterNav: React.FC = () => {
   const navigate = useNavigate();
@@ -157,48 +151,7 @@ export const FooterNav: React.FC = () => {
             </DrawerContent>
           </Drawer>
 
-          <Dialog open={aboutOpen} onOpenChange={setAboutOpen}>
-            <DialogContent className="sm:max-w-lg">
-              <DialogHeader>
-                <DialogTitle className="text-lg font-semibold">About Droplink</DialogTitle>
-                <DialogDescription>
-                  Build and share your link-in-bio with payments, memberships, digital products, and Pi-first monetization. Designed to stay fast on mobile.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
-                <p>• Collect payments, subscriptions, tips, and gift cards in Pi.</p>
-                <p>• Sell digital products, share links, and pin socials in one page.</p>
-                <p>• Manage analytics, QR, and domains from the dashboard.</p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-2 sm:justify-end mt-3">
-                <Button
-                  variant="outline"
-                  className="w-full sm:w-auto"
-                  onClick={() => setAboutOpen(false)}
-                >
-                  Close
-                </Button>
-                <Button
-                  className="w-full sm:w-auto"
-                  onClick={() => {
-                    navigate('/subscription');
-                    setAboutOpen(false);
-                  }}
-                >
-                  View Plans
-                </Button>
-                <Button
-                  variant="secondary"
-                  className="w-full sm:w-auto"
-                  onClick={() => window.open('https://droplink.space/support', '_blank')}
-                >
-                  Support
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <AboutModal open={aboutOpen} onOpenChange={setAboutOpen} />
         </div>
       </div>
     </nav>

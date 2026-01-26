@@ -3377,6 +3377,18 @@ const Dashboard = () => {
               <span className="absolute inset-0 rounded-xl bg-gradient-to-t from-sky-400/0 to-sky-400/0 group-hover:from-sky-400/10 group-hover:to-transparent transition-all duration-300"></span>
             </button>
 
+            {/* About */}
+            <button
+              onClick={() => setShowAboutModal(true)}
+              className="relative flex flex-col items-center justify-center py-2 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-sky-700 dark:hover:text-sky-300 active:scale-95 transition-all duration-300 group rounded-xl hover:bg-sky-50 dark:hover:bg-sky-950/30"
+              title="About Droplink"
+            >
+              <span className="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-200 shadow-sm group-hover:scale-105 transition-all">
+                <Info className="w-4 h-4 sm:w-5 sm:h-5" />
+              </span>
+              <span className="text-[11px] sm:text-xs mt-1 leading-tight">About</span>
+            </button>
+
             {/* Menu */}
             <Drawer>
               <DrawerTrigger asChild>
@@ -3531,6 +3543,15 @@ const Dashboard = () => {
                   >
                     <Info className="w-4 h-4" />
                     Privacy Policy
+                  </Button>
+                  <Button 
+                    onClick={() => setShowAboutModal(true)}
+                    variant="secondary"
+                    size="sm"
+                    className="w-full justify-start gap-2 h-10"
+                  >
+                    <Info className="w-4 h-4" />
+                    About Droplink
                   </Button>
                   <Button 
                     onClick={() => { navigate('/terms'); }} 
