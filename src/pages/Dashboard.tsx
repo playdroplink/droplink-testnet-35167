@@ -366,11 +366,12 @@ const Dashboard = () => {
             show_share_button: data.showShareButton,
             pi_wallet_address: data.piWalletAddress,
             pi_donation_message: data.piDonationMessage,
+            background_music_url: data.backgroundMusicUrl,
             has_premium: data.hasPremium || false,
             is_verified: data.isVerified || false,
             updated_at: new Date().toISOString(),
             username: data.username
-          }, { onConflict: 'id' });
+          });
 
         if (profileError) {
           // Log full error for debugging
@@ -957,7 +958,7 @@ const Dashboard = () => {
                 pi_user_id: piUser.uid,
                 // Ensure RLS passes by tying profile to current Supabase user
                 user_id: session?.user?.id || undefined,
-              }, { onConflict: 'username' })
+              })
               .select()
               .single();
             if (createError) {

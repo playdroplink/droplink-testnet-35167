@@ -626,7 +626,9 @@ const PublicBio = () => {
           (!sub.expires_at || new Date(sub.expires_at) > new Date())
         );
 
-      setProfile({
+      console.log('Background Music URL from DB:', (profileData as any).background_music_url);
+      
+      const profileObj = {
         id: profileData.id,
         username: profileData.username || (username ? String(username) : ""),
         email: "", // email column doesn't exist in profiles table
@@ -661,7 +663,10 @@ const PublicBio = () => {
         card_text_color: (profileData as any).card_text_color || "#000000",
         card_accent_color: (profileData as any).card_accent_color || "#fafafa",
         isVerified: (profileData as any).is_verified || hasActiveSubscription,
-      });
+      };
+      
+      console.log('Setting profile with backgroundMusicUrl:', profileObj.backgroundMusicUrl);
+      setProfile(profileObj);
     } catch (error) {
       console.error("Error loading profile:", error);
       setNotFound(true);
@@ -1092,7 +1097,7 @@ const PublicBio = () => {
           )}
 
           {/* Background Music Player */}
-          {profile.backgroundMusicUrl && (
+          {profile.backgroundMusicUrl && profile.backgroundMusicUrl.trim() && (
             <div className="max-w-md mx-auto w-full">
               <BackgroundMusicPlayer 
                 musicUrl={profile.backgroundMusicUrl}
