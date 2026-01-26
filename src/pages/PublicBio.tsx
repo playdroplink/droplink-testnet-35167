@@ -57,8 +57,6 @@ import type { ProfileData } from "@/types/profile";
 const PREFERENCES_STORAGE_KEY = 'droplink_user_preferences';
 
 const PublicBio = () => {
-    // ...existing code...
-
   // Pi Payment Dialog state
   const [showPiPaymentDialog, setShowPiPaymentDialog] = useState(false);
   const [piPaymentLoading, setPiPaymentLoading] = useState(false);
@@ -481,7 +479,7 @@ const PublicBio = () => {
       // Try exact match first
       let { data: profileData, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select("*, subscriptions!inner(plan_name, amount, status, expires_at)")
         .eq("username", username)
         .maybeSingle();
 
@@ -490,7 +488,7 @@ const PublicBio = () => {
         console.log("No exact match, trying case-insensitive search...");
         const { data: caseInsensitiveData, error: caseInsensitiveError } = await supabase
           .from("profiles")
-          .select("*")
+          .select("*, subscriptions!inner(plan_name, amount, status, expires_at)")
           .ilike("username", username)
           .maybeSingle();
         
@@ -600,6 +598,14 @@ const PublicBio = () => {
       if (Array.isArray(profileData.crypto_wallets)) walletsObj.crypto = profileData.crypto_wallets;
       if (Array.isArray(profileData.bank_details)) walletsObj.bank = profileData.bank_details;
 
+      // Check if user has active 30 Pi plan for verified badge
+      const hasActiveSubscription = Array.isArray((profileData as any).subscriptions) && 
+        (profileData as any).subscriptions.some((sub: any) => 
+          sub.status === 'active' && 
+          sub.amount >= 30 &&
+          (!sub.expires_at || new Date(sub.expires_at) > new Date())
+        );
+
       setProfile({
         id: profileData.id,
         username: profileData.username || (username ? String(username) : ""),
@@ -634,6 +640,7 @@ const PublicBio = () => {
         card_back_color: (profileData as any).card_back_color || "#2bbdee",
         card_text_color: (profileData as any).card_text_color || "#000000",
         card_accent_color: (profileData as any).card_accent_color || "#fafafa",
+        isVerified: (profileData as any).is_verified || hasActiveSubscription,
       });
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -682,23 +689,20 @@ const PublicBio = () => {
     if (!message.trim() || !profileId) return;
 
     try {
-      // Use ai_chat_messages table instead of non-existent messages table
-      const { error } = await supabase.from("ai_chat_messages").insert({
-        profile_id: profileId,
+      // Use messages table with proper structure
+      const { error } = await supabase.from("messages").insert({
+        receiver_profile_id: profileId,
         content: message,
-        role: "user",
-        session_id: `public_${Date.now()}`,
       });
 
       if (error) {
+        console.error("Error sending message:", error);
         toast.error("Failed to send message. Please try again.");
       } else {
         toast.success("Message sent successfully!");
         setMessage("");
       }
     } catch (error) {
-      console.error("Error sending message:", error);
-      toast.error("Failed to send message");
       console.error("Error sending message:", error);
       toast.error("An unexpected error occurred.");
     }
@@ -878,6 +882,38 @@ const PublicBio = () => {
         </div>
       )}
       
+      {/* Video Background - lock if expired */}
+      {profile.theme.backgroundType === 'video' && profile.theme.backgroundVideo && !isPlanExpired && (
+        <div className="fixed inset-0 z-0">
+          <video
+            src={profile.theme.backgroundVideo}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+            style={{ minHeight: '100vh' }}
+            onError={(e) => {
+              console.log('Video background failed to load in PublicBio:', profile.theme.backgroundVideo);
+              (e.target as HTMLVideoElement).style.display = 'none';
+              const parent = e.currentTarget.parentElement;
+              if (parent && parent.parentElement) {
+                parent.parentElement.style.backgroundColor = profile.theme.backgroundColor || '#000000';
+              }
+            }}
+            onLoadedData={() => {
+              console.log('Video background loaded successfully in PublicBio:', profile.theme.backgroundVideo);
+            }}
+          />
+          <div className="absolute inset-0 bg-black/30" />
+        </div>
+      )}
+      {profile.theme.backgroundType === 'video' && profile.theme.backgroundVideo && isPlanExpired && (
+        <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/70">
+          <span className="text-white text-lg font-semibold">Video background is locked. Renew plan to unlock.</span>
+        </div>
+      )}
+
       {/* GIF Background - lock if expired */}
       {profile.theme.backgroundType === 'gif' && profile.theme.backgroundGif && !isPlanExpired && (
         <div className="fixed inset-0 z-0">

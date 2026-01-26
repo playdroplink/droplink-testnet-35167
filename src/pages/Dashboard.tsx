@@ -2171,22 +2171,24 @@ const Dashboard = () => {
               </PlanGate>
 
               {/* Background Music URL */}
-              <div className="mb-6">
-                <Label htmlFor="background-music" className="mb-2 sm:mb-3 block flex items-center gap-2 text-sm">
-                  <Music className="w-4 h-4" />
-                  Background Music
-                </Label>
-                <Input
-                  id="background-music"
-                  value={profile.backgroundMusicUrl || ""}
-                  onChange={(e) => setProfile({ ...profile, backgroundMusicUrl: e.target.value })}
-                  placeholder="https://example.com/music.mp3"
-                  className="bg-input-bg text-sm"
-                />
-                <p className="text-xs text-muted-foreground mt-1.5">
-                  Add a background music URL (MP3, OGG, WAV) that will play on your public bio page. The audio will loop continuously and visitors can control the volume.
-                </p>
-              </div>
+              <PlanGate minPlan="premium" featureName="Background Music">
+                <div className="mb-6">
+                  <Label htmlFor="background-music" className="mb-2 sm:mb-3 block flex items-center gap-2 text-sm">
+                    <Music className="w-4 h-4" />
+                    Background Music
+                  </Label>
+                  <Input
+                    id="background-music"
+                    value={profile.backgroundMusicUrl || ""}
+                    onChange={(e) => setProfile({ ...profile, backgroundMusicUrl: e.target.value })}
+                    placeholder="https://example.com/music.mp3 or Spotify/YouTube link"
+                    className="bg-input-bg text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1.5">
+                    Add a background music URL (MP3, Spotify, YouTube) that will play on your public bio page. The audio will loop continuously and visitors can control playback.
+                  </p>
+                </div>
+              </PlanGate>
 
               {/* Public Bio Cover */}
               <div className="mb-6">
