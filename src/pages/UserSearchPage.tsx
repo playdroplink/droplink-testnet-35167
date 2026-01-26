@@ -9,6 +9,7 @@ import { usePi } from "@/contexts/PiContext";
 import { toast } from "sonner";
 import { Alert } from "@/components/ui/alert";
 import { FooterNav } from "@/components/FooterNav";
+import { isVerifiedUser } from "@/utils/verifiedUsers";
 
 // Notifications bell intentionally omitted on Search page to avoid noise when following
 
@@ -287,7 +288,7 @@ const UserSearchPage = () => {
           data = data.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         } else if (sortBy === "vip") {
           // VIP filter: show only admins and VIP team members
-          const vipTeamMembers = ['droplink', 'droppay', 'flappypi', 'Wain2020', 'dropstore'];
+          const vipTeamMembers = ['droplink', 'droppay', 'flappypi', 'Wain2020', 'wainfoundation', 'wainfoundation', 'dropstore'];
           data = data.filter((profile: any) => {
             const isVipTeamMember = vipTeamMembers.includes(profile.username);
             const isGmailAdmin = profile.username?.endsWith('@gmail.com');
@@ -642,6 +643,7 @@ const UserSearchPage = () => {
                     'droppay',
                     'flappypi',
                     'Wain2020',
+                    'wainfoundation',
                     'dropstore'
                   ];
                   
@@ -682,6 +684,14 @@ const UserSearchPage = () => {
                       <div className={`font-semibold text-lg ${isAdmin ? 'text-yellow-600' : 'text-sky-700'}`}>
                         {highlightText("@" + (profile.username || ""))}
                       </div>
+                      {isVerifiedUser(profile.username) && (
+                        <img 
+                          src="https://i.ibb.co/Kcz0w18P/verify-6.png" 
+                          alt="Verified" 
+                          className="w-5 h-5 inline-block" 
+                          title="Verified Account"
+                        />
+                      )}
                       {isAdmin && (
                         <span className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
                           VIP
@@ -742,7 +752,17 @@ const UserSearchPage = () => {
                   alt={selectedProfile.username || "User"}
                   className="w-20 h-20 rounded-full border-2 border-sky-300 object-cover"
                 />
-                <div className="font-semibold text-lg text-sky-700">@{selectedProfile.username || ""}</div>
+                <div className="flex items-center gap-2">
+                  <div className="font-semibold text-lg text-sky-700">@{selectedProfile.username || ""}</div>
+                  {isVerifiedUser(selectedProfile.username) && (
+                    <img 
+                      src="https://i.ibb.co/Kcz0w18P/verify-6.png" 
+                      alt="Verified" 
+                      className="w-5 h-5 inline-block" 
+                      title="Verified Account"
+                    />
+                  )}
+                </div>
                 
                 {/* Bio/Description */}
                 {(selectedProfile.bio || selectedProfile.description) && (

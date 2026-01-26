@@ -23,7 +23,6 @@ import { useAnalytics } from "@/hooks/useAnalytics";
 import { EmailCaptureDisplay } from "@/components/EmailCaptureDisplay";
 import { ProductDisplay } from "@/components/ProductDisplay";
 import { MembershipGate } from "@/components/MembershipGate";
-import { FooterNav } from "@/components/FooterNav";
 import { isVerifiedUser } from "@/utils/verifiedUsers";
 import type { UserPreferences } from "@/contexts/UserPreferencesContext";
 import { defaultPreferences } from "@/contexts/UserPreferencesContext";
@@ -1903,9 +1902,6 @@ const PublicBio = () => {
           </div>
         </div>
       )}
-
-      {/* Footer Navigation */}
-      <FooterNav />
     </div>
   );
 };

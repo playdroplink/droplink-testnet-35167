@@ -57,7 +57,8 @@ export const useActiveSubscription = (): ActiveSubscription => {
         'jomarikun',
         'airdropio2024',
         'flappypi_fun',
-        'Wain2020'
+        'Wain2020',
+        'wainfoundation'
       ];
 
       // Check if user is VIP team member
