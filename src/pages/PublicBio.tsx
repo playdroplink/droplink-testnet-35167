@@ -48,6 +48,7 @@ import {
   UserPlus,
   UserMinus,
   Gift,
+  Eye,
 } from "lucide-react";
 
 // Use react-icons for all major social platforms for reliability
@@ -1189,6 +1190,18 @@ const PublicBio = () => {
             
             {/* Username - Right below name */}
             <p className="text-white/80 text-base md:text-lg font-normal">@{profile.username || 'user'}</p>
+            
+            {/* Follower and View Count */}
+            <div className="flex items-center justify-center gap-4 pt-2 text-white/70 text-sm">
+              <div className="flex items-center gap-1.5">
+                <UserPlus className="w-4 h-4" />
+                <span>{formatCompactNumber(followerCount)} Followers</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Eye className="w-4 h-4" />
+                <span>{formatCompactNumber(visitCount)} Views</span>
+              </div>
+            </div>
           </div>
           
           {/* Social Links - Compact circular style */}

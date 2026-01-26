@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { usePi } from "@/contexts/PiContext";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Share2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ExternalLink, Share2, Eye, UserPlus, Zap, Copy } from "lucide-react";
 import { FaXTwitter, FaInstagram, FaFacebook, FaYoutube, FaTiktok, FaTwitch, FaLinkedin, FaSnapchat, FaReddit, FaTelegram, FaWhatsapp, FaDiscord, FaPinterest, FaGithub, FaVimeo, FaGlobe } from "react-icons/fa6";
 import { SiThreads, SiBluesky, SiMastodon, SiKick } from "react-icons/si";
 import type { ProfileData, SocialEmbedItem } from "@/types/profile";
@@ -54,10 +56,22 @@ const ProfileFeed = () => {
   const { username: rawUsername } = useParams();
   const navigate = useNavigate();
   const username = rawUsername?.startsWith("@") ? rawUsername.slice(1) : rawUsername;
+  const { showRewardedAd } = usePi();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [socialFeedItems, setSocialFeedItems] = useState<SocialEmbedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [visitCount, setVisitCount] = useState(0);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+
+  const formatCompactNumber = (value: number) => {
+    if (!Number.isFinite(value)) return "0";
+    if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1).replace(/\.0$/, '')}B`;
+    if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
+    if (value >= 1_000) return `${(value / 1_000).toFixed(1).replace(/\.0$/, '')}K`;
+    return value.toLocaleString();
+  };
 
   const loadProfile = async () => {
     if (!username) return;
@@ -124,6 +138,22 @@ const ProfileFeed = () => {
         isVerified: (profileData as any).is_verified || isSpecialVerified,
       });
       setSocialFeedItems(feed);
+      
+      // Load follower count
+      const followerQuery: any = (supabase as any)
+        .from('followers')
+        .select('*', { count: 'exact', head: true })
+        .eq('following_profile_id', profileData.id);
+      const { count: followerCount } = await followerQuery as any;
+      setFollowerCount(followerCount || 0);
+      
+      // Load visit count
+      const { count: visitCount } = await supabase
+        .from('analytics')
+        .select('*', { count: 'exact', head: true })
+        .eq('profile_id', profileData.id)
+        .eq('event_type', 'view');
+      setVisitCount(visitCount || 0);
     } catch (err) {
       setNotFound(true);
     } finally {
@@ -162,7 +192,36 @@ const ProfileFeed = () => {
         />
       )}
       <div className="relative z-10 flex flex-col items-center px-4 pb-16" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.85) 40%, rgba(0,0,0,0.9) 100%)" }}>
-        <div className="w-full max-w-3xl text-center pt-16 space-y-4">
+        {/* Share and Watch Ads Icons */}
+        <div className="w-full max-w-3xl flex items-center justify-between pt-6 px-2">
+          <Button
+            onClick={() => setShowShareDialog(true)}
+            variant="ghost"
+            size="icon"
+            className="hover:bg-white/10 transition-all duration-200"
+          >
+            <Share2 className="w-6 h-6 text-white hover:text-cyan-400" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-white hover:text-white/80 hover:bg-transparent"
+            onClick={async () => {
+              try {
+                const watched = await showRewardedAd();
+                if (watched) {
+                  toast.success('Thanks for watching! 🎉');
+                }
+              } catch (error) {
+                console.error('Ad error:', error);
+              }
+            }}
+          >
+            <Zap className="w-5 h-5" />
+          </Button>
+        </div>
+        
+        <div className="w-full max-w-3xl text-center pt-6 space-y-4">
           {profile.logo && (
             <div className="mx-auto w-28 h-28 rounded-3xl overflow-hidden shadow-2xl ring-4 ring-white/20">
               <img src={profile.logo} alt={profile.businessName} className="w-full h-full object-cover" />
@@ -181,6 +240,18 @@ const ProfileFeed = () => {
               )}
             </div>
             <p className="text-white/80">@{profile.username}</p>
+            
+            {/* Follower and View Count */}
+            <div className="flex items-center justify-center gap-4 pt-2 text-white/70 text-sm">
+              <div className="flex items-center gap-1.5">
+                <UserPlus className="w-4 h-4" />
+                <span>{formatCompactNumber(followerCount)} Followers</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Eye className="w-4 h-4" />
+                <span>{formatCompactNumber(visitCount)} Views</span>
+              </div>
+            </div>
           </div>
           <div className="flex flex-wrap justify-center gap-3">
             {(profile.socialLinks || []).map((link) => (
@@ -274,6 +345,49 @@ const ProfileFeed = () => {
           </div>
         </div>
       )}
+      
+      {/* Share Dialog */}
+      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+        <DialogContent className="sm:max-w-[500px] md:max-w-[550px] rounded-xl overflow-visible p-6">
+          {/* Header with Icon */}
+          <div className="flex items-center gap-3 mb-6 mt-2">
+            <div className="bg-sky-100 dark:bg-sky-900 text-sky-600 dark:text-sky-300 p-3 rounded-lg">
+              <Share2 className="size-5" />
+            </div>
+            <DialogTitle className="text-xl font-semibold">Share Feed</DialogTitle>
+          </div>
+          
+          {/* Body Content */}
+          <div className="space-y-6 py-2">
+            {/* QR Code Display */}
+            <div className="flex justify-center">
+              <QRCodeSVG
+                value={window.location.href}
+                size={200}
+                bgColor="#ffffff"
+                fgColor="#000000"
+                level="H"
+              />
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 text-center">Scan QR code to view feed</p>
+          </div>
+          
+          {/* Footer with Action Button */}
+          <div className="flex gap-2 justify-end border-t pt-4 mt-4">
+            <Button
+              className="w-full bg-sky-500 hover:bg-sky-600 text-white h-11"
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href);
+                toast.success('Feed link copied to clipboard!');
+                setShowShareDialog(false);
+              }}
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Copy Feed Link
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
