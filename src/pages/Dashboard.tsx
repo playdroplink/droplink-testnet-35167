@@ -134,12 +134,36 @@ const Dashboard = () => {
   const [aiLogoPrompt, setAiLogoPrompt] = useState("");
   const [aiLogoLoading, setAiLogoLoading] = useState(false);
   const [aiLogoError, setAiLogoError] = useState("");
+  const [showFooter, setShowFooter] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const navigate = useNavigate();
   
   // Hooks must be called unconditionally
   const piContext = usePi();
   const { piUser, isAuthenticated, signIn, signOut: piSignOut, loading: piLoading, getCurrentWalletAddress } = piContext;
   const [showPiAuthModal, setShowPiAuthModal] = useState(false);
+
+  // Scroll detection for footer navigation
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY < 10) {
+        setShowFooter(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // Scrolling down & past threshold - hide footer
+        setShowFooter(false);
+      } else if (currentScrollY < lastScrollY) {
+        // Scrolling up - show footer
+        setShowFooter(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   // Enforce Pi Auth on dashboard load
   useEffect(() => {
@@ -2945,7 +2969,7 @@ const Dashboard = () => {
       </main>
 
       {/* Bottom Navigation Bar - Mobile & Desktop Unified */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 shadow-2xl z-50">
+      <nav className={`fixed left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-sky-200/60 dark:border-sky-800/60 shadow-[0_-4px_24px_rgba(0,0,0,0.12)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.4)] z-50 transition-all duration-500 ease-in-out ${showFooter ? 'bottom-0 translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}>
         <div className="max-w-6xl mx-auto px-2 sm:px-4 py-2">
           <div className="flex justify-around items-center">
             {/* Home */}
@@ -2960,52 +2984,57 @@ const Dashboard = () => {
                   focusTab('profile');
                 }
               }}
-              className="flex flex-col items-center justify-center py-2 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
+              className="relative flex flex-col items-center justify-center py-2 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 active:scale-95 transition-all duration-300 group rounded-xl hover:bg-sky-50 dark:hover:bg-sky-950/30"
               title="Home"
             >
-              <Home className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1 group-hover:scale-110 transition-transform" />
-              <span className="text-xs sm:text-xs">Home</span>
+              <Home className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1 group-hover:scale-125 group-hover:rotate-3 transition-all duration-300 drop-shadow-sm" />
+              <span className="text-xs sm:text-xs group-hover:font-semibold transition-all">Home</span>
+              <span className="absolute inset-0 rounded-xl bg-gradient-to-t from-sky-400/0 to-sky-400/0 group-hover:from-sky-400/10 group-hover:to-transparent transition-all duration-300"></span>
             </button>
 
             {/* Inbox */}
             <button
               onClick={() => navigate('/inbox')}
-              className="flex flex-col items-center justify-center py-2 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
+              className="relative flex flex-col items-center justify-center py-2 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 active:scale-95 transition-all duration-300 group rounded-xl hover:bg-sky-50 dark:hover:bg-sky-950/30"
               title="Inbox"
             >
-              <Mail className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1 group-hover:scale-110 transition-transform" />
-              <span className="text-xs sm:text-xs">Inbox</span>
+              <Mail className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1 group-hover:scale-125 group-hover:-rotate-3 transition-all duration-300 drop-shadow-sm" />
+              <span className="text-xs sm:text-xs group-hover:font-semibold transition-all">Inbox</span>
+              <span className="absolute inset-0 rounded-xl bg-gradient-to-t from-sky-400/0 to-sky-400/0 group-hover:from-sky-400/10 group-hover:to-transparent transition-all duration-300"></span>
             </button>
 
             {/* Search Users */}
             <button
               onClick={() => navigate('/search-users')}
-              className="flex flex-col items-center justify-center py-2 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
+              className="relative flex flex-col items-center justify-center py-2 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 active:scale-95 transition-all duration-300 group rounded-xl hover:bg-sky-50 dark:hover:bg-sky-950/30"
               title="Search Users"
             >
-              <Search className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1 group-hover:scale-110 transition-transform" />
-              <span className="text-xs sm:text-xs">Search</span>
+              <Search className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1 group-hover:scale-125 group-hover:rotate-12 transition-all duration-300 drop-shadow-sm" />
+              <span className="text-xs sm:text-xs group-hover:font-semibold transition-all">Search</span>
+              <span className="absolute inset-0 rounded-xl bg-gradient-to-t from-sky-400/0 to-sky-400/0 group-hover:from-sky-400/10 group-hover:to-transparent transition-all duration-300"></span>
             </button>
 
             {/* Followers */}
             <button
               onClick={() => navigate('/followers')}
-              className="flex flex-col items-center justify-center py-2 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
+              className="relative flex flex-col items-center justify-center py-2 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 active:scale-95 transition-all duration-300 group rounded-xl hover:bg-sky-50 dark:hover:bg-sky-950/30"
               title="Followers"
             >
-              <Users className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1 group-hover:scale-110 transition-transform" />
-              <span className="text-xs sm:text-xs">Followers</span>
+              <Users className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1 group-hover:scale-125 transition-all duration-300 drop-shadow-sm" />
+              <span className="text-xs sm:text-xs group-hover:font-semibold transition-all">Followers</span>
+              <span className="absolute inset-0 rounded-xl bg-gradient-to-t from-sky-400/0 to-sky-400/0 group-hover:from-sky-400/10 group-hover:to-transparent transition-all duration-300"></span>
             </button>
 
             {/* Menu */}
             <Drawer>
               <DrawerTrigger asChild>
                 <button 
-                  className="flex flex-col items-center justify-center py-2 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors group"
+                  className="relative flex flex-col items-center justify-center py-2 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 active:scale-95 transition-all duration-300 group rounded-xl hover:bg-sky-50 dark:hover:bg-sky-950/30"
                   title="More Options"
                 >
-                  <Menu className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1 group-hover:scale-110 transition-transform" />
-                  <span className="text-xs sm:text-xs">Menu</span>
+                  <Menu className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1 group-hover:scale-125 group-hover:rotate-90 transition-all duration-300 drop-shadow-sm" />
+                  <span className="text-xs sm:text-xs group-hover:font-semibold transition-all">Menu</span>
+                  <span className="absolute inset-0 rounded-xl bg-gradient-to-t from-sky-400/0 to-sky-400/0 group-hover:from-sky-400/10 group-hover:to-transparent transition-all duration-300"></span>
                 </button>
               </DrawerTrigger>
               <DrawerContent className="bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 fixed bottom-16 left-0 right-0 max-h-[70vh] z-50">
