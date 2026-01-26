@@ -129,6 +129,7 @@ export interface ProfileData {
   description?: string;
   youtubeVideoUrl?: string;
   backgroundMusicUrl?: string;
+  category?: string;
   customLinks?: CustomLink[];
   products?: Product[];
   theme?: ThemeData;

@@ -1,8 +1,8 @@
 // Verify Social Followers Edge Function
 // This function fetches real follower counts from social media platforms
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,9 +10,13 @@ const corsHeaders = {
 };
 
 interface SocialLink {
-  platform: string;
+  platform?: string;
+  type?: string;
   url: string;
   followers?: number;
+  verified_followers?: number;
+  last_verified?: string;
+  is_verified?: boolean;
 }
 
 // Extract username from social media URL
@@ -24,27 +28,22 @@ function extractUsername(url: string, platform: string): string | null {
     switch (platform.toLowerCase()) {
       case 'twitter':
       case 'x':
-        // twitter.com/username or x.com/username
         const twitterMatch = pathname.match(/^\/(@?[\w]+)/);
         return twitterMatch ? twitterMatch[1].replace('@', '') : null;
         
       case 'instagram':
-        // instagram.com/username
         const instaMatch = pathname.match(/^\/(@?[\w.]+)/);
         return instaMatch ? instaMatch[1].replace('@', '') : null;
         
       case 'youtube':
-        // youtube.com/@username or youtube.com/c/username
         const ytMatch = pathname.match(/^\/@?([\w-]+)|^\/c\/([\w-]+)/);
         return ytMatch ? (ytMatch[1] || ytMatch[2]) : null;
         
       case 'tiktok':
-        // tiktok.com/@username
         const ttMatch = pathname.match(/^\/@([\w.]+)/);
         return ttMatch ? ttMatch[1] : null;
         
       case 'twitch':
-        // twitch.tv/username
         const twitchMatch = pathname.match(/^\/([\w]+)/);
         return twitchMatch ? twitchMatch[1] : null;
         
@@ -57,33 +56,9 @@ function extractUsername(url: string, platform: string): string | null {
   }
 }
 
-// Fetch follower count from Instagram (scraping - use with caution)
-async function getInstagramFollowers(username: string): Promise<number | null> {
-  try {
-    // Note: Instagram requires authentication for API access
-    // This is a placeholder - in production, use official Instagram Graph API
-    // or a third-party service like RapidAPI
-    const response = await fetch(`https://www.instagram.com/${username}/?__a=1`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
-    });
-    
-    if (!response.ok) return null;
-    
-    const data = await response.json();
-    return data?.graphql?.user?.edge_followed_by?.count || null;
-  } catch (e) {
-    console.error('Instagram fetch error:', e);
-    return null;
-  }
-}
-
 // Fetch follower count from Twitter/X (requires API key)
 async function getTwitterFollowers(username: string): Promise<number | null> {
   try {
-    // Twitter API v2 requires Bearer Token
-    // This is a placeholder - integrate with Twitter API v2 in production
     const TWITTER_BEARER_TOKEN = Deno.env.get('TWITTER_BEARER_TOKEN');
     if (!TWITTER_BEARER_TOKEN) {
       console.warn('Twitter API token not configured');
@@ -101,7 +76,7 @@ async function getTwitterFollowers(username: string): Promise<number | null> {
     
     if (!response.ok) return null;
     
-    const data = await response.json();
+    const data = await response.json() as any;
     return data?.data?.public_metrics?.followers_count || null;
   } catch (e) {
     console.error('Twitter fetch error:', e);
@@ -118,26 +93,24 @@ async function getYouTubeSubscribers(username: string): Promise<number | null> {
       return null;
     }
     
-    // First get channel ID from username
     const searchResponse = await fetch(
       `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=${username}&key=${YOUTUBE_API_KEY}`
     );
     
     if (!searchResponse.ok) return null;
     
-    const searchData = await searchResponse.json();
+    const searchData = await searchResponse.json() as any;
     const channelId = searchData?.items?.[0]?.id?.channelId;
     
     if (!channelId) return null;
     
-    // Get subscriber count
     const channelResponse = await fetch(
       `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${channelId}&key=${YOUTUBE_API_KEY}`
     );
     
     if (!channelResponse.ok) return null;
     
-    const channelData = await channelResponse.json();
+    const channelData = await channelResponse.json() as any;
     const subCount = channelData?.items?.[0]?.statistics?.subscriberCount;
     
     return subCount ? parseInt(subCount) : null;
@@ -147,27 +120,14 @@ async function getYouTubeSubscribers(username: string): Promise<number | null> {
   }
 }
 
-// Fetch follower count from TikTok (scraping - use with caution)
-async function getTikTokFollowers(username: string): Promise<number | null> {
-  try {
-    // TikTok API is not publicly available
-    // This is a placeholder - use third-party APIs like RapidAPI in production
-    console.warn('TikTok API not implemented - use third-party service');
-    return null;
-  } catch (e) {
-    console.error('TikTok fetch error:', e);
-    return null;
-  }
-}
-
-serve(async (req) => {
+serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { socialLinks, profileId } = await req.json();
+    const { socialLinks, profileId } = await req.json() as { socialLinks: SocialLink[]; profileId: string };
     
     if (!Array.isArray(socialLinks) || !profileId) {
       return new Response(
@@ -178,7 +138,7 @@ serve(async (req) => {
 
     const verifiedLinks = await Promise.all(
       socialLinks.map(async (link: SocialLink) => {
-        const platform = (link.platform || link.url).toLowerCase();
+        const platform = (link.platform || link.type || link.url).toLowerCase();
         const username = extractUsername(link.url, platform);
         
         if (!username) {
@@ -192,22 +152,17 @@ serve(async (req) => {
         let verifiedFollowers: number | null = null;
 
         // Fetch real follower count based on platform
-        if (platform.includes('instagram') || platform.includes('insta')) {
-          verifiedFollowers = await getInstagramFollowers(username);
-        } else if (platform.includes('twitter') || platform.includes('x.com') || platform === 'x') {
+        if (platform.includes('twitter') || platform.includes('x.com') || platform === 'x') {
           verifiedFollowers = await getTwitterFollowers(username);
         } else if (platform.includes('youtube')) {
           verifiedFollowers = await getYouTubeSubscribers(username);
-        } else if (platform.includes('tiktok')) {
-          verifiedFollowers = await getTikTokFollowers(username);
         }
 
         return {
           ...link,
           verified_followers: verifiedFollowers,
           last_verified: new Date().toISOString(),
-          is_verified: verifiedFollowers !== null,
-          username: username
+          is_verified: verifiedFollowers !== null
         };
       })
     );
@@ -243,9 +198,10 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Verification error:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Verification error:', errorMessage);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
