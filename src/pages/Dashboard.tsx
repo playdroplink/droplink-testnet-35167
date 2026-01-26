@@ -884,7 +884,7 @@ const Dashboard = () => {
           showShareButton: (profileData as any).show_share_button !== false,
           piWalletAddress: financialData.pi_wallet_address || "",
           piDonationMessage: financialData.pi_donation_message || "Send me a coffee ☕",
-          isVerified: (profileData as any).is_verified || false,
+          isVerified: (profileData as any).is_verified || isVerifiedUser(profileData.username),
           // Enhanced payment links loading: try database first, then localStorage
           paymentLinks: (() => {
             // Try to restore from theme_settings first (database)

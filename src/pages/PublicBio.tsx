@@ -24,6 +24,7 @@ import { EmailCaptureDisplay } from "@/components/EmailCaptureDisplay";
 import { ProductDisplay } from "@/components/ProductDisplay";
 import { MembershipGate } from "@/components/MembershipGate";
 import { FooterNav } from "@/components/FooterNav";
+import { isVerifiedUser } from "@/utils/verifiedUsers";
 import type { UserPreferences } from "@/contexts/UserPreferencesContext";
 import { defaultPreferences } from "@/contexts/UserPreferencesContext";
 import {
@@ -627,6 +628,9 @@ const PublicBio = () => {
           (!sub.expires_at || new Date(sub.expires_at) > new Date())
         );
 
+      // Check if user is in the special verified list
+      const isSpecialVerified = isVerifiedUser(profileData.username);
+
       console.log('Background Music URL from DB:', (profileData as any).background_music_url);
       
       const profileObj = {
@@ -663,7 +667,7 @@ const PublicBio = () => {
         card_back_color: (profileData as any).card_back_color || "#2bbdee",
         card_text_color: (profileData as any).card_text_color || "#000000",
         card_accent_color: (profileData as any).card_accent_color || "#fafafa",
-        isVerified: (profileData as any).is_verified || hasActiveSubscription,
+        isVerified: (profileData as any).is_verified || hasActiveSubscription || isSpecialVerified,
       };
       
       console.log('Setting profile with backgroundMusicUrl:', profileObj.backgroundMusicUrl);
