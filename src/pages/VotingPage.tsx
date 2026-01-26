@@ -8,6 +8,7 @@ import VotingSystem from '@/components/VotingSystem';
 import { ArrowLeft, Vote, Lightbulb, LogIn, LogOut, User } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePi } from '@/contexts/PiContext';
+import { FooterNav } from '@/components/FooterNav';
 
 export default function VotingPage() {
   const navigate = useNavigate();
@@ -157,6 +158,9 @@ export default function VotingPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Footer Navigation */}
+      <FooterNav />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import { MembershipTier, Product } from '@/types/features';
 import { Button } from '@/components/ui/button';
 import { Share2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { FooterNav } from '@/components/FooterNav';
 
 export const PublicProfile = () => {
   const { username } = useParams<{ username: string }>();
@@ -230,6 +231,9 @@ export const PublicProfile = () => {
           </p>
         </div>
       </div>
+
+      {/* Footer Navigation */}
+      <FooterNav />
     </div>
   );
 };

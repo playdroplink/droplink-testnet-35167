@@ -6,6 +6,7 @@ import { CheckCircle, ArrowRight, Gift, Loader } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { usePi } from "@/contexts/PiContext";
+import { FooterNav } from "@/components/FooterNav";
 
 export default function PaymentSuccess() {
   const navigate = useNavigate();
@@ -263,6 +264,9 @@ export default function PaymentSuccess() {
         )}
         <Button variant="outline" onClick={() => navigate("/")}>Back to Home</Button>
       </div>
+
+      {/* Footer Navigation */}
+      <FooterNav />
     </div>
   );
 }
