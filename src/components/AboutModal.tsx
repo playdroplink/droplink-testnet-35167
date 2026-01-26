@@ -121,12 +121,12 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Demo Video */}
+          {/* Watch Video */}
           <Card className="border-primary/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Play className="w-5 h-5 text-sky-500" />
-                Watch DropLink Demo
+                Watch DropLink
               </CardTitle>
               <CardDescription>
                 See DropLink in action and learn how it powers the Pi Network ecosystem
@@ -138,7 +138,7 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
                   width="100%" 
                   height="100%" 
                   src="https://www.youtube.com/embed/Oin7Ka7lXsg" 
-                  title="DropLink Demo - Pi Network Bio Links Platform"
+                  title="DropLink - Pi Network Bio Links Platform"
                   frameBorder="0" 
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                   allowFullScreen
@@ -148,7 +148,7 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
               <div className="mt-4 flex flex-wrap gap-2">
                 <Badge variant="secondary">
                   <Zap className="w-3 h-3 mr-1" />
-                  Pi Network Demo
+                  Pi Network
                 </Badge>
                 <Badge variant="secondary">
                   <Globe className="w-3 h-3 mr-1" />
