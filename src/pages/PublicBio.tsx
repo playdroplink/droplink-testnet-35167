@@ -1173,7 +1173,7 @@ const PublicBio = () => {
           
           {/* Name with Badge - Large and Bold */}
           <div className="space-y-2">
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-1.5">
               <h1 className="text-5xl md:text-6xl font-bold text-white drop-shadow-2xl tracking-tight">
                 {profile.businessName}
               </h1>
@@ -1181,7 +1181,7 @@ const PublicBio = () => {
                 <img 
                   src={getVerifiedBadgeUrl(profile.username)} 
                   alt="Verified" 
-                  className="w-8 h-8" 
+                  className="w-7 h-7 md:w-8 md:h-8 -mt-3" 
                   title="Verified Account"
                 />
               )}
@@ -1289,25 +1289,25 @@ const PublicBio = () => {
                 } finally {
                   setConnectSubmitting(false);
                 }
-              }} className="flex items-center gap-2 bg-white rounded-full p-2 shadow-lg">
+              }} className="flex items-center gap-2 bg-white rounded-full p-2 shadow-lg w-full">
                 <input
                   type="email"
                   placeholder="your@email.com"
                   value={connectEmail}
                   onChange={(e) => setConnectEmail(e.target.value)}
                   disabled={connectSubmitting}
-                  className="flex-1 px-4 py-2 bg-transparent outline-none text-gray-800 placeholder-gray-400"
+                  className="flex-1 px-4 py-2.5 bg-transparent outline-none text-gray-800 placeholder-gray-400 text-base"
                   required
                 />
                 <button
                   type="submit"
                   disabled={connectSubmitting}
-                  className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-full font-medium flex items-center gap-2 transition-all disabled:opacity-50"
+                  className="text-white px-5 py-2.5 rounded-full font-medium flex items-center gap-1.5 transition-all disabled:opacity-50 whitespace-nowrap shrink-0"
                   style={{ backgroundColor: profile.theme.primaryColor }}
                 >
-                  {connectSubmitting ? 'Connecting...' : 'Connect with'}
-                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                    <UserPlus className="w-4 h-4" />
+                  <span className="text-sm">{connectSubmitting ? 'Connecting...' : 'Connect'}</span>
+                  <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
+                    <UserPlus className="w-3.5 h-3.5" />
                   </div>
                 </button>
               </form>

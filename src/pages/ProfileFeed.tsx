@@ -8,6 +8,7 @@ import { FaXTwitter, FaInstagram, FaFacebook, FaYoutube, FaTiktok, FaTwitch, FaL
 import { SiThreads, SiBluesky, SiMastodon, SiKick } from "react-icons/si";
 import type { ProfileData, SocialEmbedItem } from "@/types/profile";
 import { toast } from "sonner";
+import { isVerifiedUser, getVerifiedBadgeUrl } from "@/utils/verifiedUsers";
 
 const getSocialIcon = (platform?: string) => {
   const p = (platform || "link").toLowerCase();
@@ -82,6 +83,9 @@ const ProfileFeed = () => {
         ? profileData.social_links.filter((l: any) => l.url && l.url.trim()).map((l: any) => ({ platform: l.type || l.platform, url: l.url }))
         : [];
 
+      // Check if user is verified (special list or database flag)
+      const isSpecialVerified = isVerifiedUser(profileData.username);
+
       setProfile({
         id: profileData.id,
         username: profileData.username,
@@ -117,7 +121,7 @@ const ProfileFeed = () => {
         card_back_color: (profileData as any).card_back_color || "#2bbdee",
         card_text_color: (profileData as any).card_text_color || "#000000",
         card_accent_color: (profileData as any).card_accent_color || "#fafafa",
-        isVerified: (profileData as any).is_verified || false,
+        isVerified: (profileData as any).is_verified || isSpecialVerified,
       });
       setSocialFeedItems(feed);
     } catch (err) {
@@ -165,7 +169,17 @@ const ProfileFeed = () => {
             </div>
           )}
           <div className="space-y-1">
-            <h1 className="text-4xl font-bold drop-shadow-lg flex items-center justify-center gap-2">{profile.businessName || profile.username}</h1>
+            <div className="flex items-center justify-center gap-2">
+              <h1 className="text-4xl font-bold drop-shadow-lg">{profile.businessName || profile.username}</h1>
+              {profile.isVerified && (
+                <img 
+                  src={getVerifiedBadgeUrl(profile.username)} 
+                  alt="Verified" 
+                  className="w-7 h-7" 
+                  title="Verified Account"
+                />
+              )}
+            </div>
             <p className="text-white/80">@{profile.username}</p>
           </div>
           <div className="flex flex-wrap justify-center gap-3">

@@ -1007,19 +1007,41 @@ const Dashboard = () => {
               toast.error('Pi username missing. Cannot create profile.');
               throw new Error('Pi username missing');
             }
-            const { data: newProfile, error: createError } = await supabase
+            // First check if profile exists
+            const { data: existingProfile } = await supabase
               .from("profiles")
-              .upsert({
-                username: piUser.username,
-                business_name: piUser.username,
-                description: "",
-                email: "", // Pi users don't have email in the basic interface
-                pi_user_id: piUser.uid,
-                // Ensure RLS passes by tying profile to current Supabase user
-                user_id: session?.user?.id || undefined,
-              })
-              .select()
-              .single();
+              .select("id, username")
+              .eq("username", piUser.username)
+              .maybeSingle();
+            
+            let newProfile;
+            let createError;
+            
+            if (existingProfile) {
+              // Profile exists, just load it
+              newProfile = existingProfile;
+              console.log("✅ Found existing Pi user profile:", existingProfile.id);
+            } else {
+              // Create new profile
+              const result = await supabase
+                .from("profiles")
+                .insert({
+                  username: piUser.username,
+                  business_name: piUser.username,
+                  description: "",
+                  email: "",
+                  pi_user_id: piUser.uid,
+                  user_id: session?.user?.id || null,
+                  social_links: [],
+                  social_feed: [],
+                  theme_settings: {},
+                })
+                .select()
+                .single();
+              
+              newProfile = result.data;
+              createError = result.error;
+            }
             if (createError) {
               console.error("❌ Error creating Pi user profile:", createError);
               if (createError.message?.includes('permission denied') || createError.message?.includes('row level security')) {
