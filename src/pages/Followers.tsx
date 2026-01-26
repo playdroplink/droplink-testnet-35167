@@ -32,6 +32,28 @@ const Followers = () => {
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
   const [currentUsername, setCurrentUsername] = useState<string | null>(null);
 
+  const findCachedProfile = () => {
+    if (typeof window === "undefined") return null;
+    try {
+      const keys = Object.keys(localStorage).filter((key) =>
+        key.startsWith("profile_")
+      );
+      for (const key of keys) {
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+        const parsed = JSON.parse(raw);
+        const id = parsed?.profileId || parsed?.id;
+        const username = parsed?.username;
+        if (id && username) {
+          return { id, username } as { id: string; username: string };
+        }
+      }
+    } catch (error) {
+      console.error("[FOLLOWERS PAGE] Failed to read cached profile:", error);
+    }
+    return null;
+  };
+
   useEffect(() => {
     loadFollowData();
   }, []);
@@ -41,8 +63,7 @@ const Followers = () => {
       const { data: { user } } = await supabase.auth.getUser();
 
       // Fallback for mobile where Supabase session might not hydrate in time
-      const cachedProfileRaw = localStorage.getItem("profile");
-      const cachedProfile = cachedProfileRaw ? JSON.parse(cachedProfileRaw) : null;
+      const cachedProfile = findCachedProfile();
 
       if (!user && !cachedProfile?.id) {
         toast.error("Please sign in to view followers");
@@ -60,7 +81,9 @@ const Followers = () => {
           .eq("user_id", profileLookupUserId)
           .single();
         profile = foundProfile;
-      } else if (cachedProfile?.id && cachedProfile?.username) {
+      }
+
+      if (!profile && cachedProfile?.id && cachedProfile?.username) {
         // Use cached profile when auth session is missing
         profile = { id: cachedProfile.id, username: cachedProfile.username };
       }

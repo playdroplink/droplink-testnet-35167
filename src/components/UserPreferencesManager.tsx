@@ -115,6 +115,42 @@ export const UserPreferencesManager = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
+                  <Label>Show Community Section</Label>
+                  <p className="text-sm text-muted-foreground">Hide or show the followers & gifts block on your public bio</p>
+                </div>
+                <Switch
+                  checked={preferences.store_settings.showCommunitySection}
+                  onCheckedChange={(checked) => 
+                    updateNestedPreference('store_settings', 'showCommunitySection', checked)
+                  }
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Show Message Form</Label>
+                  <p className="text-sm text-muted-foreground">Allow visitors to send you public bio messages</p>
+                </div>
+                <Switch
+                  checked={preferences.store_settings.showMessageForm}
+                  onCheckedChange={(checked) => 
+                    updateNestedPreference('store_settings', 'showMessageForm', checked)
+                  }
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Show Pi Ad Network</Label>
+                  <p className="text-sm text-muted-foreground">Hide or show Pi ads on your public bio (when your plan allows ads)</p>
+                </div>
+                <Switch
+                  checked={preferences.store_settings.showPiAds}
+                  onCheckedChange={(checked) => 
+                    updateNestedPreference('store_settings', 'showPiAds', checked)
+                  }
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
                   <Label>Show Follower Count</Label>
                   <p className="text-sm text-muted-foreground">Display follower count on your profile</p>
                 </div>

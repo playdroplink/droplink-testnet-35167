@@ -75,7 +75,7 @@ const PublicBio = () => {
   const { plan, expiresAt, loading: subLoading } = usePublicSubscription(username ? String(username) : "");
   const isPlanExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
   // Pi AdNetwork logic: show ads for free/basic/expired, hide for premium/pro
-  const showPiAds = !plan || plan === 'free' || plan === 'basic' || isPlanExpired;
+  const planAllowsPiAds = !plan || plan === 'free' || plan === 'basic' || isPlanExpired;
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [currentUserProfileId, setCurrentUserProfileId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -95,6 +95,28 @@ const PublicBio = () => {
   const [message, setMessage] = useState("");
   // State to trigger auto-refresh after Pi Auth if Profile Not Found
   const [shouldAutoRefresh, setShouldAutoRefresh] = useState(false);
+
+  const getCachedProfileFromStorage = () => {
+    if (typeof window === "undefined") return null;
+    try {
+      const keys = Object.keys(localStorage).filter((key) =>
+        key.startsWith("profile_")
+      );
+      for (const key of keys) {
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+        const parsed = JSON.parse(raw);
+        const id = parsed?.profileId || parsed?.id;
+        const username = parsed?.username || parsed?.businessName;
+        if (id) {
+          return { id, username } as { id: string; username?: string | null };
+        }
+      }
+    } catch (error) {
+      console.error("[PROFILE] Failed to read cached profile:", error);
+    }
+    return null;
+  };
 
   const formatCompactNumber = (value: number) => {
     if (!Number.isFinite(value)) return "0";
@@ -155,6 +177,7 @@ const PublicBio = () => {
   useEffect(() => {
     loadProfile();
     loadCurrentUserProfile();
+    loadUserPreferences();
     loadVisitorCounts();
     // Fetch profileId for store link
     const fetchProfileId = async () => {
@@ -223,18 +246,33 @@ const PublicBio = () => {
       } else {
         console.log('[PROFILE] No authenticated user found');
       }
+
+      if (!currentUserProfileId) {
+        const cachedProfile = getCachedProfileFromStorage();
+        if (cachedProfile?.id) {
+          console.log('[PROFILE] Using cached profile from storage:', cachedProfile.id);
+          setCurrentUserProfileId(cachedProfile.id);
+        }
+      }
     } catch (error) {
       console.error('[PROFILE] Error in loadCurrentUserProfile:', error);
     }
   };
 
-  // FIX: Use correct table and map to UserPreferences type
-  const loadUserPreferences = async (userId: string) => {
+  const loadUserPreferences = async () => {
+    // Public bio should respect local preference toggles saved in dashboard
+    if (typeof window === 'undefined') return;
     try {
-      // Fallback: just set to null or default, since user_preferences table is not in schema
-      setUserPreferences(null);
+      const stored = localStorage.getItem('droplink_user_preferences');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setUserPreferences(parsed);
+      } else {
+        setUserPreferences(null);
+      }
     } catch (error) {
       console.error('Failed to load user preferences:', error);
+      setUserPreferences(null);
     }
   };
 
@@ -251,7 +289,7 @@ const PublicBio = () => {
       
       if (profileData) {
         // Load user preferences for the profile owner
-        await loadUserPreferences(profileData.user_id);
+        await loadUserPreferences();
         
         // Load follower count
         const followerQuery: any = (supabase as any)
@@ -320,11 +358,19 @@ const PublicBio = () => {
   };
 
   const handleFollow = async () => {
-    if (!currentUserProfileId || !profileId) {
-      console.warn('Missing user or profile ID for follow action');
+    const cachedProfile = currentUserProfileId ? null : getCachedProfileFromStorage();
+    const followerProfileId = currentUserProfileId || cachedProfile?.id || null;
+
+    if (!followerProfileId || !profileId) {
+      toast.error("Please sign in to follow");
       return;
     }
-    if (currentUserProfileId === profileId) {
+
+    if (!currentUserProfileId && cachedProfile?.id) {
+      setCurrentUserProfileId(cachedProfile.id);
+    }
+
+    if (followerProfileId === profileId) {
       console.warn('Cannot follow own profile');
       return;
     }
@@ -333,7 +379,7 @@ const PublicBio = () => {
         const { error } = await supabase
           .from("followers")
           .delete()
-          .eq("follower_profile_id", currentUserProfileId)
+          .eq("follower_profile_id", followerProfileId)
           .eq("following_profile_id", profileId);
         if (error) {
           console.error('Unfollow error:', error);
@@ -345,7 +391,7 @@ const PublicBio = () => {
         const { error } = await supabase
           .from("followers")
           .insert({
-            follower_profile_id: currentUserProfileId,
+            follower_profile_id: followerProfileId,
             following_profile_id: profileId,
           });
         if (error) {
@@ -821,8 +867,8 @@ const PublicBio = () => {
       )}
       
       <div className="w-full max-w-2xl space-y-8 py-12 relative z-10">
-        {/* Pi AdNetwork logic based on creator's plan */}
-        {showPiAds && (
+        {/* Pi AdNetwork logic based on creator's plan and creator preference */}
+        {planAllowsPiAds && userPreferences?.store_settings?.showPiAds !== false && (
           <div className="mb-6">
             <div className="flex items-center justify-between gap-3">
               {profile.showShareButton && (
@@ -1459,7 +1505,7 @@ const PublicBio = () => {
         )}
 
         {/* Followers Section */}
-        {profileId && (
+        {profileId && userPreferences?.store_settings?.showCommunitySection !== false && (
           <FollowersSection 
             profileId={profileId} 
             currentUserProfileId={currentUserProfileId || undefined}
@@ -1467,7 +1513,7 @@ const PublicBio = () => {
         )}
 
         {/* Message Input Section - Only for followers */}
-        {currentUserProfileId && currentUserProfileId !== profileId && (
+        {userPreferences?.store_settings?.showCommunitySection !== false && userPreferences?.store_settings?.showMessageForm !== false && currentUserProfileId && currentUserProfileId !== profileId && (
           <div className="mt-8">
             {/* Use the Pi payment + message form */}
             <PublicBioMessageForm 

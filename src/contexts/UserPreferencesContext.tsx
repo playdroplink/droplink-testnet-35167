@@ -14,6 +14,9 @@ export interface StoreSettings {
   enableComments: boolean;
   allowGifts: boolean;
   showSocialLinks: boolean;
+  showCommunitySection: boolean;
+  showMessageForm: boolean;
+  showPiAds: boolean;
 }
 
 export interface SocialSettings {
@@ -77,7 +80,10 @@ const defaultPreferences: UserPreferences = {
     showVisitCount: true,
     enableComments: false,
     allowGifts: true,
-    showSocialLinks: true
+    showSocialLinks: true,
+    showCommunitySection: true,
+    showMessageForm: true,
+    showPiAds: true
   },
   social_settings: {
     allowFollows: true,
