@@ -984,7 +984,15 @@ const PublicBio = () => {
     );
   }
 
-  const socialLinksArray = profile.socialLinks.filter(link => link.url && String(link.url).trim());
+  const isValidSocialUrl = (url?: string | null) => {
+    if (!url) return false;
+    const trimmed = String(url).trim();
+    return /^https?:\/\//i.test(trimmed);
+  };
+
+  const socialLinksArray = Array.isArray(profile.socialLinks)
+    ? profile.socialLinks.filter(link => isValidSocialUrl(link?.url))
+    : [];
   const totalSocialFollowers = Array.isArray(profile.socialLinks)
     ? profile.socialLinks.reduce((sum, link) => {
         const followers = Number(link.followers);
@@ -994,7 +1002,7 @@ const PublicBio = () => {
 
   return (
     <div 
-      className="min-h-screen px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 flex flex-col items-center relative overflow-x-hidden w-full max-w-full pb-24"
+      className="min-h-screen w-full max-w-full overflow-x-hidden px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 flex flex-col items-center relative pb-24"
       style={
         profile.theme.backgroundType === 'gif' && profile.theme.backgroundGif
           ? {}
@@ -1025,7 +1033,7 @@ const PublicBio = () => {
       
       {/* Video Background - lock if expired */}
       {profile.theme.backgroundType === 'video' && profile.theme.backgroundVideo && !isPlanExpired && (
-        <div className="fixed inset-0 z-0">
+        <div className="fixed inset-0 z-0 w-full max-w-full overflow-hidden">
           <video
             src={profile.theme.backgroundVideo}
             autoPlay
@@ -1057,7 +1065,7 @@ const PublicBio = () => {
 
       {/* GIF Background - lock if expired */}
       {profile.theme.backgroundType === 'gif' && profile.theme.backgroundGif && !isPlanExpired && (
-        <div className="fixed inset-0 z-0">
+        <div className="fixed inset-0 z-0 w-full max-w-full overflow-hidden">
           <img
             src={profile.theme.backgroundGif}
             alt="Background"
@@ -1089,7 +1097,7 @@ const PublicBio = () => {
         </div>
       )}
       
-      <div className="w-full max-w-2xl space-y-8 py-12 relative z-10">
+      <div className="w-full max-w-full sm:max-w-2xl space-y-8 py-12 relative z-10 overflow-x-hidden px-2 sm:px-0">
         {/* Pi AdNetwork logic based on creator's plan and creator preference */}
         {planAllowsPiAds && userPreferences?.store_settings?.showPiAds !== false && (
           <div className="mb-6">
@@ -1138,7 +1146,7 @@ const PublicBio = () => {
         {/* Link.me Style Cover Image - Fixed Background with Fade on Scroll */}
         {profile.theme?.coverImage && (
           <div 
-            className="fixed top-0 left-0 w-full h-screen overflow-hidden z-0"
+            className="fixed top-0 left-0 w-full max-w-full h-screen overflow-hidden z-0"
             style={{
               opacity: Math.max(0, 1 - scrollY / 300),
               pointerEvents: 'none'
@@ -1155,7 +1163,7 @@ const PublicBio = () => {
         )}
         
         {/* Link.me Style Hero Section */}
-        <div className="text-center space-y-4 pt-32 relative z-10">
+        <div className="text-center space-y-4 pt-32 relative z-10 w-full max-w-full overflow-x-hidden">
           {/* Large Profile Image - Positioned on cover */}
           {profile.logo && (
             <div className="flex justify-center mb-4">
@@ -1174,9 +1182,9 @@ const PublicBio = () => {
           
           {/* Name with Badge - Large and Bold */}
           <div className="space-y-2">
-            <div className="flex items-center justify-center gap-1.5">
-              <h1 className="text-5xl md:text-6xl font-bold text-white drop-shadow-2xl tracking-tight">
-                {profile.businessName}
+            <div className="flex items-center justify-center gap-1.5 flex-wrap px-2">
+              <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-white drop-shadow-2xl tracking-tight break-words max-w-full">
+                {profile.businessName || profile.username || username || 'user'}
               </h1>
               {profile.isVerified && (
                 <img 
@@ -1189,7 +1197,7 @@ const PublicBio = () => {
             </div>
             
             {/* Username - Right below name */}
-            <p className="text-white/80 text-base md:text-lg font-normal">@{profile.username || 'user'}</p>
+            <p className="text-white/80 text-base md:text-lg font-normal">@{profile.username || username || 'user'}</p>
             
             {/* Follower and View Count */}
             <div className="flex items-center justify-center gap-4 pt-2 text-white/70 text-sm">
@@ -1264,14 +1272,14 @@ const PublicBio = () => {
 
           {/* Bio Description */}
           {profile.description && (
-            <p className="text-white/90 text-sm md:text-base max-w-lg mx-auto font-light mt-4 px-4">
+            <p className="text-white/90 text-sm md:text-base max-w-lg mx-auto font-light mt-4 px-4 break-words overflow-wrap-anywhere">
               {profile.description}
             </p>
           )}
           
           {/* Email Capture / Connect Section */}
           {userPreferences?.store_settings?.showEmailCapture !== false && (
-            <div className="max-w-md mx-auto mt-6 px-4">
+            <div className="max-w-full sm:max-w-md mx-auto mt-6 px-4 w-full">
               <form onSubmit={async (e) => {
                 e.preventDefault();
                 if (!connectEmail || !connectEmail.includes('@')) {
@@ -1329,7 +1337,7 @@ const PublicBio = () => {
 
           {/* Background Music Player */}
           {profile.backgroundMusicUrl && profile.backgroundMusicUrl.trim() && (
-            <div className="max-w-md mx-auto w-full mt-6 px-4">
+            <div className="max-w-full sm:max-w-md mx-auto w-full mt-6 px-4">
               <BackgroundMusicPlayer 
                 musicUrl={profile.backgroundMusicUrl}
                 autoPlay={false}
@@ -1340,7 +1348,7 @@ const PublicBio = () => {
 
           {/* Image Link Cards */}
           {Array.isArray(profile.imageLinkCards) && profile.imageLinkCards.length > 0 && (
-            <div className="w-full max-w-md mx-auto grid grid-cols-2 gap-3 mt-6">
+            <div className="w-full max-w-full sm:max-w-md mx-auto grid grid-cols-2 gap-3 mt-6 px-2">
               {profile.imageLinkCards.map((card: any) => (
                 <a
                   key={card.id}
@@ -1367,7 +1375,7 @@ const PublicBio = () => {
           )}
 
           {/* Primary Action Buttons - Link.me Style */}
-          <div className="flex flex-col gap-3 justify-center pt-4 max-w-md mx-auto w-full">
+          <div className="flex flex-col gap-3 justify-center pt-4 max-w-full sm:max-w-md mx-auto w-full px-2">
             {/* Sign In / Follow Button - Primary CTA */}
             {!currentUserProfileId && isPiAuthenticated === false && typeof window !== 'undefined' && window.Pi ? (
               <Button
@@ -1456,7 +1464,7 @@ const PublicBio = () => {
 
         {/* YouTube Video */}
         {profile.youtubeVideoUrl && extractYouTubeVideoId(profile.youtubeVideoUrl) && (
-          <div className="w-full max-w-2xl px-4">
+          <div className="w-full max-w-full sm:max-w-2xl px-4">
             <div className="bg-transparent border border-white/20 rounded-xl backdrop-blur-sm overflow-hidden p-3">
               <div className="relative pb-[56.25%] h-0 overflow-hidden rounded-lg">
                 <iframe
@@ -1472,7 +1480,7 @@ const PublicBio = () => {
         )}
 
         {/* Social Feed & Pinned Posts */}
-        <div id="social-feed" className="w-full max-w-2xl px-4">
+        <div id="social-feed" className="w-full max-w-full sm:max-w-2xl px-4">
           <div className="flex flex-col gap-1 mb-4">
             <h2 className="text-2xl font-bold text-white drop-shadow-lg">Social Feed</h2>
             <p className="text-white/70 text-sm">Pinned posts, embeds, and recent drops</p>
@@ -1504,7 +1512,7 @@ const PublicBio = () => {
 
                   {item.embedHtml ? (
                     <div
-                      className="rounded-lg overflow-hidden bg-white/5 border border-white/10"
+                      className="rounded-lg overflow-hidden bg-white/5 border border-white/10 w-full max-w-full"
                       dangerouslySetInnerHTML={{ __html: item.embedHtml }}
                     />
                   ) : (
@@ -1538,7 +1546,7 @@ const PublicBio = () => {
 
         {/* Custom Links - Link.me Style */}
         {Array.isArray(profile.customLinks) && profile.customLinks.length > 0 && (
-          <div className="space-y-3 max-w-md mx-auto w-full pt-4">
+          <div className="space-y-3 max-w-full sm:max-w-md mx-auto w-full pt-4 px-2">
             {profile.customLinks.map((link) => {
               const buttonStyles = getButtonStyles(profile.theme.primaryColor, profile.theme.buttonStyle, profile.theme?.glassMode);
               return (
@@ -1547,7 +1555,7 @@ const PublicBio = () => {
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`flex items-center justify-center gap-3 w-full py-4 px-6 ${getIconStyle(profile.theme.iconStyle)} font-semibold text-white transition-all hover:shadow-xl hover:scale-105 shadow-lg`}
+                  className={`flex items-center justify-center gap-3 w-full py-4 px-6 ${getIconStyle(profile.theme.iconStyle)} font-semibold text-white transition-all hover:shadow-xl hover:scale-105 shadow-lg break-words overflow-wrap-anywhere`}
                   style={buttonStyles}
                 >
                   <ExternalLink className="w-5 h-5" />
@@ -1564,7 +1572,7 @@ const PublicBio = () => {
             <h2 className="text-2xl font-bold text-white text-center mb-8 drop-shadow-lg">
               📦 Digital Products
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-full sm:max-w-2xl mx-auto px-2">
               {profile.products.map((product) => (
                 <div
                   key={product.id}
@@ -1575,11 +1583,11 @@ const PublicBio = () => {
                   }}
                 >
                   <div className="flex flex-col h-full">
-                    <h3 className="text-lg font-bold text-white mb-2">
+                    <h3 className="text-lg font-bold text-white mb-2 break-words overflow-wrap-anywhere">
                       {product.title}
                     </h3>
                     {product.description && (
-                      <p className="text-white/80 text-sm mb-4 flex-grow">
+                      <p className="text-white/80 text-sm mb-4 flex-grow break-words">
                         {product.description}
                       </p>
                     )}
@@ -1618,7 +1626,7 @@ const PublicBio = () => {
               Support & Donations
             </h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-full sm:max-w-2xl mx-auto px-2">
               {Array.isArray(profile.wallets?.crypto) && profile.wallets.crypto.length > 0 && (
                 <div className="space-y-3">
                   <p className="text-white/80 text-sm text-center font-semibold mb-3">💰 Crypto Wallets</p>
@@ -1633,7 +1641,7 @@ const PublicBio = () => {
                        }}
                      >
                       <div className="flex items-center justify-between">
-                        <span className="text-white font-semibold text-left flex-1">{wallet.name}</span>
+                        <span className="text-white font-semibold text-left flex-1 break-words overflow-wrap-anywhere pr-2">{wallet.name}</span>
                         <span className="text-white/70 text-xs">QR Code</span>
                       </div>
                     </button>
@@ -1655,7 +1663,7 @@ const PublicBio = () => {
                       }}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-white font-semibold text-left flex-1">{account.bankName}</span>
+                        <span className="text-white font-semibold text-left flex-1 break-words overflow-wrap-anywhere pr-2">{account.bankName}</span>
                         <span className="text-white/70 text-xs">Details</span>
                       </div>
                     </button>
@@ -1669,8 +1677,8 @@ const PublicBio = () => {
         {/* Pi Wallet Tips - show only if enabled AND wallet is set */}
         {/* Pi Wallet Tips - lock if expired */}
         {profile.piWalletAddress && profile.showPiWalletTips !== false && !isPlanExpired && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-white text-center mb-6 flex items-center justify-center gap-2">
+          <div className="space-y-4 w-full max-w-full sm:max-w-2xl px-2 sm:px-4">
+            <h2 className="text-lg sm:text-xl font-semibold text-white text-center mb-6 flex flex-wrap items-center justify-center gap-2 px-2">
               <Wallet className="w-5 h-5 text-blue-400" />
               Receive DROP or Pi Tips
               {isMobile ? (
@@ -1697,8 +1705,8 @@ const PublicBio = () => {
                 <span className="relative group ml-2">
                   <Info className="w-4 h-4 text-blue-300 cursor-pointer" />
                   <span
-                    className="absolute left-1/2 -translate-x-1/2 mt-2 w-72 max-w-xs sm:max-w-sm bg-blue-900 text-white text-xs sm:text-sm rounded p-3 sm:p-4 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center justify-center text-center"
-                    style={{ minWidth: '180px', maxWidth: '90vw', wordBreak: 'break-word' }}
+                    className="absolute left-1/2 -translate-x-1/2 mt-2 w-72 max-w-[90vw] bg-blue-900 text-white text-xs sm:text-sm rounded p-3 sm:p-4 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center justify-center text-center"
+                    style={{ minWidth: '180px', maxWidth: 'calc(90vw - 2rem)', wordBreak: 'break-word' }}
                   >
                     <span className="w-full block text-center leading-snug">
                       DROP is the utility token for DropLink. Send only Pi Network DROP tokens to this address.<br /><br />You can copy or scan the QR code below.
@@ -1740,9 +1748,9 @@ const PublicBio = () => {
                           type="text"
                           value={profile.piWalletAddress}
                           readOnly
-                          className="w-full bg-black/50 border border-blue-400/30 rounded px-3 py-2 text-white text-xs font-mono"
+                          className="w-full bg-black/50 border border-blue-400/30 rounded px-3 py-2 text-white text-xs font-mono break-all overflow-hidden"
                         />
-                        <div className="flex gap-2 w-full justify-center">
+                        <div className="flex flex-wrap gap-2 w-full justify-center">
                           <Button
                             variant="outline"
                             size="sm"

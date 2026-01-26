@@ -970,6 +970,11 @@ const Dashboard = () => {
           socialLinks: Array.isArray(loadedProfile.socialLinks) ? loadedProfile.socialLinks : [],
         });
         
+        // Update displayUsername with the actual profile username
+        if (loadedProfile.username) {
+          setDisplayUsername(loadedProfile.username);
+        }
+        
         // Welcome back existing users (only on first load of session)
         if (!isNewUser && !sessionStorage.getItem(`welcomed_${profileData.id}`)) {
           toast.success(`👋 Welcome back, ${loadedProfile.businessName}!`);
@@ -1178,7 +1183,7 @@ const Dashboard = () => {
           username: defaultName || "",
           logo: "",
           businessName: defaultName,
-          storeUrl: `@${defaultName}`,
+          storeUrl: defaultName ? `@${defaultName}` : "your-link",
           description: "",
           email: supabaseUser?.email || "",
           youtubeVideoUrl: "",
@@ -1547,22 +1552,29 @@ const Dashboard = () => {
     }
   };
 
+  const getPublicSlugs = () => {
+    const normalize = (value: string) =>
+      (value || "")
+        .replace(/^\/+/, "")
+        .replace(/^@+/, "")
+        .trim();
+
+    const usernameSlug = normalize(profile.username || displayUsername || "your-link");
+    const profileSlug = `@${normalize(profile.storeUrl || usernameSlug) || usernameSlug}`;
+    const feedSlug = `${profileSlug}/feed`;
+    return { usernameSlug, profileSlug, feedSlug };
+  };
+
   const handleCopyLink = () => {
-    if (!profile.storeUrl) {
-      toast.error("Please set your store URL first");
-      return;
-    }
-    const link = `${window.location.origin}/${profile.storeUrl}`;
+    const { profileSlug } = getPublicSlugs();
+    const link = `${window.location.origin}/${profileSlug}`;
     navigator.clipboard.writeText(link);
     toast.success("Public link copied! Ready to share.");
   };
 
   const handleOpenPublicBio = () => {
-    if (!profile.storeUrl) {
-      toast.error("Please set your store URL first");
-      return;
-    }
-    const link = `${window.location.origin}/${profile.storeUrl}`;
+    const { profileSlug } = getPublicSlugs();
+    const link = `${window.location.origin}/${profileSlug}`;
     window.open(link, "_blank");
   };
 
@@ -1739,16 +1751,49 @@ const Dashboard = () => {
               </Button>
             </div>
             {displayUsername && (
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/70 bg-slate-50/80 dark:bg-slate-900/60 p-3">
                   <p className="text-xs text-slate-500">Profile URL</p>
                   <div className="flex items-center justify-between gap-2 mt-1">
-                    <span className="text-sm font-medium truncate">{window.location.origin}/{profile.storeUrl || 'your-link'}</span>
+                    <span className="text-sm font-medium truncate">{window.location.origin}/{getPublicSlugs().profileSlug}</span>
                     <div className="flex items-center gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleOpenPublicBio} title="View">
                         <ExternalLink className="w-4 h-4" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleCopyLink} title="Copy">
+                        <Share2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/70 bg-slate-50/80 dark:bg-slate-900/60 p-3">
+                  <p className="text-xs text-slate-500">Feed URL</p>
+                  <div className="flex items-center justify-between gap-2 mt-1">
+                    <span className="text-sm font-medium truncate">{window.location.origin}/{getPublicSlugs().feedSlug}</span>
+                    <div className="flex items-center gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8" 
+                        onClick={() => {
+                          const feedUrl = `${window.location.origin}/${getPublicSlugs().feedSlug}`;
+                          window.open(feedUrl, '_blank', 'noopener,noreferrer');
+                        }} 
+                        title="View Feed"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8" 
+                        onClick={() => {
+                          const feedUrl = `${window.location.origin}/${getPublicSlugs().feedSlug}`;
+                          navigator.clipboard.writeText(feedUrl);
+                          toast.success('Feed URL copied!');
+                        }} 
+                        title="Copy Feed URL"
+                      >
                         <Share2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -2236,6 +2281,12 @@ const Dashboard = () => {
                       className="bg-input-bg flex-1 text-sm min-w-0"
                     />
                   </div>
+                  {profile.username && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800 rounded-lg">
+                      <span className="text-xs text-sky-700 dark:text-sky-300 font-medium">@{profile.username}</span>
+                      <span className="text-xs text-sky-600 dark:text-sky-400">← Your public bio username</span>
+                    </div>
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1.5">
                   This will be your public store URL that you can share

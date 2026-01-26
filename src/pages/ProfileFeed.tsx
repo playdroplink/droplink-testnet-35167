@@ -5,7 +5,8 @@ import { usePi } from "@/contexts/PiContext";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ExternalLink, Share2, Eye, UserPlus, Zap, Copy, Flag } from "lucide-react";
+import { GiftDialog } from "@/components/GiftDialog";
+import { ExternalLink, Share2, Eye, UserPlus, UserMinus, Zap, Copy, Flag, Gift } from "lucide-react";
 import { FaXTwitter, FaInstagram, FaFacebook, FaYoutube, FaTiktok, FaTwitch, FaLinkedin, FaSnapchat, FaReddit, FaTelegram, FaWhatsapp, FaDiscord, FaPinterest, FaGithub, FaVimeo, FaGlobe } from "react-icons/fa6";
 import { SiThreads, SiBluesky, SiMastodon, SiKick } from "react-icons/si";
 import type { ProfileData, SocialEmbedItem } from "@/types/profile";
@@ -56,7 +57,7 @@ const ProfileFeed = () => {
   const { username: rawUsername } = useParams();
   const navigate = useNavigate();
   const username = rawUsername?.startsWith("@") ? rawUsername.slice(1) : rawUsername;
-  const { showRewardedAd } = usePi();
+  const { piUser, isAuthenticated: isPiAuthenticated, showRewardedAd, signOut } = usePi();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [socialFeedItems, setSocialFeedItems] = useState<SocialEmbedItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,6 +69,7 @@ const ProfileFeed = () => {
   const [visitCount, setVisitCount] = useState(0);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showGiftDialog, setShowGiftDialog] = useState(false);
 
   const getCachedProfileFromStorage = () => {
     if (typeof window === "undefined") return null;
@@ -85,6 +87,14 @@ const ProfileFeed = () => {
     }
     return null;
   };
+
+  // Keep cached profile ID in state for follow actions
+  useEffect(() => {
+    if (!currentUserProfileId) {
+      const cached = getCachedProfileFromStorage();
+      if (cached?.id) setCurrentUserProfileId(cached.id);
+    }
+  }, [currentUserProfileId]);
 
   const formatCompactNumber = (value: number) => {
     if (!Number.isFinite(value)) return "0";
@@ -134,8 +144,16 @@ const ProfileFeed = () => {
         (profileData as any).pinned_posts
       );
 
+      const isValidSocialUrl = (url?: string | null) => {
+        if (!url) return false;
+        const trimmed = String(url).trim();
+        return /^https?:\/\//i.test(trimmed);
+      };
+
       const socialLinksArr = Array.isArray(profileData.social_links)
-        ? profileData.social_links.filter((l: any) => l.url && l.url.trim()).map((l: any) => ({ platform: l.type || l.platform, url: l.url }))
+        ? profileData.social_links
+            .filter((l: any) => isValidSocialUrl(l?.url))
+            .map((l: any) => ({ platform: l.type || l.platform, url: l.url }))
         : [];
 
       // Check if user is verified (special list or database flag)
@@ -204,6 +222,25 @@ const ProfileFeed = () => {
     }
   };
 
+  // Auto-follow after returning from auth (same workflow as PublicBio)
+  useEffect(() => {
+    const authAction = sessionStorage.getItem('authAction');
+    const profileToFollow = sessionStorage.getItem('profileToFollow');
+    if (
+      authAction === 'follow' &&
+      profileToFollow &&
+      (profileToFollow === username || profileToFollow === profileId) &&
+      currentUserProfileId &&
+      profileId &&
+      currentUserProfileId !== profileId &&
+      !isFollowing
+    ) {
+      sessionStorage.removeItem('authAction');
+      sessionStorage.removeItem('profileToFollow');
+      handleFollow();
+    }
+  }, [username, profileId, currentUserProfileId, isFollowing]);
+
   const handleFollow = async () => {
     const cached = getCachedProfileFromStorage();
     const followerProfileId = currentUserProfileId || cached?.id || null;
@@ -240,6 +277,26 @@ const ProfileFeed = () => {
       console.error("Follow error:", error);
       toast.error("Could not update follow status");
     }
+  };
+
+  const handlePiSignIn = async () => {
+    try {
+      sessionStorage.setItem('authAction', 'follow');
+      sessionStorage.setItem('profileToFollow', profileId || '');
+      sessionStorage.setItem('redirectAfterAuth', window.location.pathname);
+      toast.loading("Redirecting to sign in...");
+      navigate('/', { state: { authAction: 'follow', profileToFollow: profileId } });
+    } catch (error) {
+      console.error("Pi sign in error:", error);
+      toast.error("Failed to redirect to sign in");
+    }
+  };
+
+  const handleSignUpToFollow = () => {
+    sessionStorage.setItem('redirectAfterAuth', window.location.pathname);
+    sessionStorage.setItem('authAction', 'follow');
+    sessionStorage.setItem('profileToFollow', username || '');
+    window.location.href = 'https://www.droplink.space';
   };
 
   useEffect(() => {
@@ -310,7 +367,7 @@ const ProfileFeed = () => {
           )}
           <div className="space-y-1">
             <div className="flex items-center justify-center gap-2">
-              <h1 className="text-4xl font-bold drop-shadow-lg">{profile.businessName || profile.username}</h1>
+              <h1 className="text-4xl font-bold drop-shadow-lg">{profile.businessName || profile.username || username || 'user'}</h1>
               {profile.isVerified && (
                 <img 
                   src={getVerifiedBadgeUrl(profile.username)} 
@@ -320,7 +377,7 @@ const ProfileFeed = () => {
                 />
               )}
             </div>
-            <p className="text-white/80">@{profile.username}</p>
+            <p className="text-white/80">@{profile.username || username || 'user'}</p>
             
             {/* Follower and View Count */}
             <div className="flex items-center justify-center gap-4 pt-2 text-white/70 text-sm">
@@ -333,28 +390,104 @@ const ProfileFeed = () => {
                 <span>{formatCompactNumber(visitCount)} Views</span>
               </div>
             </div>
-            <div className="pt-3 flex justify-center">
-              <Button
-                onClick={handleFollow}
-                variant={isFollowing ? "secondary" : "default"}
-                className={`${isFollowing ? "bg-white/15 text-white" : "bg-white text-black"} border border-white/30 px-4`}
-              >
-                {isFollowing ? "Following" : "Follow"}
-              </Button>
+            {/* Primary Action Buttons - same styling as PublicBio */}
+            <div className="flex flex-col gap-3 justify-center pt-4 max-w-md mx-auto w-full">
+              {/* Sign In / Follow Button */}
+              {!currentUserProfileId && isPiAuthenticated === false && typeof window !== 'undefined' && (window as any).Pi ? (
+                <Button
+                  onClick={handlePiSignIn}
+                  className={`rounded-full gap-2 w-full py-3 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300`}
+                  style={{ 
+                    backgroundColor: profile.theme.primaryColor,
+                    color: '#fff',
+                    textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+                  }}
+                >
+                  <UserPlus className="w-5 h-5" />
+                  Sign in to Follow
+                </Button>
+              ) : currentUserProfileId && currentUserProfileId !== profileId ? (
+                <Button
+                  onClick={handleFollow}
+                  className={`rounded-full gap-2 w-full py-3 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300`}
+                  style={isFollowing ? { 
+                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                    border: `2px solid ${profile.theme.primaryColor}`,
+                    color: '#fff',
+                    textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)',
+                  } : { 
+                    backgroundColor: profile.theme.primaryColor,
+                    color: '#fff',
+                    textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+                  }}
+                  variant={isFollowing ? "outline" : "default"}
+                >
+                  {isFollowing ? (
+                    <>
+                      <UserMinus className="w-5 h-5" />
+                      Following
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-5 h-5" />
+                      Follow
+                    </>
+                  )}
+                </Button>
+              ) : null}
+              {/* Gift Button */}
+              {currentUserProfileId && currentUserProfileId !== profileId && (
+                <Button
+                  onClick={() => setShowGiftDialog(true)}
+                  className={`rounded-full gap-2 w-full py-3 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300`}
+                  style={{ 
+                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                    border: `2px solid ${profile.theme.primaryColor}`,
+                    color: '#fff',
+                    textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)',
+                  }}
+                  variant="outline"
+                >
+                  <Gift className="w-5 h-5" />
+                  Send Gift
+                </Button>
+              )}
+              {/* Anonymous Follow Prompt */}
+              {!currentUserProfileId && !(typeof window !== 'undefined' && (window as any).Pi && isPiAuthenticated === false) && (
+                <div className="flex justify-center pt-2">
+                  <div className="text-center p-4 bg-white/5 rounded-lg border border-white/10 w-full">
+                    <p className="text-sm text-white mb-3">Like this profile? Sign up to follow!</p>
+                    <Button
+                      onClick={handleSignUpToFollow}
+                      className="rounded-full gap-2 w-full py-2.5 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                      style={{ 
+                        backgroundColor: profile.theme.primaryColor,
+                        color: '#fff',
+                        textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+                      }}
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      Sign up to Follow
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex flex-wrap justify-center gap-3">
-            {(profile.socialLinks || []).map((link) => (
-              <a
-                key={link.platform}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-11 h-11 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition"
-              >
-                <span className="text-white text-lg">{getSocialIcon(link.platform)}</span>
-              </a>
-            ))}
+            {(profile.socialLinks || [])
+              .filter((link) => link?.url && /^https?:\/\//i.test(String(link.url).trim()))
+              .map((link) => (
+                <a
+                  key={link.platform || link.type || link.url}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-11 h-11 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition"
+                >
+                  <span className="text-white text-lg">{getSocialIcon(link.platform || link.type)}</span>
+                </a>
+              ))}
           </div>
           <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
             <Button
@@ -571,6 +704,17 @@ const ProfileFeed = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Gift Dialog */}
+      {profileId && currentUserProfileId && (
+        <GiftDialog
+          open={showGiftDialog}
+          onOpenChange={setShowGiftDialog}
+          receiverProfileId={profileId}
+          senderProfileId={currentUserProfileId}
+          receiverName={profile?.businessName || profile?.username || ""}
+        />
       )}
     </div>
   );
