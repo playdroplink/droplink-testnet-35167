@@ -1217,10 +1217,12 @@ const Dashboard = () => {
     // Confirm with user before canceling
     const confirmed = window.confirm(
       '⚠️ WARNING: Canceling your plan will:\n\n' +
-      '• Delete ALL active subscriptions\n' +
-      '• Remove any unused gift card plans\n' +
+      '• Delete ALL subscriptions (regular & gift card plans)\n' +
+      '• Remove ALL gift cards (purchased & redeemed)\n' +
+      '• Delete subscription transaction history\n' +
       '• Reset your account to FREE tier\n' +
       '• Remove premium features immediately\n\n' +
+      'After cancellation, you can subscribe to a new plan anytime.\n\n' +
       'This action CANNOT be undone. Are you sure you want to continue?'
     );
 
@@ -1232,21 +1234,41 @@ const Dashboard = () => {
       setCancelingPlan(true);
       const nowIso = new Date().toISOString();
 
-      // Delete all subscriptions for this profile
-      await supabase
+      // Delete all subscriptions for this profile (includes all types: regular, gift, etc.)
+      const { error: subDeleteError } = await supabase
         .from('subscriptions')
         .delete()
         .eq('profile_id', effectiveProfileId);
 
-      // Delete any unredeemed gift cards purchased by this user
-      await supabase
+      if (subDeleteError) {
+        console.error('Error deleting subscriptions:', subDeleteError);
+        throw new Error('Failed to delete subscriptions');
+      }
+
+      // Delete subscription transaction history
+      const { error: transDeleteError } = await supabase
+        .from('subscription_transactions' as any)
+        .delete()
+        .eq('profile_id', effectiveProfileId);
+
+      if (transDeleteError) {
+        console.error('Error deleting subscription transactions:', transDeleteError);
+        // Don't throw - this is not critical
+      }
+
+      // Delete ALL gift cards (purchased by or redeemed by this user)
+      const { error: giftDeleteError } = await supabase
         .from('gift_cards')
         .delete()
-        .eq('purchased_by_profile_id', effectiveProfileId)
-        .eq('status', 'available');
+        .or(`purchased_by_profile_id.eq.${effectiveProfileId},redeemed_by_profile_id.eq.${effectiveProfileId}`);
 
-      // Reset profile to free tier
-      await supabase
+      if (giftDeleteError) {
+        console.error('Error deleting gift cards:', giftDeleteError);
+        // Don't throw - continue with profile reset
+      }
+
+      // Reset profile to free tier - allows user to subscribe again
+      const { error: profileUpdateError } = await supabase
         .from('profiles')
         .update({ 
           subscription_status: 'free', 
@@ -1255,8 +1277,13 @@ const Dashboard = () => {
         })
         .eq('id', effectiveProfileId);
 
+      if (profileUpdateError) {
+        console.error('Error updating profile:', profileUpdateError);
+        throw new Error('Failed to reset profile to free tier');
+      }
+
       await refetchSubscription?.();
-      toast.success('Plan canceled. All subscriptions and gift cards have been deleted. You are now on the Free plan.');
+      toast.success('Plan canceled. All subscriptions, gift cards, and transaction history have been deleted. You can now subscribe to a new plan.');
       setShowPlanModal(false);
     } catch (error) {
       console.error('Cancel plan failed', error);
@@ -2811,7 +2838,7 @@ const Dashboard = () => {
                     </div>
                     <div className="ml-3">
                       <p className="text-sm text-yellow-700">
-                        <strong>Important:</strong> Canceling your plan will permanently delete all active subscriptions, unused gift cards, and reset your account to the free tier. This action cannot be undone.
+                        <strong>Important:</strong> Canceling your plan will permanently delete all subscriptions (including gift card plans), gift cards, and transaction history. You can subscribe to a new plan after cancellation.
                       </p>
                     </div>
                   </div>
@@ -2850,7 +2877,7 @@ const Dashboard = () => {
                       </div>
                       <div className="ml-3">
                         <p className="text-xs text-yellow-700">
-                          Canceling will delete all subscriptions, gift cards, and reset to free tier.
+                          Canceling will delete all subscriptions (regular & gift plans), gift cards, and transaction history. You can subscribe again after cancellation.
                         </p>
                       </div>
                     </div>

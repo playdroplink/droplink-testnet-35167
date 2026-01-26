@@ -299,7 +299,7 @@ const LinkManager: React.FC<LinkManagerProps> = ({
   }));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full overflow-x-hidden">
       {/* Layout Selection */}
       {onLayoutChange && (
         <Card>
@@ -316,10 +316,10 @@ const LinkManager: React.FC<LinkManagerProps> = ({
                   key={layout.value}
                   variant={layoutType === layout.value ? 'default' : 'outline'}
                   onClick={() => onLayoutChange(layout.value)}
-                  className="h-auto p-3 flex flex-col items-center gap-2"
+                  className="h-auto p-3 flex flex-col items-center gap-2 text-xs sm:text-sm"
                 >
-                  <span className="font-medium">{layout.label}</span>
-                  <span className="text-xs text-muted-foreground">{layout.description}</span>
+                  <span className="font-medium truncate w-full">{layout.label}</span>
+                  <span className="text-xs text-muted-foreground truncate w-full">{layout.description}</span>
                 </Button>
               ))}
             </div>
@@ -327,7 +327,7 @@ const LinkManager: React.FC<LinkManagerProps> = ({
         </Card>
       )}
 
-      <Tabs defaultValue="custom" className="w-full">
+      <Tabs defaultValue="custom" className="w-full max-w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="custom">Custom Links</TabsTrigger>
           <TabsTrigger value="shortened">Short Links</TabsTrigger>
@@ -343,17 +343,17 @@ const LinkManager: React.FC<LinkManagerProps> = ({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                 {suggestedLinks.map((suggestion, index) => (
                   <Button
                     key={index}
                     variant="outline"
                     size="sm"
                     onClick={() => handleAddCustomLink(suggestion)}
-                    className="flex items-center gap-2 h-auto p-3"
+                    className="flex items-center gap-1 sm:gap-2 h-auto p-2 sm:p-3 text-xs sm:text-sm"
                   >
-                    <span>{suggestion.icon}</span>
-                    <span className="text-xs">{suggestion.title}</span>
+                    <span className="text-sm sm:text-base">{suggestion.icon}</span>
+                    <span className="text-xs truncate">{suggestion.title}</span>
                   </Button>
                 ))}
               </div>
@@ -369,51 +369,58 @@ const LinkManager: React.FC<LinkManagerProps> = ({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Title</Label>
-                  <Input
-                    placeholder="Link title"
-                    value={formData.title || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  />
+              <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Title</Label>
+                    <Input
+                      placeholder="Link title"
+                      value={formData.title || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <Label>URL</Label>
+                    <Input
+                      placeholder="https://example.com"
+                      value={formData.url || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                      className="w-full"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label>URL</Label>
-                  <Input
-                    placeholder="https://example.com"
-                    value={formData.url || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label>Icon/Emoji</Label>
-                  <Input
-                    placeholder="🔗 or icon name"
-                    value={formData.icon || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, icon: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label>Category</Label>
-                  <Select value={formData.category || selectedCategory} onValueChange={(value) => {
-                    setFormData(prev => ({ ...prev, category: value as LinkCategory }));
-                    setSelectedCategory(value as LinkCategory);
-                  }}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {linkCategories.map((cat) => (
-                        <SelectItem key={cat.value} value={cat.value}>
-                          <div className="flex items-center gap-2">
-                            <div className={`w-3 h-3 rounded-full ${cat.color}`} />
-                            {cat.label}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Icon/Emoji</Label>
+                    <Input
+                      placeholder="🔗 or icon name"
+                      value={formData.icon || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, icon: e.target.value }))}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <Label>Category</Label>
+                    <Select value={formData.category || selectedCategory} onValueChange={(value) => {
+                      setFormData(prev => ({ ...prev, category: value as LinkCategory }));
+                      setSelectedCategory(value as LinkCategory);
+                    }}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {linkCategories.map((cat) => (
+                          <SelectItem key={cat.value} value={cat.value}>
+                            <div className="flex items-center gap-2">
+                              <div className={`w-3 h-3 rounded-full ${cat.color}`} />
+                              {cat.label}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
               <div>
@@ -423,19 +430,20 @@ const LinkManager: React.FC<LinkManagerProps> = ({
                   value={formData.description || ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   rows={2}
+                  className="w-full resize-none"
                 />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <Label>Display Style</Label>
                   <Select value={formData.displayStyle || 'classic'} onValueChange={(value) => setFormData(prev => ({ ...prev, displayStyle: value as DisplayStyle }))}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       {displayStyles.map((style) => (
                         <SelectItem key={style.value} value={style.value}>
-                          {style.label} - {style.description}
+                          <span className="text-xs sm:text-sm">{style.label} - {style.description}</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -447,7 +455,7 @@ const LinkManager: React.FC<LinkManagerProps> = ({
                     type="color"
                     value={formData.color || '#3b82f6'}
                     onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
-                    className="h-10"
+                    className="h-10 w-full"
                   />
                 </div>
                 <div>
@@ -456,17 +464,17 @@ const LinkManager: React.FC<LinkManagerProps> = ({
                     type="color"
                     value={formData.textColor || '#ffffff'}
                     onChange={(e) => setFormData(prev => ({ ...prev, textColor: e.target.value }))}
-                    className="h-10"
+                    className="h-10 w-full"
                   />
                 </div>
               </div>
               
               {/* Image Upload Section */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <Label>Link Thumbnail</Label>
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Input
                         type="file"
                         accept="image/*"
@@ -479,7 +487,7 @@ const LinkManager: React.FC<LinkManagerProps> = ({
                         variant="outline"
                         onClick={() => document.getElementById('thumbnail-upload')?.click()}
                         disabled={uploadingImage}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 flex-1 sm:flex-none text-xs sm:text-sm"
                       >
                         <Upload className="w-4 h-4" />
                         {uploadingImage ? 'Uploading...' : 'Upload Thumbnail'}
@@ -510,7 +518,7 @@ const LinkManager: React.FC<LinkManagerProps> = ({
                 <div>
                   <Label>Favicon/Icon</Label>
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Input
                         type="file"
                         accept="image/*"
@@ -523,7 +531,7 @@ const LinkManager: React.FC<LinkManagerProps> = ({
                         variant="outline"
                         onClick={() => document.getElementById('favicon-upload')?.click()}
                         disabled={uploadingImage}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 flex-1 sm:flex-none text-xs sm:text-sm"
                       >
                         <Upload className="w-4 h-4" />
                         {uploadingImage ? 'Uploading...' : 'Upload Icon'}
@@ -551,7 +559,7 @@ const LinkManager: React.FC<LinkManagerProps> = ({
                   </div>
                 </div>
               </div>
-              <Button onClick={() => handleAddCustomLink()} className="w-full">
+              <Button onClick={() => handleAddCustomLink()} className="w-full text-sm sm:text-base">
                 Add Custom Link
               </Button>
             </CardContent>
@@ -570,7 +578,7 @@ const LinkManager: React.FC<LinkManagerProps> = ({
                 <CardContent>
                   <div className="space-y-3">
                     {category.links.map((link, index) => (
-                      <div key={link.id} className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                      <div key={link.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 sm:p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                         {/* Link Preview */}
                         <div className="flex-shrink-0">
                           {link.image ? (
@@ -597,21 +605,21 @@ const LinkManager: React.FC<LinkManagerProps> = ({
                         </div>
                         
                         {/* Link Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium text-gray-900 truncate">{link.title}</span>
+                        <div className="flex-1 min-w-0 w-full">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="font-medium text-gray-900 truncate text-sm sm:text-base">{link.title}</span>
                             <Badge variant={link.displayStyle === 'featured' ? 'default' : 'secondary'} className="text-xs">
                               {link.displayStyle}
                             </Badge>
                             {!link.isVisible && <EyeOff className="w-4 h-4 text-gray-400" />}
                           </div>
-                          <p className="text-sm text-gray-500 truncate mb-1">{link.url}</p>
+                          <p className="text-xs sm:text-sm text-gray-500 truncate mb-1 break-all">{link.url}</p>
                           {link.description && (
                             <p className="text-xs text-gray-400 line-clamp-2">{link.description}</p>
                           )}
                           
                           {/* Visual Styling Indicators */}
-                          <div className="flex items-center gap-2 mt-2">
+                          <div className="flex items-center gap-2 mt-2 flex-wrap">
                             {link.color && link.color !== '#3b82f6' && (
                               <div 
                                 className="w-4 h-4 rounded-full border border-gray-300" 
@@ -628,15 +636,16 @@ const LinkManager: React.FC<LinkManagerProps> = ({
                         </div>
                         
                         {/* Action Buttons */}
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 flex-wrap sm:flex-nowrap w-full sm:w-auto justify-end">
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => handleReorderLink(link.id, 'up')}
                             disabled={index === 0}
                             title="Move up"
+                            className="h-8 w-8 p-0"
                           >
-                            <ArrowUp className="w-4 h-4" />
+                            <ArrowUp className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                           <Button
                             size="sm"
@@ -644,49 +653,54 @@ const LinkManager: React.FC<LinkManagerProps> = ({
                             onClick={() => handleReorderLink(link.id, 'down')}
                             disabled={index === category.links.length - 1}
                             title="Move down"
+                            className="h-8 w-8 p-0"
                           >
-                            <ArrowDown className="w-4 h-4" />
+                            <ArrowDown className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => handleUpdateLink(link.id, { isVisible: !link.isVisible })}
                             title={link.isVisible ? 'Hide link' : 'Show link'}
+                            className="h-8 w-8 p-0"
                           >
-                            {link.isVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                            {link.isVisible ? <Eye className="w-3 h-3 sm:w-4 sm:h-4" /> : <EyeOff className="w-3 h-3 sm:w-4 sm:h-4" />}
                           </Button>
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => setShowQR(link.url)}
                             title="Generate QR code"
+                            className="h-8 w-8 p-0"
                           >
-                            <QrCode className="w-4 h-4" />
+                            <QrCode className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => copyToClipboard(link.url)}
                             title="Copy URL"
+                            className="h-8 w-8 p-0"
                           >
-                            <Copy className="w-4 h-4" />
+                            <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => handleEditLink(link)}
                             title="Edit link"
+                            className="h-8 w-8 p-0"
                           >
-                            <Edit className="w-4 h-4" />
+                            <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => handleDeleteLink(link.id)}
-                            className="text-red-500 hover:text-red-700"
+                            className="text-red-500 hover:text-red-700 h-8 w-8 p-0"
                             title="Delete link"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                         </div>
                       </div>

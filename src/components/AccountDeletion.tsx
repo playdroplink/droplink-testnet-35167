@@ -38,6 +38,26 @@ export const AccountDeletion: React.FC<AccountDeletionProps> = ({
       return;
     }
 
+    // Additional confirmation dialog with detailed warning
+    const finalConfirm = window.confirm(
+      '⚠️ FINAL WARNING: Deleting your account will:\n\n' +
+      '• PERMANENTLY delete ALL subscriptions\n' +
+      '• Remove ALL gift cards (purchased & redeemed)\n' +
+      '• Delete ALL profile data and settings\n' +
+      '• Erase ALL payment history and links\n' +
+      '• Remove ALL custom content and preferences\n\n' +
+      'If you create a new account, you will start with:\n' +
+      '• FREE plan (no active subscription)\n' +
+      '• No previous data or history\n' +
+      '• Default settings only\n\n' +
+      'This action is PERMANENT and CANNOT be undone!\n\n' +
+      'Click OK to proceed with account deletion, or Cancel to keep your account.'
+    );
+
+    if (!finalConfirm) {
+      return;
+    }
+
     const userIdToDelete = currentUser?.id || piUser?.uid;
     if (!userIdToDelete) {
       toast({
@@ -62,6 +82,8 @@ export const AccountDeletion: React.FC<AccountDeletionProps> = ({
         throw new Error(`Failed to delete user data: ${deleteError.message}`);
       }
 
+      console.log('Account deletion result:', deleteResult);
+
       // Step 2: Sign out from Pi Network
       setDeleteStep(2);
       await signOut();
@@ -82,7 +104,7 @@ export const AccountDeletion: React.FC<AccountDeletionProps> = ({
 
       toast({
         title: "Account Deleted Successfully",
-        description: "Your account and all associated data have been permanently deleted. You can create a new account anytime.",
+        description: "Your account, all subscriptions, and gift cards have been permanently deleted. You can create a new account anytime starting with the FREE plan.",
         duration: 5000
       });
 
@@ -111,7 +133,7 @@ export const AccountDeletion: React.FC<AccountDeletionProps> = ({
 
   const getStepDescription = () => {
     switch (deleteStep) {
-      case 1: return "Deleting user data and subscriptions...";
+      case 1: return "Deleting subscriptions, gift cards, and user data...";
       case 2: return "Signing out from Pi Network...";
       case 3: return "Clearing local storage...";
       case 4: return "Clearing cached data...";
@@ -143,13 +165,15 @@ export const AccountDeletion: React.FC<AccountDeletionProps> = ({
         <div className="bg-white p-4 rounded-lg border border-red-200">
           <h4 className="font-semibold text-red-700 mb-2">What will be deleted:</h4>
           <ul className="space-y-1 text-sm text-red-600">
+            <li>• <strong>All subscriptions (reset to FREE plan)</strong></li>
+            <li>• <strong>All gift cards (purchased & redeemed)</strong></li>
             <li>• All profile information and settings</li>
             <li>• Payment links and transaction history</li>
             <li>• Analytics data and usage statistics</li>
             <li>• Custom links and domain settings</li>
-            <li>• <strong>All subscriptions and plan data (reset to FREE plan)</strong></li>
             <li>• Pi Network wallet connections</li>
             <li>• User preferences and customizations</li>
+            <li>• Products, orders, and merchant data</li>
           </ul>
         </div>
 
@@ -200,8 +224,16 @@ export const AccountDeletion: React.FC<AccountDeletionProps> = ({
               <Alert className="border-red-200 bg-red-50">
                 <Shield className="h-4 w-4 text-red-600" />
                 <AlertDescription className="text-red-700">
-                  All your data, subscriptions (reset to FREE plan), and settings will be permanently lost. 
-                  You can create a new account later, but it will start fresh with no subscription.
+                  <strong>All data will be permanently lost:</strong>
+                  <br />
+                  • All subscriptions deleted (reset to FREE plan)
+                  <br />
+                  • All gift cards removed (purchased & redeemed)
+                  <br />
+                  • All profile data, links, and settings erased
+                  <br />
+                  <br />
+                  You can create a new account later, but it will start completely fresh with no subscription or previous data.
                 </AlertDescription>
               </Alert>
 

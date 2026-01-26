@@ -87,6 +87,11 @@ BEGIN
     GET DIAGNOSTICS affected_rows = ROW_COUNT;
     total_deleted := total_deleted + affected_rows;
     
+    -- 11b. Delete gift_cards (purchased by or redeemed by this user)
+    DELETE FROM gift_cards WHERE purchased_by_profile_id = user_id_to_delete OR redeemed_by_profile_id = user_id_to_delete;
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    total_deleted := total_deleted + affected_rows;
+    
     -- 12. Delete gifts and gift_transactions (by profile_id and pi_user_id)
     DELETE FROM gift_transactions WHERE sender_id = user_id_to_delete OR recipient_id = user_id_to_delete;
     GET DIAGNOSTICS affected_rows = ROW_COUNT;
