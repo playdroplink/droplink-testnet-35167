@@ -43,6 +43,7 @@ import LinkManager from "@/components/LinkManager";
 import { PiAuthTest } from "@/components/PiAuthTest";
 import { AccountDeletion } from "@/components/AccountDeletion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ComingSoonModal } from "@/components/ComingSoonModal";
 import {
   Drawer,
   DrawerClose,
@@ -235,6 +236,8 @@ const Dashboard = () => {
   const [hasSupabaseSession, setHasSupabaseSession] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [showDropStoreModal, setShowDropStoreModal] = useState(false);
+  const [showDropPayModal, setShowDropPayModal] = useState(false);
 
   // Check for Supabase session on mount
   useEffect(() => {
@@ -1770,56 +1773,60 @@ const Dashboard = () => {
 
                 {/* DropStore Tab */}
                 <TabsContent value="merchant" className="pb-6 sm:pb-8">
-                  <div className="max-w-lg mx-auto mt-8 sm:mt-12 p-4 sm:p-6 bg-white dark:bg-slate-900 rounded-xl shadow border border-sky-200/80 dark:border-sky-800/60 text-center space-y-3">
-                    <div className="relative inline-block">
-                      <Store className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-sky-600 dark:text-sky-400" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-blue-900 dark:text-blue-100">DropStore (Coming Soon)</h2>
-                    <p className="text-sm sm:text-base text-blue-800 dark:text-blue-200">
-                      A Pi-first marketplace to launch digital storefronts, accept Pi payments, and reach global buyers.
-                    </p>
-                    <div className="bg-sky-50 dark:bg-slate-900/40 p-3 rounded-lg border border-sky-200 dark:border-sky-700">
-                      <p className="text-xs sm:text-sm text-sky-700 dark:text-sky-300">
-                        <strong>🚀 Launch features:</strong>
-                      </p>
-                      <ul className="text-xs text-sky-700 dark:text-sky-300 mt-2 space-y-1">
-                        <li>✓ Digital storefronts with themes</li>
-                        <li>✓ Pi Network mainnet payments</li>
-                        <li>✓ Discovery, search, and curation</li>
-                        <li>✓ Real-time earnings and analytics</li>
-                      </ul>
-                    </div>
-                    <p className="text-xs sm:text-sm text-sky-700 dark:text-sky-300 font-medium">
-                      Building now — stay tuned! 🎉
-                    </p>
+                  <div className="max-w-lg mx-auto mt-8 sm:mt-12 text-center">
+                    <Button
+                      onClick={() => setShowDropStoreModal(true)}
+                      variant="ghost"
+                      className="w-full py-8 sm:py-12 hover:bg-sky-50 dark:hover:bg-slate-800/50"
+                    >
+                      <div className="flex flex-col items-center gap-3">
+                        <Store className="w-12 h-12 sm:w-14 sm:h-14 text-sky-600 dark:text-sky-400" />
+                        <div>
+                          <p className="text-lg sm:text-xl font-semibold text-sky-900 dark:text-sky-100">
+                            DropStore
+                          </p>
+                          <p className="text-xs sm:text-sm text-sky-700 dark:text-sky-300 mt-1">
+                            Click to learn more
+                          </p>
+                        </div>
+                      </div>
+                    </Button>
                   </div>
+
+                  <ComingSoonModal
+                    open={showDropStoreModal}
+                    onOpenChange={setShowDropStoreModal}
+                    type="dropstore"
+                  />
                 </TabsContent>
 
                 {/* DropPay Tab */}
                 <TabsContent value="droppay" className="pb-6 sm:pb-8">
-                  <div className="max-w-lg mx-auto mt-8 sm:mt-12 p-4 sm:p-6 bg-white dark:bg-slate-900 rounded-xl shadow border border-sky-200/80 dark:border-sky-800/60 text-center space-y-3">
-                    <div className="relative inline-block">
-                      <Wallet className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-sky-600 dark:text-sky-400" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-sky-900 dark:text-sky-100">DropPay (Coming Soon)</h2>
-                    <p className="text-sm sm:text-base text-sky-800 dark:text-sky-200">
-                      Seamless Pi payment modal with QR, on-chain verification, and branded checkout for your links and products.
-                    </p>
-                    <div className="bg-sky-50 dark:bg-slate-900/40 p-3 rounded-lg border border-sky-200 dark:border-sky-700">
-                      <p className="text-xs sm:text-sm text-sky-700 dark:text-sky-300">
-                        <strong>🚀 Launch features:</strong>
-                      </p>
-                      <ul className="text-xs text-sky-700 dark:text-sky-300 mt-2 space-y-1">
-                        <li>✓ Pi payments with QR</li>
-                        <li>✓ Real-time verification</li>
-                        <li>✓ Custom branding</li>
-                        <li>✓ Analytics and receipts</li>
-                      </ul>
-                    </div>
-                    <p className="text-xs sm:text-sm text-sky-700 dark:text-sky-300 font-medium">
-                      Coming soon to your dashboard.
-                    </p>
+                  <div className="max-w-lg mx-auto mt-8 sm:mt-12 text-center">
+                    <Button
+                      onClick={() => setShowDropPayModal(true)}
+                      variant="ghost"
+                      className="w-full py-8 sm:py-12 hover:bg-sky-50 dark:hover:bg-slate-800/50"
+                    >
+                      <div className="flex flex-col items-center gap-3">
+                        <Wallet className="w-12 h-12 sm:w-14 sm:h-14 text-sky-600 dark:text-sky-400" />
+                        <div>
+                          <p className="text-lg sm:text-xl font-semibold text-sky-900 dark:text-sky-100">
+                            DropPay
+                          </p>
+                          <p className="text-xs sm:text-sm text-sky-700 dark:text-sky-300 mt-1">
+                            Click to learn more
+                          </p>
+                        </div>
+                      </div>
+                    </Button>
                   </div>
+
+                  <ComingSoonModal
+                    open={showDropPayModal}
+                    onOpenChange={setShowDropPayModal}
+                    type="droppay"
+                  />
                 </TabsContent>
                 {/* Pi Data tab removed for production */}
 
