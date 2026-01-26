@@ -1775,20 +1775,31 @@ const Dashboard = () => {
 
                 {/* Merchant Tab */}
                 <TabsContent value="merchant" className="pb-6 sm:pb-8">
-                  <div className="max-w-lg mx-auto mt-8 sm:mt-12 p-4 sm:p-6 bg-white dark:bg-slate-900 rounded-xl shadow border border-slate-200/70 dark:border-slate-800/70 text-center space-y-3">
-                    <Store className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-sky-500" />
-                    <h2 className="text-2xl font-bold">Dropstore: Digital Marketplace Platform</h2>
-                    <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300">
-                      Dropstore empowers anyone to launch a digital storefront, accept Pi payments on mainnet, and reach a global audience.
-                    </p>
-                    <a href="https://dropshops.space/" target="_blank" rel="noopener noreferrer">
-                      <button className="mt-2 px-6 py-2 bg-sky-500 text-white rounded-lg font-semibold shadow hover:bg-sky-600 transition">
-                        Start Selling on Dropstore
-                      </button>
-                    </a>
-                    <div className="text-xs sm:text-sm text-slate-500">
-                      <strong>Live Features:</strong> Advanced storefronts, marketplace discovery, Pi Network mainnet integration, analytics, and more.
+                  <div className="max-w-lg mx-auto mt-8 sm:mt-12 p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 rounded-xl shadow border-2 border-blue-300 dark:border-blue-700/50 text-center space-y-3">
+                    <div className="relative inline-block">
+                      <Store className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-blue-600 dark:text-blue-400" />
+                      <span className="absolute top-0 right-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-500 text-white shadow-lg animate-pulse">
+                        Coming Soon
+                      </span>
                     </div>
+                    <h2 className="text-2xl font-bold text-blue-900 dark:text-blue-100">DropStore: Digital Marketplace</h2>
+                    <p className="text-sm sm:text-base text-blue-800 dark:text-blue-200">
+                      Dropstore is launching soon! Launch a digital storefront, accept Pi payments on mainnet, and reach a global audience.
+                    </p>
+                    <div className="bg-white/60 dark:bg-slate-900/40 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
+                      <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300">
+                        <strong>🚀 Features Coming Soon:</strong>
+                      </p>
+                      <ul className="text-xs text-blue-600 dark:text-blue-400 mt-2 space-y-1">
+                        <li>✓ Advanced digital storefronts</li>
+                        <li>✓ Pi Network mainnet integration</li>
+                        <li>✓ Marketplace discovery & search</li>
+                        <li>✓ Real-time analytics & earnings</li>
+                      </ul>
+                    </div>
+                    <p className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 font-medium">
+                      We're building something amazing. Stay tuned! 🎉
+                    </p>
                   </div>
                 </TabsContent>
 
