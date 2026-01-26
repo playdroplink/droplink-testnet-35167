@@ -5,7 +5,7 @@ import { usePi } from "@/contexts/PiContext";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ExternalLink, Share2, Eye, UserPlus, Zap, Copy } from "lucide-react";
+import { ExternalLink, Share2, Eye, UserPlus, Zap, Copy, Flag } from "lucide-react";
 import { FaXTwitter, FaInstagram, FaFacebook, FaYoutube, FaTiktok, FaTwitch, FaLinkedin, FaSnapchat, FaReddit, FaTelegram, FaWhatsapp, FaDiscord, FaPinterest, FaGithub, FaVimeo, FaGlobe } from "react-icons/fa6";
 import { SiThreads, SiBluesky, SiMastodon, SiKick } from "react-icons/si";
 import type { ProfileData, SocialEmbedItem } from "@/types/profile";
@@ -61,9 +61,30 @@ const ProfileFeed = () => {
   const [socialFeedItems, setSocialFeedItems] = useState<SocialEmbedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const [currentUserProfileId, setCurrentUserProfileId] = useState<string | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [visitCount, setVisitCount] = useState(0);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+
+  const getCachedProfileFromStorage = () => {
+    if (typeof window === "undefined") return null;
+    try {
+      const keys = Object.keys(localStorage).filter((key) => key.startsWith("profile_"));
+      for (const key of keys) {
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+        const parsed = JSON.parse(raw);
+        const id = parsed?.profileId || parsed?.id;
+        if (id) return { id } as { id: string };
+      }
+    } catch (error) {
+      console.error("[PROFILE] Failed to read cached profile:", error);
+    }
+    return null;
+  };
 
   const formatCompactNumber = (value: number) => {
     if (!Number.isFinite(value)) return "0";
@@ -71,6 +92,22 @@ const ProfileFeed = () => {
     if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
     if (value >= 1_000) return `${(value / 1_000).toFixed(1).replace(/\.0$/, '')}K`;
     return value.toLocaleString();
+  };
+
+  const checkFollowStatus = async () => {
+    if (!profileId) return false;
+    const cached = getCachedProfileFromStorage();
+    const followerProfileId = currentUserProfileId || cached?.id || null;
+    if (!followerProfileId) return false;
+    const { data } = await (supabase as any)
+      .from("followers")
+      .select("id")
+      .eq("follower_profile_id", followerProfileId)
+      .eq("following_profile_id", profileId)
+      .maybeSingle();
+    const following = !!data;
+    setIsFollowing(following);
+    return following;
   };
 
   const loadProfile = async () => {
@@ -85,6 +122,10 @@ const ProfileFeed = () => {
         setNotFound(true);
         return;
       }
+
+      setProfileId(profileData.id);
+      const cached = getCachedProfileFromStorage();
+      if (cached?.id) setCurrentUserProfileId(cached.id);
 
       const themeSettings = (profileData as any).theme_settings || {};
       const feed = normalizeSocialFeed(
@@ -154,10 +195,50 @@ const ProfileFeed = () => {
         .eq('profile_id', profileData.id)
         .eq('event_type', 'view');
       setVisitCount(visitCount || 0);
+      // Check follow status if possible
+      await checkFollowStatus();
     } catch (err) {
       setNotFound(true);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFollow = async () => {
+    const cached = getCachedProfileFromStorage();
+    const followerProfileId = currentUserProfileId || cached?.id || null;
+    if (!followerProfileId || !profileId) {
+      toast.error("Please sign in to follow");
+      return;
+    }
+    if (followerProfileId === profileId) {
+      toast.error("You cannot follow yourself");
+      return;
+    }
+    try {
+      // Re-check to avoid double follow
+      const alreadyFollowing = isFollowing || (await checkFollowStatus());
+      if (alreadyFollowing) {
+        // Unfollow path
+        const { error } = await supabase
+          .from("followers")
+          .delete()
+          .eq("follower_profile_id", followerProfileId)
+          .eq("following_profile_id", profileId);
+        if (error) throw error;
+        setIsFollowing(false);
+        setFollowerCount((prev) => Math.max(0, prev - 1));
+      } else {
+        const { error } = await supabase
+          .from("followers")
+          .insert({ follower_profile_id: followerProfileId, following_profile_id: profileId });
+        if (error) throw error;
+        setIsFollowing(true);
+        setFollowerCount((prev) => prev + 1);
+      }
+    } catch (error) {
+      console.error("Follow error:", error);
+      toast.error("Could not update follow status");
     }
   };
 
@@ -252,6 +333,15 @@ const ProfileFeed = () => {
                 <span>{formatCompactNumber(visitCount)} Views</span>
               </div>
             </div>
+            <div className="pt-3 flex justify-center">
+              <Button
+                onClick={handleFollow}
+                variant={isFollowing ? "secondary" : "default"}
+                className={`${isFollowing ? "bg-white/15 text-white" : "bg-white text-black"} border border-white/30 px-4`}
+              >
+                {isFollowing ? "Following" : "Follow"}
+              </Button>
+            </div>
           </div>
           <div className="flex flex-wrap justify-center gap-3">
             {(profile.socialLinks || []).map((link) => (
@@ -336,6 +426,72 @@ const ProfileFeed = () => {
         </div>
       </div>
 
+      {/* Report Button in Footer */}
+      <div className="text-center py-6">
+        <button
+          className="bg-gradient-to-r from-red-500/20 to-pink-500/20 hover:from-red-500/30 hover:to-pink-500/30 rounded-full p-3 shadow-lg border border-red-400/40 inline-flex items-center gap-2 px-6 transition-all duration-200 backdrop-blur"
+          title="Report unwanted content"
+          onClick={() => setShowReportModal(true)}
+        >
+          <Flag className="w-4 h-4 text-red-400" />
+          <span className="text-sm text-red-300 font-semibold">Report Unwanted Content</span>
+        </button>
+      </div>
+
+      {/* Droplink Branding Footer */}
+      {profile && !profile.hasPremium && (
+        <div className="text-center py-6">
+          <button
+            onClick={() => window.location.href = "https://www.droplink.space"}
+            className="text-white/70 text-xs font-semibold hover:text-cyan-400 transition-all duration-200 cursor-pointer group"
+          >
+            JOIN <span className="text-cyan-400 group-hover:text-cyan-300">DROPLINK</span> BY <span className="text-white/80">MRWAIN ORGANIZATION</span>
+          </button>
+        </div>
+      )}
+
+      {/* Footer Links */}
+      <div className="text-center py-4">
+        <div className="flex flex-wrap justify-center gap-2 text-xs text-white/60">
+          <a
+            href="https://www.droplink.space/cookies"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-white/80 transition-colors"
+          >
+            Cookie Preferences
+          </a>
+          <span>·</span>
+          <button
+            onClick={() => setShowReportModal(true)}
+            className="hover:text-white/80 transition-colors"
+          >
+            Report
+          </button>
+          <span>·</span>
+          <button
+            onClick={() => navigate('/privacy')}
+            className="hover:text-white/80 transition-colors"
+          >
+            Privacy
+          </button>
+          <span>·</span>
+          <button
+            onClick={() => navigate('/terms')}
+            className="hover:text-white/80 transition-colors"
+          >
+            Terms
+          </button>
+          <span>·</span>
+          <button
+            onClick={() => navigate('/search-users')}
+            className="hover:text-white/80 transition-colors"
+          >
+            Discover
+          </button>
+        </div>
+      </div>
+
       {profile.piWalletAddress && profile.showPiWalletTips !== false && (
         <div className="fixed bottom-4 right-4 bg-black/70 border border-white/10 rounded-xl p-3 flex items-center gap-3 shadow-xl backdrop-blur">
           <QRCodeSVG value={profile.piWalletAddress} size={64} bgColor="#fff" fgColor="#2563eb" />
@@ -388,6 +544,34 @@ const ProfileFeed = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-xs w-full relative">
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+              onClick={() => setShowReportModal(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+            <div className="flex flex-col items-center gap-3">
+              <Flag className="w-8 h-8 text-red-500 mb-2" />
+              <h2 className="text-lg font-bold text-red-600">Report Unwanted Content</h2>
+              <p className="text-sm text-gray-700 text-center mb-2">If you see inappropriate, abusive, or unwanted content on this feed, please report it. Your feedback helps keep Droplink safe for everyone.</p>
+              <a
+                href="https://www.droplink.space/report-abuse"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 px-4 py-2 bg-red-500 text-white rounded-lg font-semibold shadow hover:bg-red-600 transition"
+              >
+                Go to Report Page
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
