@@ -190,12 +190,17 @@ export const BackgroundMusicPlayer = ({
     const embed = buildYouTubeEmbed(musicUrl);
     if (!embed) return null;
     return (
-      <div className={`flex flex-col gap-2 p-3 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg ${className}`}>
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <Music className="w-4 h-4 text-red-500" />
-          <span>YouTube • {titleFromUrl}</span>
+      <div className={`flex flex-col gap-3 p-4 bg-gradient-to-br from-gray-900 via-gray-800 to-black border border-gray-700 rounded-xl shadow-2xl ${className}`}>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg">
+            <Music className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide">YouTube Music</div>
+            <div className="text-sm font-bold text-white truncate">{titleFromUrl}</div>
+          </div>
         </div>
-        <div className="aspect-video w-full overflow-hidden rounded-lg border border-blue-200">
+        <div className="aspect-video w-full overflow-hidden rounded-lg shadow-xl">
           <iframe
             src={embed}
             allow="autoplay; encrypted-media"
@@ -212,10 +217,15 @@ export const BackgroundMusicPlayer = ({
     const embed = buildSpotifyEmbed(musicUrl);
     if (!embed) return null;
     return (
-      <div className={`flex flex-col gap-2 p-3 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg ${className}`}>
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <Music className="w-4 h-4 text-green-600" />
-          <span>Spotify • {titleFromUrl}</span>
+      <div className={`flex flex-col gap-3 p-4 bg-gradient-to-br from-gray-900 via-[#121212] to-black border border-gray-800 rounded-xl shadow-2xl ${className}`}>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
+            <Music className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Spotify</div>
+            <div className="text-sm font-bold text-white truncate">{titleFromUrl}</div>
+          </div>
         </div>
         <iframe
           src={embed}
@@ -225,14 +235,14 @@ export const BackgroundMusicPlayer = ({
           allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
           loading="lazy"
           title="Spotify background music"
-          className="rounded-lg border border-green-200"
+          className="rounded-lg shadow-xl"
         />
       </div>
     );
   }
 
   return (
-    <div className={`flex flex-col gap-2 p-3 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg ${className}`}>
+    <div className={`flex flex-col gap-3 p-4 bg-gradient-to-br from-gray-900 via-gray-800 to-black border border-gray-700 rounded-xl shadow-2xl ${className}`}>
       <audio
         ref={audioRef}
         onTimeUpdate={handleTimeUpdate}
@@ -243,16 +253,22 @@ export const BackgroundMusicPlayer = ({
       />
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Music className="w-4 h-4 text-blue-600" />
-          <span className="text-xs font-medium text-gray-700">{titleFromUrl}</span>
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg flex-shrink-0">
+            <Music className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Now Playing</div>
+            <div className="text-sm font-bold text-white truncate">{titleFromUrl}</div>
+          </div>
         </div>
-        <span className="text-xs text-gray-500">
+        <span className="text-xs font-mono text-gray-400 ml-2">
           {formatTime(currentTime)} / {formatTime(duration)}
         </span>
       </div>
 
-      <div className="w-full h-1 bg-gray-200 rounded-full overflow-hidden cursor-pointer" 
+      <div 
+        className="group w-full h-1.5 bg-gray-700 rounded-full overflow-hidden cursor-pointer hover:h-2 transition-all relative"
         onClick={(e) => {
           if (!audioRef.current || duration === 0) return;
           const rect = e.currentTarget.getBoundingClientRect();
@@ -261,60 +277,66 @@ export const BackgroundMusicPlayer = ({
         }}
       >
         <div
-          className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all"
+          className="h-full bg-gradient-to-r from-green-400 via-blue-500 to-purple-500 transition-all relative"
           style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
-        />
+        >
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
       </div>
 
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-3">
         <Button
           size="sm"
-          variant="outline"
           onClick={handlePlayPause}
-          className="h-8 w-8 p-0 flex items-center justify-center bg-white hover:bg-blue-100 border-blue-200"
+          className="h-10 w-10 p-0 flex items-center justify-center bg-white hover:bg-gray-100 rounded-full shadow-lg hover:scale-105 transition-all border-0"
           title={isPlaying ? "Pause" : "Play"}
         >
           {isPlaying ? (
-            <Pause className="w-4 h-4 text-blue-600" />
+            <Pause className="w-5 h-5 text-gray-900 fill-current" />
           ) : (
-            <Play className="w-4 h-4 text-blue-600" />
+            <Play className="w-5 h-5 text-gray-900 fill-current ml-0.5" />
           )}
         </Button>
 
-        <div className="flex items-center gap-1 flex-1">
+        <div className="flex items-center gap-2 flex-1">
           <Button
             size="sm"
             variant="ghost"
             onClick={handleMuteToggle}
-            className="h-8 w-8 p-0 flex items-center justify-center"
+            className="h-8 w-8 p-0 flex items-center justify-center hover:bg-gray-700 rounded-full transition-all"
             title={isMuted ? "Unmute" : "Mute"}
           >
             {isMuted || volume === 0 ? (
-              <VolumeX className="w-4 h-4 text-gray-500" />
+              <VolumeX className="w-4 h-4 text-gray-400" />
             ) : (
-              <Volume2 className="w-4 h-4 text-blue-600" />
+              <Volume2 className="w-4 h-4 text-white" />
             )}
           </Button>
 
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            value={isMuted ? 0 : volume}
-            onChange={handleVolumeChange}
-            className="h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer flex-1"
-            style={{
-              background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(isMuted ? 0 : volume) * 100}%, #e5e7eb ${(isMuted ? 0 : volume) * 100}%, #e5e7eb 100%)`
-            }}
-            title="Volume"
-          />
+          <div className="group flex-1 h-1 bg-gray-700 rounded-full overflow-hidden hover:h-1.5 transition-all relative">
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={isMuted ? 0 : volume}
+              onChange={handleVolumeChange}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              title="Volume"
+            />
+            <div 
+              className="h-full bg-gradient-to-r from-green-400 to-blue-500 transition-all pointer-events-none relative"
+              style={{ width: `${(isMuted ? 0 : volume) * 100}%` }}
+            >
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </div>
         </div>
 
         {isPlaying && (
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-xs text-green-600">Playing</span>
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-green-500/20 rounded-full">
+            <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+            <span className="text-xs font-medium text-green-400">Playing</span>
           </div>
         )}
       </div>
