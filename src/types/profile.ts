@@ -36,6 +36,7 @@ export interface SocialLink {
   url: string;
   icon?: string; // icon name or url
   label?: string; // custom label
+  followers?: number; // optional follower count per platform
 }
 
 export type SocialLinks = SocialLink[];
@@ -50,6 +51,7 @@ export interface ThemeData {
   buttonStyle: string;
   textColor?: string;
   glassMode?: boolean;
+  coverImage?: string;
 }
 
 export interface ProductItem {
@@ -143,4 +145,5 @@ export interface ProfileData {
   card_back_color?: string;
   card_text_color?: string;
   card_accent_color?: string;
+  isVerified?: boolean;
 }

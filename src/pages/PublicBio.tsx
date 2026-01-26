@@ -96,6 +96,14 @@ const PublicBio = () => {
   // State to trigger auto-refresh after Pi Auth if Profile Not Found
   const [shouldAutoRefresh, setShouldAutoRefresh] = useState(false);
 
+  const formatCompactNumber = (value: number) => {
+    if (!Number.isFinite(value)) return "0";
+    if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1).replace(/\.0$/, '')}B`;
+    if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
+    if (value >= 1_000) return `${(value / 1_000).toFixed(1).replace(/\.0$/, '')}K`;
+    return value.toLocaleString();
+  };
+
   // Monetization features
   const { products, tiers, captureLead, createOrder } = useMonetization(profileId);
   const { logClickEvent } = useAnalytics(profileId);
@@ -740,6 +748,12 @@ const PublicBio = () => {
   }
 
   const socialLinksArray = profile.socialLinks.filter(link => link.url && String(link.url).trim());
+  const totalSocialFollowers = Array.isArray(profile.socialLinks)
+    ? profile.socialLinks.reduce((sum, link) => {
+        const followers = Number(link.followers);
+        return sum + (Number.isFinite(followers) ? followers : 0);
+      }, 0)
+    : 0;
 
   return (
     <div 
@@ -852,6 +866,18 @@ const PublicBio = () => {
           </div>
         )}
         
+        {/* Cover Image */}
+        {profile.theme?.coverImage && (
+          <div className="relative w-full max-w-3xl mx-auto -mt-4 sm:-mt-6 mb-4 rounded-3xl overflow-hidden border border-white/15 shadow-2xl">
+            <img
+              src={profile.theme.coverImage}
+              alt="Profile cover"
+              className="w-full h-56 sm:h-72 object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/35 to-black/65" />
+          </div>
+        )}
+        
         {/* Logo and Business Info */}
         <div className="text-center space-y-4">
           {profile.logo && (
@@ -869,18 +895,36 @@ const PublicBio = () => {
             </div>
           )}
           
-          <h1 className="text-3xl font-bold text-white">
-            {profile.businessName}
-          </h1>
+          <div className="flex items-center justify-center gap-2">
+            <h1 className="text-3xl font-bold text-white">
+              {profile.businessName}
+            </h1>
+            {profile.isVerified && (
+              <img 
+                src="https://i.ibb.co/Kcz0w18P/verify-6.png" 
+                alt="Verified" 
+                className="w-7 h-7 inline-block" 
+                title="Verified Account"
+              />
+            )}
+          </div>
           
           {/* Follower and Visit Counts - Controlled by Preferences */}
-          <div className="flex gap-6 justify-center text-sm text-white">
+          <div className="flex gap-6 justify-center text-sm text-white flex-wrap">
             {userPreferences?.store_settings?.showFollowerCount !== false && (
               <div className="text-center">
                 <div className="font-semibold text-lg text-white">
                   {followerCount.toLocaleString()}
                 </div>
                 <div className="text-white">Followers</div>
+              </div>
+            )}
+            {totalSocialFollowers > 0 && (
+              <div className="text-center">
+                <div className="font-semibold text-lg text-white">
+                  {formatCompactNumber(totalSocialFollowers)}
+                </div>
+                <div className="text-white">Total Social Followers</div>
               </div>
             )}
             {userPreferences?.store_settings?.showVisitCount !== false && (

@@ -91,6 +91,7 @@ import {
   Home,
   Plus,
   Search,
+  Image,
 } from "lucide-react";
 import { 
   FaTwitter, 
@@ -271,14 +272,14 @@ const Dashboard = () => {
     youtubeVideoUrl: "",
     backgroundMusicUrl: "",
     socialLinks: [
-      { type: "twitter", url: "", icon: "twitter" },
-      { type: "instagram", url: "", icon: "instagram" },
-      { type: "youtube", url: "", icon: "youtube" },
-      { type: "tiktok", url: "", icon: "tiktok" },
-      { type: "facebook", url: "", icon: "facebook" },
-      { type: "linkedin", url: "", icon: "linkedin" },
-      { type: "twitch", url: "", icon: "twitch" },
-      { type: "website", url: "", icon: "website" },
+      { type: "twitter", url: "", icon: "twitter", followers: 0 },
+      { type: "instagram", url: "", icon: "instagram", followers: 0 },
+      { type: "youtube", url: "", icon: "youtube", followers: 0 },
+      { type: "tiktok", url: "", icon: "tiktok", followers: 0 },
+      { type: "facebook", url: "", icon: "facebook", followers: 0 },
+      { type: "linkedin", url: "", icon: "linkedin", followers: 0 },
+      { type: "twitch", url: "", icon: "twitch", followers: 0 },
+      { type: "website", url: "", icon: "website", followers: 0 },
     ],
     customLinks: [],
     theme: {
@@ -290,6 +291,7 @@ const Dashboard = () => {
       iconStyle: "rounded",
       buttonStyle: "filled",
       glassMode: false,
+      coverImage: "",
     },
     products: [],
     paymentLinks: [],
@@ -297,6 +299,7 @@ const Dashboard = () => {
     showShareButton: true,
     piWalletAddress: "",
     piDonationMessage: "Send me a coffee ☕",
+    isVerified: false,
   });
 
   // Monetization hooks (now profileId state is declared above)
@@ -363,6 +366,7 @@ const Dashboard = () => {
             pi_wallet_address: data.piWalletAddress,
             pi_donation_message: data.piDonationMessage,
             has_premium: data.hasPremium || false,
+            is_verified: data.isVerified || false,
             updated_at: new Date().toISOString(),
             username: data.username
           }, { onConflict: 'id' });
@@ -746,14 +750,14 @@ const Dashboard = () => {
         // Ensure socialLinks is properly initialized - fix for broken social links
         if (!Array.isArray(socialLinks) || socialLinks.length === 0) {
           socialLinks = [
-            { type: "twitter", url: "", icon: "twitter" },
-            { type: "instagram", url: "", icon: "instagram" },
-            { type: "youtube", url: "", icon: "youtube" },
-            { type: "tiktok", url: "", icon: "tiktok" },
-            { type: "facebook", url: "", icon: "facebook" },
-            { type: "linkedin", url: "", icon: "linkedin" },
-            { type: "twitch", url: "", icon: "twitch" },
-            { type: "website", url: "", icon: "website" },
+            { type: "twitter", url: "", icon: "twitter", followers: 0 },
+            { type: "instagram", url: "", icon: "instagram", followers: 0 },
+            { type: "youtube", url: "", icon: "youtube", followers: 0 },
+            { type: "tiktok", url: "", icon: "tiktok", followers: 0 },
+            { type: "facebook", url: "", icon: "facebook", followers: 0 },
+            { type: "linkedin", url: "", icon: "linkedin", followers: 0 },
+            { type: "twitch", url: "", icon: "twitch", followers: 0 },
+            { type: "website", url: "", icon: "website", followers: 0 },
           ];
         } else if (Array.isArray(socialLinks)) {
           // Ensure all expected platforms exist in the array
@@ -764,14 +768,17 @@ const Dashboard = () => {
           if (missingTypes.length > 0) {
             // Add missing platforms
             missingTypes.forEach(type => {
-              socialLinks.push({ type, url: "", icon: type });
+              socialLinks.push({ type, url: "", icon: type, followers: 0 });
             });
           }
           
-          // Ensure each link has an icon property
+          // Ensure each link has an icon property and numeric follower counts
           socialLinks = socialLinks.map((link: any) => ({
             ...link,
-            icon: link.icon || link.type
+            icon: link.icon || link.type,
+            followers: link.followers !== undefined && link.followers !== null
+              ? Number(link.followers) || 0
+              : undefined
           }));
         }
         
@@ -841,24 +848,26 @@ const Dashboard = () => {
           youtubeVideoUrl: (profileData as any)?.youtube_video_url || "",
           backgroundMusicUrl: (profileData as any)?.background_music_url || "",
           socialLinks: Array.isArray(socialLinks) && socialLinks.length > 0 ? socialLinks : [
-            { type: "twitter", url: "", icon: "twitter" },
-            { type: "instagram", url: "", icon: "instagram" },
-            { type: "youtube", url: "", icon: "youtube" },
-            { type: "tiktok", url: "", icon: "tiktok" },
-            { type: "facebook", url: "", icon: "facebook" },
-            { type: "linkedin", url: "", icon: "linkedin" },
-            { type: "twitch", url: "", icon: "twitch" },
-            { type: "website", url: "", icon: "website" },
+            { type: "twitter", url: "", icon: "twitter", followers: 0 },
+            { type: "instagram", url: "", icon: "instagram", followers: 0 },
+            { type: "youtube", url: "", icon: "youtube", followers: 0 },
+            { type: "tiktok", url: "", icon: "tiktok", followers: 0 },
+            { type: "facebook", url: "", icon: "facebook", followers: 0 },
+            { type: "linkedin", url: "", icon: "linkedin", followers: 0 },
+            { type: "twitch", url: "", icon: "twitch", followers: 0 },
+            { type: "website", url: "", icon: "website", followers: 0 },
           ],
           customLinks: (themeSettings?.customLinks as any) || [],
           theme: {
             primaryColor: themeSettings?.primaryColor || "#38bdf8",
             backgroundColor: themeSettings?.backgroundColor || "#000000",
-            backgroundType: (themeSettings?.backgroundType as 'color' | 'gif') || "color",
+            backgroundType: (themeSettings?.backgroundType as 'color' | 'gif' | 'video') || "color",
             backgroundGif: themeSettings?.backgroundGif || "",
+            backgroundVideo: themeSettings?.backgroundVideo || "",
             iconStyle: themeSettings?.iconStyle || "rounded",
             buttonStyle: themeSettings?.buttonStyle || "filled",
-              glassMode: themeSettings?.glassMode ?? false,
+            glassMode: themeSettings?.glassMode ?? false,
+            coverImage: themeSettings?.coverImage || "",
           },
           products: productsData?.map((p: any) => ({
             id: p.id,
@@ -872,6 +881,7 @@ const Dashboard = () => {
           showShareButton: (profileData as any).show_share_button !== false,
           piWalletAddress: financialData.pi_wallet_address || "",
           piDonationMessage: financialData.pi_donation_message || "Send me a coffee ☕",
+          isVerified: (profileData as any).is_verified || false,
           // Enhanced payment links loading: try database first, then localStorage
           paymentLinks: (() => {
             // Try to restore from theme_settings first (database)
@@ -1213,6 +1223,30 @@ const Dashboard = () => {
     saveProfileNow(updatedProfile);
   };
 
+  const parseFollowerInput = (raw: string) => {
+    const value = raw.trim().toLowerCase();
+    if (!value) return undefined;
+    const multiplier = value.endsWith("m") ? 1_000_000 : value.endsWith("k") ? 1_000 : 1;
+    const numericPortion = value.replace(/[^0-9.]/g, "");
+    const parsed = parseFloat(numericPortion || "0") * multiplier;
+    if (!Number.isFinite(parsed) || parsed < 0) return undefined;
+    return Math.floor(parsed);
+  };
+
+  const handleSocialFollowerChange = (platform: string, value: string, index?: number) => {
+    const followers = parseFollowerInput(value);
+    const updatedProfile = {
+      ...profile,
+      socialLinks: profile.socialLinks.map((link, idx) =>
+        index !== undefined
+          ? (idx === index ? { ...link, followers } : link)
+          : (link.type === platform ? { ...link, followers } : link)
+      ),
+    };
+    setProfile(updatedProfile);
+    saveProfileNow(updatedProfile);
+  };
+
   // Cancel current plan and fall back to free tier
   const handleCancelPlan = async () => {
     if (!effectiveProfileId) {
@@ -1310,6 +1344,17 @@ const Dashboard = () => {
     }
   };
 
+  const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfile({ ...profile, theme: { ...profile.theme, coverImage: reader.result as string } });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -1345,6 +1390,7 @@ const Dashboard = () => {
           pi_wallet_address: profile.piWalletAddress,
           pi_donation_message: profile.piDonationMessage,
           has_premium: profile.hasPremium || false,
+          is_verified: profile.isVerified || false,
           updated_at: new Date().toISOString()
         })
         .eq('id', profileId);
@@ -2122,6 +2168,88 @@ const Dashboard = () => {
                   Add a background music URL (MP3, OGG, WAV) that will play on your public bio page. The audio will loop continuously and visitors can control the volume.
                 </p>
               </div>
+
+              {/* Public Bio Cover */}
+              <div className="mb-6">
+                <Label className="mb-2 sm:mb-3 block flex items-center gap-2 text-sm">
+                  <Image className="w-4 h-4" />
+                  Public Bio Cover
+                </Label>
+                <div className="flex items-start gap-4">
+                  <div className="w-36 h-24 rounded-xl overflow-hidden border border-border bg-card flex items-center justify-center">
+                    {profile.theme.coverImage ? (
+                      <img src={profile.theme.coverImage} alt="Cover preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xs text-muted-foreground text-center px-2">1200x600 recommended</span>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <label htmlFor="cover-upload">
+                        <Button variant="secondary" size="sm" asChild className="w-full sm:w-auto">
+                          <span>{profile.theme.coverImage ? "Change" : "Upload"}</span>
+                        </Button>
+                        <input
+                          id="cover-upload"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleCoverUpload}
+                        />
+                      </label>
+                      {profile.theme.coverImage && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setProfile({ ...profile, theme: { ...profile.theme, coverImage: "" } })}
+                          className="w-full sm:w-auto"
+                        >
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                    <Input
+                      value={profile.theme.coverImage || ""}
+                      onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, coverImage: e.target.value } })}
+                      placeholder="https://your-cover-image.com/cover.jpg"
+                      className="bg-input-bg text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Shown at the top of your public bio for a link.me-style cover.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Verified Badge (30 Pi) */}
+              <div className="mb-6 p-4 border border-blue-200 dark:border-blue-800 rounded-xl bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-950/30 dark:to-purple-950/30">
+                <div className="flex items-start gap-3">
+                  <img 
+                    src="https://i.ibb.co/Kcz0w18P/verify-6.png" 
+                    alt="Verified badge" 
+                    className="w-8 h-8 flex-shrink-0 mt-0.5"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Label className="text-sm font-semibold">Get Verified</Label>
+                      <span className="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full font-medium">30 Pi</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Show the verified badge next to your name and stand out as a trusted creator.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={profile.isVerified || false}
+                        onCheckedChange={(checked) => setProfile({ ...profile, isVerified: checked })}
+                        disabled={!profile.isVerified}
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        {profile.isVerified ? "Verified ✓" : "Not verified · Pay 30 Pi to verify"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Social Links */}
@@ -2182,6 +2310,14 @@ const Dashboard = () => {
                           placeholder="Enter URL"
                           className="bg-input-bg flex-1 text-sm"
                         />
+                        <Input
+                          type="text"
+                          inputMode="decimal"
+                          value={link.followers ?? ""}
+                          onChange={(e) => handleSocialFollowerChange(link.type || `custom-${idx}`, e.target.value, idx)}
+                          placeholder="Followers"
+                          className="bg-input-bg w-28 text-sm"
+                        />
                         <Button
                           variant="ghost"
                           size="icon"
@@ -2224,6 +2360,14 @@ const Dashboard = () => {
                     placeholder="https://x.com/"
                     className="bg-input-bg flex-1 text-sm"
                   />
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "twitter")?.followers ?? "" : ""}
+                    onChange={(e) => handleSocialFollowerChange("twitter", e.target.value)}
+                    placeholder="Followers"
+                    className="bg-input-bg w-28 text-sm"
+                  />
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -2235,6 +2379,14 @@ const Dashboard = () => {
                     onChange={(e) => handleSocialLinkChange("instagram", e.target.value)}
                     placeholder="https://instagram.com/"
                     className="bg-input-bg flex-1 text-sm"
+                  />
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "instagram")?.followers ?? "" : ""}
+                    onChange={(e) => handleSocialFollowerChange("instagram", e.target.value)}
+                    placeholder="Followers"
+                    className="bg-input-bg w-28 text-sm"
                   />
                 </div>
 
@@ -2248,6 +2400,14 @@ const Dashboard = () => {
                     placeholder="https://youtube.com/@"
                     className="bg-input-bg flex-1 text-sm"
                   />
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "youtube")?.followers ?? "" : ""}
+                    onChange={(e) => handleSocialFollowerChange("youtube", e.target.value)}
+                    placeholder="Followers"
+                    className="bg-input-bg w-28 text-sm"
+                  />
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -2259,6 +2419,14 @@ const Dashboard = () => {
                     onChange={(e) => handleSocialLinkChange("tiktok", e.target.value)}
                     placeholder="https://tiktok.com/@"
                     className="bg-input-bg flex-1 text-sm"
+                  />
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "tiktok")?.followers ?? "" : ""}
+                    onChange={(e) => handleSocialFollowerChange("tiktok", e.target.value)}
+                    placeholder="Followers"
+                    className="bg-input-bg w-28 text-sm"
                   />
                 </div>
 
@@ -2272,6 +2440,14 @@ const Dashboard = () => {
                     placeholder="https://facebook.com/"
                     className="bg-input-bg flex-1 text-sm"
                   />
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "facebook")?.followers ?? "" : ""}
+                    onChange={(e) => handleSocialFollowerChange("facebook", e.target.value)}
+                    placeholder="Followers"
+                    className="bg-input-bg w-28 text-sm"
+                  />
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -2283,6 +2459,14 @@ const Dashboard = () => {
                     onChange={(e) => handleSocialLinkChange("linkedin", e.target.value)}
                     placeholder="https://linkedin.com/in/"
                     className="bg-input-bg flex-1 text-sm"
+                  />
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "linkedin")?.followers ?? "" : ""}
+                    onChange={(e) => handleSocialFollowerChange("linkedin", e.target.value)}
+                    placeholder="Followers"
+                    className="bg-input-bg w-28 text-sm"
                   />
                 </div>
 
@@ -2296,6 +2480,14 @@ const Dashboard = () => {
                     placeholder="https://twitch.tv/"
                     className="bg-input-bg flex-1 text-sm"
                   />
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "twitch")?.followers ?? "" : ""}
+                    onChange={(e) => handleSocialFollowerChange("twitch", e.target.value)}
+                    placeholder="Followers"
+                    className="bg-input-bg w-28 text-sm"
+                  />
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -2307,6 +2499,14 @@ const Dashboard = () => {
                     onChange={(e) => handleSocialLinkChange("website", e.target.value)}
                     placeholder="Enter website URL"
                     className="bg-input-bg flex-1 text-sm"
+                  />
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "website")?.followers ?? "" : ""}
+                    onChange={(e) => handleSocialFollowerChange("website", e.target.value)}
+                    placeholder="Followers"
+                    className="bg-input-bg w-28 text-sm"
                   />
                 </div>
               </div>

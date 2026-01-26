@@ -115,8 +115,9 @@ interface DesignCustomizerProps {
     iconStyle: string;
     buttonStyle: string;
     glassMode?: boolean;
+    coverImage?: string;
   };
-  onThemeChange: (theme: { primaryColor: string; backgroundColor: string; backgroundType: 'color' | 'gif' | 'video'; backgroundGif: string; backgroundVideo?: string; iconStyle: string; buttonStyle: string; glassMode?: boolean }) => void;
+  onThemeChange: (theme: { primaryColor: string; backgroundColor: string; backgroundType: 'color' | 'gif' | 'video'; backgroundGif: string; backgroundVideo?: string; iconStyle: string; buttonStyle: string; glassMode?: boolean; coverImage?: string }) => void;
 }
 
 export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps) => {
@@ -127,8 +128,11 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
       backgroundColor: template.backgroundColor,
       backgroundType: theme.backgroundType,
       backgroundGif: theme.backgroundGif,
+      backgroundVideo: theme.backgroundVideo,
       iconStyle: template.iconStyle,
       buttonStyle: theme.buttonStyle,
+      glassMode: theme.glassMode,
+      coverImage: theme.coverImage,
     });
   };
 
