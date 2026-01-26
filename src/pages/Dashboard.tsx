@@ -1954,9 +1954,9 @@ const Dashboard = () => {
                 {/* Pi Data tab removed for production */}
 
                 {/* Profile Tab */}
-                <TabsContent value="profile" className="space-y-6 sm:space-y-8 max-w-xl w-full mx-auto">
+                <TabsContent value="profile" className="space-y-6 sm:space-y-8 max-w-xl w-full mx-auto px-4 sm:px-0">
                 {/* Floating Action Bar - Mobile & Tablet */}
-                <div className="lg:hidden sticky top-16 z-20 mb-4 flex gap-2 justify-end items-center flex-wrap">
+                <div className="lg:hidden sticky top-16 z-20 mb-4 -mx-4 sm:mx-0 px-4 sm:px-0 flex gap-2 justify-end items-center flex-wrap">
                   {/* Save Status Indicator */}
                   {saveStatus !== 'idle' && (
                     <div className={`text-xs font-medium px-3 py-2 rounded-full flex items-center gap-1.5 transition-all duration-300 ${
@@ -2040,8 +2040,8 @@ const Dashboard = () => {
                       )}
                     </div>
                     <div className="flex flex-col gap-2 w-full">
-                      <div className="flex gap-2 flex-col w-full">
-                        <label htmlFor="logo-upload">
+                      <div className="flex gap-2 flex-col sm:flex-row w-full">
+                        <label htmlFor="logo-upload" className="flex-1">
                           <Button variant="secondary" size="sm" asChild className="w-full">
                             <span>{profile.logo ? "Change" : "Upload"}</span>
                           </Button>
@@ -2058,7 +2058,7 @@ const Dashboard = () => {
                             variant="outline" 
                             size="sm"
                             onClick={() => setProfile({ ...profile, logo: "" })}
-                            className="w-full"
+                            className="w-full sm:w-auto"
                           >
                             Remove
                           </Button>
@@ -2066,11 +2066,11 @@ const Dashboard = () => {
                       </div>
                       {/* AI Logo Generation */}
                       <div className="flex flex-col gap-2">
-                        <div className="flex gap-2 flex-col w-full">
+                        <div className="flex gap-2 flex-col sm:flex-row w-full">
                           <input
                             type="text"
                             placeholder="Describe your logo..."
-                            className="border rounded px-2 py-1.5 text-xs sm:text-sm flex-1 w-full"
+                            className="border rounded px-2 py-1.5 text-xs sm:text-sm flex-1 w-full min-w-0"
                             value={aiLogoPrompt || ""}
                             onChange={e => setAiLogoPrompt(e.target.value)}
                             disabled={aiLogoLoading}
@@ -2101,7 +2101,7 @@ const Dashboard = () => {
                               }
                             }}
                             disabled={aiLogoLoading || !aiLogoPrompt}
-                            className="w-full"
+                            className="w-full sm:w-auto sm:min-w-[80px]"
                           >
                             {aiLogoLoading ? "Generating..." : "AI"}
                           </Button>
@@ -2109,8 +2109,8 @@ const Dashboard = () => {
                         <div className="text-xs text-muted-foreground">Generate a logo using AI</div>
                       </div>
                       {/* Logo Style Selector */}
-                      <div className="flex gap-2 items-center flex-wrap w-full">
-                        <Label htmlFor="logo-style" className="text-xs whitespace-nowrap">Logo style:</Label>
+                      <div className="flex gap-2 items-center flex-col sm:flex-row w-full">
+                        <Label htmlFor="logo-style" className="text-xs whitespace-nowrap self-start sm:self-center">Logo style:</Label>
                         <select
                           id="logo-style"
                           value={profile.theme?.iconStyle || 'rounded'}
@@ -2121,7 +2121,7 @@ const Dashboard = () => {
                               iconStyle: e.target.value as 'rounded' | 'square' | 'circle',
                             },
                           })}
-                          className="border rounded px-2 py-1 text-xs flex-1"
+                          className="border rounded px-2 py-1 text-xs flex-1 w-full sm:w-auto"
                         >
                           <option value="rounded">Rounded</option>
                           <option value="square">Square</option>
@@ -2176,14 +2176,15 @@ const Dashboard = () => {
               <div className="mb-6">
                 <Label htmlFor="store-url" className="mb-2 sm:mb-3 block text-sm text-gray-900 dark:text-white">Store URL (Username)</Label>
                 <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2 w-full">
-                    <span className="text-muted-foreground text-xs truncate">{window.location.origin}/</span>
+                  <div className="flex items-center gap-2 w-full overflow-hidden">
+                    <span className="text-muted-foreground text-xs whitespace-nowrap flex-shrink-0 hidden sm:inline">{window.location.origin}/</span>
+                    <span className="text-muted-foreground text-xs whitespace-nowrap flex-shrink-0 sm:hidden">URL:</span>
                     <Input
                       id="store-url"
                       value={profile.storeUrl}
                       onChange={(e) => setProfile({ ...profile, storeUrl: e.target.value })}
                       placeholder="your-store-name"
-                      className="bg-input-bg flex-1 text-sm"
+                      className="bg-input-bg flex-1 text-sm min-w-0"
                     />
                   </div>
                 </div>
