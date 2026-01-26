@@ -572,10 +572,10 @@ export default function CardGenerator() {
 
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2 text-sky-500">
+          <h1 className="text-4xl font-bold mb-2 text-slate-900">
             Virtual Card Generator
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-slate-700">
             Create your personalized Droplink card with QR code
           </p>
         </div>
@@ -584,7 +584,7 @@ export default function CardGenerator() {
           {/* Card Preview */}
           <div className="space-y-6">
             <Card className="p-6 bg-white dark:bg-gray-800">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-slate-900">
                 <Palette className="w-5 h-5" />
                 Card Preview
               </h2>
@@ -667,13 +667,13 @@ export default function CardGenerator() {
             {/* Share Link Card (Always visible if link generated) */}
             {shareableLink && (
               <Card className="p-4 bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950 border-2 border-green-200 dark:border-green-800 no-print">
-                <h3 className="font-semibold mb-2 flex items-center gap-2">
+                <h3 className="font-semibold mb-2 flex items-center gap-2 text-slate-900">
                   <Link className="w-4 h-4" />
                   Download or Share Link
                 </h3>
-                <p className="text-xs text-muted-foreground mb-2">
+                <p className="text-xs text-slate-700 mb-2">
                   Open this link in any browser to download your card:<br />
-                  <a href={shareableLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline break-all">{shareableLink}</a>
+                  <a href={shareableLink} target="_blank" rel="noopener noreferrer" className="text-blue-700 underline break-all">{shareableLink}</a>
                 </p>
                 <div className="flex gap-2">
                   <Input
@@ -694,8 +694,8 @@ export default function CardGenerator() {
 
             {/* Info Card */}
             <Card className="p-6 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border-2 no-print">
-              <h3 className="font-semibold mb-2">💳 About Your Card</h3>
-              <ul className="text-sm space-y-1 text-muted-foreground">
+              <h3 className="font-semibold mb-2 text-slate-900">💳 About Your Card</h3>
+              <ul className="text-sm space-y-1 text-slate-800">
                 <li>✓ Standard credit card size (85.6 × 53.98 mm)</li>
                 <li>✓ QR code links to your public bio: @{username}</li>
                 <li>✓ High-quality print ready</li>
@@ -712,18 +712,18 @@ export default function CardGenerator() {
             {/* Followers Stats Card */}
             {profileId && (
               <Card className="p-6 bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-950 dark:to-rose-950 border-2 border-pink-200 dark:border-pink-800 no-print">
-                <h3 className="font-semibold mb-3 text-lg">👥 Your Followers</h3>
+                <h3 className="font-semibold mb-3 text-lg text-slate-900">👥 Your Followers</h3>
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <p className="text-3xl font-bold text-pink-600 dark:text-pink-400">
                       {followerCount}
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-slate-700">
                       {followerCount === 1 ? 'follower' : 'followers'}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-muted-foreground mb-2">
+                    <p className="text-xs text-slate-700 mb-2">
                       Share your public bio to gain followers
                     </p>
                     <Button
@@ -747,8 +747,8 @@ export default function CardGenerator() {
 
             {/* Printing Instructions */}
             <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border-2 border-green-200 dark:border-green-800 no-print">
-              <h3 className="font-semibold mb-2">🖨️ Print Instructions</h3>
-              <ul className="text-xs space-y-1 text-muted-foreground">
+              <h3 className="font-semibold mb-2 text-slate-900">🖨️ Print Instructions</h3>
+              <ul className="text-xs space-y-1 text-slate-800">
                 <li><strong>PDF:</strong> 2 pages - Page 1 (Front), Page 2 (Back - mirrored)</li>
                 <li><strong>PNG:</strong> Both sides side-by-side (back mirrored)</li>
                 <li><strong>Duplex Printing:</strong> Select "Flip on Short Edge"</li>
@@ -773,7 +773,7 @@ export default function CardGenerator() {
             {/* Color Customization */}
             <Card className="p-6 bg-white dark:bg-gray-800">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Customize Colors</h2>
+                <h2 className="text-xl font-semibold text-slate-900">Customize Colors</h2>
                 <div className="flex gap-2">
                   {hasProPlan && (
                     <Button
@@ -890,7 +890,7 @@ export default function CardGenerator() {
 
             {/* Preset Themes */}
             <Card className="p-6 bg-white dark:bg-gray-800">
-              <h2 className="text-xl font-semibold mb-4">Preset Themes</h2>
+              <h2 className="text-xl font-semibold mb-4 text-slate-900">Preset Themes</h2>
               <div className="grid grid-cols-2 gap-3">
                 {presets.map((preset) => (
                   <Button
@@ -918,25 +918,25 @@ export default function CardGenerator() {
 
             {/* Card Details */}
             <Card className="p-6 bg-white dark:bg-gray-800">
-              <h2 className="text-xl font-semibold mb-4">Card Information</h2>
+              <h2 className="text-xl font-semibold mb-4 text-slate-900">Card Information</h2>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between py-2 border-b">
-                  <span className="text-muted-foreground">Username:</span>
-                  <span className="font-mono font-semibold">@{username}</span>
+                  <span className="text-slate-600">Username:</span>
+                  <span className="font-mono font-semibold text-slate-900">@{username}</span>
                 </div>
                 <div className="flex justify-between py-2 border-b">
-                  <span className="text-muted-foreground">Store URL:</span>
-                  <span className="font-mono text-xs truncate max-w-[200px]">
+                  <span className="text-slate-600">Store URL:</span>
+                  <span className="font-mono text-xs truncate max-w-[200px] text-slate-900">
                     {storeUrl}
                   </span>
                 </div>
                 <div className="flex justify-between py-2 border-b">
-                  <span className="text-muted-foreground">Card Size:</span>
-                  <span className="font-semibold">85.6 × 53.98 mm</span>
+                  <span className="text-slate-600">Card Size:</span>
+                  <span className="font-semibold text-slate-900">85.6 × 53.98 mm</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground">Network:</span>
-                  <span className="font-semibold text-blue-600">Pi Network</span>
+                  <span className="text-slate-600">Network:</span>
+                  <span className="font-semibold text-blue-700">Pi Network</span>
                 </div>
               </div>
             </Card>
