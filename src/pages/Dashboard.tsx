@@ -848,6 +848,7 @@ const Dashboard = () => {
           email: (profileData as any)?.email || supabaseUser?.email || "",
           youtubeVideoUrl: (profileData as any)?.youtube_video_url || "",
           backgroundMusicUrl: (profileData as any)?.background_music_url || "",
+          category: (profileData as any)?.category || "other",
           socialLinks: Array.isArray(socialLinks) && socialLinks.length > 0 ? socialLinks : [
             { type: "twitter", url: "", icon: "twitter", followers: 0 },
             { type: "instagram", url: "", icon: "instagram", followers: 0 },
@@ -2115,22 +2116,19 @@ const Dashboard = () => {
                     
                     if (profileId) {
                       try {
-                        // Category update removed - field doesn't exist in profiles table
-                        // If needed, add category column to profiles table first
+                        const { error } = await supabase
+                          .from('profiles')
+                          .update({ category: newCategory })
+                          .eq('id', profileId);
                         
-                        // const { error } = await supabase
-                        //   .from('profiles')
-                        //   .update({ category: newCategory })
-                        //   .eq('id', profileId);
-                        
-                        // if (error) {
-                        //   toast.error('Failed to update category');
-                        // } else {
-                        //   toast.success('Category updated!');
-                        // }
-                        
-                        toast.info('Category feature is disabled');
+                        if (error) {
+                          console.error('Category update error:', error);
+                          toast.error('Failed to update category');
+                        } else {
+                          toast.success('Category updated!');
+                        }
                       } catch (error) {
+                        console.error('Category update error:', error);
                         toast.error('Failed to update category');
                       }
                     }
@@ -2276,7 +2274,39 @@ const Dashboard = () => {
             {/* Social Links */}
             <div>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-2">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Social links</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Social links</h2>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      if (!profileId) return;
+                      toast.info('Verifying follower counts...');
+                      try {
+                        const { data, error } = await supabase.functions.invoke('verify-social-followers', {
+                          body: {
+                            socialLinks: profile.socialLinks,
+                            profileId: profileId
+                          }
+                        });
+                        if (error) {
+                          console.error('Verification error:', error);
+                          toast.error('Failed to verify followers');
+                        } else if (data?.verifiedLinks) {
+                          setProfile({ ...profile, socialLinks: data.verifiedLinks });
+                          toast.success('Follower counts verified!');
+                        }
+                      } catch (error) {
+                        console.error('Verification error:', error);
+                        toast.error('Verification service unavailable');
+                      }
+                    }}
+                    className="text-xs h-7"
+                    title="Fetch real follower counts from social media APIs"
+                  >
+                    ✓ Verify Followers
+                  </Button>
+                </div>
                 {/* Social link plan gating */}
                 {(() => {
                   let maxLinks = 1;

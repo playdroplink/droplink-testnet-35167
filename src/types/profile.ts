@@ -36,7 +36,10 @@ export interface SocialLink {
   url: string;
   icon?: string; // icon name or url
   label?: string; // custom label
-  followers?: number; // optional follower count per platform
+  followers?: number; // user-entered follower count
+  verified_followers?: number; // API-verified follower count
+  last_verified?: string; // ISO timestamp of last verification
+  is_verified?: boolean; // whether follower count is verified
 }
 
 export type SocialLinks = SocialLink[];
