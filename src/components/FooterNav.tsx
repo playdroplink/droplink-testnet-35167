@@ -16,22 +16,36 @@ export const FooterNav: React.FC = () => {
   const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
+    let scrollTimeout: NodeJS.Timeout;
+
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+      const currentScrollY = window.scrollY || document.documentElement.scrollTop;
       
       if (currentScrollY < 50) {
         setShowFooter(true);
       } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
         setShowFooter(false);
-      } else {
+      } else if (currentScrollY < lastScrollY) {
         setShowFooter(true);
       }
       
       setLastScrollY(currentScrollY);
+
+      // Auto-show footer after scroll stops
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        setShowFooter(true);
+      }, 2000);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    document.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('scroll', handleScroll);
+      clearTimeout(scrollTimeout);
+    };
   }, [lastScrollY]);
 
   return (
