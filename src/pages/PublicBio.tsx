@@ -12,7 +12,7 @@ import { Info, Flag } from "lucide-react";
 import { FollowersSection } from "@/components/FollowersSection";
 import { GiftDialog } from "@/components/GiftDialog";
 import { AIChatWidget } from "@/components/AIChatWidget";
-import PublicBioMessageForm from "@/components/PublicBioMessageForm";
+import PublicBioMessageForm from "@/components/PublicBioMessageComposer";
 import { BackgroundMusicPlayer } from "@/components/BackgroundMusicPlayer";
 import { VirtualCard } from "@/components/VirtualCard";
 import { PiAdBanner } from "@/components/PiAdBanner";
