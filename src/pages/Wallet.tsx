@@ -183,7 +183,7 @@ const Wallet = () => {
 
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
+    <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 max-w-4xl pb-24\">
       {/* Header Card with Gradient Background */}
       <Card className="mb-6 border-0 shadow-lg" style={{ background: DROP_TOKEN.colors.background }}>
         <CardHeader className="text-center">

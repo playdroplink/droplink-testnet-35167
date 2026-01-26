@@ -3,7 +3,10 @@ import { Outlet } from "react-router-dom";
 
 const PageLayout: React.FC = () => {
   return (
-    <div className="relative min-h-screen bg-sky-400 text-slate-900 dark:text-slate-100 overflow-x-hidden pb-24">
+    <div
+      className="relative w-full min-h-screen bg-sky-400 text-slate-900 dark:text-slate-100 overflow-x-hidden safe-area-bottom"
+      style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom))' }}
+    >
       <style>{`
         /* Ensure text is readable on sky-400 background */
         .text-gray-600, .text-slate-600 {

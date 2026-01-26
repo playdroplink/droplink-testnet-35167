@@ -732,7 +732,7 @@ const Subscription = () => {
   };
 
   return (
-    <div className="container mx-auto py-12">
+    <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-8 pb-24">
       <div className="mb-6 flex items-center justify-between">
         <Button variant="outline" onClick={() => navigate('/')}> ← Back to Dashboard</Button>
         <Button
@@ -760,8 +760,8 @@ const Subscription = () => {
       )}
       <div className="max-w-4xl mx-auto">
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold mb-2">Choose Your Plan</h1>
-          <p className="text-lg text-muted-foreground mb-2">Unlock more features and remove ads with a paid plan.</p>
+          <h1 className="text-4xl font-bold mb-2 text-white">Choose Your Plan</h1>
+          <p className="text-lg mb-2 text-white/90">Unlock more features and remove ads with a paid plan.</p>
           
           <div className="mt-3 flex flex-col gap-2 items-center text-sm">
             <div className="flex gap-3 items-center flex-wrap justify-center">
@@ -780,9 +780,9 @@ const Subscription = () => {
         </div>
 
         <div className="flex items-center justify-center gap-4 mb-12">
-          <Label htmlFor="billing-toggle" className={!isYearly ? 'font-bold' : ''}>Monthly</Label>
+          <Label htmlFor="billing-toggle" className={`text-white ${!isYearly ? 'font-bold' : ''}`}>Monthly</Label>
           <Switch id="billing-toggle" checked={isYearly} onCheckedChange={setIsYearly} />
-          <Label htmlFor="billing-toggle" className={isYearly ? 'font-bold' : ''}>Yearly <span className="text-primary">(Save 20%)</span></Label>
+          <Label htmlFor="billing-toggle" className={`text-white ${isYearly ? 'font-bold' : ''}`}>Yearly <span className="text-white">(Save 20%)</span></Label>
         </div>
 
         {isSubscriptionProcessing && (
@@ -798,7 +798,7 @@ const Subscription = () => {
             const period = isYearly ? 'per year' : 'per month';
             const isCurrent = currentPlan === plan.name;
             return (
-              <Card key={plan.name} className={`relative ${plan.popular ? 'border-primary shadow-lg' : ''}`}>
+              <Card key={plan.name} className={`relative bg-white dark:bg-slate-900 ${plan.popular ? 'border-primary shadow-lg' : ''}`}>
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium">Most Popular</div>
                 )}
@@ -876,7 +876,7 @@ const Subscription = () => {
           })}
         </div>
 
-        <div className="mt-12 text-center text-sm text-muted-foreground space-y-2">
+        <div className="mt-12 text-center text-sm text-white space-y-2">
           <p>All plans include a 14-day Pi-back guarantee.</p>
           <p>Payments are processed securely through Pi Network blockchain.</p>
           <p>Questions? Contact support@droplink.space</p>

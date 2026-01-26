@@ -243,7 +243,7 @@ const SalesEarnings: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-sky-400 p-6">
+    <div className="min-h-screen bg-sky-400 px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 pb-24">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">

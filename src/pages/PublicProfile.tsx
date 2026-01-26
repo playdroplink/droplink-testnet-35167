@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { PhonePreview } from '@/components/PhonePreview';
 import { EmailCaptureDisplay } from '@/components/EmailCaptureDisplay';
@@ -10,11 +10,12 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 import { ProfileData } from '@/types/profile';
 import { MembershipTier, Product } from '@/types/features';
 import { Button } from '@/components/ui/button';
-import { Share2 } from 'lucide-react';
+import { Share2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const PublicProfile = () => {
   const { username } = useParams<{ username: string }>();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -84,8 +85,16 @@ export const PublicProfile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 py-4 sm:py-8 px-3 sm:px-4">
       <div className="max-w-2xl mx-auto">
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="mb-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
         {/* Header */}
         <div className="text-center mb-8">
           {profile.logo && (

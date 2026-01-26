@@ -2996,7 +2996,10 @@ const Dashboard = () => {
       </main>
 
       {/* Bottom Navigation Bar - Mobile & Desktop Unified */}
-      <nav className={`fixed left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-sky-200/60 dark:border-sky-800/60 shadow-[0_-4px_24px_rgba(0,0,0,0.12)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.4)] z-50 transition-all duration-500 ease-in-out ${showFooter ? 'bottom-0 translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}>
+      <nav
+        className={`fixed left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-sky-200/60 dark:border-sky-800/60 shadow-[0_-4px_24px_rgba(0,0,0,0.12)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.4)] z-50 transition-all duration-500 ease-in-out ${showFooter ? 'bottom-0 translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
         <div className="max-w-6xl mx-auto px-2 sm:px-4 py-2">
           <div className="flex justify-around items-center">
             {/* Home */}

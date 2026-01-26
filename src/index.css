@@ -49,12 +49,16 @@ html, body {
   overflow-x: hidden;
   max-width: 100vw;
   width: 100%;
+  overscroll-behavior-y: contain; /* prevent bounce causing layout jumps on mobile */
+  height: auto;
 }
 
 #root {
   overflow-x: hidden;
   max-width: 100vw;
   width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
@@ -145,6 +149,8 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
     overflow-x: hidden;
     max-width: 100vw;
+    overflow-wrap: anywhere; /* long words don't overflow */
+    word-break: break-word;
   }
 
   body {
@@ -220,6 +226,22 @@ All colors MUST be HSL.
   /* ============================================================================ */
 
   @media (max-width: 768px) {
+    /* Safe area helpers for iOS */
+    .safe-area-bottom {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .safe-area-top {
+      padding-top: env(safe-area-inset-top);
+    }
+    /* Ensure images and videos don't overflow */
+    img, video {
+      max-width: 100% !important;
+      height: auto !important;
+    }
+    /* Prevent grids from squeezing too tight */
+    .grid-auto-fill-min {
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    }
   }
 }
 
@@ -232,4 +254,30 @@ All colors MUST be HSL.
 
 .animation-delay-4000 {
   animation-delay: 4s;
+}
+
+/* Additional utilities for mobile robustness */
+.break-anywhere {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Mobile-safe page container wrapper */
+.page-wrapper {
+  @apply w-full overflow-x-hidden;
+}
+
+/* Mobile-safe main content padding */
+.main-content {
+  @apply px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 pb-24 sm:pb-28;
+}
+
+/* Responsive container for all devices */
+.safe-container {
+  @apply w-full max-w-full overflow-x-hidden;
+}
+
+/* Clamp content width with safe padding */
+.content-safe {
+  @apply mx-auto px-3 sm:px-4 md:px-6 w-full;
 }

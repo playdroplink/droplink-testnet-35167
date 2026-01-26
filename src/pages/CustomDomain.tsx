@@ -105,17 +105,17 @@ const CustomDomain = () => {
 
   return (
     <div className="min-h-screen bg-sky-400">
-      <header className="border-b border-border px-4 lg:px-6 py-4">
+      <header className="border-b border-border px-3 sm:px-4 md:px-6 py-3 sm:py-4\">
         <div className="max-w-4xl mx-auto flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
-          <h1 className="text-xl font-semibold">Custom Domain</h1>
+          <h1 className="text-lg sm:text-xl font-semibold\">Custom Domain</h1>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto p-4 lg:p-8 space-y-4">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-8 space-y-4 pb-24\">
         {!isPremiumPlan && (
           <Alert className="border-primary/40 bg-primary/5">
             <AlertCircle className="h-4 w-4 text-primary" />

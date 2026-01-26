@@ -63,7 +63,7 @@ const Dropmate = () => {
   };
 
   return (
-    <div className="p-4 max-w-4xl mx-auto">
+    <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 max-w-4xl mx-auto pb-24">
       <Card>
         <CardHeader>
           <CardTitle>Messages & Chat History</CardTitle>

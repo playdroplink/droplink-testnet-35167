@@ -1,10 +1,20 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
 const SwitchToMerchant: React.FC = () => {
   const navigate = useNavigate();
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
+      <Button
+        variant="ghost"
+        onClick={() => navigate(-1)}
+        className="absolute top-4 left-4"
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back
+      </Button>
       <h1 className="text-3xl font-bold mb-4">Switch to Merchant</h1>
       <p className="mb-6 text-center max-w-xl">
         Become a merchant and create your own online store! Set your store name, location, theme, and contact info. Add products, manage your menu, and start selling to customers who can browse, add to cart, and buy your items with Pi.

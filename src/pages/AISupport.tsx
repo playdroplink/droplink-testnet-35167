@@ -89,23 +89,23 @@ const AISupport = () => {
 
   return (
     <PlanGate minPlan="pro" featureName="AI Support">
-      <div className="min-h-screen bg-sky-400 p-6">
+      <div className="min-h-screen bg-sky-400 p-3 sm:p-4 md:p-6 pb-24">
         <div className="max-w-4xl mx-auto">
           <Button
             variant="ghost"
             onClick={() => navigate(-1)}
-            className="mb-6"
+            className="mb-4 sm:mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
 
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-4 sm:mb-6">
             <Bot className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">AI Support Configuration</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">AI Support Configuration</h1>
           </div>
 
-          <Card className="p-6 space-y-6">
+          <Card className="p-4 sm:p-6 space-y-6">
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="enabled" className="text-lg font-medium">

@@ -546,15 +546,15 @@ export default function CardGenerator() {
   };
 
   return (
-    <div className="min-h-screen bg-sky-400 py-8 px-4">
+    <div className="min-h-screen bg-sky-400 py-3 sm:py-4 md:py-8 px-3 sm:px-4">
       {/* View Card Only Mode */}
       {viewCardOnly && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
           <div className="relative w-full max-w-2xl">
             <Button
               onClick={() => setViewCardOnly(false)}
               variant="ghost"
-              className="absolute -top-12 right-0 text-white hover:text-gray-300"
+              className="absolute -top-10 right-0 text-white hover:text-gray-300"
             >
               <X className="w-6 h-6" />
             </Button>
@@ -571,20 +571,20 @@ export default function CardGenerator() {
       )}
 
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2 text-white">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 text-white">
             Virtual Card Generator
           </h1>
-          <p className="text-white/90">
+          <p className="text-sm sm:text-base text-white/90">
             Create your personalized Droplink card with QR code
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-6 md:gap-8">
           {/* Card Preview */}
-          <div className="space-y-6">
-            <Card className="p-6 bg-white dark:bg-gray-800">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-slate-900">
+          <div className="space-y-4 sm:space-y-6">
+            <Card className="p-4 sm:p-6 bg-white dark:bg-gray-800">
+              <h2 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2 text-slate-900">
                 <Palette className="w-5 h-5" />
                 Card Preview
               </h2>
@@ -612,7 +612,7 @@ export default function CardGenerator() {
               </div>
 
               {/* Action Buttons */}
-              <div className="grid grid-cols-2 gap-3 mt-6 no-print">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mt-4 sm:mt-6 no-print">
                 <Button
                   onClick={() => setViewCardOnly(true)}
                   variant="outline"
@@ -623,33 +623,33 @@ export default function CardGenerator() {
                 </Button>
                 <Button
                   onClick={generateShareableLink}
-                  className="w-full col-span-2 bg-sky-500 hover:bg-sky-600"
+                  className="w-full sm:col-span-2 bg-sky-500 hover:bg-sky-600"
                 >
                   <Share2 className="w-4 h-4 mr-2" />
-                  Get Download Link
+                  Get Link
                 </Button>
                 <Button
                   onClick={handlePrint}
                   variant="outline"
-                  className="w-full"
+                  className="w-full text-xs sm:text-sm"
                 >
-                  <Printer className="w-4 h-4 mr-2" />
-                  Print Card
+                  <Printer className="w-4 h-4 mr-1 sm:mr-2" />
+                  Print
                 </Button>
                 <Button
                   onClick={handleDownloadPNG}
                   variant="outline"
-                  className="w-full"
+                  className="w-full text-xs sm:text-sm"
                 >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download PNG
+                  <Download className="w-4 h-4 mr-1 sm:mr-2" />
+                  PNG
                 </Button>
                 <Button
                   onClick={handleDownloadPDF}
-                  className="w-full col-span-2"
+                  className="w-full sm:col-span-2 text-xs sm:text-sm"
                 >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download PDF (Print Ready)
+                  <Download className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Download</span> PDF
                 </Button>
               </div>
             </Card>
@@ -759,30 +759,30 @@ export default function CardGenerator() {
           </div>
 
           {/* Customization Panel */}
-          <div className="space-y-6 no-print">
+          <div className="space-y-4 sm:space-y-6 no-print">
             {/* Pro Plan Notice */}
             {!hasProPlan && (
               <Alert className="bg-sky-50 dark:bg-sky-950 border-sky-200 dark:border-sky-800">
                 <AlertCircle className="h-4 w-4 text-sky-600" />
-                <AlertDescription className="text-sm">
+                <AlertDescription className="text-xs sm:text-sm">
                   <strong>Customization Locked:</strong> Subscribe to the <strong>30 Pi Pro plan</strong> to customize card colors and themes. Default sky blue theme is active.
                 </AlertDescription>
               </Alert>
             )}
             
             {/* Color Customization */}
-            <Card className="p-6 bg-white dark:bg-gray-800">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-slate-900">Customize Colors</h2>
+            <Card className="p-4 sm:p-6 bg-white dark:bg-gray-800">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-4">
+                <h2 className="text-lg sm:text-xl font-semibold text-slate-900">Colors</h2>
                 <div className="flex gap-2">
                   {hasProPlan && (
                     <Button
                       onClick={saveCardColors}
                       variant="default"
                       size="sm"
-                      className="bg-sky-500 hover:bg-sky-600"
+                      className="bg-sky-500 hover:bg-sky-600 text-xs sm:text-sm"
                     >
-                      Save Colors
+                      Save
                     </Button>
                   )}
                   <Button

@@ -10,7 +10,7 @@ export default function InboxPage() {
   const navigate = useNavigate();
   
   return (
-    <div className="p-4">
+    <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 pb-24">
       <div className="max-w-2xl mx-auto">
         <Button 
           variant="ghost" 

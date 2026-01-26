@@ -272,8 +272,8 @@ export default function ChatPage() {
       <div className="hidden dark:block absolute bottom-0 right-10 w-80 h-80 bg-purple-900 rounded-full mix-blend-screen filter blur-3xl opacity-10 animate-blob animation-delay-2000\"></div>
 
       {/* Header */}
-      <div className="glass-container border-b rounded-b-3xl mx-4 mt-4 relative z-10">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
+      <div className="glass-container border-b rounded-b-3xl mx-3 sm:mx-4 mt-3 sm:mt-4 relative z-10">
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 py-3 flex items-center gap-3">
           <Button
             variant="ghost"
             size="sm"
@@ -297,7 +297,7 @@ export default function ChatPage() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 relative z-10">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 relative z-10">
         <div className="max-w-4xl mx-auto space-y-3">
           {messages.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
@@ -359,8 +359,8 @@ export default function ChatPage() {
       </div>
 
       {/* Input Area */}
-      <div className="glass-container rounded-t-3xl border-t mx-4 mb-4 sticky bottom-0 relative z-10">
-        <div className="max-w-4xl mx-auto p-4">
+      <div className="glass-container rounded-t-3xl border-t mx-3 sm:mx-4 mb-4 sticky bottom-0 relative z-10">
+        <div className="max-w-4xl mx-auto p-3 sm:p-4">
           {imagePreview && (
             <div className="mb-3 relative inline-block">
               <img
