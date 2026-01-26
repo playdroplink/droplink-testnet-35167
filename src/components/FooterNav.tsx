@@ -110,12 +110,13 @@ export const FooterNav: React.FC = () => {
           {/* About */}
           <button
             onClick={() => setAboutOpen(true)}
-            className="relative flex flex-col items-center justify-center py-2 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 active:scale-95 transition-all duration-300 group rounded-xl hover:bg-sky-50 dark:hover:bg-sky-950/30"
+            className="relative flex flex-col items-center justify-center py-2 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-sky-700 dark:hover:text-sky-300 active:scale-95 transition-all duration-300 group rounded-xl hover:bg-sky-50 dark:hover:bg-sky-950/30"
             title="About Droplink"
           >
-            <Info className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1 group-hover:scale-125 transition-all duration-300 drop-shadow-sm" />
-            <span className="text-xs sm:text-xs group-hover:font-semibold transition-all">About</span>
-            <span className="absolute inset-0 rounded-xl bg-gradient-to-t from-sky-400/0 to-sky-400/0 group-hover:from-sky-400/10 group-hover:to-transparent transition-all duration-300"></span>
+            <span className="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-200 shadow-sm group-hover:scale-105 transition-all">
+              <Info className="w-4 h-4 sm:w-5 sm:h-5" />
+            </span>
+            <span className="text-[11px] sm:text-xs mt-1 leading-tight">About</span>
           </button>
 
           {/* Menu */}

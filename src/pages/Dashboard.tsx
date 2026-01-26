@@ -1721,7 +1721,7 @@ const Dashboard = () => {
                   {/* Secondary Features Row */}
                   <TabsTrigger value="merchant" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
                     <Store className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                    <span className="hidden sm:inline">Merchant</span>
+                    <span className="hidden sm:inline">DropStore</span>
                   </TabsTrigger>
                   <TabsTrigger value="droppay" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
                     <Wallet className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
@@ -1768,52 +1768,57 @@ const Dashboard = () => {
                   </div>
                 </div>
 
-                {/* Merchant Tab */}
+                {/* DropStore Tab */}
                 <TabsContent value="merchant" className="pb-6 sm:pb-8">
-                  <div className="max-w-lg mx-auto mt-8 sm:mt-12 p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 rounded-xl shadow border-2 border-blue-300 dark:border-blue-700/50 text-center space-y-3">
+                  <div className="max-w-lg mx-auto mt-8 sm:mt-12 p-4 sm:p-6 bg-white dark:bg-slate-900 rounded-xl shadow border border-sky-200/80 dark:border-sky-800/60 text-center space-y-3">
                     <div className="relative inline-block">
                       <Store className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-blue-600 dark:text-blue-400" />
-                      <span className="absolute top-0 right-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-500 text-white shadow-lg animate-pulse">
-                        Coming Soon
-                      </span>
                     </div>
-                    <h2 className="text-2xl font-bold text-blue-900 dark:text-blue-100">DropStore: Digital Marketplace</h2>
+                    <h2 className="text-2xl font-bold text-blue-900 dark:text-blue-100">DropStore (Coming Soon)</h2>
                     <p className="text-sm sm:text-base text-blue-800 dark:text-blue-200">
-                      Dropstore is launching soon! Launch a digital storefront, accept Pi payments on mainnet, and reach a global audience.
+                      A Pi-first marketplace to launch digital storefronts, accept Pi payments, and reach global buyers.
                     </p>
-                    <div className="bg-white/60 dark:bg-slate-900/40 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
-                      <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300">
-                        <strong>🚀 Features Coming Soon:</strong>
+                    <div className="bg-sky-50 dark:bg-slate-900/40 p-3 rounded-lg border border-sky-200 dark:border-sky-700">
+                      <p className="text-xs sm:text-sm text-sky-700 dark:text-sky-300">
+                        <strong>🚀 Launch features:</strong>
                       </p>
-                      <ul className="text-xs text-blue-600 dark:text-blue-400 mt-2 space-y-1">
-                        <li>✓ Advanced digital storefronts</li>
-                        <li>✓ Pi Network mainnet integration</li>
-                        <li>✓ Marketplace discovery & search</li>
-                        <li>✓ Real-time analytics & earnings</li>
+                      <ul className="text-xs text-sky-700 dark:text-sky-300 mt-2 space-y-1">
+                        <li>✓ Digital storefronts with themes</li>
+                        <li>✓ Pi Network mainnet payments</li>
+                        <li>✓ Discovery, search, and curation</li>
+                        <li>✓ Real-time earnings and analytics</li>
                       </ul>
                     </div>
-                    <p className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 font-medium">
-                      We're building something amazing. Stay tuned! 🎉
+                    <p className="text-xs sm:text-sm text-sky-700 dark:text-sky-300 font-medium">
+                      Building now — stay tuned! 🎉
                     </p>
                   </div>
                 </TabsContent>
 
                 {/* DropPay Tab */}
                 <TabsContent value="droppay" className="pb-6 sm:pb-8">
-                  <div className="max-w-lg mx-auto mt-8 sm:mt-12 p-4 sm:p-6 bg-white dark:bg-slate-900 rounded-xl shadow border border-slate-200/70 dark:border-slate-800/70 text-center space-y-3">
-                    <Wallet className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-sky-500" />
-                    <h2 className="text-2xl font-bold">DropPay: Seamless Pi Payment Modal</h2>
-                    <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300">
-                      DropPay provides a ready-to-use payment modal for accepting Pi and Drop cryptocurrency payments on Pi Network Mainnet.
-                    </p>
-                    <a href="https://droppay.space/" target="_blank" rel="noopener noreferrer">
-                      <button className="mt-2 px-6 py-2 bg-sky-500 text-white rounded-lg font-semibold shadow hover:bg-sky-600 transition">
-                        Launch DropPay Platform
-                      </button>
-                    </a>
-                    <div className="text-xs sm:text-sm text-slate-500">
-                      <strong>Features:</strong> Payment modal UI, Pi & Drop support, QR payments, real-time verification, customizable branding, and analytics.
+                  <div className="max-w-lg mx-auto mt-8 sm:mt-12 p-4 sm:p-6 bg-white dark:bg-slate-900 rounded-xl shadow border border-sky-200/80 dark:border-sky-800/60 text-center space-y-3">
+                    <div className="relative inline-block">
+                      <Wallet className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-sky-600 dark:text-sky-400" />
                     </div>
+                    <h2 className="text-2xl font-bold text-sky-900 dark:text-sky-100">DropPay (Coming Soon)</h2>
+                    <p className="text-sm sm:text-base text-sky-800 dark:text-sky-200">
+                      Seamless Pi payment modal with QR, on-chain verification, and branded checkout for your links and products.
+                    </p>
+                    <div className="bg-sky-50 dark:bg-slate-900/40 p-3 rounded-lg border border-sky-200 dark:border-sky-700">
+                      <p className="text-xs sm:text-sm text-sky-700 dark:text-sky-300">
+                        <strong>🚀 Launch features:</strong>
+                      </p>
+                      <ul className="text-xs text-sky-700 dark:text-sky-300 mt-2 space-y-1">
+                        <li>✓ Pi payments with QR</li>
+                        <li>✓ Real-time verification</li>
+                        <li>✓ Custom branding</li>
+                        <li>✓ Analytics and receipts</li>
+                      </ul>
+                    </div>
+                    <p className="text-xs sm:text-sm text-sky-700 dark:text-sky-300 font-medium">
+                      Coming soon to your dashboard.
+                    </p>
                   </div>
                 </TabsContent>
                 {/* Pi Data tab removed for production */}

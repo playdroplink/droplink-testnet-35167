@@ -277,9 +277,9 @@ export const AboutModal = ({ children, open: externalOpen, onOpenChange }: About
                 <div className="flex items-start gap-3">
                   <div>
                     <h4 className="font-medium">Pi Network Community</h4>
-                    <p className="text-sm text-blue-600">Beta Testers & Contributors</p>
+                    <p className="text-sm text-blue-600">Mainnet Contributors</p>
                     <p className="text-sm text-muted-foreground">
-                      Thousands of Pi Pioneers helping shape DropLink through feedback and real-world usage
+                      Thousands of Pi Pioneers shaping DropLink with real mainnet usage and feedback
                     </p>
                   </div>
                 </div>
