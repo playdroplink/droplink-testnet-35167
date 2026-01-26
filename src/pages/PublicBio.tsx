@@ -480,7 +480,7 @@ const PublicBio = () => {
       // Try exact match first
       let { data: profileData, error } = await supabase
         .from("profiles")
-        .select("*, subscriptions(plan_type, pi_amount, status, expires_at)")
+        .select("*")
         .eq("username", username)
         .maybeSingle();
 
@@ -491,7 +491,7 @@ const PublicBio = () => {
         console.log("[PUBLIC BIO] No exact match, trying case-insensitive search...");
         const { data: caseInsensitiveData, error: caseInsensitiveError } = await supabase
           .from("profiles")
-          .select("*, subscriptions(plan_type, pi_amount, status, expires_at)")
+          .select("*")
           .ilike("username", username)
           .maybeSingle();
         
