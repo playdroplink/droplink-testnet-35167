@@ -1819,7 +1819,7 @@ const Dashboard = () => {
                 {/* Pi Data tab removed for production */}
 
                 {/* Profile Tab */}
-                <TabsContent value="profile" className="space-y-6 sm:space-y-8">
+                <TabsContent value="profile" className="space-y-6 sm:space-y-8 max-w-xl w-full mx-auto">
                 {/* Pi Ad Banner for free users */}
                 <PiAdBanner />
                 
