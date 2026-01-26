@@ -1640,31 +1640,31 @@ const Dashboard = () => {
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
                     <button 
                       onClick={() => document.getElementById('dashboard-builder')?.scrollIntoView({ behavior: 'smooth' })}
-                      className="flex flex-col items-center gap-2 p-3 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
+                      className="flex flex-col items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
                     >
-                      <Palette className="w-5 h-5 text-sky-600" />
-                      <span className="text-xs font-medium text-center text-slate-900 dark:text-white">Customize</span>
+                      <Palette className="w-4 sm:w-5 h-4 sm:h-5 text-sky-600" />
+                      <span className="text-xs font-medium text-center text-slate-900 dark:text-white leading-tight">Customize</span>
                     </button>
                     <button 
                       onClick={handleShowQRCode}
-                      className="flex flex-col items-center gap-2 p-3 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
+                      className="flex flex-col items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
                     >
-                      <QrCode className="w-5 h-5 text-sky-600" />
-                      <span className="text-xs font-medium text-center text-slate-900 dark:text-white">QR Code</span>
+                      <QrCode className="w-4 sm:w-5 h-4 sm:h-5 text-sky-600" />
+                      <span className="text-xs font-medium text-center text-slate-900 dark:text-white leading-tight">QR Code</span>
                     </button>
                     <button 
                       onClick={handleCopyLink}
-                      className="flex flex-col items-center gap-2 p-3 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
+                      className="flex flex-col items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
                     >
-                      <Share2 className="w-5 h-5 text-sky-600" />
-                      <span className="text-xs font-medium text-center text-slate-900 dark:text-white">Share</span>
+                      <Share2 className="w-4 sm:w-5 h-4 sm:h-5 text-sky-600" />
+                      <span className="text-xs font-medium text-center text-slate-900 dark:text-white leading-tight">Share</span>
                     </button>
                     <button 
                       onClick={() => navigate('/subscription')}
                       className="flex flex-col items-center gap-2 p-3 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
                     >
-                      <Crown className="w-5 h-5 text-sky-600" />
-                      <span className="text-xs font-medium text-center text-slate-900 dark:text-white">Upgrade</span>
+                      <Crown className="w-4 sm:w-5 h-4 sm:h-5 text-sky-600" />
+                      <span className="text-xs font-medium text-center text-slate-900 dark:text-white leading-tight">Upgrade</span>
                     </button>
                   </div>
                 </div>
