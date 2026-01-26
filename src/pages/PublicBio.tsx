@@ -51,7 +51,16 @@ import {
 } from "lucide-react";
 
 // Use react-icons for all major social platforms for reliability
-import { FaInstagram, FaFacebook, FaYoutube, FaGlobe, FaLinkedin, FaTiktok, FaTwitch, FaXTwitter } from "react-icons/fa6";
+import { 
+  FaInstagram, FaFacebook, FaYoutube, FaGlobe, FaLinkedin, FaTiktok, FaTwitch, FaXTwitter,
+  FaSnapchat, FaDiscord, FaTelegram, FaWhatsapp, FaReddit, FaPinterest, FaGithub,
+  FaSpotify, FaSoundcloud, FaPatreon, FaMedium, FaBehance, FaDribbble, FaEtsy,
+  FaAmazon, FaShopify, FaStackOverflow, FaBandcamp, FaKickstarter, FaApple, FaVimeo
+} from "react-icons/fa6";
+import { 
+  SiThreads, SiBluesky, SiMastodon, SiKick, SiGitlab, SiDeviantart, 
+  SiSubstack, SiOnlyfans, SiClubhouse, SiLinktree, SiSlack
+} from "react-icons/si";
 
 import type { ProfileData } from "@/types/profile";
 
@@ -601,6 +610,7 @@ const PublicBio = () => {
 
       // Custom links: only if present and array (fallback to empty array)
       let customLinksArr = [];
+      let imageLinkCardsArr = [];
       let showPiWalletTips = true;
       let themeSettingsObj: any = {};
       if (profileData.theme_settings && typeof profileData.theme_settings === 'object' && !Array.isArray(profileData.theme_settings)) {
@@ -608,6 +618,9 @@ const PublicBio = () => {
         if (Array.isArray(themeSettingsObj.customLinks)) {
           // Filter out links with empty URLs to keep public bio clean
           customLinksArr = themeSettingsObj.customLinks.filter((link: any) => link.url && String(link.url).trim());
+        }
+        if (Array.isArray(themeSettingsObj.imageLinkCards)) {
+          imageLinkCardsArr = themeSettingsObj.imageLinkCards;
         }
         if (typeof themeSettingsObj.showPiWalletTips === 'boolean') {
           showPiWalletTips = themeSettingsObj.showPiWalletTips;
@@ -643,6 +656,7 @@ const PublicBio = () => {
         backgroundMusicUrl: (profileData as any).background_music_url || "",
         socialLinks: socialLinksArr,
         customLinks: customLinksArr,
+        imageLinkCards: imageLinkCardsArr,
         theme: {
           primaryColor: themeSettingsObj.primaryColor || "#000000",
           backgroundColor: themeSettingsObj.backgroundColor || "#FFFFFF",
@@ -740,14 +754,67 @@ const PublicBio = () => {
   const getSocialIcon = (platform: string) => {
     if (!platform) return <LinkIcon className="w-5 h-5" />;
     const p = platform.toLowerCase();
+    
+    // Social Networks
     if (["twitter", "x", "x.com"].includes(p)) return <FaXTwitter className="w-5 h-5" />;
     if (["instagram", "insta", "instagram.com"].includes(p)) return <FaInstagram className="w-5 h-5" />;
+    if (["facebook", "fb", "facebook.com"].includes(p)) return <FaFacebook className="w-5 h-5" />;
+    if (["snapchat", "snap"].includes(p)) return <FaSnapchat className="w-5 h-5" />;
+    if (["threads"].includes(p)) return <SiThreads className="w-5 h-5" />;
+    if (["bluesky", "bsky"].includes(p)) return <SiBluesky className="w-5 h-5" />;
+    if (["mastodon"].includes(p)) return <SiMastodon className="w-5 h-5" />;
+    if (["reddit"].includes(p)) return <FaReddit className="w-5 h-5" />;
+    if (["clubhouse"].includes(p)) return <SiClubhouse className="w-5 h-5" />;
+    
+    // Professional
+    if (["linkedin", "li", "linkedin.com", "linkedin.com/in/"].includes(p)) return <FaLinkedin className="w-5 h-5" />;
+    if (["github"].includes(p)) return <FaGithub className="w-5 h-5" />;
+    if (["gitlab"].includes(p)) return <SiGitlab className="w-5 h-5" />;
+    if (["stackoverflow", "stack overflow"].includes(p)) return <FaStackOverflow className="w-5 h-5" />;
+    
+    // Content Platforms
     if (["youtube", "yt", "youtube.com", "youtube.com/@"].includes(p)) return <FaYoutube className="w-5 h-5" />;
     if (["tiktok", "tiktok.com", "tiktok.com/@"].includes(p)) return <FaTiktok className="w-5 h-5" />;
-    if (["facebook", "fb", "facebook.com"].includes(p)) return <FaFacebook className="w-5 h-5" />;
-    if (["linkedin", "li", "linkedin.com", "linkedin.com/in/"].includes(p)) return <FaLinkedin className="w-5 h-5" />;
     if (["twitch", "twitch.tv"].includes(p)) return <FaTwitch className="w-5 h-5" />;
+    if (["kick"].includes(p)) return <SiKick className="w-5 h-5" />;
+    if (["vimeo"].includes(p)) return <FaVimeo className="w-5 h-5" />;
+    if (["pinterest"].includes(p)) return <FaPinterest className="w-5 h-5" />;
+    
+    // Messaging
+    if (["whatsapp", "wa"].includes(p)) return <FaWhatsapp className="w-5 h-5" />;
+    if (["telegram"].includes(p)) return <FaTelegram className="w-5 h-5" />;
+    if (["discord"].includes(p)) return <FaDiscord className="w-5 h-5" />;
+    if (["slack"].includes(p)) return <SiSlack className="w-5 h-5" />;
+    
+    // Creative & Design
+    if (["behance"].includes(p)) return <FaBehance className="w-5 h-5" />;
+    if (["dribbble"].includes(p)) return <FaDribbble className="w-5 h-5" />;
+    if (["deviantart"].includes(p)) return <SiDeviantart className="w-5 h-5" />;
+    
+    // Music
+    if (["spotify"].includes(p)) return <FaSpotify className="w-5 h-5" />;
+    if (["soundcloud"].includes(p)) return <FaSoundcloud className="w-5 h-5" />;
+    if (["applemusic", "apple music"].includes(p)) return <FaApple className="w-5 h-5" />;
+    if (["bandcamp"].includes(p)) return <FaBandcamp className="w-5 h-5" />;
+    
+    // Content Creation & Monetization
+    if (["patreon"].includes(p)) return <FaPatreon className="w-5 h-5" />;
+    if (["onlyfans"].includes(p)) return <SiOnlyfans className="w-5 h-5" />;
+    if (["substack"].includes(p)) return <SiSubstack className="w-5 h-5" />;
+    if (["medium"].includes(p)) return <FaMedium className="w-5 h-5" />;
+    
+    // Business & Shopping
+    if (["etsy"].includes(p)) return <FaEtsy className="w-5 h-5" />;
+    if (["shopify"].includes(p)) return <FaShopify className="w-5 h-5" />;
+    if (["amazon"].includes(p)) return <FaAmazon className="w-5 h-5" />;
+    
+    // Other
+    if (["linktree"].includes(p)) return <SiLinktree className="w-5 h-5" />;
     if (["website", "web", "site", "homepage", "home", "globe"].includes(p)) return <FaGlobe className="w-5 h-5" />;
+    if (["email", "mail"].includes(p)) return <Mail className="w-5 h-5" />;
+    if (["phone", "tel"].includes(p)) return <Phone className="w-5 h-5" />;
+    
+    // Fallback
     return <LinkIcon className="w-5 h-5" />;
   };
 
@@ -1108,6 +1175,34 @@ const PublicBio = () => {
                 autoPlay={false}
                 loop={true}
               />
+            </div>
+          )}
+
+          {/* Image Link Cards */}
+          {Array.isArray(profile.imageLinkCards) && profile.imageLinkCards.length > 0 && (
+            <div className="w-full max-w-md mx-auto grid grid-cols-2 gap-3 mt-6">
+              {profile.imageLinkCards.map((card: any) => (
+                <a
+                  key={card.id}
+                  href={card.linkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative block rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+                  style={{ aspectRatio: '4 / 3' }}
+                >
+                  <img
+                    src={card.imageUrl}
+                    alt={card.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <p className="text-white font-semibold text-sm text-center drop-shadow-lg">
+                      {card.title}
+                    </p>
+                  </div>
+                </a>
+              ))}
             </div>
           )}
 

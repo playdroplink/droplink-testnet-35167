@@ -163,10 +163,10 @@ export default function CardGenerator() {
   ];
 
   const saveCardColors = async () => {
-    if (!profile?.id) {
+    if (!profileId && !profile?.id) {
       toast({
-        title: "Not Logged In",
-        description: "Please log in to save card customization.",
+        title: "Authentication Required",
+        description: "Please authenticate with Pi Browser to save your card design.",
         variant: "destructive",
       });
       return;

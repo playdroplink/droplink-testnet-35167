@@ -120,6 +120,13 @@ export interface Wallets {
   bank: { id: string; accountNumber: string; bankName: string; details: string }[];
 }
 
+export interface ImageLinkCard {
+  id: string;
+  imageUrl: string;
+  linkUrl: string;
+  title: string;
+}
+
 export interface ProfileData {
   id: string;
   username: string;
@@ -132,6 +139,7 @@ export interface ProfileData {
   category?: string;
   customLinks?: CustomLink[];
   products?: Product[];
+  imageLinkCards?: ImageLinkCard[];
   theme?: ThemeData;
   wallets?: Wallets;
   hasPremium?: boolean;

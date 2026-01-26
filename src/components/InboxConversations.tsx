@@ -64,22 +64,40 @@ export default function InboxConversations() {
   }, [profileId]);
 
   const loadProfile = async () => {
-    if (!piUser?.username) return;
+    if (!piUser?.username) {
+      console.log('[InboxConversations] No Pi username available');
+      return;
+    }
 
-    const { data: profile } = await supabase
+    console.log('[InboxConversations] Loading profile for username:', piUser.username);
+    
+    const { data: profile, error } = await supabase
       .from('profiles')
       .select('id')
       .eq('username', piUser.username)
       .maybeSingle();
 
+    if (error) {
+      console.error('[InboxConversations] Error loading profile:', error);
+      toast.error('Failed to load your profile');
+      return;
+    }
+
     if (profile) {
+      console.log('[InboxConversations] Profile loaded, ID:', profile.id);
       setProfileId(profile.id);
+    } else {
+      console.log('[InboxConversations] No profile found for username:', piUser.username);
     }
   };
 
   const loadConversations = async () => {
-    if (!profileId) return;
+    if (!profileId) {
+      console.log('[InboxConversations] No profile ID, skipping conversation load');
+      return;
+    }
 
+    console.log('[InboxConversations] Loading conversations for profile ID:', profileId);
     setLoading(true);
     try {
       // Fetch all messages involving this user
@@ -89,7 +107,12 @@ export default function InboxConversations() {
         .or(`sender_profile_id.eq.${profileId},receiver_profile_id.eq.${profileId}`)
         .order('created_at', { ascending: false }) as any);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[InboxConversations] Error loading messages:', error);
+        throw error;
+      }
+
+      console.log('[InboxConversations] Loaded messages:', messages?.length || 0);
 
       // Group messages by conversation partner
       const conversationMap = new Map<string, any>();
@@ -131,9 +154,10 @@ export default function InboxConversations() {
       }
 
       const conversationsList = Array.from(conversationMap.values());
+      console.log('[InboxConversations] Grouped into conversations:', conversationsList.length);
       setConversations(conversationsList);
     } catch (error) {
-      console.error('Failed to load conversations:', error);
+      console.error('[InboxConversations] Failed to load conversations:', error);
       toast.error('Failed to load conversations');
     } finally {
       setLoading(false);

@@ -17,6 +17,8 @@ import { useActiveSubscription } from "@/hooks/useActiveSubscription";
 import { useMonetization } from "@/hooks/useMonetization";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { ProductManager } from "@/components/ProductManager";
+import { ImageLinkCardManager } from "@/components/ImageLinkCardManager";
+import { SocialMediaManager } from "@/components/SocialMediaManager";
 import { MembershipManager } from "@/components/MembershipManager";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 // Removed duplicate Dialog imports to fix duplicate identifier errors
@@ -296,6 +298,7 @@ const Dashboard = () => {
       coverImage: "",
     },
     products: [],
+    imageLinkCards: [],
     paymentLinks: [],
     hasPremium: false,
     showShareButton: true,
@@ -1362,7 +1365,13 @@ const Dashboard = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      if (!profileId) throw new Error('No profile ID found.');
+      if (!profileId) {
+        console.error('[Dashboard] No profile ID found');
+        throw new Error('No profile ID found. Please sign in again.');
+      }
+      
+      console.log('[Dashboard] Saving profile, ID:', profileId);
+      
       // Update main profile data in Supabase
       const { error: profileError } = await supabase
         .from('profiles')
@@ -1377,6 +1386,7 @@ const Dashboard = () => {
           theme_settings: {
             ...profile.theme,
             customLinks: profile.customLinks || [],
+            imageLinkCards: profile.imageLinkCards || [],
             paymentLinks: (profile.paymentLinks || []).map(link => ({
               id: link.id,
               amount: link.amount,
@@ -1398,10 +1408,17 @@ const Dashboard = () => {
           updated_at: new Date().toISOString()
         })
         .eq('id', profileId);
-      if (profileError) throw profileError;
+        
+      if (profileError) {
+        console.error('[Dashboard] Profile update error:', profileError);
+        throw profileError;
+      }
+
+      console.log('[Dashboard] Profile updated successfully');
 
       // Sync products to database
       if (profile.products && profile.products.length > 0) {
+        console.log('[Dashboard] Syncing products:', profile.products.length);
         await supabase
           .from('products')
           .delete()
@@ -1418,12 +1435,13 @@ const Dashboard = () => {
             .from('products')
             .insert(productsToInsert);
           if (productsError) {
-            console.error('Products sync error:', productsError);
+            console.error('[Dashboard] Products sync error:', productsError);
           }
         }
       }
 
       toast.success('Changes saved successfully!');
+      
       // Force reload of profile from database after save
       if (profileId) {
         try {
@@ -1444,7 +1462,9 @@ const Dashboard = () => {
         }
       }
     } catch (error: any) {
-      toast.error('Failed to save changes. Please try again.');
+      console.error('[Dashboard] Save failed:', error);
+      const errorMessage = error?.message || error?.details || error?.hint || 'Unknown error';
+      toast.error(`Failed to save: ${errorMessage}`, { duration: 5000 });
     } finally {
       setSaving(false);
     }
@@ -2273,296 +2293,17 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Social Links */}
+            {/* Social Links - New Comprehensive Manager */}
             <div>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-2">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Social links</h2>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={async () => {
-                      if (!profileId) return;
-                      toast.info('Verifying follower counts...');
-                      try {
-                        const { data, error } = await supabase.functions.invoke('verify-social-followers', {
-                          body: {
-                            socialLinks: profile.socialLinks,
-                            profileId: profileId
-                          }
-                        });
-                        if (error) {
-                          console.error('Verification error:', error);
-                          toast.error('Failed to verify followers');
-                        } else if (data?.verifiedLinks) {
-                          setProfile({ ...profile, socialLinks: data.verifiedLinks });
-                          toast.success('Follower counts verified!');
-                        }
-                      } catch (error) {
-                        console.error('Verification error:', error);
-                        toast.error('Verification service unavailable');
-                      }
-                    }}
-                    className="text-xs h-7"
-                    title="Fetch real follower counts from social media APIs"
-                  >
-                    ✓ Verify Followers
-                  </Button>
-                </div>
-                {/* Social link plan gating */}
-                {(() => {
-                  let maxLinks = 1;
-                  if (plan === "basic") maxLinks = 3;
-                  if (plan === "premium" || plan === "pro") maxLinks = 99;
-                  return (
-                    <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded whitespace-nowrap">
-                      {plan === "free" && "Limit: 1 social link"}
-                      {plan === "basic" && "Limit: 3 social links"}
-                      {(plan === "premium" || plan === "pro") && "Unlimited social links"}
-                    </span>
-                  );
+              <SocialMediaManager 
+                socialLinks={profile.socialLinks || []}
+                onChange={(links) => setProfile({ ...profile, socialLinks: links })}
+                maxLinks={(() => {
+                  if (plan === "basic") return 3;
+                  if (plan === "premium" || plan === "pro") return undefined; // unlimited
+                  return 1; // free plan
                 })()}
-              </div>
-              <div className="space-y-3 sm:space-y-4">
-                {/* For Premium/Pro: Add/Remove custom social links with icon picker */}
-                {(plan === "premium" || plan === "pro") && (
-                  <>
-                    {profile.socialLinks.map((link, idx) => (
-                      <div key={idx} className="flex items-center gap-2 sm:gap-3">
-                        {/* Icon Picker */}
-                        <select
-                          value={link.icon || link.type}
-                          onChange={e => {
-                            const newLinks = [...profile.socialLinks];
-                            newLinks[idx].icon = e.target.value;
-                            setProfile({ ...profile, socialLinks: newLinks });
-                          }}
-                          className="w-10 h-10 sm:w-12 sm:h-10 rounded-lg border border-border bg-card text-center flex-shrink-0 text-sm"
-                        >
-                          <option value="twitter">🐦</option>
-                          <option value="instagram">📸</option>
-                          <option value="youtube">▶️</option>
-                          <option value="tiktok">🎵</option>
-                          <option value="facebook">📘</option>
-                          <option value="linkedin">💼</option>
-                          <option value="twitch">🎮</option>
-                          <option value="website">🌐</option>
-                          <option value="custom">⭐</option>
-                        </select>
-                        <Input
-                          value={link.url}
-                          onChange={e => {
-                            const newLinks = [...profile.socialLinks];
-                            newLinks[idx].url = e.target.value;
-                            const updatedProfile = { ...profile, socialLinks: newLinks };
-                            setProfile(updatedProfile);
-                            // Save immediately for custom links
-                            console.log('[CUSTOM SOCIAL] Updating custom link at index', idx, 'Value:', e.target.value);
-                            saveProfileNow(updatedProfile);
-                          }}
-                          placeholder="Enter URL"
-                          className="bg-input-bg flex-1 text-sm"
-                        />
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          value={link.followers ?? ""}
-                          onChange={(e) => handleSocialFollowerChange(link.type || `custom-${idx}`, e.target.value, idx)}
-                          placeholder="Followers"
-                          className="bg-input-bg w-28 text-sm"
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            const newLinks = profile.socialLinks.filter((_, i) => i !== idx);
-                            setProfile({ ...profile, socialLinks: newLinks });
-                          }}
-                          title="Remove"
-                          className="h-10 w-10 flex-shrink-0"
-                        >
-                          ✖️
-                        </Button>
-                      </div>
-                    ))}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setProfile({
-                          ...profile,
-                          socialLinks: [
-                            ...profile.socialLinks,
-                            { type: "custom", url: "", icon: "custom" },
-                          ],
-                        });
-                      }}
-                      className="w-full mt-2"
-                    >
-                      + Add Social Link
-                    </Button>
-                  </>
-                )}
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 flex-shrink-0 rounded-lg bg-card border border-border flex items-center justify-center">
-                    <FaXTwitter className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </div>
-                  <Input
-                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "twitter")?.url || "" : ""}
-                    onChange={(e) => handleSocialLinkChange("twitter", e.target.value)}
-                    placeholder="https://x.com/"
-                    className="bg-input-bg flex-1 text-sm"
-                  />
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "twitter")?.followers ?? "" : ""}
-                    onChange={(e) => handleSocialFollowerChange("twitter", e.target.value)}
-                    placeholder="Followers"
-                    className="bg-input-bg w-28 text-sm"
-                  />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 flex-shrink-0 rounded-lg bg-card border border-border flex items-center justify-center">
-                    <Instagram className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </div>
-                  <Input
-                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "instagram")?.url || "" : ""}
-                    onChange={(e) => handleSocialLinkChange("instagram", e.target.value)}
-                    placeholder="https://instagram.com/"
-                    className="bg-input-bg flex-1 text-sm"
-                  />
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "instagram")?.followers ?? "" : ""}
-                    onChange={(e) => handleSocialFollowerChange("instagram", e.target.value)}
-                    placeholder="Followers"
-                    className="bg-input-bg w-28 text-sm"
-                  />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 flex-shrink-0 rounded-lg bg-card border border-border flex items-center justify-center">
-                    <Youtube className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </div>
-                  <Input
-                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "youtube")?.url || "" : ""}
-                    onChange={(e) => handleSocialLinkChange("youtube", e.target.value)}
-                    placeholder="https://youtube.com/@"
-                    className="bg-input-bg flex-1 text-sm"
-                  />
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "youtube")?.followers ?? "" : ""}
-                    onChange={(e) => handleSocialFollowerChange("youtube", e.target.value)}
-                    placeholder="Followers"
-                    className="bg-input-bg w-28 text-sm"
-                  />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 flex-shrink-0 rounded-lg bg-card border border-border flex items-center justify-center">
-                    <FaTiktok className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </div>
-                  <Input
-                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "tiktok")?.url || "" : ""}
-                    onChange={(e) => handleSocialLinkChange("tiktok", e.target.value)}
-                    placeholder="https://tiktok.com/@"
-                    className="bg-input-bg flex-1 text-sm"
-                  />
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "tiktok")?.followers ?? "" : ""}
-                    onChange={(e) => handleSocialFollowerChange("tiktok", e.target.value)}
-                    placeholder="Followers"
-                    className="bg-input-bg w-28 text-sm"
-                  />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 flex-shrink-0 rounded-lg bg-card border border-border flex items-center justify-center">
-                    <Facebook className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </div>
-                  <Input
-                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "facebook")?.url || "" : ""}
-                    onChange={(e) => handleSocialLinkChange("facebook", e.target.value)}
-                    placeholder="https://facebook.com/"
-                    className="bg-input-bg flex-1 text-sm"
-                  />
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "facebook")?.followers ?? "" : ""}
-                    onChange={(e) => handleSocialFollowerChange("facebook", e.target.value)}
-                    placeholder="Followers"
-                    className="bg-input-bg w-28 text-sm"
-                  />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 flex-shrink-0 rounded-lg bg-card border border-border flex items-center justify-center">
-                    <Linkedin className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </div>
-                  <Input
-                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "linkedin")?.url || "" : ""}
-                    onChange={(e) => handleSocialLinkChange("linkedin", e.target.value)}
-                    placeholder="https://linkedin.com/in/"
-                    className="bg-input-bg flex-1 text-sm"
-                  />
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "linkedin")?.followers ?? "" : ""}
-                    onChange={(e) => handleSocialFollowerChange("linkedin", e.target.value)}
-                    placeholder="Followers"
-                    className="bg-input-bg w-28 text-sm"
-                  />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 flex-shrink-0 rounded-lg bg-card border border-border flex items-center justify-center">
-                    <Twitch className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </div>
-                  <Input
-                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "twitch")?.url || "" : ""}
-                    onChange={(e) => handleSocialLinkChange("twitch", e.target.value)}
-                    placeholder="https://twitch.tv/"
-                    className="bg-input-bg flex-1 text-sm"
-                  />
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "twitch")?.followers ?? "" : ""}
-                    onChange={(e) => handleSocialFollowerChange("twitch", e.target.value)}
-                    placeholder="Followers"
-                    className="bg-input-bg w-28 text-sm"
-                  />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 flex-shrink-0 rounded-lg bg-card border border-border flex items-center justify-center">
-                    <Globe className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </div>
-                  <Input
-                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "website")?.url || "" : ""}
-                    onChange={(e) => handleSocialLinkChange("website", e.target.value)}
-                    placeholder="Enter website URL"
-                    className="bg-input-bg flex-1 text-sm"
-                  />
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === "website")?.followers ?? "" : ""}
-                    onChange={(e) => handleSocialFollowerChange("website", e.target.value)}
-                    placeholder="Followers"
-                    className="bg-input-bg w-28 text-sm"
-                  />
-                </div>
-              </div>
+              />
             </div>
 
             {/* Pi Wallet Address for Tips & Payments + Pi Tip/Send Me a Coffee */}
@@ -3176,14 +2917,24 @@ const Dashboard = () => {
               {/* Monetization Tab - Products & Selling */}
               <TabsContent value="monetization" className="pb-8 space-y-6">
                 <PlanGate minPlan="basic" featureName="Monetization">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">Products & Tips</h3>
-                    <ProductManager
-                      products={products}
-                      onSave={saveProduct}
-                      onDelete={deleteProduct}
-                      profileId={profileId || ''}
-                    />
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Products & Tips</h3>
+                      <ProductManager
+                        products={products}
+                        onSave={saveProduct}
+                        onDelete={deleteProduct}
+                        profileId={profileId || ''}
+                      />
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Image Link Cards</h3>
+                      <ImageLinkCardManager
+                        cards={profile.imageLinkCards || []}
+                        onChange={(cards) => setProfile({ ...profile, imageLinkCards: cards })}
+                      />
+                    </div>
                   </div>
                 </PlanGate>
               </TabsContent>
@@ -3307,7 +3058,10 @@ const Dashboard = () => {
             </Button>
           </div>
           <div className="flex-1 flex items-center justify-center w-full overflow-hidden px-3 pb-4">
-            <PhonePreview profile={profile} />
+            <PhonePreview 
+              key={`preview-${profile.businessName}-${profile.description}-${profile.logo}`}
+              profile={profile} 
+            />
           </div>
         </aside>
       </div>

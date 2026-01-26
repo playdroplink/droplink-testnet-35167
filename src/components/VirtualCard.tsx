@@ -139,14 +139,14 @@ export const VirtualCard = ({
 
             <div className="text-center space-y-1 mb-6">
               <p className="text-lg font-semibold" style={{ color: textColor }}>@{username}</p>
-              <p className="text-xs" style={{ color: textColor, opacity: 0.8 }}>Digital Commerce Card</p>
+              <p className="text-xs" style={{ color: textColor, opacity: 0.8 }}>Digital Business Card</p>
             </div>
           </div>
 
           {/* Bottom Info */}
-          <div className="relative z-10 text-center space-y-1">
-            <p className="text-xs font-medium" style={{ color: textColor, opacity: 0.8 }}>Powered by Pi Network</p>
-            <p className="text-xs" style={{ color: textColor, opacity: 0.7 }}>Scan QR code to visit store</p>
+          <div className="relative z-10 text-center space-y-2">
+            <p className="text-xs font-medium" style={{ color: textColor, opacity: 0.9 }}>Powered by Pi Network</p>
+            <p className="text-[10px] leading-tight px-4" style={{ color: textColor, opacity: 0.75 }}>Scan the QR code on front to visit my digital profile</p>
           </div>
 
           {/* Signature Strip */}
