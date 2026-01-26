@@ -39,20 +39,35 @@ const Followers = () => {
   const loadFollowData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate("/");
+
+      // Fallback for mobile where Supabase session might not hydrate in time
+      const cachedProfileRaw = localStorage.getItem("profile");
+      const cachedProfile = cachedProfileRaw ? JSON.parse(cachedProfileRaw) : null;
+
+      if (!user && !cachedProfile?.id) {
+        toast.error("Please sign in to view followers");
+        navigate("/auth");
         return;
       }
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, username")
-        .eq("user_id", user.id)
-        .single();
+      const profileLookupUserId = user?.id;
+      let profile = null as any;
+
+      if (profileLookupUserId) {
+        const { data: foundProfile } = await supabase
+          .from("profiles")
+          .select("id, username")
+          .eq("user_id", profileLookupUserId)
+          .single();
+        profile = foundProfile;
+      } else if (cachedProfile?.id && cachedProfile?.username) {
+        // Use cached profile when auth session is missing
+        profile = { id: cachedProfile.id, username: cachedProfile.username };
+      }
 
       if (!profile) {
         toast.error("Profile not found");
-        navigate("/");
+        navigate("/auth");
         return;
       }
 

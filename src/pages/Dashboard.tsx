@@ -1520,11 +1520,6 @@ const Dashboard = () => {
                 {displayUsername ? `@${displayUsername}` : 'Dashboard'}
               </span>
             </div>
-            {isAuthenticated && (
-              <span className="ml-1 inline-flex items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200 px-2 py-0.5 text-[11px] font-semibold">
-                π Auth
-              </span>
-            )}
             {!isAuthenticated && piLoading && (
               <span className="text-xs text-amber-600 animate-pulse">Connecting Pi...</span>
             )}
