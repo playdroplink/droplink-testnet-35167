@@ -53,6 +53,8 @@ export const ComingSoonModal = ({ open, onOpenChange, type }: ComingSoonModalPro
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogTitle className="sr-only">{config.title}</DialogTitle>
+        <DialogDescription className="sr-only">{config.description}</DialogDescription>
         {/* Header with Icon */}
         <div className="text-center space-y-3 pb-6 border-b border-slate-200 dark:border-slate-700">
           <div className="flex justify-center">

@@ -32,11 +32,13 @@ export const useMonetization = (profileId: string | null) => {
     if (!profileId) return;
     const loadProducts = async () => {
       try {
-        const { data } = await (supabase
+        const { data, error } = await (supabase
           .from('products' as any) as any)
           .select('*')
-          .eq('profile_id', profileId)
-          .eq('status', 'active');
+          .eq('profile_id', profileId);
+        if (error) {
+          console.error('Failed to load products - Error:', error);
+        }
         setProducts((data as Product[]) || []);
       } catch (e) {
         console.error('Failed to load products:', e);

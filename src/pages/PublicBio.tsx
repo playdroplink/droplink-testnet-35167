@@ -474,30 +474,62 @@ const PublicBio = () => {
     try {
       // Normalize username to lowercase for case-insensitive matching
       const normalizedUsername = username.toLowerCase();
-      console.log("Loading profile for username (normalized):", normalizedUsername, "original:", username);
+      console.log("[PUBLIC BIO] Loading profile for username:", username);
+      console.log("[PUBLIC BIO] Supabase URL:", supabase.supabaseUrl);
       
       // Try exact match first
       let { data: profileData, error } = await supabase
         .from("profiles")
-        .select("*, subscriptions!inner(plan_name, amount, status, expires_at)")
+        .select("*, subscriptions(plan_type, pi_amount, status, expires_at)")
         .eq("username", username)
         .maybeSingle();
 
+      console.log("[PUBLIC BIO] Exact match - Data:", profileData ? 'Found' : 'Not found', "Error:", error?.message);
+
       // If no exact match, try case-insensitive match
       if (!profileData && !error) {
-        console.log("No exact match, trying case-insensitive search...");
+        console.log("[PUBLIC BIO] No exact match, trying case-insensitive search...");
         const { data: caseInsensitiveData, error: caseInsensitiveError } = await supabase
           .from("profiles")
-          .select("*, subscriptions!inner(plan_name, amount, status, expires_at)")
+          .select("*, subscriptions(plan_type, pi_amount, status, expires_at)")
           .ilike("username", username)
           .maybeSingle();
         
+        console.log("[PUBLIC BIO] Case-insensitive - Data:", caseInsensitiveData ? 'Found' : 'Not found', "Error:", caseInsensitiveError?.message);
         profileData = caseInsensitiveData;
         error = caseInsensitiveError;
       }
 
+      // If still no profile, try without subscription relationship
+      if (!profileData && !error) {
+        console.log("[PUBLIC BIO] Retrying without subscriptions relationship...");
+        const { data: basicProfileData, error: basicError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("username", username)
+          .maybeSingle();
+        
+        console.log("[PUBLIC BIO] Basic query - Data:", basicProfileData ? 'Found' : 'Not found', "Error:", basicError?.message);
+        
+        if (basicProfileData) {
+          profileData = basicProfileData;
+          error = basicError;
+        } else if (!basicError) {
+          // Try case-insensitive without subscriptions
+          console.log("[PUBLIC BIO] Trying case-insensitive without subscriptions...");
+          const { data: ilikProfileData, error: ilikError } = await supabase
+            .from("profiles")
+            .select("*")
+            .ilike("username", username)
+            .maybeSingle();
+          console.log("[PUBLIC BIO] Case-insensitive basic - Data:", ilikProfileData ? 'Found' : 'Not found', "Error:", ilikError?.message);
+          profileData = ilikProfileData;
+          error = ilikError;
+        }
+      }
+
       if (error) {
-        console.error("Database error:", error);
+        console.error("[PUBLIC BIO] Database error:", error);
         setNotFound(true);
         setLoading(false);
         return;
@@ -539,23 +571,11 @@ const PublicBio = () => {
       
       // Load financial data from secure table (public read access)
       let financialData = {
-        pi_wallet_address: null,
-        pi_donation_message: "Send me a coffee ☕",
-        crypto_wallets: {},
-        bank_details: {},
+        pi_wallet_address: profileData.pi_wallet_address || null,
+        pi_donation_message: profileData.pi_donation_message || "Send me a coffee ☕",
+        crypto_wallets: profileData.crypto_wallets || {},
+        bank_details: profileData.bank_details || {},
       };
-      
-      try {
-        // Financial data is stored directly in profiles table
-        financialData = {
-          pi_wallet_address: profileData.pi_wallet_address,
-          pi_donation_message: profileData.pi_donation_message || "Send me a coffee ☕",
-          crypto_wallets: profileData.crypto_wallets || {},
-          bank_details: profileData.bank_details || {},
-        };
-      } catch (error) {
-        console.error("Error loading financial data:", error);
-      }
       
       const cryptoWallets = financialData.crypto_wallets as any;
       const bankDetails = financialData.bank_details as any;
