@@ -127,6 +127,16 @@ export interface ImageLinkCard {
   title: string;
 }
 
+export interface SocialEmbedItem {
+  id: string;
+  platform?: string;
+  url?: string;
+  embedHtml?: string;
+  title?: string;
+  pinned?: boolean;
+  thumbnail?: string;
+}
+
 export interface ProfileData {
   id: string;
   username: string;
@@ -140,6 +150,7 @@ export interface ProfileData {
   customLinks?: CustomLink[];
   products?: Product[];
   imageLinkCards?: ImageLinkCard[];
+  socialFeedItems?: SocialEmbedItem[];
   theme?: ThemeData;
   wallets?: Wallets;
   hasPremium?: boolean;

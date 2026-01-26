@@ -62,7 +62,7 @@ import {
   SiSubstack, SiOnlyfans, SiClubhouse, SiLinktree, SiSlack
 } from "react-icons/si";
 
-import type { ProfileData } from "@/types/profile";
+import type { ProfileData, SocialEmbedItem } from "@/types/profile";
 import { BioTemplate, DEFAULT_TEMPLATE } from "@/config/bioTemplates";
 
 const PREFERENCES_STORAGE_KEY = 'droplink_user_preferences';
@@ -109,6 +109,7 @@ const PublicBio = () => {
   const [scrollY, setScrollY] = useState(0);
   const [connectEmail, setConnectEmail] = useState("");
   const [connectSubmitting, setConnectSubmitting] = useState(false);
+  const [socialFeedItems, setSocialFeedItems] = useState<SocialEmbedItem[]>([]);
   // State to trigger auto-refresh after Pi Auth if Profile Not Found
   const [shouldAutoRefresh, setShouldAutoRefresh] = useState(false);
 
@@ -645,6 +646,31 @@ const PublicBio = () => {
       if (Array.isArray(profileData.crypto_wallets)) walletsObj.crypto = profileData.crypto_wallets;
       if (Array.isArray(profileData.bank_details)) walletsObj.bank = profileData.bank_details;
 
+      // Social feed / pinned embeds sourced from multiple possible fields for compatibility
+      let socialFeed: SocialEmbedItem[] = [];
+      const possibleFeeds = [
+        (themeSettingsObj as any).socialFeedItems,
+        (themeSettingsObj as any).pinnedEmbeds,
+        (profileData as any).social_feed,
+        (profileData as any).pinned_posts,
+      ];
+      for (const feed of possibleFeeds) {
+        if (Array.isArray(feed)) {
+          socialFeed = feed
+            .filter((item: any) => item && (item.url || item.embedHtml))
+            .map((item: any, idx: number) => ({
+              id: item.id || `feed-${idx}`,
+              platform: item.platform || item.type || item.source || 'Social',
+              url: item.url,
+              embedHtml: item.embedHtml || item.embed_html,
+              title: item.title || item.caption || item.description,
+              pinned: item.pinned ?? true,
+              thumbnail: item.thumbnail || item.image,
+            }));
+          break;
+        }
+      }
+
       // Check if user has active 30 Pi plan for verified badge
       const hasActiveSubscription = Array.isArray((profileData as any).subscriptions) && 
         (profileData as any).subscriptions.some((sub: any) => 
@@ -702,6 +728,7 @@ const PublicBio = () => {
       
       console.log('Setting profile with backgroundMusicUrl:', profileObj.backgroundMusicUrl);
       setProfile(profileObj);
+      setSocialFeedItems(socialFeed);
     } catch (error) {
       console.error("Error loading profile:", error);
       setNotFound(true);
@@ -1197,6 +1224,31 @@ const PublicBio = () => {
             </div>
           )}
           
+          {/* Quick Feed Access CTA */}
+          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4 px-4">
+            <Button
+              onClick={() => {
+                const feedUrl = profile.storeUrl ? `${window.location.origin}/${profile.storeUrl}/feed` : profile.username ? `${window.location.origin}/@${profile.username}/feed` : undefined;
+                if (feedUrl) {
+                  window.open(feedUrl, '_blank', 'noopener,noreferrer');
+                }
+              }}
+              variant="ghost"
+              className={`gap-2 w-full sm:w-auto text-white/90 hover:text-white ${getIconStyle(profile.theme.iconStyle)} border border-white/20 bg-white/5 hover:bg-white/10`}
+            >
+              <Share2 className="w-4 h-4" />
+              Profile Feed
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => document.getElementById('social-feed')?.scrollIntoView({ behavior: 'smooth' })}
+              className="gap-2 w-full sm:w-auto text-white/80 hover:text-white border border-white/20 bg-white/0 hover:bg-white/10"
+            >
+              <ExternalLink className="w-4 h-4" />
+              View Pins
+            </Button>
+          </div>
+
           {/* Bio Description */}
           {profile.description && (
             <p className="text-white/90 text-sm md:text-base max-w-lg mx-auto font-light mt-4 px-4">
@@ -1405,6 +1457,71 @@ const PublicBio = () => {
             </div>
           </div>
         )}
+
+        {/* Social Feed & Pinned Posts */}
+        <div id="social-feed" className="w-full max-w-2xl px-4">
+          <div className="flex flex-col gap-1 mb-4">
+            <h2 className="text-2xl font-bold text-white drop-shadow-lg">Social Feed</h2>
+            <p className="text-white/70 text-sm">Pinned posts, embeds, and recent drops</p>
+          </div>
+
+          {socialFeedItems.length === 0 ? (
+            <div className="border border-dashed border-white/20 rounded-xl p-4 text-center text-white/70 bg-white/5">
+              No pinned social posts yet.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {socialFeedItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-xl border border-white/15 bg-black/30 backdrop-blur-sm p-4 shadow-lg"
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white/10 text-white text-xl">
+                      {getSocialIcon(item.platform || 'link')}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white/80">{item.platform || 'Social'}</p>
+                      <p className="text-white font-semibold truncate">{item.title || 'Pinned post'}</p>
+                    </div>
+                    {item.pinned && (
+                      <span className="text-xs px-2 py-1 rounded-full bg-white/15 text-white/80 border border-white/20">Pinned</span>
+                    )}
+                  </div>
+
+                  {item.embedHtml ? (
+                    <div
+                      className="rounded-lg overflow-hidden bg-white/5 border border-white/10"
+                      dangerouslySetInnerHTML={{ __html: item.embedHtml }}
+                    />
+                  ) : (
+                    <div className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
+                      {item.thumbnail && (
+                        <img src={item.thumbnail} alt={item.title || 'Pinned post'} className="w-full h-48 object-cover" />
+                      )}
+                      <div className="p-3 flex items-center justify-between gap-3">
+                        <div className="text-white/80 text-sm truncate">
+                          {item.url || 'No link available'}
+                        </div>
+                        {item.url && (
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`${getIconStyle(profile.theme.iconStyle)} px-3 py-2 text-white text-sm rounded-lg`}
+                            style={{ backgroundColor: profile.theme.primaryColor }}
+                          >
+                            Open
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Custom Links - Link.me Style */}
         {Array.isArray(profile.customLinks) && profile.customLinks.length > 0 && (

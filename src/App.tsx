@@ -12,6 +12,7 @@ import MerchantProductManager from "./pages/MerchantProductManager";
 import MerchantStorePreview from "./pages/MerchantStorePreview";
 import StoreFront from "./pages/StoreFront";
 import PublicBio from "./pages/PublicBio";
+import ProfileFeed from "./pages/ProfileFeed";
 import PaymentPage from "./pages/PaymentPage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
@@ -96,9 +97,14 @@ const AppRoutes = ({ showSplash, setShowSplash }: { showSplash: boolean; setShow
         <Route path="*" element={<NotFound />} />
       </Route>
       {/* Public Bio routes excluded from global layout */}
+      {/* Public bio + feed routes */}
       <Route path="/u/:username" element={<PublicBio />} />
       <Route path="/profile/:username" element={<PublicBio />} />
       <Route path="/@:username" element={<PublicBio />} />
+      <Route path="/@:username/feed" element={<ProfileFeed />} />
+      <Route path="/u/:username/feed" element={<ProfileFeed />} />
+      <Route path="/profile/:username/feed" element={<ProfileFeed />} />
+      <Route path=":username/feed" element={<ProfileFeed />} />
       <Route path=":username" element={<PublicBio />} />
     </Routes>
   );

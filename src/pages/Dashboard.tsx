@@ -40,7 +40,7 @@ import PiPayments from "@/components/PiPayments";
 import SubscriptionStatus from "@/components/SubscriptionStatus";
 import { Dialog, DialogContent, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import VotingSystem from "@/components/VotingSystem";
-import { ProfileData } from "@/types/profile";
+import { ProfileData, SocialEmbedItem } from "@/types/profile";
 import LinkManager from "@/components/LinkManager";
 import { PiAuthTest } from "@/components/PiAuthTest";
 import { AccountDeletion } from "@/components/AccountDeletion";
@@ -318,6 +318,7 @@ const Dashboard = () => {
     },
     products: [],
     imageLinkCards: [],
+    socialFeedItems: [],
     paymentLinks: [],
     hasPremium: false,
     showShareButton: true,
@@ -373,6 +374,7 @@ const Dashboard = () => {
               ...data.theme,
               glassMode: data.theme?.glassMode ?? false,
               customLinks: data.customLinks || [],
+              socialFeedItems: data.socialFeedItems || [],
               imageLinkCards: data.imageLinkCards || [],
               bioTemplate: bioTemplate,
               paymentLinks: (data.paymentLinks || []).map(link => ({
@@ -387,6 +389,7 @@ const Dashboard = () => {
                 transactionCount: link.transactionCount
               }))
             } as any,
+            social_feed: data.socialFeedItems || [],
             logo: data.logo,
             show_share_button: data.showShareButton,
             pi_wallet_address: data.piWalletAddress,
@@ -520,6 +523,7 @@ const Dashboard = () => {
         theme_settings: {
           ...dataToSave.theme,
           customLinks: dataToSave.customLinks || [],
+          socialFeedItems: dataToSave.socialFeedItems || [],
           paymentLinks: (dataToSave.paymentLinks || []).map((link: any) => ({
             id: link.id,
             amount: link.amount,
@@ -532,6 +536,7 @@ const Dashboard = () => {
             transactionCount: link.transactionCount
           }))
         } as any,
+        social_feed: dataToSave.socialFeedItems || [],
         logo: dataToSave.logo,
         has_premium: dataToSave.hasPremium,
         pi_wallet_address: dataToSave.piWalletAddress,
@@ -810,6 +815,27 @@ const Dashboard = () => {
         }
         
         const themeSettings = profileData.theme_settings as any;
+
+        const normalizeSocialFeed = (feed: any): SocialEmbedItem[] => {
+          if (!Array.isArray(feed)) return [];
+          return feed
+            .filter((item) => item && (item.url || item.embedHtml || (item as any).embed_html))
+            .map((item, idx) => ({
+              id: item.id || `feed-${idx}-${Date.now()}`,
+              platform: item.platform || item.type || item.source || 'Social',
+              url: item.url,
+              embedHtml: item.embedHtml || (item as any).embed_html,
+              title: item.title || item.caption || item.description,
+              pinned: item.pinned ?? true,
+              thumbnail: item.thumbnail || item.image,
+            }));
+        };
+
+        const socialFeedItems = normalizeSocialFeed(
+          themeSettings?.socialFeedItems ||
+          (profileData as any)?.social_feed ||
+          (profileData as any)?.pinned_posts
+        );
         
         // Load financial data from secure endpoint (optional - won't fail if no session)
         let financialData = {
@@ -887,6 +913,7 @@ const Dashboard = () => {
           ],
           customLinks: (themeSettings?.customLinks as any) || [],
           imageLinkCards: (themeSettings?.imageLinkCards as any) || [],
+          socialFeedItems,
           theme: {
             primaryColor: themeSettings?.primaryColor || "#38bdf8",
             backgroundColor: themeSettings?.backgroundColor || "#000000",
@@ -2394,6 +2421,139 @@ const Dashboard = () => {
                 })()}
               />
             </div>
+
+            {/* Social Feed / Pinned Embeds */}
+            <PlanGate minPlan="basic" featureName="Social Feed Pins">
+              <div className="border-t pt-6 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Profile Feed Pins</h2>
+                    <p className="text-sm text-muted-foreground">Pin social embeds or links that will show on your public bio feed.</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => {
+                      const newItem: SocialEmbedItem = {
+                        id: typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `feed-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                        platform: '',
+                        title: '',
+                        url: '',
+                        embedHtml: '',
+                        pinned: true,
+                      };
+                      setProfile({ ...profile, socialFeedItems: [...(profile.socialFeedItems || []), newItem] });
+                    }}>
+                      + Add Pin
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={autoSave.save} disabled={autoSave.isSaving}>
+                      {autoSave.isSaving ? 'Saving...' : 'Save'}
+                    </Button>
+                  </div>
+                </div>
+
+                {(profile.socialFeedItems || []).length === 0 && (
+                  <div className="border border-dashed border-border rounded-lg p-4 text-sm text-muted-foreground bg-card/30">
+                    No pins yet. Add a social URL or paste embed HTML to feature it on your public feed.
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {(profile.socialFeedItems || []).map((item) => (
+                    <Card key={item.id} className="p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-semibold">Pinned Item</div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">Pinned</span>
+                          <Switch
+                            checked={item.pinned !== false}
+                            onCheckedChange={(checked) => {
+                              setProfile({
+                                ...profile,
+                                socialFeedItems: (profile.socialFeedItems || []).map((feed) => feed.id === item.id ? { ...feed, pinned: checked } : feed)
+                              });
+                            }}
+                          />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setProfile({
+                              ...profile,
+                              socialFeedItems: (profile.socialFeedItems || []).filter((feed) => feed.id !== item.id)
+                            })}
+                            className="text-xs text-red-500"
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label className="text-xs">Platform / Label</Label>
+                          <Input
+                            value={item.platform || ''}
+                            onChange={(e) => setProfile({
+                              ...profile,
+                              socialFeedItems: (profile.socialFeedItems || []).map((feed) => feed.id === item.id ? { ...feed, platform: e.target.value } : feed)
+                            })}
+                            placeholder="Instagram, X, Blog, etc."
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Title</Label>
+                          <Input
+                            value={item.title || ''}
+                            onChange={(e) => setProfile({
+                              ...profile,
+                              socialFeedItems: (profile.socialFeedItems || []).map((feed) => feed.id === item.id ? { ...feed, title: e.target.value } : feed)
+                            })}
+                            placeholder="Pinned post title"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label className="text-xs">Social URL (optional if using embed HTML)</Label>
+                          <Input
+                            value={item.url || ''}
+                            onChange={(e) => setProfile({
+                              ...profile,
+                              socialFeedItems: (profile.socialFeedItems || []).map((feed) => feed.id === item.id ? { ...feed, url: e.target.value } : feed)
+                            })}
+                            placeholder="https://social.com/post/123"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Thumbnail (optional)</Label>
+                          <Input
+                            value={item.thumbnail || ''}
+                            onChange={(e) => setProfile({
+                              ...profile,
+                              socialFeedItems: (profile.socialFeedItems || []).map((feed) => feed.id === item.id ? { ...feed, thumbnail: e.target.value } : feed)
+                            })}
+                            placeholder="https://image.jpg"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-xs">Embed HTML (paste from Instagram/Twitter/YouTube, etc.)</Label>
+                        <Textarea
+                          value={item.embedHtml || ''}
+                          onChange={(e) => setProfile({
+                            ...profile,
+                            socialFeedItems: (profile.socialFeedItems || []).map((feed) => feed.id === item.id ? { ...feed, embedHtml: e.target.value } : feed)
+                          })}
+                          placeholder="&lt;blockquote class='instagram-media' ...&gt;&lt;/blockquote&gt;"
+                          className="min-h-[120px]"
+                        />
+                        <p className="text-xs text-muted-foreground">If embed HTML is provided, it will be used over the URL.</p>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </PlanGate>
 
             {/* Pi Wallet Address for Tips & Payments + Pi Tip/Send Me a Coffee */}
             {/* Pi Wallet for Tips - Basic and above only, auto-lock if expired */}
