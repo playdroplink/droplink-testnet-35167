@@ -36,6 +36,7 @@ import Purchases from "./pages/Purchases";
 import ProductDetail from "./pages/ProductDetail";
 import SalesEarnings from "./pages/SalesEarnings";
 import CardGenerator from "./pages/CardGenerator";
+import PageLayout from "./components/PageLayout";
 
 const queryClient = new QueryClient();
 
@@ -69,41 +70,45 @@ const App = () => {
           }}
         >
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/home" element={<Home />} />
-            <Route path="/auth" element={<PiAuth />} />
-            <Route path="/subscription" element={<Subscription />} />
-            <Route path="/voting" element={<VotingPage />} />
-            <Route path="/followers" element={<Followers />} />
-            <Route path="/wallet" element={<Wallet />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/card-generator" element={<CardGenerator />} />
-            <Route path="/ai-support" element={<AISupport />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/domain" element={<CustomDomain />} />
-            <Route path="/admin-mrwain" element={<AdminMrwain />} />
-            {/* Payment routes */}
-            <Route path="/payment-success" element={<PaymentSuccess />} />
-            <Route path="/payment-cancel" element={<PaymentCancel />} />
-            <Route path="/pay/:linkId" element={<PaymentPage />} />
-            <Route path="/search-users" element={<UserSearchPage />} />
+            {/* Global layout applying Dashboard background */}
+            <Route element={<PageLayout />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/home" element={<Home />} />
+              <Route path="/auth" element={<PiAuth />} />
+              <Route path="/subscription" element={<Subscription />} />
+              <Route path="/voting" element={<VotingPage />} />
+              <Route path="/followers" element={<Followers />} />
+              <Route path="/wallet" element={<Wallet />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/card-generator" element={<CardGenerator />} />
+              <Route path="/ai-support" element={<AISupport />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/domain" element={<CustomDomain />} />
+              <Route path="/admin-mrwain" element={<AdminMrwain />} />
+              {/* Payment routes */}
+              <Route path="/payment-success" element={<PaymentSuccess />} />
+              <Route path="/payment-cancel" element={<PaymentCancel />} />
+              <Route path="/pay/:linkId" element={<PaymentPage />} />
+              <Route path="/search-users" element={<UserSearchPage />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="/switch-to-merchant" element={<SwitchToMerchant />} />
+              <Route path="/merchant-setup" element={<MerchantStoreSetup />} />
+              <Route path="/merchant-products" element={<MerchantProductManager />} />
+              <Route path="/store/:merchantId" element={<MerchantStorePreview />} />
+              <Route path="/storefront/:storeId" element={<StoreFront />} />
+              <Route path="/inbox" element={<InboxPage />} />
+              <Route path="/chat/:username" element={<Chat />} />
+              <Route path="/purchases" element={<Purchases />} />
+              <Route path="/sales-earnings" element={<SalesEarnings />} />
+              <Route path="/product/:productId" element={<ProductDetail />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
+            {/* Public Bio routes excluded from global layout */}
             <Route path="/u/:username" element={<PublicBio />} />
             <Route path="/profile/:username" element={<PublicBio />} />
             <Route path="/@:username" element={<PublicBio />} />
-            <Route path="/:username" element={<PublicBio />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="/switch-to-merchant" element={<SwitchToMerchant />} />
-            <Route path="/merchant-setup" element={<MerchantStoreSetup />} />
-            <Route path="/merchant-products" element={<MerchantProductManager />} />
-            <Route path="/store/:merchantId" element={<MerchantStorePreview />} />
-            <Route path="/storefront/:storeId" element={<StoreFront />} />
-            <Route path="/inbox" element={<InboxPage />} />
-            <Route path="/chat/:username" element={<Chat />} />
-            <Route path="/purchases" element={<Purchases />} />
-            <Route path="/sales-earnings" element={<SalesEarnings />} />
-            <Route path="/product/:productId" element={<ProductDetail />} />
-            <Route path="*" element={<NotFound />} />
+            <Route path=":username" element={<PublicBio />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>

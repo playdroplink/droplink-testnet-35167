@@ -264,16 +264,8 @@ const Followers = () => {
   }
 
   return (
-    <div className="relative overflow-hidden bg-background">
-      {/* Background decorative elements - Light Mode */}
-      <div className="dark:hidden absolute top-0 left-10 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-blob"></div>
-      <div className="dark:hidden absolute top-40 right-10 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-blob animation-delay-2000"></div>
-
-      {/* Background decorative elements - Dark Mode */}
-      <div className="hidden dark:block absolute top-0 left-10 w-80 h-80 bg-blue-900 rounded-full mix-blend-screen filter blur-3xl opacity-15 animate-blob"></div>
-      <div className="hidden dark:block absolute top-40 right-10 w-80 h-80 bg-purple-900 rounded-full mix-blend-screen filter blur-3xl opacity-15 animate-blob animation-delay-2000"></div>
-
-      <div className="container mx-auto p-6 max-w-4xl relative z-10">
+    <div>
+      <div className="container mx-auto p-6 max-w-4xl">
         <div className="p-6 rounded-3xl bg-card border border-border">
           <div className="flex items-center gap-2 mb-6">
             <Users className="w-6 h-6 text-foreground" />
@@ -362,7 +354,7 @@ const Followers = () => {
         </div>
       </div>
 
-      <div className="mt-6 text-center relative z-10">
+      <div className="mt-6 text-center">
         <Button variant="outline" onClick={() => navigate("/")}>
           Back to Dashboard
         </Button>
