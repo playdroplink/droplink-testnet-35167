@@ -142,7 +142,7 @@ export default function PublicBioMessageForm({
 
   if (!isAuthenticated) {
     return (
-      <Card className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700">
+      <Card className="bg-white/70 dark:bg-white/10 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-xl shadow-blue-500/10 dark:shadow-sky-900/40">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
             <MessageSquare className="h-5 w-5" />
@@ -162,7 +162,7 @@ export default function PublicBioMessageForm({
   }
 
   return (
-    <Card className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700">
+    <Card className="bg-white/75 dark:bg-white/10 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-xl shadow-sky-500/10 dark:shadow-sky-900/40">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
           <MessageSquare className="h-5 w-5" />
@@ -176,7 +176,7 @@ export default function PublicBioMessageForm({
             value={message}
             onChange={e => setMessage(e.target.value)}
             rows={3}
-            className="resize-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-gray-300 dark:border-slate-600 placeholder:text-gray-500 dark:placeholder:text-gray-400"
+            className="resize-none bg-white/80 dark:bg-white/5 backdrop-blur-md text-slate-900 dark:text-white border border-white/40 dark:border-white/10 placeholder:text-gray-500 dark:placeholder:text-gray-400 shadow-inner shadow-slate-900/5"
           />
           
           {/* Image preview */}

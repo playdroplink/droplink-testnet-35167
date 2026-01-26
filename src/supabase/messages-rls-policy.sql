@@ -2,7 +2,7 @@
 -- This file contains all necessary RLS policies to secure the messages table
 
 -- Step 1: Enable RLS on messages table
-ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- POLICY 1: Users can view their sent messages
@@ -10,11 +10,11 @@ ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
 -- Allows users to see messages they sent to others
 DROP POLICY IF EXISTS "Users can view their sent messages" ON messages;
 CREATE POLICY "Users can view their sent messages"
-ON messages
+ON public.messages
 FOR SELECT
 USING (
-  sender_username = (
-    SELECT username FROM profiles 
+  sender_profile_id = (
+    SELECT id FROM public.profiles 
     WHERE user_id = auth.uid() 
     LIMIT 1
   )
@@ -26,11 +26,11 @@ USING (
 -- Allows users to see messages others sent to them
 DROP POLICY IF EXISTS "Users can view messages sent to them" ON messages;
 CREATE POLICY "Users can view messages sent to them"
-ON messages
+ON public.messages
 FOR SELECT
 USING (
-  receiver_username = (
-    SELECT username FROM profiles 
+  receiver_profile_id = (
+    SELECT id FROM public.profiles 
     WHERE user_id = auth.uid() 
     LIMIT 1
   )
@@ -42,11 +42,11 @@ USING (
 -- Allows any authenticated user to send messages to anyone
 DROP POLICY IF EXISTS "Authenticated users can send messages" ON messages;
 CREATE POLICY "Authenticated users can send messages"
-ON messages
+ON public.messages
 FOR INSERT
 WITH CHECK (
-  sender_username = (
-    SELECT username FROM profiles 
+  sender_profile_id = (
+    SELECT id FROM public.profiles 
     WHERE user_id = auth.uid() 
     LIMIT 1
   )
@@ -58,18 +58,18 @@ WITH CHECK (
 -- Allows receivers to mark their messages as read
 DROP POLICY IF EXISTS "Receivers can update message read status" ON messages;
 CREATE POLICY "Receivers can update message read status"
-ON messages
+ON public.messages
 FOR UPDATE
 USING (
-  receiver_username = (
-    SELECT username FROM profiles 
+  receiver_profile_id = (
+    SELECT id FROM public.profiles 
     WHERE user_id = auth.uid() 
     LIMIT 1
   )
 )
 WITH CHECK (
-  receiver_username = (
-    SELECT username FROM profiles 
+  receiver_profile_id = (
+    SELECT id FROM public.profiles 
     WHERE user_id = auth.uid() 
     LIMIT 1
   )
@@ -81,11 +81,11 @@ WITH CHECK (
 -- Allows senders to delete messages they sent
 DROP POLICY IF EXISTS "Senders can delete their sent messages" ON messages;
 CREATE POLICY "Senders can delete their sent messages"
-ON messages
+ON public.messages
 FOR DELETE
 USING (
-  sender_username = (
-    SELECT username FROM profiles 
+  sender_profile_id = (
+    SELECT id FROM public.profiles 
     WHERE user_id = auth.uid() 
     LIMIT 1
   )
@@ -97,11 +97,11 @@ USING (
 -- Allows receivers to delete messages sent to them
 DROP POLICY IF EXISTS "Receivers can delete their received messages" ON messages;
 CREATE POLICY "Receivers can delete their received messages"
-ON messages
+ON public.messages
 FOR DELETE
 USING (
-  receiver_username = (
-    SELECT username FROM profiles 
+  receiver_profile_id = (
+    SELECT id FROM public.profiles 
     WHERE user_id = auth.uid() 
     LIMIT 1
   )

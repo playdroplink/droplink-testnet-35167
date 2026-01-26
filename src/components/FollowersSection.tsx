@@ -144,7 +144,7 @@ export const FollowersSection = ({ profileId, currentUserProfileId }: FollowersS
 
   return (
     <div className="space-y-4">
-      <Card className="bg-white/5 border border-white/10 backdrop-blur-sm">
+      <Card className="bg-white/10 dark:bg-white/5 border border-white/15 dark:border-white/10 backdrop-blur-xl shadow-xl shadow-sky-500/10 dark:shadow-sky-900/40 rounded-2xl">
         <CardHeader className="pb-3 border-b border-white/10">
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-white">
