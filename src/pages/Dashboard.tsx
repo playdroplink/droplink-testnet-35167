@@ -1586,7 +1586,7 @@ const Dashboard = () => {
                   }
                 }}
               >
-                <TabsList className="w-full grid grid-cols-3 sm:grid-cols-7 gap-1.5 sm:gap-2 bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 p-2 sm:p-3 rounded-xl mb-1.5 sm:mb-3">
+                <TabsList className="w-full grid grid-cols-3 sm:grid-cols-7 gap-1.5 sm:gap-2 bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 p-2 sm:p-3 rounded-xl mb-24 sm:mb-32">
                   {/* Primary Features Row */}
                   <TabsTrigger value="profile" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-1.5 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
                     <Settings className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
@@ -1616,10 +1616,8 @@ const Dashboard = () => {
                     <Crown className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                     <span className="hidden sm:inline">Sub</span>
                   </TabsTrigger>
-                </TabsList>
 
-                {/* Secondary Features Row */}
-                <TabsList className="w-full grid grid-cols-3 gap-1.5 sm:gap-2 bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 p-2 sm:p-3 rounded-xl mb-4 sm:mb-6">
+                  {/* Secondary Features Row */}
                   <TabsTrigger value="merchant" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
                     <Store className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                     <span className="hidden sm:inline">Merchant</span>
@@ -1634,34 +1632,34 @@ const Dashboard = () => {
                   </TabsTrigger>
                 </TabsList>
 
-                {/* Setup & Quick Links Section */}
-                <div className="mb-6 sm:mb-8 p-3 sm:p-6 bg-gradient-to-r from-sky-50 to-blue-50 dark:from-sky-950/30 dark:to-blue-950/30 rounded-xl border border-sky-200/50 dark:border-sky-800/50">
-                  <h3 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white mb-3 sm:mb-4">Get Started</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                {/* Setup & Quick Links Section - Separate Container */}
+                <div className="mb-8 sm:mb-10 p-4 sm:p-6 bg-gradient-to-r from-sky-50 to-blue-50 dark:from-sky-950/30 dark:to-blue-950/30 rounded-xl border border-sky-200/50 dark:border-sky-800/50 shadow-sm">
+                  <h3 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white mb-4 sm:mb-5">Get Started</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                     <button 
                       onClick={() => document.getElementById('dashboard-builder')?.scrollIntoView({ behavior: 'smooth' })}
-                      className="flex flex-col items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
+                      className="flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
                     >
                       <Palette className="w-4 sm:w-5 h-4 sm:h-5 text-sky-600" />
                       <span className="text-xs font-medium text-center text-slate-900 dark:text-white leading-tight">Customize</span>
                     </button>
                     <button 
                       onClick={handleShowQRCode}
-                      className="flex flex-col items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
+                      className="flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
                     >
                       <QrCode className="w-4 sm:w-5 h-4 sm:h-5 text-sky-600" />
                       <span className="text-xs font-medium text-center text-slate-900 dark:text-white leading-tight">QR Code</span>
                     </button>
                     <button 
                       onClick={handleCopyLink}
-                      className="flex flex-col items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
+                      className="flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
                     >
                       <Share2 className="w-4 sm:w-5 h-4 sm:h-5 text-sky-600" />
                       <span className="text-xs font-medium text-center text-slate-900 dark:text-white leading-tight">Share</span>
                     </button>
                     <button 
                       onClick={() => navigate('/subscription')}
-                      className="flex flex-col items-center gap-2 p-3 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
+                      className="flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
                     >
                       <Crown className="w-4 sm:w-5 h-4 sm:h-5 text-sky-600" />
                       <span className="text-xs font-medium text-center text-slate-900 dark:text-white leading-tight">Upgrade</span>
