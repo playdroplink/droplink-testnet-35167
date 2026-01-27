@@ -9,13 +9,14 @@ import { usePi } from "@/contexts/PiContext";
 import { toast } from "sonner";
 import { Alert } from "@/components/ui/alert";
 import { FooterNav } from "@/components/FooterNav";
-import { isVerifiedUser, getVerifiedBadgeUrl } from "@/utils/verifiedUsers";
+import { isVerifiedUser, getVerifiedBadgeUrl, isVipUser, VIP_TEAM_MEMBERS, VERIFIED_USERNAMES } from "@/utils/verifiedUsers";
 
 // Notifications bell intentionally omitted on Search page to avoid noise when following
 
 const plans = ["all", "free", "basic", "premium", "pro"];
 const categories = [
   { value: "all", label: "All Categories" },
+  { value: "vip", label: "👑 VIP Members" },
   { value: "content_creator", label: "🎥 Content Creator" },
   { value: "business", label: "💼 Business" },
   { value: "gamer", label: "🎮 Gamer" },
@@ -33,6 +34,76 @@ const sortOptions = [
   { value: "recent", label: "Most Recent" },
   { value: "vip", label: "VIP/Admin Only" },
 ];
+
+// Ranking order for VIP members - they will always appear in this order at the top
+const VIP_RANKING = ['wain2020', 'wainfoundation', 'openapp', 'dropshare', 'droplink', 'dropstore', 'droppay'];
+
+// Helper function to get VIP rank (lower = appears first)
+const getVipRank = (username?: string | null): number => {
+  if (!username) return 999;
+  const rank = VIP_RANKING.findIndex(v => v.toLowerCase() === username.toLowerCase());
+  return rank >= 0 ? rank : 999;
+};
+
+// Helper function to check if a user is VIP (gold badge)
+const isGoldBadgeUser = (username?: string | null): boolean => {
+  if (!username) return false;
+  const goldBadgeMembers = ['wain2020', 'wainfoundation', 'flappypiofficial'];
+  return goldBadgeMembers.some(v => v.toLowerCase() === username.toLowerCase());
+};
+
+// Helper function to check if a user has blue badge (verified but not VIP)
+const isBlueBadgeUser = (username?: string | null): boolean => {
+  if (!username) return false;
+  const blueBadgeMembers = ['droplink', 'droppay', 'dropstore', 'flappypi', 'airdropio2024', 'flappypi_fun', 'dropshare', 'openapp'];
+  return blueBadgeMembers.some(v => v.toLowerCase() === username.toLowerCase());
+};
+
+// Helper function to check if a user is VIP
+const isUserVip = (username?: string | null): boolean => {
+  if (!username) return false;
+  const vipTeamMembers = ['wain2020', 'wainfoundation', 'flappypiofficial', 'droplink', 'droppay', 'flappypi', 'dropstore', 'dropshare', 'openapp', 'airdropio2024', 'flappypi_fun'];
+  return vipTeamMembers.some(v => v.toLowerCase() === username.toLowerCase());
+};
+
+// Helper function to sort with ranked VIPs at top, then by type/sort preference
+const sortWithBadgesOnTop = (data: any[], sortType: string): any[] => {
+  const rankedVipUsers: any[] = [];
+  const otherBadgeUsers: any[] = [];
+  const regularUsers: any[] = [];
+  
+  // Separate users by badge type and rank
+  data.forEach(profile => {
+    const rank = getVipRank(profile.username);
+    if (rank < 999) {
+      // This is a ranked VIP user
+      rankedVipUsers.push({ ...profile, vipRank: rank });
+    } else if (isGoldBadgeUser(profile.username)) {
+      otherBadgeUsers.push(profile);
+    } else if (isBlueBadgeUser(profile.username) || profile.is_admin === true) {
+      otherBadgeUsers.push(profile);
+    } else {
+      regularUsers.push(profile);
+    }
+  });
+  
+  // Sort ranked VIP users by their rank
+  rankedVipUsers.sort((a, b) => a.vipRank - b.vipRank);
+  
+  // Sort other badge users by sort type
+  const sortByType = (arr: any[]) => {
+    if (sortType === "followers") {
+      return arr.sort((a: any, b: any) => (b.follower_count || 0) - (a.follower_count || 0));
+    } else if (sortType === "recent") {
+      return arr.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    } else {
+      return arr.sort((a: any, b: any) => a.username.localeCompare(b.username));
+    }
+  };
+  
+  // Return in order: Ranked VIPs (by rank), Other badges (by sort type), Regular (by sort type)
+  return [...rankedVipUsers, ...sortByType(otherBadgeUsers), ...sortByType(regularUsers)];
+};
 
 const UserSearchPage = () => {
   const { piUser, isAuthenticated, signIn, showRewardedAd } = usePi();
@@ -173,10 +244,10 @@ const UserSearchPage = () => {
     // Fetch all profile fields from Supabase (only existing columns)
     let query = supabase
       .from("profiles")
-      .select("id, username, logo, created_at, category, is_admin, bio, description") as any;
+      .select("id, username, logo, created_at, category, is_admin, bio, description, business_name") as any;
     
     // Category filter
-    if (selectedCategory !== "all") {
+    if (selectedCategory !== "all" && selectedCategory !== "vip") {
       query = query.eq("category", selectedCategory);
     }
     
@@ -196,13 +267,9 @@ const UserSearchPage = () => {
         return { ...profile, follower_count: count || 0 };
       }));
       
-      // Apply sorting
+      // Apply sorting (with VIPs always on top)
       let sortedData = enrichedData;
-      if (sortBy === "followers") {
-        sortedData = enrichedData.sort((a: any, b: any) => (b.follower_count || 0) - (a.follower_count || 0));
-      } else if (sortBy === "recent") {
-        sortedData = enrichedData.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      } else if (sortBy === "vip") {
+      if (sortBy === "vip") {
         // VIP filter: show only admins and VIP team members
         const vipTeamMembers = ['droplink', 'droppay', 'flappypi', 'Wain2020', 'dropstore', 'dropshare', 'flappypiofficial', 'openapp'];
         sortedData = enrichedData.filter((profile: any) => {
@@ -211,8 +278,18 @@ const UserSearchPage = () => {
           return profile.is_admin === true || isGmailAdmin || isVipTeamMember;
         }).sort((a: any, b: any) => a.username.localeCompare(b.username));
       } else {
-        sortedData = enrichedData.sort((a: any, b: any) => a.username.localeCompare(b.username));
+        sortedData = sortWithBadgesOnTop(enrichedData, sortBy);
       }
+      
+      // Apply category filter for VIP
+      if (selectedCategory === "vip") {
+        sortedData = sortedData.filter((profile: any) => {
+          const vipTeamMembers = ['wain2020', 'wainfoundation', 'flappypiofficial', 'droplink', 'droppay', 'flappypi', 'dropstore', 'dropshare', 'openapp', 'airdropio2024', 'flappypi_fun'];
+          const isVipUser = vipTeamMembers.some(v => v.toLowerCase() === (profile.username || '').toLowerCase());
+          return isVipUser || profile.is_admin === true;
+        });
+      }
+      
       setResults(sortedData);
     } else {
       setResults([]);
@@ -286,11 +363,11 @@ const UserSearchPage = () => {
       } else {
         let search = supabase
           .from("profiles")
-          .select("id, username, logo, created_at, category, is_admin, bio, description")
+          .select("id, username, logo, created_at, category, is_admin, bio, description, business_name")
           .ilike("username", `%${query.replace(/^@/, "")}%`) as any;
         
         // Category filter
-        if (selectedCategory !== "all") {
+        if (selectedCategory !== "all" && selectedCategory !== "vip") {
           search = search.eq("category", selectedCategory);
         }
         
@@ -308,12 +385,8 @@ const UserSearchPage = () => {
             return { ...profile, follower_count: count || 0 };
           }));
         }
-        // Sorting
-        if (sortBy === "followers") {
-          data = data.sort((a: any, b: any) => (b.follower_count || 0) - (a.follower_count || 0));
-        } else if (sortBy === "recent") {
-          data = data.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        } else if (sortBy === "vip") {
+        // Sorting (with VIPs always on top)
+        if (sortBy === "vip") {
           // VIP filter: show only admins and VIP team members
           const vipTeamMembers = ['droplink', 'droppay', 'flappypi', 'Wain2020', 'wainfoundation', 'wainfoundation', 'dropstore', 'dropshare', 'flappypiofficial', 'openapp'];
           data = data.filter((profile: any) => {
@@ -322,7 +395,16 @@ const UserSearchPage = () => {
             return profile.is_admin === true || isGmailAdmin || isVipTeamMember;
           }).sort((a: any, b: any) => a.username.localeCompare(b.username));
         } else {
-          data = data.sort((a: any, b: any) => a.username.localeCompare(b.username));
+          data = sortWithBadgesOnTop(data, sortBy);
+        }
+        
+        // Apply category filter for VIP
+        if (selectedCategory === "vip") {
+          data = data.filter((profile: any) => {
+            const vipTeamMembers = ['wain2020', 'wainfoundation', 'flappypiofficial', 'droplink', 'droppay', 'flappypi', 'dropstore', 'dropshare', 'openapp', 'airdropio2024', 'flappypi_fun'];
+            const isVipUser = vipTeamMembers.some(v => v.toLowerCase() === (profile.username || '').toLowerCase());
+            return isVipUser || profile.is_admin === true;
+          });
         }
       }
       setResults(data || []);
@@ -808,6 +890,13 @@ const UserSearchPage = () => {
                     />
                   )}
                 </div>
+                
+                {/* Business Name */}
+                {selectedProfile.business_name && (
+                  <div className="text-sm font-medium text-gray-600">
+                    {selectedProfile.business_name}
+                  </div>
+                )}
                 
                 {/* Bio/Description */}
                 {(selectedProfile.bio || selectedProfile.description) && (

@@ -79,18 +79,19 @@ export async function linkPiUserToSupabase(
     createIfNotExists?: boolean;
     displayName?: string;
   }
-) {
+): Promise<{ profile: any; isNew: boolean }>
+{
   const { createIfNotExists = true, displayName } = options || {};
   
   console.log('[Pi Auth Service] 🔗 Linking Pi user to Supabase profile...');
   console.log(`[Pi Auth Service] Username: ${piData.username}`);
 
   try {
-    // Find existing profile by username
+    // Find existing profile by any stable identifier
     const { data: existingProfile, error: selectError } = await supabase
       .from('profiles')
-      .select('*')
-      .eq('username', piData.username)
+      .select('id,user_id,username,business_name,pi_user_id,pi_username,pi_wallet_address')
+      .or(`pi_user_id.eq.${piData.uid},username.eq.${piData.username}`)
       .maybeSingle();
 
     if (selectError && selectError.code !== 'PGRST116') {
@@ -101,15 +102,18 @@ export async function linkPiUserToSupabase(
     if (existingProfile) {
       console.log('[Pi Auth Service] ✅ Profile already exists, updating...');
       
-      // Update with new Pi data
+      // Update with latest Pi data, keep existing business_name unless missing
       const { data: updated, error: updateError } = await supabase
         .from('profiles')
         .update({
+          pi_user_id: existingProfile.pi_user_id || piData.uid,
+          pi_username: existingProfile.pi_username || piData.username,
           pi_wallet_address: piData.wallet_address || existingProfile.pi_wallet_address,
+          business_name: existingProfile.business_name || displayName || piData.username,
           updated_at: new Date().toISOString(),
         })
         .eq('id', existingProfile.id)
-        .select()
+        .select('id,user_id,username,business_name,pi_user_id,pi_username,pi_wallet_address')
         .single();
 
       if (updateError) {
@@ -118,7 +122,7 @@ export async function linkPiUserToSupabase(
       }
 
       console.log('[Pi Auth Service] ✅ Profile updated');
-      return updated;
+      return { profile: updated, isNew: false };
     }
 
     // Create new profile if allowed
@@ -130,6 +134,8 @@ export async function linkPiUserToSupabase(
         .insert([
           {
             username: piData.username,
+            pi_username: piData.username,
+            pi_user_id: piData.uid,
             business_name: displayName || piData.username,
             pi_wallet_address: piData.wallet_address || null,
             theme_settings: {
@@ -140,7 +146,7 @@ export async function linkPiUserToSupabase(
             },
           },
         ])
-        .select()
+        .select('id,user_id,username,business_name,pi_user_id,pi_username,pi_wallet_address')
         .single();
 
       if (createError) {
@@ -149,7 +155,7 @@ export async function linkPiUserToSupabase(
       }
 
       console.log('[Pi Auth Service] ✅ New profile created');
-      return newProfile;
+      return { profile: newProfile, isNew: true };
     }
 
     throw new Error('No profile found and profile creation is disabled');
@@ -172,13 +178,14 @@ export async function authenticatePiUser(accessToken: string, options?: any) {
     console.log('[Pi Auth Service] ✅ Step 1: Token validated');
 
     // Step 2: Link/create Supabase profile
-    const supabaseProfile = await linkPiUserToSupabase(piData, options);
+    const profileResult = await linkPiUserToSupabase(piData, options);
     console.log('[Pi Auth Service] ✅ Step 2: Profile linked');
 
     const result = {
       success: true,
       piUser: piData,
-      supabaseProfile: supabaseProfile,
+      supabaseProfile: profileResult.profile,
+      isNewProfile: profileResult.isNew,
       accessToken: accessToken,
     };
 

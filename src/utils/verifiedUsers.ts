@@ -12,9 +12,10 @@ export const VERIFIED_USERNAMES = [
   'dropstore',
   'flappypi',
   'flappypiofficial',
-  'jomarikun',
   'airdropio2024',
   'flappypi_fun',
+  'dropshare',
+  'openapp',
 ] as const;
 
 /**
@@ -24,9 +25,7 @@ export const VERIFIED_USERNAMES = [
 export const VIP_TEAM_MEMBERS = [
   'wain2020',
   'wainfoundation',
-  'dropshare',
   'flappypiofficial',
-  'openapp'
 ] as const;
 
 /**

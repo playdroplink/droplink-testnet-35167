@@ -293,6 +293,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
 
           const storedToken = localStorage.getItem('pi_access_token');
           const storedUser = localStorage.getItem('pi_user');
+          const lastVerified = localStorage.getItem('pi_token_last_verified');
 
           if (storedToken && storedUser) {
             try {
@@ -300,19 +301,35 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
               setAccessToken(storedToken);
               setPiUser(userData);
 
-              verifyStoredPiToken(storedToken).then((isValid) => {
-                if (!isValid) {
-                  localStorage.removeItem('pi_access_token');
-                  localStorage.removeItem('pi_user');
-                  setPiUser(null);
-                  setAccessToken(null);
-                }
-              }).catch(() => {
-                // Silent - network issues shouldn't break app
-              });
+              // Only verify token if it hasn't been verified recently (within 24 hours)
+              const now = Date.now();
+              const shouldVerify = !lastVerified || (now - parseInt(lastVerified)) > 24 * 60 * 60 * 1000;
+
+              if (shouldVerify) {
+                verifyStoredPiToken(storedToken).then((isValid) => {
+                  if (!isValid) {
+                    console.warn('[PI INIT] Token verification failed - clearing stored credentials');
+                    localStorage.removeItem('pi_access_token');
+                    localStorage.removeItem('pi_user');
+                    localStorage.removeItem('pi_token_last_verified');
+                    setPiUser(null);
+                    setAccessToken(null);
+                  } else {
+                    // Token is valid, update last verified timestamp
+                    localStorage.setItem('pi_token_last_verified', now.toString());
+                  }
+                }).catch((err) => {
+                  // Network error - don't clear tokens, just log warning
+                  console.warn('[PI INIT] Token verification error (network issue):', err);
+                });
+              } else {
+                console.log('[PI INIT] Token verified recently, skipping verification');
+              }
             } catch (err) {
+              console.error('[PI INIT] Error parsing stored user data:', err);
               localStorage.removeItem('pi_access_token');
               localStorage.removeItem('pi_user');
+              localStorage.removeItem('pi_token_last_verified');
             }
           }
         }
@@ -443,6 +460,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       // Store access token and user info in localStorage
       localStorage.setItem('pi_access_token', accessToken);
       localStorage.setItem('pi_user', JSON.stringify(piUser));
+      localStorage.setItem('pi_token_last_verified', Date.now().toString());
       
       // Update state with authenticated user
       setAccessToken(accessToken);
@@ -477,6 +495,7 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
       localStorage.removeItem('pi_access_token');
       localStorage.removeItem('pi_user');
       localStorage.removeItem('pi_user_extended');
+      localStorage.removeItem('pi_token_last_verified');
       
       // Reset state
       setPiUser(null);

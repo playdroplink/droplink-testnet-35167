@@ -50,12 +50,12 @@ const EmailAuth = () => {
           return;
         }
 
-        // Create profile if it doesn't exist
         if (data.user) {
-          await ensureProfileExists(data.user);
+          const { isNew } = await ensureProfileTracked(data.user);
+          toast.success(isNew ? "Welcome! Your profile is ready." : "Welcome back!");
+        } else {
+          toast.success("Welcome back!");
         }
-        
-        toast.success("Welcome back!");
         navigate("/auth");
       } else {
         const { data, error } = await supabase.auth.signUp({
@@ -79,9 +79,8 @@ const EmailAuth = () => {
         }
 
         if (data.user) {
-          // Create profile for new user
-          await ensureProfileExists(data.user);
-          toast.success("Account created successfully! Welcome!");
+          const { isNew } = await ensureProfileTracked(data.user);
+          toast.success(isNew ? "Account created successfully! Welcome!" : "Welcome back!" );
           navigate("/auth");
         }
       }
@@ -93,37 +92,75 @@ const EmailAuth = () => {
     }
   };
 
-  const ensureProfileExists = async (user: any) => {
+  const ensureProfileTracked = async (user: any) => {
     try {
-      // Check if profile exists
-      const { data: existingProfile } = await supabase
+      const emailUsername = user.email?.split("@")[0] || `user-${user.id.slice(0, 8)}`;
+      const sanitizedUsername = emailUsername.toLowerCase()
+        .replace(/[^a-z0-9-]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+
+      // Look up existing profile by multiple stable identifiers
+      const { data: existingProfile, error: selectError } = await supabase
         .from("profiles")
-        .select("id")
-        .eq("user_id", user.id)
+        .select("id,user_id,username,business_name")
+        .or(`user_id.eq.${user.id},username.eq.${sanitizedUsername},business_name.eq.${sanitizedUsername}`)
         .maybeSingle();
 
-      if (!existingProfile) {
-        // Create profile with email username
-        const emailUsername = user.email?.split("@")[0] || `user-${user.id.slice(0, 8)}`;
-        const sanitizedUsername = emailUsername.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert({
-            user_id: user.id,
-            username: sanitizedUsername,
-            business_name: sanitizedUsername,
-            description: "",
-          });
-
-        if (profileError) {
-          console.error("Profile creation error:", profileError);
-          // Don't throw - user can still use the app
-        }
+      if (selectError && selectError.code !== 'PGRST116') {
+        console.error("Profile lookup error:", selectError);
       }
+
+      if (existingProfile) {
+        // Attach user_id if missing, preserve existing names when present
+        const needsUserId = !existingProfile.user_id;
+        const needsNames = !existingProfile.username || !existingProfile.business_name;
+
+        if (needsUserId || needsNames) {
+          const { data: updated, error: updateError } = await supabase
+            .from("profiles")
+            .update({
+              user_id: existingProfile.user_id || user.id,
+              username: existingProfile.username || sanitizedUsername,
+              business_name: existingProfile.business_name || sanitizedUsername,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", existingProfile.id)
+            .select("id,user_id,username,business_name")
+            .single();
+
+          if (updateError) {
+            console.error("Profile update error:", updateError);
+            return { profile: existingProfile, isNew: false };
+          }
+
+          return { profile: updated, isNew: false };
+        }
+
+        return { profile: existingProfile, isNew: false };
+      }
+
+      // Create profile if none exists
+      const { data: newProfile, error: insertError } = await supabase
+        .from("profiles")
+        .insert({
+          user_id: user.id,
+          username: sanitizedUsername,
+          business_name: sanitizedUsername,
+          description: "",
+        })
+        .select("id,user_id,username,business_name")
+        .single();
+
+      if (insertError) {
+        console.error("Profile creation error:", insertError);
+        return { profile: null, isNew: true };
+      }
+
+      return { profile: newProfile, isNew: true };
     } catch (error) {
-      console.error("Error ensuring profile exists:", error);
-      // Don't throw - user can still use the app
+      console.error("Error ensuring profile tracking:", error);
+      return { profile: null, isNew: false };
     }
   };
 

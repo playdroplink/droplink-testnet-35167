@@ -57,8 +57,15 @@ export const Auth = () => {
         }
       } else if (event === 'SIGNED_OUT') {
         console.log("User signed out, staying on auth page");
-        // Clear any remaining state
-        localStorage.clear();
+        // Only clear Supabase auth-related items, preserve Pi auth tokens
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && !key.startsWith('pi_') && !key.startsWith('droplink-auth-token')) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
       }
     });
 

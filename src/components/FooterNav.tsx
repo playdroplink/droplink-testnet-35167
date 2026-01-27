@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Mail, Search, Users, Menu } from 'lucide-react';
+import { Home, Mail, Search, Users, Info, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -9,11 +9,13 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
+import { AboutModal } from '@/components/AboutModal';
 
 export const FooterNav: React.FC = () => {
   const navigate = useNavigate();
   const [showFooter, setShowFooter] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [showAboutModal, setShowAboutModal] = useState(false);
 
   useEffect(() => {
     let scrollTimeout: NodeJS.Timeout;
@@ -99,6 +101,17 @@ export const FooterNav: React.FC = () => {
             <span className="absolute inset-0 rounded-xl bg-gradient-to-t from-sky-400/0 to-sky-400/0 group-hover:from-sky-400/10 group-hover:to-transparent transition-all duration-300"></span>
           </button>
 
+          {/* About */}
+          <button
+            onClick={() => setShowAboutModal(true)}
+            className="relative flex flex-col items-center justify-center py-2 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 active:scale-95 transition-all duration-300 group rounded-xl hover:bg-sky-50 dark:hover:bg-sky-950/30"
+            title="About"
+          >
+            <Info className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1 group-hover:scale-125 transition-all duration-300 drop-shadow-sm" />
+            <span className="text-xs sm:text-xs group-hover:font-semibold transition-all">About</span>
+            <span className="absolute inset-0 rounded-xl bg-gradient-to-t from-sky-400/0 to-sky-400/0 group-hover:from-sky-400/10 group-hover:to-transparent transition-all duration-300"></span>
+          </button>
+
           {/* Menu */}
           <Drawer>
             <DrawerTrigger asChild>
@@ -134,6 +147,14 @@ export const FooterNav: React.FC = () => {
           </Drawer>
         </div>
       </div>
+
+      {/* About Modal */}
+      <AboutModal 
+        open={showAboutModal}
+        onOpenChange={setShowAboutModal}
+      >
+        <span className="hidden" />
+      </AboutModal>
     </nav>
   );
 };
