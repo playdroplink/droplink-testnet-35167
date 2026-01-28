@@ -39,16 +39,55 @@ import React, { useState } from "react";
 import { Flag } from "lucide-react";
 
 import type { ThemeData } from "@/types/profile";
+import { BioTemplate } from "@/config/bioTemplates";
+
 interface PhonePreviewProps {
   profile: ProfileData;
+  bioTemplate?: BioTemplate;
 }
 
-export const PhonePreview = ({ profile }: PhonePreviewProps) => {
+export const PhonePreview = ({ profile, bioTemplate = 'cards' }: PhonePreviewProps) => {
   const [showReportModal, setShowReportModal] = useState(false);
   const iconRadius = profile.theme?.iconStyle === 'circle' ? 'rounded-full' : 
                      profile.theme?.iconStyle === 'square' ? 'rounded-lg' : 'rounded-2xl';
   
   const buttonStyle = profile.theme?.buttonStyle || 'filled';
+
+  // Template-specific styling
+  const getTemplateStyles = (section: string) => {
+    switch (bioTemplate) {
+      case 'minimal':
+        return {
+          section: 'space-y-3',
+          card: 'bg-transparent border-0 shadow-none p-2',
+          heading: 'text-xs'
+        };
+      case 'cards':
+        return {
+          section: 'space-y-2 sm:space-y-3',
+          card: 'bg-gradient-to-r from-white/5 to-white/10 border border-white/10 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-lg',
+          heading: 'text-xs sm:text-sm'
+        };
+      case 'grid':
+        return {
+          section: 'grid grid-cols-2 gap-2 sm:gap-3',
+          card: 'bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-400/20 rounded-lg p-3 sm:p-4 shadow-lg',
+          heading: 'text-xs sm:text-sm'
+        };
+      case 'gallery':
+        return {
+          section: 'grid grid-cols-2 gap-2 sm:gap-3',
+          card: 'bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-400/30 rounded-xl p-3 sm:p-4 shadow-xl',
+          heading: 'text-xs sm:text-sm'
+        };
+      default:
+        return {
+          section: 'space-y-2 sm:space-y-3',
+          card: 'bg-gradient-to-r from-white/5 to-white/10 border border-white/10 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-lg',
+          heading: 'text-xs sm:text-sm'
+        };
+    }
+  };
 
   const formatCompactNumber = (value: number) => {
     if (!Number.isFinite(value)) return "0";
@@ -205,7 +244,7 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 sm:w-28 md:w-32 h-5 sm:h-6 bg-foreground/20 rounded-b-2xl sm:rounded-b-3xl z-10" />
       
       {/* Phone Screen Content - Scrollable with proper flex layout */}
-      <div className="flex-1 overflow-y-auto pt-6 sm:pt-8 px-3 sm:px-4 md:px-6 pb-4 sm:pb-6 relative z-10 w-full flex flex-col scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+      <div className="flex-1 overflow-y-auto pt-6 sm:pt-8 px-3 sm:px-4 md:px-6 pb-4 sm:pb-6 relative z-10 w-full flex flex-col scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent" data-template={bioTemplate}>
         <div className="flex flex-col items-center text-center space-y-4 sm:space-y-5 md:space-y-6 w-full min-w-0">
           {/* Cover Image */}
           {profile.theme?.coverImage && (
@@ -580,26 +619,43 @@ export const PhonePreview = ({ profile }: PhonePreviewProps) => {
 
           
           {profile.products && profile.products.length > 0 && (
-            <div className="w-full space-y-2 sm:space-y-3 pt-4 sm:pt-5">
+            <div className={`w-full ${getTemplateStyles('products').section} pt-4 sm:pt-5`}>
               <div className="px-2 flex items-center gap-2 text-white text-xs sm:text-sm font-semibold drop-shadow-md">
                 <ShoppingBag className="w-4 h-4 text-emerald-400" />
                 <span>Products ({profile.products.length})</span>
               </div>
-              {profile.products.slice(0, 2).map((product, idx) => (
-                <div 
-                  key={product.id}
-                  className="mx-2 bg-gradient-to-r from-white/5 to-white/10 border border-white/10 rounded-lg sm:rounded-xl p-3 sm:p-4 text-left shadow-lg hover:shadow-xl hover:border-white/20 transition-all duration-300 backdrop-blur-sm"
-                  style={{ animation: `slideUp 0.4s ease-out ${idx * 0.1}s both` }}
-                >
-                  <div className="flex justify-between items-start mb-2 gap-2">
-                    <h4 className="text-xs sm:text-sm font-bold text-white truncate drop-shadow-sm flex-1">{product.title || "Untitled"}</h4>
-                    <span className="text-xs sm:text-sm font-bold text-emerald-400 drop-shadow-sm whitespace-nowrap">${product.price || "0"}</span>
+              {bioTemplate === 'grid' || bioTemplate === 'gallery' ? (
+                // Grid/Gallery layout for products
+                profile.products.slice(0, 4).map((product, idx) => (
+                  <div 
+                    key={product.id}
+                    className={`${getTemplateStyles('products').card} text-left transition-all duration-300 backdrop-blur-sm hover:shadow-2xl hover:scale-105`}
+                    style={{ animation: `slideUp 0.4s ease-out ${idx * 0.1}s both` }}
+                  >
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-bold text-white truncate drop-shadow-sm">{product.title || "Untitled"}</h4>
+                      <span className="text-xs font-bold text-emerald-400 drop-shadow-sm">${product.price || "0"}</span>
+                    </div>
                   </div>
-                  <p className="text-[10px] sm:text-xs text-white/70 line-clamp-2 drop-shadow-sm">{product.description || "No description"}</p>
-                </div>
-              ))}
-              {profile.products.length > 2 && (
-                <p className="text-[9px] sm:text-[10px] text-white/60 text-center drop-shadow-sm px-2">+{profile.products.length - 2} more products</p>
+                ))
+              ) : (
+                // Stack layout for products
+                profile.products.slice(0, 2).map((product, idx) => (
+                  <div 
+                    key={product.id}
+                    className={`mx-2 ${getTemplateStyles('products').card} text-left`}
+                    style={{ animation: `slideUp 0.4s ease-out ${idx * 0.1}s both` }}
+                  >
+                    <div className="flex justify-between items-start mb-2 gap-2">
+                      <h4 className="text-xs sm:text-sm font-bold text-white truncate drop-shadow-sm flex-1">{product.title || "Untitled"}</h4>
+                      <span className="text-xs sm:text-sm font-bold text-emerald-400 drop-shadow-sm whitespace-nowrap">${product.price || "0"}</span>
+                    </div>
+                    <p className="text-[10px] sm:text-xs text-white/70 line-clamp-2 drop-shadow-sm">{product.description || "No description"}</p>
+                  </div>
+                ))
+              )}
+              {profile.products.length > (bioTemplate === 'grid' || bioTemplate === 'gallery' ? 4 : 2) && (
+                <p className="text-[9px] sm:text-[10px] text-white/60 text-center drop-shadow-sm px-2">+{profile.products.length - (bioTemplate === 'grid' || bioTemplate === 'gallery' ? 4 : 2)} more products</p>
               )}
             </div>
           )}

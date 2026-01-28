@@ -244,8 +244,7 @@ const Dashboard = () => {
   const [hasSupabaseSession, setHasSupabaseSession] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const [showDropStoreModal, setShowDropStoreModal] = useState(false);
-  const [showDropPayModal, setShowDropPayModal] = useState(false);
+
 
   // Manual save function
   const handleManualSave = async () => {
@@ -1802,32 +1801,33 @@ const Dashboard = () => {
 
       <main className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-10 space-y-4 sm:space-y-6">
         <div className="grid gap-3 grid-cols-1 lg:grid-cols-[2fr_1fr] items-start">
-          <div className="rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800/70 bg-white/90 dark:bg-slate-900/70 shadow-sm p-3 sm:p-4 lg:p-5">
-            <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Welcome back</p>
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-white leading-tight">
-                  {greeting || 'Hello'}, {displayUsername || 'creator'}
-                </h2>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Curate your link-in-bio page with a clean, Droplink builder.</p>
+          <div className="rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800/70 bg-white/90 dark:bg-slate-900/70 shadow-sm p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col gap-3 lg:gap-4">
+              <div className="flex items-start justify-between gap-2 lg:gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Welcome back</p>
+                  <h2 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-white leading-tight">
+                    {greeting || 'Hello'}, {displayUsername || 'creator'}
+                  </h2>
+                </div>
+                <Button variant="ghost" size="sm" className="px-2" onClick={() => navigate('/card-generator')} title="Card Generator">
+                  <CreditCard className="w-4 h-4" />
+                </Button>
               </div>
-              <Button variant="link" size="sm" className="px-0 text-sky-600" onClick={() => navigate('/card-generator')}>
-                <CreditCard className="w-4 h-4 mr-2" />
-                Card Generator
-              </Button>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">Manage your link-in-bio page with Droplink builder.</p>
             </div>
             {displayUsername && (
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/70 bg-slate-50/80 dark:bg-slate-900/60 p-3">
-                  <p className="text-xs text-slate-500">Profile URL</p>
-                  <div className="flex items-center justify-between gap-2 mt-1">
-                    <span className="text-sm font-medium truncate">{window.location.origin}/{getPublicSlugs().profileSlug}</span>
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleOpenPublicBio} title="View">
-                        <ExternalLink className="w-4 h-4" />
+              <div className="mt-3 space-y-2">
+                <div className="rounded-lg sm:rounded-xl border border-slate-200/80 dark:border-slate-800/70 bg-slate-50/80 dark:bg-slate-900/60 p-2.5 sm:p-3">
+                  <p className="text-xs text-slate-500 mb-1.5">Profile URL</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs sm:text-sm font-medium truncate">{window.location.origin}/{getPublicSlugs().profileSlug}</span>
+                    <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={handleOpenPublicBio} title="View">
+                        <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleCopyLink} title="Copy">
-                        <Share2 className="w-4 h-4" />
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={handleCopyLink} title="Copy">
+                        <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </Button>
                     </div>
                   </div>
@@ -1890,28 +1890,28 @@ const Dashboard = () => {
           </div>
           <div className="rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800/70 bg-white/90 dark:bg-slate-900/70 shadow-sm p-3 sm:p-4 lg:p-5 flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Quick actions</p>
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Actions</p>
               <div className="inline-flex items-center gap-2 text-xs text-slate-500">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 Live
               </div>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              <Button type="button" variant="secondary" className="justify-start" onClick={handleShowQRCode}>
-                <QrCode className="w-4 h-4 mr-2" />
-                QR Code
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 lg:gap-3">
+              <Button type="button" variant="secondary" size="sm" className="h-10 flex flex-col items-center justify-center" onClick={handleShowQRCode}>
+                <QrCode className="w-4 h-4 mb-0.5" />
+                <span className="text-xs">QR</span>
               </Button>
-              <Button type="button" variant="secondary" className="justify-start" onClick={handleCopyLink}>
-                <Share2 className="w-4 h-4 mr-2" />
-                Copy link
+              <Button type="button" variant="secondary" size="sm" className="h-10 flex flex-col items-center justify-center" onClick={handleCopyLink}>
+                <Share2 className="w-4 h-4 mb-0.5" />
+                <span className="text-xs">Copy</span>
               </Button>
-              <Button type="button" variant="secondary" className="justify-start" onClick={handleOpenPublicBio}>
-                <ExternalLink className="w-4 h-4 mr-2" />
-                View Public Bio
+              <Button type="button" variant="secondary" size="sm" className="h-10 flex flex-col items-center justify-center" onClick={handleOpenPublicBio}>
+                <ExternalLink className="w-4 h-4 mb-0.5" />
+                <span className="text-xs">View</span>
               </Button>
-              <Button type="button" variant="secondary" className="justify-start" onClick={() => navigate('/subscription')}>
-                <Crown className="w-4 h-4 mr-2" />
-                Upgrade
+              <Button type="button" variant="secondary" size="sm" className="h-10 flex flex-col items-center justify-center" onClick={() => navigate('/subscription')}>
+                <Crown className="w-4 h-4 mb-0.5" />
+                <span className="text-xs">Plan</span>
               </Button>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
@@ -1949,13 +1949,13 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="grid gap-4 sm:gap-6 grid-cols-1 xl:grid-cols-[1.45fr_minmax(360px,1fr)] items-start">
+        <div className="grid gap-4 sm:gap-6 lg:gap-8 grid-cols-1 xl:grid-cols-[1.45fr_minmax(360px,1fr)] items-start">
           {/* Builder Panel */}
           <section
             id="dashboard-builder"
             className={`${showPreview ? 'hidden lg:block' : 'block'} rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800/70 bg-white/95 dark:bg-slate-900/70 shadow-sm`}
           >
-            <div className="p-3 sm:p-5">
+            <div className="p-3 sm:p-5 lg:p-6">
               <Tabs 
                 defaultValue={preferences.dashboard_layout.activeTab}
                 className="w-full"
@@ -1969,14 +1969,14 @@ const Dashboard = () => {
                   }
                 }}
               >
-                <TabsList className="w-full grid grid-cols-3 sm:grid-cols-7 gap-1 sm:gap-1.5 lg:gap-2 bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 p-1.5 sm:p-2 lg:p-3 rounded-lg sm:rounded-xl mb-20 sm:mb-24 lg:mb-32">
+                <TabsList className="w-full overflow-x-auto flex gap-1 sm:gap-2 lg:gap-2.5 bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 p-1.5 sm:p-2 lg:p-4 rounded-lg sm:rounded-xl mb-20 sm:mb-24 lg:mb-32">
                   {/* Primary Features Row */}
-                  <TabsTrigger value="profile" className="flex-shrink-0 rounded-md sm:rounded-lg text-xs sm:text-sm px-1 sm:px-2 lg:px-3 py-1.5 sm:py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
-                    <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
+                  <TabsTrigger value="profile" className="flex-shrink-0 rounded-md sm:rounded-lg text-xs sm:text-sm px-2 sm:px-3 lg:px-4 py-2 sm:py-2 lg:py-2.5 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm whitespace-nowrap h-9 sm:h-10 lg:h-11">
+                    <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-4.5 lg:h-4.5 mr-0.5 sm:mr-1 lg:mr-1.5" />
                     <span className="hidden sm:inline">Profile</span>
                   </TabsTrigger>
-                  <TabsTrigger value="design" className="flex-shrink-0 rounded-md sm:rounded-lg text-xs sm:text-sm px-1 sm:px-2 lg:px-3 py-1.5 sm:py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
-                    <Palette className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
+                  <TabsTrigger value="design" className="flex-shrink-0 rounded-md sm:rounded-lg text-xs sm:text-sm px-2 sm:px-3 lg:px-4 py-2 sm:py-2 lg:py-2.5 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm whitespace-nowrap h-9 sm:h-10 lg:h-11">
+                    <Palette className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-4.5 lg:h-4.5 mr-0.5 sm:mr-1 lg:mr-1.5" />
                     <span className="hidden sm:inline">Design</span>
                   </TabsTrigger>
                   <TabsTrigger value="templates" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
@@ -2005,14 +2005,6 @@ const Dashboard = () => {
                   </TabsTrigger>
 
                   {/* Secondary Features Row */}
-                  <TabsTrigger value="merchant" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
-                    <Store className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                    <span className="hidden sm:inline">DropStore</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="droppay" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
-                    <Wallet className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                    <span className="hidden sm:inline">DropPay</span>
-                  </TabsTrigger>
                   <TabsTrigger value="preferences" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
                     <User className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                     <span className="hidden sm:inline">Settings</span>
@@ -2020,12 +2012,12 @@ const Dashboard = () => {
                 </TabsList>
 
                 {/* Setup & Quick Links Section - Separate Container */}
-                <div className="mb-8 sm:mb-10 p-4 sm:p-6 bg-gradient-to-r from-sky-50 to-blue-50 dark:from-sky-950/30 dark:to-blue-950/30 rounded-xl border border-sky-200/50 dark:border-sky-800/50 shadow-sm">
-                  <h3 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white mb-4 sm:mb-5">Get Started</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                <div className="mb-8 sm:mb-10 lg:mb-12 p-4 sm:p-6 lg:p-8 bg-gradient-to-r from-sky-50 to-blue-50 dark:from-sky-950/30 dark:to-blue-950/30 rounded-xl border border-sky-200/50 dark:border-sky-800/50 shadow-sm">
+                  <h3 className="text-xs sm:text-sm lg:text-base font-semibold text-slate-900 dark:text-white mb-4 sm:mb-5 lg:mb-6">Get Started</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
                     <button 
                       onClick={() => document.getElementById('dashboard-builder')?.scrollIntoView({ behavior: 'smooth' })}
-                      className="flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
+                      className="flex flex-col items-center gap-1.5 sm:gap-2 lg:gap-2.5 p-3 sm:p-4 lg:p-5 rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-all"
                     >
                       <Palette className="w-4 sm:w-5 h-4 sm:h-5 text-sky-600" />
                       <span className="text-xs font-medium text-center text-slate-900 dark:text-white leading-tight">Customize</span>
@@ -2053,65 +2045,6 @@ const Dashboard = () => {
                     </button>
                   </div>
                 </div>
-
-                {/* DropStore Tab */}
-                <TabsContent value="merchant" className="pb-6 sm:pb-8">
-                  <div className="max-w-lg mx-auto mt-8 sm:mt-12 text-center">
-                    <Button
-                      onClick={() => setShowDropStoreModal(true)}
-                      variant="ghost"
-                      className="w-full py-8 sm:py-12 hover:bg-sky-50 dark:hover:bg-slate-800/50"
-                    >
-                      <div className="flex flex-col items-center gap-3">
-                        <Store className="w-12 h-12 sm:w-14 sm:h-14 text-sky-600 dark:text-sky-400" />
-                        <div>
-                          <p className="text-lg sm:text-xl font-semibold text-sky-900 dark:text-sky-100">
-                            DropStore
-                          </p>
-                          <p className="text-xs sm:text-sm text-sky-700 dark:text-sky-300 mt-1">
-                            Click to learn more
-                          </p>
-                        </div>
-                      </div>
-                    </Button>
-                  </div>
-
-                  <ComingSoonModal
-                    open={showDropStoreModal}
-                    onOpenChange={setShowDropStoreModal}
-                    type="dropstore"
-                  />
-                </TabsContent>
-
-                {/* DropPay Tab */}
-                <TabsContent value="droppay" className="pb-6 sm:pb-8">
-                  <div className="max-w-lg mx-auto mt-8 sm:mt-12 text-center">
-                    <Button
-                      onClick={() => setShowDropPayModal(true)}
-                      variant="ghost"
-                      className="w-full py-8 sm:py-12 hover:bg-sky-50 dark:hover:bg-slate-800/50"
-                    >
-                      <div className="flex flex-col items-center gap-3">
-                        <Wallet className="w-12 h-12 sm:w-14 sm:h-14 text-sky-600 dark:text-sky-400" />
-                        <div>
-                          <p className="text-lg sm:text-xl font-semibold text-sky-900 dark:text-sky-100">
-                            DropPay
-                          </p>
-                          <p className="text-xs sm:text-sm text-sky-700 dark:text-sky-300 mt-1">
-                            Click to learn more
-                          </p>
-                        </div>
-                      </div>
-                    </Button>
-                  </div>
-
-                  <ComingSoonModal
-                    open={showDropPayModal}
-                    onOpenChange={setShowDropPayModal}
-                    type="droppay"
-                  />
-                </TabsContent>
-                {/* Pi Data tab removed for production */}
 
                 {/* Profile Tab */}
                 <TabsContent value="profile" className="space-y-6 sm:space-y-8 max-w-xl w-full mx-auto px-4 sm:px-0">
@@ -2144,28 +2077,31 @@ const Dashboard = () => {
                   <button
                     onClick={handleManualSave}
                     disabled={saveStatus === 'saving'}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-400 text-white font-medium text-sm shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95 backdrop-blur-sm border border-emerald-400/50 disabled:opacity-75 disabled:cursor-not-allowed"
+                    className="inline-flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-400 text-white font-medium text-xs sm:text-sm shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95 backdrop-blur-sm border border-emerald-400/50 disabled:opacity-75 disabled:cursor-not-allowed"
                   >
-                    <svg className={`w-4 h-4 ${saveStatus === 'saving' ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${saveStatus === 'saving' ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span>{saveStatus === 'saving' ? 'Saving' : 'Save'}</span>
+                    <span className="hidden sm:inline">{saveStatus === 'saving' ? 'Saving' : 'Save'}</span>
+                    <span className="sm:hidden">{saveStatus === 'saving' ? '...' : 'Save'}</span>
                   </button>
                   
                   {/* Preview Toggle Button */}
                   <button
                     onClick={() => setShowPreview(!showPreview)}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-sky-500 hover:bg-sky-600 text-white font-medium text-sm shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95 backdrop-blur-sm border border-sky-400/50"
+                    className="inline-flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-full bg-sky-500 hover:bg-sky-600 text-white font-medium text-xs sm:text-sm shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95 backdrop-blur-sm border border-sky-400/50"
                   >
                     {showPreview ? (
                       <>
-                        <EyeOff className="w-4 h-4" />
-                        <span>Hide Preview</span>
+                        <EyeOff className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">Hide Preview</span>
+                        <span className="sm:hidden">Hide</span>
                       </>
                     ) : (
                       <>
-                        <Eye className="w-4 h-4" />
-                        <span>Show Preview</span>
+                        <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">Show Preview</span>
+                        <span className="sm:hidden">Show</span>
                       </>
                     )}
                   </button>
@@ -3414,35 +3350,25 @@ const Dashboard = () => {
             </Tabs>
           </div>
         </section>
-
-        {/* Preview Panel */}
         <aside
           className={`w-full ${showPreview ? 'flex' : 'hidden lg:flex'} lg:w-[380px] xl:w-[420px] 2xl:w-[480px] border border-slate-200/80 dark:border-slate-800/70 bg-white/90 dark:bg-slate-900/70 rounded-xl sm:rounded-2xl shadow-sm flex-col items-center justify-start overflow-hidden`}
           style={{ minHeight: 0 }}
         >
-          <div className="w-full border-b border-slate-200/70 dark:border-slate-800/60 px-4 py-3 flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">Live preview</p>
-              <p className="text-sm font-semibold text-slate-900 dark:text-white">Link-in-bio page</p>
+          <div className="w-full border-b border-slate-200/70 dark:border-slate-800/60 px-3 sm:px-4 lg:px-5 py-2 sm:py-3 lg:py-4 flex items-center justify-between">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Preview</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">Your profile</p>
             </div>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleCopyLink}>
+            <div className="flex gap-1 flex-shrink-0">
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={handleCopyLink} title="Copy">
                 <Share2 className="w-4 h-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate('/search-users')}>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => navigate('/search-users')} title="Audience">
                 <Users className="w-4 h-4" />
               </Button>
             </div>
           </div>
           <div className="w-full px-4 py-3 space-y-2">
-            <Button 
-              onClick={() => window.open('https://droppay.space/', '_blank')} 
-              className="w-full bg-sky-500 hover:bg-sky-600 text-white"
-              size="sm"
-            >
-              <Store className="w-4 h-4 mr-2" />
-              Sell Digital Products
-            </Button>
             <Button 
               onClick={() => navigate('/subscription')} 
               variant="secondary"
@@ -3455,8 +3381,9 @@ const Dashboard = () => {
           </div>
           <div className="flex-1 flex items-center justify-center w-full overflow-hidden px-3 pb-4">
             <PhonePreview 
-              key={`preview-${profile.businessName}-${profile.description}-${profile.logo}`}
-              profile={profile} 
+              key={`preview-${profile.businessName}-${profile.description}-${profile.logo}-${bioTemplate}`}
+              profile={profile}
+              bioTemplate={bioTemplate}
             />
           </div>
         </aside>
