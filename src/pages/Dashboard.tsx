@@ -667,12 +667,15 @@ const Dashboard = () => {
   }, [isAuthenticated, piUser, subscriptionLoading, hasCheckedSubscription, navigate, refetchSubscription]);
 
   const checkAuthAndLoadProfile = async () => {
+    console.log("🔍 Starting checkAuthAndLoadProfile...");
     try {
       // Check Pi authentication OR Supabase session (for Gmail/email users)
       if (piLoading) {
+        console.log("⏳ Pi SDK still loading, waiting...");
         return; // Still loading
       }
       
+      console.log("✅ Pi loading complete, proceeding with profile load");
       // Check for Supabase session (Gmail/email users)
       let session = null;
       let supabaseUser = null;
@@ -929,8 +932,9 @@ const Dashboard = () => {
         // Set template from saved data
         setBioTemplate((themeSettings?.bioTemplate as BioTemplate) || DEFAULT_TEMPLATE);
         
-        const profileDataToReturn: ProfileData = {
-          ...profileDataFromDb,
+        // Create final profile with products and payment links
+        const completeProfile: ProfileData = {
+          ...loadedProfile,
           products: productsData?.map((p: any) => ({
             id: p.id,
             title: p.title,
@@ -938,7 +942,6 @@ const Dashboard = () => {
             description: p.description || "",
             fileUrl: p.file_url || "",
           })) || [],
-          // wallets property removed to match ProfileData type and avoid React object error
           hasPremium: profileData.has_premium || false,
           showShareButton: (profileData as any).show_share_button !== false,
           piWalletAddress: financialData.pi_wallet_address || "",
@@ -960,15 +963,36 @@ const Dashboard = () => {
             }
             // Fallback to localStorage
             return loadPaymentLinks();
-          })()
+          })(),
+          imageLinkCards: loadedProfile.imageLinkCards || [],
+          socialFeedItems: loadedProfile.socialFeedItems || [],
+          customLinks: loadedProfile.customLinks || [],
+          theme: loadedProfile.theme || {
+            primaryColor: "#38bdf8",
+            backgroundColor: "#000000",
+            backgroundType: "color",
+            backgroundGif: "",
+            backgroundVideo: "",
+            iconStyle: "rounded",
+            buttonStyle: "filled",
+            glassMode: false,
+            coverImage: "",
+          }
         };
         
-        setProfile({
-          ...loadedProfile,
-          id: loadedProfile.id || "",
-          username: loadedProfile.username || "",
-          socialLinks: Array.isArray(loadedProfile.socialLinks) ? loadedProfile.socialLinks : [],
-        });
+        setProfile(completeProfile);
+        
+        // Enhanced debugging for profile data
+        console.log("✅ Profile loaded successfully:");
+        console.log("- Profile ID:", completeProfile.id);
+        console.log("- Username:", completeProfile.username);
+        console.log("- Business Name:", completeProfile.businessName);
+        console.log("- Description:", completeProfile.description);
+        console.log("- Logo:", completeProfile.logo);
+        console.log("- Products count:", completeProfile.products?.length || 0);
+        console.log("- Custom Links count:", completeProfile.customLinks?.length || 0);
+        console.log("- Social Links:", completeProfile.socialLinks);
+        console.log("- Theme:", completeProfile.theme);
         
         // Update displayUsername with the actual profile username
         if (loadedProfile.username) {
@@ -1264,9 +1288,64 @@ const Dashboard = () => {
         }
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error("❌ Critical error in checkAuthAndLoadProfile:", error);
+      
+      // Show user-friendly error
+      toast.error('Failed to load profile', {
+        description: 'There was an error loading your profile. Using fallback data.',
+        duration: 5000
+      });
+      
+      // Set default profile to avoid broken state
+      const fallbackUsername = piUser?.username || 'user';
+      const fallbackProfile: ProfileData = {
+        id: "",
+        username: fallbackUsername,
+        logo: "",
+        businessName: fallbackUsername,
+        storeUrl: `@${fallbackUsername}`,
+        description: "",
+        email: "",
+        youtubeVideoUrl: "",
+        backgroundMusicUrl: "",
+        socialLinks: [
+          { type: "twitter", url: "", icon: "twitter", followers: 0 },
+          { type: "instagram", url: "", icon: "instagram", followers: 0 },
+          { type: "youtube", url: "", icon: "youtube", followers: 0 },
+          { type: "tiktok", url: "", icon: "tiktok", followers: 0 },
+          { type: "facebook", url: "", icon: "facebook", followers: 0 },
+          { type: "linkedin", url: "", icon: "linkedin", followers: 0 },
+          { type: "twitch", url: "", icon: "twitch", followers: 0 },
+          { type: "website", url: "", icon: "website", followers: 0 },
+        ],
+        customLinks: [],
+        theme: {
+          primaryColor: "#38bdf8",
+          backgroundColor: "#000000",
+          backgroundType: "color",
+          backgroundGif: "",
+          backgroundVideo: "",
+          iconStyle: "rounded",
+          buttonStyle: "filled",
+          glassMode: false,
+          coverImage: "",
+        },
+        products: [],
+        imageLinkCards: [],
+        socialFeedItems: [],
+        paymentLinks: [],
+        hasPremium: false,
+        showShareButton: true,
+        piWalletAddress: "",
+        piDonationMessage: "Send me a coffee ☕",
+        isVerified: false,
+      };
+      
+      setProfile(fallbackProfile);
+      setDisplayUsername(fallbackUsername);
     } finally {
       setLoading(false);
+      console.log("✅ Dashboard loading complete (loading state set to false)");
     }
   };
 
