@@ -173,15 +173,14 @@ const Dashboard = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  // Enforce Pi Auth on dashboard load
-  useEffect(() => {
-    if (!isAuthenticated || !piUser) {
-      // Require Pi auth
-      setShowPiAuthModal(true);
-    } else {
-      setShowPiAuthModal(false);
-    }
-  }, [isAuthenticated, piUser]);
+  // Pi Auth is optional - removed enforcement to allow dashboard access without Pi Browser
+  // useEffect(() => {
+  //   if (!isAuthenticated || !piUser) {
+  //     setShowPiAuthModal(true);
+  //   } else {
+  //     setShowPiAuthModal(false);
+  //   }
+  // }, [isAuthenticated, piUser]);
 
   const handlePiAuth = async () => {
     try {
@@ -1701,21 +1700,8 @@ const Dashboard = () => {
     );
   }
 
-  // Show Pi Auth button if not authenticated, not loading, and no Supabase session
-  if (!isAuthenticated && !piLoading && !hasSupabaseSession) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 flex items-center justify-center">
-        <div className="max-w-md w-full p-6 rounded-lg shadow border mx-auto bg-card">
-          <div className="mb-6 text-center">
-            <div className="text-red-500 text-lg font-semibold mb-2">Pi Network is not available.</div>
-            <div className="text-gray-700 mb-4">Please open this app in <b>Pi Browser</b> or ensure the Pi SDK is loaded.</div>
-            <a href="https://minepi.com/Wain2020" target="_blank" rel="noopener noreferrer" className="underline text-blue-600">Download Pi Browser</a>
-          </div>
-          <PiAuthTest />
-        </div>
-      </div>
-    );
-  }
+  // Pi authentication is optional - dashboard now accessible without Pi Browser
+  // Users can still connect Pi later if needed
 
   // Removed Pi Authentication Required modal to allow dashboard access without blocking
 
