@@ -946,6 +946,7 @@ const Dashboard = () => {
           piWalletAddress: financialData.pi_wallet_address || "",
           piDonationMessage: financialData.pi_donation_message || "Send me a coffee ☕",
           isVerified: (profileData as any).is_verified || isVerifiedUser(profileData.username),
+          isAdmin: (profileData as any).is_admin || false,
           // Enhanced payment links loading: try database first, then localStorage
           paymentLinks: (() => {
             // Try to restore from theme_settings first (database)
@@ -1799,10 +1800,10 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <main className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 lg:py-10 space-y-6">
-        <div className="grid gap-3 lg:grid-cols-[2fr_1fr] items-start">
-          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800/70 bg-white/90 dark:bg-slate-900/70 shadow-sm p-4 sm:p-5">
-            <div className="flex items-start justify-between gap-3">
+      <main className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-10 space-y-4 sm:space-y-6">
+        <div className="grid gap-3 grid-cols-1 lg:grid-cols-[2fr_1fr] items-start">
+          <div className="rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800/70 bg-white/90 dark:bg-slate-900/70 shadow-sm p-3 sm:p-4 lg:p-5">
+            <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
               <div>
                 <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Welcome back</p>
                 <h2 className="text-xl font-semibold text-slate-900 dark:text-white leading-tight">
@@ -1887,7 +1888,7 @@ const Dashboard = () => {
               </div>
             )}
           </div>
-          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800/70 bg-white/90 dark:bg-slate-900/70 shadow-sm p-4 sm:p-5 flex flex-col gap-3">
+          <div className="rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800/70 bg-white/90 dark:bg-slate-900/70 shadow-sm p-3 sm:p-4 lg:p-5 flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Quick actions</p>
               <div className="inline-flex items-center gap-2 text-xs text-slate-500">
@@ -1948,11 +1949,11 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[1.45fr_minmax(360px,1fr)] items-start">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 xl:grid-cols-[1.45fr_minmax(360px,1fr)] items-start">
           {/* Builder Panel */}
           <section
             id="dashboard-builder"
-            className={`${showPreview ? 'hidden lg:block' : 'block'} rounded-2xl border border-slate-200/80 dark:border-slate-800/70 bg-white/95 dark:bg-slate-900/70 shadow-sm`}
+            className={`${showPreview ? 'hidden lg:block' : 'block'} rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800/70 bg-white/95 dark:bg-slate-900/70 shadow-sm`}
           >
             <div className="p-3 sm:p-5">
               <Tabs 
@@ -1968,14 +1969,14 @@ const Dashboard = () => {
                   }
                 }}
               >
-                <TabsList className="w-full grid grid-cols-3 sm:grid-cols-7 gap-1.5 sm:gap-2 bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 p-2 sm:p-3 rounded-xl mb-24 sm:mb-32">
+                <TabsList className="w-full grid grid-cols-3 sm:grid-cols-7 gap-1 sm:gap-1.5 lg:gap-2 bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 p-1.5 sm:p-2 lg:p-3 rounded-lg sm:rounded-xl mb-20 sm:mb-24 lg:mb-32">
                   {/* Primary Features Row */}
-                  <TabsTrigger value="profile" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-1.5 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
-                    <Settings className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <TabsTrigger value="profile" className="flex-shrink-0 rounded-md sm:rounded-lg text-xs sm:text-sm px-1 sm:px-2 lg:px-3 py-1.5 sm:py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
+                    <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
                     <span className="hidden sm:inline">Profile</span>
                   </TabsTrigger>
-                  <TabsTrigger value="design" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
-                    <Palette className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <TabsTrigger value="design" className="flex-shrink-0 rounded-md sm:rounded-lg text-xs sm:text-sm px-1 sm:px-2 lg:px-3 py-1.5 sm:py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
+                    <Palette className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
                     <span className="hidden sm:inline">Design</span>
                   </TabsTrigger>
                   <TabsTrigger value="templates" className="flex-shrink-0 rounded-lg text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
@@ -3416,7 +3417,7 @@ const Dashboard = () => {
 
         {/* Preview Panel */}
         <aside
-          className={`w-full ${showPreview ? 'flex' : 'hidden lg:flex'} lg:w-[380px] xl:w-[420px] 2xl:w-[480px] border border-slate-200/80 dark:border-slate-800/70 bg-white/90 dark:bg-slate-900/70 rounded-2xl shadow-sm flex-col items-center justify-start overflow-hidden`}
+          className={`w-full ${showPreview ? 'flex' : 'hidden lg:flex'} lg:w-[380px] xl:w-[420px] 2xl:w-[480px] border border-slate-200/80 dark:border-slate-800/70 bg-white/90 dark:bg-slate-900/70 rounded-xl sm:rounded-2xl shadow-sm flex-col items-center justify-start overflow-hidden`}
           style={{ minHeight: 0 }}
         >
           <div className="w-full border-b border-slate-200/70 dark:border-slate-800/60 px-4 py-3 flex items-center justify-between">

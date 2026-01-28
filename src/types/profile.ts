@@ -169,4 +169,5 @@ export interface ProfileData {
   card_text_color?: string;
   card_accent_color?: string;
   isVerified?: boolean;
+  isAdmin?: boolean;
 }

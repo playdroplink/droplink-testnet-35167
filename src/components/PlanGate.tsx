@@ -1,4 +1,3 @@
-
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,15 +10,23 @@ const planOrder = ["free", "basic", "premium", "pro"];
 export const PlanGate = ({
   minPlan,
   children,
-  featureName
+  featureName,
+  isAdmin = false
 }: {
   minPlan: PlanType;
   children: ReactNode;
   featureName?: string;
+  isAdmin?: boolean;
 }) => {
   const { plan, loading } = useActiveSubscription();
   const targetPlanName = minPlan.charAt(0).toUpperCase() + minPlan.slice(1);
   const navigate = useNavigate();
+  
+  // Admins bypass plan requirements
+  if (isAdmin) {
+    return <>{children}</>;
+  }
+  
   if (loading) return null;
   if (planOrder.indexOf(plan) >= planOrder.indexOf(minPlan)) {
     return <>{children}</>;
