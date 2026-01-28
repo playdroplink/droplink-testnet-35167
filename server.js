@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import { secureLog, logApiStatus } from './utils/secureLogging.js';
+import { generateProfileMetadata } from './server/metadataGenerator.js';
+import { createMetadataHtmlPage, createNotFoundHtmlPage } from './server/htmlTemplate.js';
 
 dotenv.config();
 
@@ -314,6 +316,63 @@ app.post('/pi-auth', async (req, res) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return res.status(400).json({ error: errorMessage });
+  }
+});
+
+/**
+ * Dynamic metadata route for user profiles
+ * Handles: GET /@:username
+ * Returns HTML with injected Open Graph and Twitter metadata
+ * This allows social media crawlers to show proper previews
+ */
+app.get('/@:username', async (req, res) => {
+  try {
+    const username = req.params.username;
+    
+    // Validate username format (alphanumeric, underscores, hyphens)
+    if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+      return res.status(400).send(createNotFoundHtmlPage(username));
+    }
+    
+    // Generate metadata from user profile
+    const metadata = await generateProfileMetadata(username);
+    
+    if (metadata.notFound) {
+      // Return 404 response for social crawlers while still providing metadata
+      res.status(404);
+    }
+    
+    // Generate and return HTML with metadata
+    const html = createMetadataHtmlPage(metadata);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    console.error('Metadata route error:', errorMessage);
+    // Return a safe HTML page even on error
+    const username = req.params.username || 'unknown';
+    res.status(500).send(createNotFoundHtmlPage(username));
+  }
+});
+
+/**
+ * API endpoint for fetching profile metadata (for debugging/testing)
+ * Handles: GET /api/metadata/:username
+ */
+app.get('/api/metadata/:username', async (req, res) => {
+  try {
+    const username = req.params.username;
+    
+    if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+      return res.status(400).json({ error: 'Invalid username format' });
+    }
+    
+    const metadata = await generateProfileMetadata(username);
+    res.json(metadata);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    console.error('Metadata API error:', errorMessage);
+    res.status(500).json({ error: errorMessage });
   }
 });
 
