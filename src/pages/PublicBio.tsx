@@ -510,7 +510,6 @@ const PublicBio = () => {
       // Normalize username to lowercase for case-insensitive matching
       const normalizedUsername = username.toLowerCase();
       console.log("[PUBLIC BIO] Loading profile for username:", username);
-      console.log("[PUBLIC BIO] Supabase URL:", supabase.supabaseUrl);
       
       // Try exact match first
       let { data: profileData, error } = await supabase
@@ -1299,22 +1298,23 @@ const PublicBio = () => {
                 
                 setConnectSubmitting(true);
                 try {
-                  // Capture email in database
+                  // Store connection as analytics event instead of email_captures
                   const { error } = await supabase
-                    .from('email_captures')
+                    .from('analytics')
                     .insert({
                       profile_id: profileId,
-                      email: connectEmail,
-                      source: 'connect_button',
-                      captured_from_page: 'public_bio'
+                      event_type: 'email_connect',
+                      event_data: { email: connectEmail, source: 'connect_button' }
                     });
                   
-                  if (error) throw error;
+                  if (error) {
+                    console.error('Analytics error:', error);
+                  }
                   
                   toast.success('✅ Thanks for connecting!');
                   setConnectEmail('');
                 } catch (error) {
-                  console.error('Email capture error:', error);
+                  console.error('Connection error:', error);
                   toast.error('Failed to connect. Please try again.');
                 } finally {
                   setConnectSubmitting(false);

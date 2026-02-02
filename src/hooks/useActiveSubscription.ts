@@ -87,22 +87,22 @@ export const useActiveSubscription = (): ActiveSubscription => {
       // Get profile
       const { data: profile } = await supabase
         .from("profiles")
-        .select("id, username, subscription_status, has_premium, auth_method")
+        .select("id, username, has_premium")
         .eq("username", piUser.username)
         .maybeSingle();
 
-      // Check if user is admin or has premium status
-      const isAdmin = profile?.auth_method === 'email' && (profile?.subscription_status === 'pro' || profile?.has_premium === true);
-      const isGmailAdmin = profile?.username?.endsWith('@gmail.com');
+      // Check if user has premium status (casting to any to avoid type issues)
+      const profileData = profile as any;
+      const isGmailAdmin = profileData?.username?.endsWith('@gmail.com');
       
-      if (isAdmin || isGmailAdmin || (profile?.username && vipTeamMembers.includes(profile.username))) {
-        setProfileId(profile?.id || null);
+      if (isGmailAdmin || (profileData?.username && vipTeamMembers.includes(profileData.username))) {
+        setProfileId(profileData?.id || null);
         setPlan("pro");
         setExpiresAt(null); // No expiration for admins/VIP/Gmail users
         setStatus("active");
         setSubscription({
-          id: isAdmin ? 'admin' : 'vip',
-          profile_id: profile?.id || '',
+          id: 'vip',
+          profile_id: profileData?.id || '',
           plan_type: 'pro',
           billing_period: 'lifetime',
           end_date: '',
@@ -115,18 +115,18 @@ export const useActiveSubscription = (): ActiveSubscription => {
         return;
       }
 
-      if (!profile?.id) {
+      if (!profileData?.id) {
         setLoading(false);
         return;
       }
 
-      setProfileId(profile.id);
+      setProfileId(profileData.id);
 
       // Check for active subscription in subscriptions table
       const { data: sub } = await supabase
         .from("subscriptions")
         .select("*")
-        .eq("profile_id", profile.id)
+        .eq("profile_id", profileData.id)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();

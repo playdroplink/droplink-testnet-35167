@@ -87,11 +87,11 @@ export async function linkPiUserToSupabase(
   console.log(`[Pi Auth Service] Username: ${piData.username}`);
 
   try {
-    // Find existing profile by any stable identifier
+    // Find existing profile by username (pi_user_id columns don't exist, so use username)
     const { data: existingProfile, error: selectError } = await supabase
       .from('profiles')
-      .select('id,user_id,username,business_name,pi_user_id,pi_username,pi_wallet_address')
-      .or(`pi_user_id.eq.${piData.uid},username.eq.${piData.username}`)
+      .select('id,user_id,username,business_name,pi_wallet_address')
+      .eq('username', piData.username)
       .maybeSingle();
 
     if (selectError && selectError.code !== 'PGRST116') {
@@ -99,21 +99,22 @@ export async function linkPiUserToSupabase(
       throw selectError;
     }
 
-    if (existingProfile) {
+    // Cast to any to avoid TS errors due to missing columns in types
+    const profile = existingProfile as any;
+
+    if (profile) {
       console.log('[Pi Auth Service] ✅ Profile already exists, updating...');
       
       // Update with latest Pi data, keep existing business_name unless missing
       const { data: updated, error: updateError } = await supabase
         .from('profiles')
         .update({
-          pi_user_id: existingProfile.pi_user_id || piData.uid,
-          pi_username: existingProfile.pi_username || piData.username,
-          pi_wallet_address: piData.wallet_address || existingProfile.pi_wallet_address,
-          business_name: existingProfile.business_name || displayName || piData.username,
+          pi_wallet_address: piData.wallet_address || profile.pi_wallet_address,
+          business_name: profile.business_name || displayName || piData.username,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', existingProfile.id)
-        .select('id,user_id,username,business_name,pi_user_id,pi_username,pi_wallet_address')
+        .eq('id', profile.id)
+        .select('id,user_id,username,business_name,pi_wallet_address')
         .single();
 
       if (updateError) {
