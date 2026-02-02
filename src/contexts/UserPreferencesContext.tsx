@@ -18,6 +18,7 @@ export interface StoreSettings {
   showCommunitySection: boolean;
   showMessageForm: boolean;
   showPiAds: boolean;
+  showEmailCapture?: boolean;
 }
 
 export interface SocialSettings {
@@ -53,7 +54,7 @@ export interface UserPreferences {
   id?: string;
   user_id?: string;
   profile_id?: string;
-  theme_mode: 'light';
+  theme_mode: 'light' | 'dark' | 'system';
   primary_color: string;
   background_color: string;
   font_size: 'small' | 'medium' | 'large';

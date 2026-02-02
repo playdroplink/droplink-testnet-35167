@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PurchaseButton } from "@/components/PurchaseButton";
 import { toast } from "sonner";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { FooterNav } from "@/components/FooterNav";
 

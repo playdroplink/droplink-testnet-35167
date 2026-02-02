@@ -18,7 +18,8 @@ import {
   Pi,
   Wallet,
   QrCode,
-  Copy
+  Copy,
+  Image as ImageIcon
 } from "lucide-react";
 import { getVerifiedBadgeUrl } from "@/utils/verifiedUsers";
 import { 
@@ -543,7 +544,7 @@ export const PhonePreview = ({ profile, bioTemplate = 'cards' }: PhonePreviewPro
             <div className="w-full pt-4 sm:pt-5">
               <div className="px-2 mb-3">
                 <div className="flex items-center gap-2 text-white text-xs sm:text-sm font-semibold drop-shadow-md mb-2">
-                  <Image className="w-4 h-4 text-sky-400" />
+                  <ImageIcon className="w-4 h-4 text-sky-400" />
                   <span>Featured Links ({profile.imageLinkCards.length})</span>
                 </div>
               </div>

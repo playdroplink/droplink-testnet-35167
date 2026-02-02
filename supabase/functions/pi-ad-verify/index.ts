@@ -79,9 +79,9 @@ serve(async (req) => {
       );
     }
 
-    // Get API key for Pi Platform API
-    const piApiKey = Deno.env.get('PI_API_KEY');
-    if (!piApiKey) {
+    // Verify Pi API key is available for ad verification
+    const adApiKey = Deno.env.get('PI_API_KEY') || piApiKey;
+    if (!adApiKey) {
       console.error('PI_API_KEY not configured');
       return new Response(
         JSON.stringify({ error: 'Pi API key not configured' }),
@@ -96,7 +96,7 @@ serve(async (req) => {
     const adVerifyResponse = await fetch(`https://api.minepi.com/v2/ads_network/status/${adId}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Key ${piApiKey}`,
+        'Authorization': `Key ${adApiKey}`,
         'Content-Type': 'application/json',
       }
     });
