@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePi } from "@/contexts/PiContext";
 
@@ -24,9 +24,24 @@ interface ActiveSubscription {
   subscription: Subscription | null;
   isLoading: boolean;
   isActive: boolean;
+  isExpired: boolean;
+  isExpiringSoon: boolean;
+  daysLeft: number | null;
   profileId: string | null;
   refetch: () => Promise<void>;
 }
+
+// VIP team members who get full access
+const VIP_TEAM_MEMBERS = [
+  'jomarikun',
+  'airdropio2024',
+  'flappypi_fun',
+  'Wain2020',
+  'wainfoundation',
+  'dropshare',
+  'flappypiofficial',
+  'openapp'
+];
 
 export const useActiveSubscription = (): ActiveSubscription => {
   const { piUser } = usePi();
@@ -37,11 +52,11 @@ export const useActiveSubscription = (): ActiveSubscription => {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       setLoading(true);
       
-      // If no Pi user, always set to free (mainnet only, no mock)
+      // If no Pi user, always set to free
       if (!piUser?.username) {
         setPlan("free");
         setExpiresAt(null);
@@ -52,20 +67,8 @@ export const useActiveSubscription = (): ActiveSubscription => {
         return;
       }
 
-      // VIP team members list - these users get all features unlocked without a plan
-      const vipTeamMembers = [
-        'jomarikun',
-        'airdropio2024',
-        'flappypi_fun',
-        'Wain2020',
-        'wainfoundation',
-        'dropshare',
-        'flappypiofficial',
-        'openapp'
-      ];
-
-      // Check if user is VIP team member
-      if (vipTeamMembers.includes(piUser.username)) {
+      // Check if user is VIP team member - they get lifetime pro access
+      if (VIP_TEAM_MEMBERS.includes(piUser.username)) {
         setPlan("pro");
         setExpiresAt(null); // No expiration for VIP team
         setStatus("active");
@@ -91,52 +94,46 @@ export const useActiveSubscription = (): ActiveSubscription => {
         .eq("username", piUser.username)
         .maybeSingle();
 
-      // Check if user has premium status (casting to any to avoid type issues)
-      const profileData = profile as any;
-      const isGmailAdmin = profileData?.username?.endsWith('@gmail.com');
-      
-      if (isGmailAdmin || (profileData?.username && vipTeamMembers.includes(profileData.username))) {
-        setProfileId(profileData?.id || null);
-        setPlan("pro");
-        setExpiresAt(null); // No expiration for admins/VIP/Gmail users
-        setStatus("active");
-        setSubscription({
-          id: 'vip',
-          profile_id: profileData?.id || '',
-          plan_type: 'pro',
-          billing_period: 'lifetime',
-          end_date: '',
-          start_date: new Date().toISOString(),
-          status: 'active',
-          pi_amount: 0,
-          auto_renew: false
-        });
+      if (!profile?.id) {
+        setPlan("free");
         setLoading(false);
         return;
       }
 
-      if (!profileData?.id) {
-        setLoading(false);
-        return;
-      }
-
-      setProfileId(profileData.id);
+      setProfileId(profile.id);
 
       // Check for active subscription in subscriptions table
       const { data: sub } = await supabase
         .from("subscriptions")
         .select("*")
-        .eq("profile_id", profileData.id)
+        .eq("profile_id", profile.id)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (sub && new Date(sub.end_date) > new Date()) {
-        setPlan((sub.plan_type as PlanType) || "free");
-        setExpiresAt(new Date(sub.end_date));
-        setStatus(sub.status || null);
-        setSubscription(sub as Subscription);
+      if (sub) {
+        const endDate = new Date(sub.end_date);
+        const now = new Date();
+        const isExpired = endDate < now;
+        
+        if (isExpired) {
+          // Subscription expired - downgrade to free
+          setPlan("free");
+          setExpiresAt(endDate);
+          setStatus("expired");
+          setSubscription({
+            ...sub,
+            status: "expired"
+          } as Subscription);
+        } else {
+          // Active subscription
+          setPlan((sub.plan_type as PlanType) || "free");
+          setExpiresAt(endDate);
+          setStatus(sub.status || "active");
+          setSubscription(sub as Subscription);
+        }
       } else {
+        // No subscription record - free plan
         setPlan("free");
         setExpiresAt(null);
         setStatus(null);
@@ -144,23 +141,38 @@ export const useActiveSubscription = (): ActiveSubscription => {
       }
     } catch (e) {
       console.error("Failed to load subscription", e);
+      setPlan("free");
     } finally {
       setLoading(false);
     }
-  };
+  }, [piUser?.username]);
 
   useEffect(() => {
     load();
-  }, [piUser]);
+  }, [load]);
+
+  // Calculate derived states
+  const now = new Date();
+  const isExpired = expiresAt ? expiresAt < now : false;
+  const daysLeft = expiresAt 
+    ? Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+  const isExpiringSoon = daysLeft !== null && daysLeft > 0 && daysLeft <= 7;
+  
+  // isActive means user has a valid, non-expired paid plan
+  const isActive = !isExpired && plan !== "free" && status === "active";
 
   return { 
-    plan, 
+    plan: isExpired ? "free" : plan, // Return effective plan (downgraded if expired)
     expiresAt, 
-    status, 
+    status: isExpired ? "expired" : status, 
     loading, 
     subscription,
     isLoading: loading,
-    isActive: status === "active" || plan !== "free",
+    isActive,
+    isExpired,
+    isExpiringSoon,
+    daysLeft,
     profileId,
     refetch: load
   };

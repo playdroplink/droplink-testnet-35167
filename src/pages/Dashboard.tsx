@@ -38,6 +38,7 @@ import { DropTokenManager } from "@/components/DropTokenManager";
 import PiAdNetwork from "../components/PiAdNetwork";
 import PiPayments from "@/components/PiPayments";
 import SubscriptionStatus from "@/components/SubscriptionStatus";
+import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 import { Dialog, DialogContent, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import VotingSystem from "@/components/VotingSystem";
 import { ProfileData, SocialEmbedItem } from "@/types/profile";
@@ -97,6 +98,8 @@ import {
   Search,
   Image,
   ExternalLink,
+  Lock,
+  AlertTriangle,
 } from "lucide-react";
 import { 
   FaTwitter, 
@@ -1800,6 +1803,9 @@ const Dashboard = () => {
       </header>
 
       <main className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-10 space-y-4 sm:space-y-6">
+        {/* Subscription Status Banner */}
+        <SubscriptionBanner />
+        
         <div className="grid gap-3 grid-cols-1 lg:grid-cols-[2fr_1fr] items-start">
           <div className="rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800/70 bg-white/90 dark:bg-slate-900/70 shadow-sm p-3 sm:p-4 lg:p-6">
             <div className="flex flex-col gap-3 lg:gap-4">
@@ -1867,10 +1873,40 @@ const Dashboard = () => {
                 </div>
                 <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/70 bg-slate-50/80 dark:bg-slate-900/60 p-3">
                   <p className="text-xs text-slate-500">Status</p>
-                  <div className="flex items-center gap-2 mt-1 text-sm font-medium text-emerald-600 dark:text-emerald-300">
-                    <Sparkles className="w-4 h-4" />
-                    {plan ? `${plan.toUpperCase()} plan` : 'No plan yet'}
+                  <div className={`flex items-center gap-2 mt-1 text-sm font-medium ${
+                    isPlanExpired 
+                      ? 'text-red-600 dark:text-red-400' 
+                      : plan === 'free' 
+                        ? 'text-slate-600 dark:text-slate-300'
+                        : 'text-emerald-600 dark:text-emerald-300'
+                  }`}>
+                    {isPlanExpired ? (
+                      <>
+                        <AlertTriangle className="w-4 h-4" />
+                        Expired - was {plan.toUpperCase()}
+                      </>
+                    ) : (
+                      <>
+                        {plan === 'free' ? <Lock className="w-4 h-4" /> : <Crown className="w-4 h-4" />}
+                        {plan.charAt(0).toUpperCase() + plan.slice(1)} plan
+                        {expiresAt && !isPlanExpired && (
+                          <span className="text-xs text-muted-foreground ml-1">
+                            ({Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))}d left)
+                          </span>
+                        )}
+                      </>
+                    )}
                   </div>
+                  {(isPlanExpired || plan === 'free') && (
+                    <Button 
+                      size="sm" 
+                      variant="link" 
+                      className="p-0 h-auto text-xs text-sky-600 dark:text-sky-400 mt-1"
+                      onClick={() => navigate('/subscription')}
+                    >
+                      {isPlanExpired ? 'Renew now →' : 'Upgrade →'}
+                    </Button>
+                  )}
                 </div>
                 <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/70 bg-slate-50/80 dark:bg-slate-900/60 p-3">
                   <p className="text-xs text-slate-500">Preview</p>
@@ -3116,9 +3152,9 @@ const Dashboard = () => {
                 />
               </TabsContent>
 
-              {/* Analytics Tab - locked for Free plan */}
+              {/* Analytics Tab - Basic plan and above */}
               <TabsContent value="analytics" className="pb-8">
-                <PlanGate minPlan="pro" featureName="Analytics">
+                <PlanGate minPlan="basic" featureName="Analytics Dashboard">
                   {!isPlanExpired && (
                     <>
                       {/* Expiration/Renewal Modal */}
