@@ -333,6 +333,45 @@ const A2UPayment = () => {
               </div>
             </div>
           </Card>
+
+          <Card className="p-4 mt-4">
+            <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+              <ArrowUpRight className="w-4 h-4 text-primary" />
+              Setup Resources
+            </h3>
+            <div className="space-y-2 text-xs text-muted-foreground">
+              <p>Use these docs to configure A2U payments, server-side API calls, and Pi SDK setup.</p>
+              <div className="space-y-2">
+                <a
+                  className="flex items-center gap-2 text-primary hover:underline"
+                  href="https://pi-apps.github.io/community-developer-guide/docs/gettingStarted/piAppPlatform/piAppPlatformSDK/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Pi Platform SDK (Pi Browser)
+                  <ArrowUpRight className="w-3 h-3" />
+                </a>
+                <a
+                  className="flex items-center gap-2 text-primary hover:underline"
+                  href="https://github.com/pi-apps/pi-ruby"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Pi API Ruby Client (A2U server calls)
+                  <ArrowUpRight className="w-3 h-3" />
+                </a>
+                <a
+                  className="flex items-center gap-2 text-primary hover:underline"
+                  href="https://pi-apps.github.io/community-developer-guide/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Pi Network Payment Guide
+                  <ArrowUpRight className="w-3 h-3" />
+                </a>
+              </div>
+            </div>
+          </Card>
         </TabsContent>
 
         {/* HISTORY TAB */}
