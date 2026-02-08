@@ -37,6 +37,7 @@ import Purchases from "./pages/Purchases";
 import ProductDetail from "./pages/ProductDetail";
 import SalesEarnings from "./pages/SalesEarnings";
 import CardGenerator from "./pages/CardGenerator";
+import A2UPayment from "./pages/A2UPayment";
 import PageLayout from "./components/PageLayout";
 
 const queryClient = new QueryClient();
@@ -93,6 +94,7 @@ const AppRoutes = ({ showSplash, setShowSplash }: { showSplash: boolean; setShow
         <Route path="/chat/:username" element={<Chat />} />
         <Route path="/purchases" element={<Purchases />} />
         <Route path="/sales-earnings" element={<SalesEarnings />} />
+        <Route path="/a2u-payment" element={<A2UPayment />} />
         <Route path="/product/:productId" element={<ProductDetail />} />
         <Route path="*" element={<NotFound />} />
       </Route>
