@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.link-shortener]
 verify_jwt = false
+
+[functions.a2u-payment]
+verify_jwt = false

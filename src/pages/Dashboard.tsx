@@ -100,6 +100,7 @@ import {
   ExternalLink,
   Lock,
   AlertTriangle,
+  Send,
 } from "lucide-react";
 import { 
   FaTwitter, 
@@ -3630,6 +3631,15 @@ const Dashboard = () => {
                   >
                     <BarChart3 className="w-4 h-4" />
                     Sales & Earnings
+                  </Button>
+                  <Button 
+                    onClick={() => { navigate('/a2u-payment'); }} 
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start gap-2 h-10"
+                  >
+                    <Send className="w-4 h-4" />
+                    A2U Payments
                   </Button>
                   
                   {/* Tools & Features */}
