@@ -3,7 +3,7 @@
  * Implements 3-phase Pi payment flow per Pi Network documentation
  */
 
-import { PI_CONFIG } from '@/config/piConfig';
+import { PI_CONFIG, PI_USE_BACKEND } from '@/config/pi-config';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface PaymentItem {
@@ -137,6 +137,32 @@ export class RealPiPaymentService {
       // Set receiver wallet address
       if (PI_CONFIG?.PAYMENT_RECEIVER_WALLET) {
         paymentData.to = PI_CONFIG.PAYMENT_RECEIVER_WALLET;
+      }
+
+      // Frontend-only testnet/local mode: no backend approval/completion calls
+      if (!PI_USE_BACKEND) {
+        const fallbackPaymentId = `local_${Date.now()}`;
+        const fallbackTxid = `local_tx_${Date.now()}`;
+        const localCallbacks = {
+          onReadyForServerApproval: (paymentId: string) => {
+            onProgress?.('approved', { paymentId });
+          },
+          onReadyForServerCompletion: (paymentId: string, txid: string) => {
+            onProgress?.('completed', { paymentId, txid });
+            resolve({ identifier: paymentId || fallbackPaymentId, transaction: { txid: txid || fallbackTxid } });
+          },
+          onCancel: (paymentId: string) => {
+            onProgress?.('cancelled', { paymentId });
+            reject(new Error('Payment cancelled by user'));
+          },
+          onError: (error: Error, payment?: any) => {
+            onProgress?.('error', { error: error.message, payment });
+            reject(error);
+          },
+        };
+
+        window.Pi.createPayment(paymentData, localCallbacks as any);
+        return;
       }
 
       console.log('[PI PAYMENT] Creating payment with:', JSON.stringify(paymentData, null, 2));
