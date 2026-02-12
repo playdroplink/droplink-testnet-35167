@@ -217,3 +217,8 @@ Call complete action with paymentId + txid:
 - Pi platform docs: https://github.com/pi-apps/pi-platform-docs
 - Ads docs: https://github.com/pi-apps/pi-platform-docs/blob/master/ads.md
 - Pi Ruby SDK: https://github.com/pi-apps/pi-ruby
+
+
+## 10) Quick copy/paste env file
+
+For a ready-to-paste setup, use: `ENV_COPY_PASTE_TESTNET.md`.
