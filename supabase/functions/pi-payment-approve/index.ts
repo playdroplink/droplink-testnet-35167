@@ -8,7 +8,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Pi Network MAINNET API endpoint - PRODUCTION ONLY
-const PI_API_BASE_URL = "https://api.minepi.com";
+const PI_SANDBOX_MODE = (Deno.env.get('PI_SANDBOX_MODE') || 'false') === 'true';
+const PI_API_BASE_URL = PI_SANDBOX_MODE ? "https://api.testnet.minepi.com" : "https://api.minepi.com";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -73,8 +74,8 @@ serve(async (req) => {
     }
 
     // Step 1: Get payment details from Pi API (MAINNET)
-    console.log('[APPROVAL] 📡 Fetching payment details from Pi MAINNET API...');
-    console.log('[APPROVAL] Network: MAINNET (Production Only)');
+    console.log('[APPROVAL] 📡 Fetching payment details from Pi API...');
+    console.log('[APPROVAL] Network:', PI_SANDBOX_MODE ? 'TESTNET/SANDBOX' : 'MAINNET');
     const getPaymentResponse = await fetch(`${PI_API_BASE_URL}/v2/payments/${paymentId}`, {
       method: 'GET',
       headers: {
