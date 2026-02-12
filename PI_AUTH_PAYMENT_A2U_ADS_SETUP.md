@@ -233,3 +233,8 @@ VITE_SUPABASE_FUNCTIONS_URL=https://your-lovable-project.supabase.co/functions/v
 ```
 
 This makes the A2U page call the specified Lovable Cloud function endpoint directly for `a2u-payment`.
+
+
+## 11) Lovable Cloud project setup
+
+If you are using Lovable Cloud Supabase, follow `LOVABLE_CLOUD_SUPABASE_SETUP.md` to link CLI, push DB migrations, set secrets, deploy functions, and run smoke tests.

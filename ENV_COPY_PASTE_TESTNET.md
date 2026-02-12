@@ -53,3 +53,8 @@ npm run build
 - A2U requires recipient **Pi UID**, not username/wallet address.
 - Keep API keys and wallet private seed server-side only.
 - Do not commit real secrets to git.
+
+
+## 6) Lovable Cloud full setup
+
+For full edge function + DB setup on Lovable Cloud project, follow: `LOVABLE_CLOUD_SUPABASE_SETUP.md`.
