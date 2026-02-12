@@ -47,13 +47,46 @@ const A2UPayment = () => {
   const [payments, setPayments] = useState<A2UPaymentRecord[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
+  // Optional override: route A2U calls to Lovable Cloud Functions endpoint
+  // Example: https://<project-ref>.supabase.co/functions/v1
+  const functionsBaseUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL?.trim();
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  const invokeA2U = async (body: Record<string, unknown>) => {
+    if (functionsBaseUrl) {
+      const endpoint = `${functionsBaseUrl.replace(/\/$/, '')}/a2u-payment`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(anonKey ? { apikey: anonKey, Authorization: `Bearer ${anonKey}` } : {}),
+        },
+        body: JSON.stringify(body),
+      });
+
+      let payload: any = null;
+      try {
+        payload = await response.json();
+      } catch {
+        payload = { success: false, error: await response.text() };
+      }
+
+      if (!response.ok) {
+        const details = payload?.error || payload?.message || response.statusText;
+        throw new Error(`A2U Edge Function ${response.status}: ${details}`);
+      }
+
+      return { data: payload, error: null as any };
+    }
+
+    return supabase.functions.invoke('a2u-payment', { body });
+  };
+
   // Load payment history
   const loadPayments = async () => {
     setLoadingHistory(true);
     try {
-      const { data, error } = await supabase.functions.invoke('a2u-payment', {
-        body: { action: 'list' },
-      });
+      const { data, error } = await invokeA2U({ action: 'list' });
 
       if (error) {
         console.error('Failed to load A2U payment history:', error);
@@ -95,16 +128,14 @@ const A2UPayment = () => {
     try {
       console.log('[A2U] Initiating A2U payment...', { recipientUid, amount, memo });
 
-      const { data, error } = await supabase.functions.invoke('a2u-payment', {
-        body: {
-          action: 'create',
-          recipientUid: recipientUid.trim(),
-          amount: parseFloat(amount),
-          memo: memo.trim(),
-          metadata: {
-            source: 'droplink_a2u',
-            sentAt: new Date().toISOString(),
-          },
+      const { data, error } = await invokeA2U({
+        action: 'create',
+        recipientUid: recipientUid.trim(),
+        amount: parseFloat(amount),
+        memo: memo.trim(),
+        metadata: {
+          source: 'droplink_a2u',
+          sentAt: new Date().toISOString(),
         },
       });
 
@@ -130,7 +161,9 @@ const A2UPayment = () => {
       loadPayments();
     } catch (error: any) {
       console.error('[A2U] Payment error:', error);
-      toast.error(error.message || 'Failed to send A2U payment');
+      toast.error(error.message || 'Failed to send A2U payment', {
+        description: 'Check VITE_SUPABASE_FUNCTIONS_URL and deployed a2u-payment function.'
+      });
       setLastPaymentResult({ success: false, error: error.message });
     } finally {
       setSending(false);
@@ -140,9 +173,7 @@ const A2UPayment = () => {
   // Check payment status
   const handleCheckStatus = async (paymentId: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke('a2u-payment', {
-        body: { action: 'status', paymentId },
-      });
+      const { data, error } = await invokeA2U({ action: 'status', paymentId });
 
       if (data?.success) {
         toast.success(`Payment status: ${JSON.stringify(data.payment?.status || 'unknown')}`);

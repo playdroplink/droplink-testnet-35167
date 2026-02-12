@@ -18,6 +18,8 @@ VITE_PI_VALIDATION_KEY=
 # ===== Supabase Frontend =====
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+# Lovable Cloud Functions URL (recommended if UI uses different Supabase project)
+VITE_SUPABASE_FUNCTIONS_URL=https://your-lovable-project.supabase.co/functions/v1
 ```
 
 ## 2) Supabase Edge Function secrets (server-side)

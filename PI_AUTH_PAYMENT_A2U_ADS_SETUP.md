@@ -222,3 +222,14 @@ Call complete action with paymentId + txid:
 ## 10) Quick copy/paste env file
 
 For a ready-to-paste setup, use: `ENV_COPY_PASTE_TESTNET.md`.
+
+
+### Lovable Cloud Edge Functions (important)
+
+If you see `A2U Edge Function returned a non-2xx status code`, set:
+
+```env
+VITE_SUPABASE_FUNCTIONS_URL=https://your-lovable-project.supabase.co/functions/v1
+```
+
+This makes the A2U page call the specified Lovable Cloud function endpoint directly for `a2u-payment`.
