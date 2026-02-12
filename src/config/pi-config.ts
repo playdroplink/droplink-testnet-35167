@@ -9,27 +9,35 @@
 
 import { isPiBrowserEnv } from "@/contexts/PiContext";
 
-// PRODUCTION ONLY - NO SANDBOX, NO TESTNET
-const sandboxFlag = false; // HARDCODED: Always mainnet
+const isLocalhost = typeof window !== 'undefined' &&
+  ['localhost', '127.0.0.1'].includes(window.location.hostname);
+
+// In local/testnet work, default to sandbox unless explicitly disabled.
+const sandboxFlag = import.meta.env.VITE_PI_SANDBOX_MODE
+  ? import.meta.env.VITE_PI_SANDBOX_MODE === 'true'
+  : isLocalhost;
+
+// Backend is REQUIRED for production-safe payment approval/completion and A2U.
+// You can disable only for local debugging with VITE_PI_USE_BACKEND=false.
+export const PI_USE_BACKEND = import.meta.env.VITE_PI_USE_BACKEND !== 'false';
 
 // Log configuration for debugging
 if (typeof window !== 'undefined') {
-  console.log('[PI CONFIG] 🌐 Network Mode: MAINNET (Production)');
-  console.log('[PI CONFIG] Sandbox/Testnet: DISABLED');
+  console.log(`[PI CONFIG] 🌐 Network Mode: ${sandboxFlag ? 'TESTNET/SANDBOX' : 'MAINNET'}`);
+  console.log(`[PI CONFIG] Backend mode: ${PI_USE_BACKEND ? 'ENABLED (recommended)' : 'DISABLED (debug only)'}`);
 }
 
 // Pi Network Credentials - From Pi Developer Portal
 const PI_APP_ID = import.meta.env.VITE_PI_APP_ID ?? "droplink-317d26f51b67e992";
-const PI_API_KEY = "epbig4kjt1evsdir4jr5nzxsgxg4f8jhqsmeuf3ijo1bshis1qhq50irzx9wotzg";
-const PI_VALIDATION_KEY = "26ec4458680b98edc16b18ed68c2fb7841ee2c9d3b9cfdcfa82de36bea71f64074a2ee5d1fbea04762df431edb1458b44a2ff50679b16d93935b0b645e98174a";
+const PI_API_KEY = import.meta.env.VITE_PI_API_KEY ?? "";
+const PI_VALIDATION_KEY = import.meta.env.VITE_PI_VALIDATION_KEY ?? "";
 const PLATFORM_URL = import.meta.env.VITE_PLATFORM_URL ?? "https://droplink.space";
 const PAYMENT_RECEIVER_WALLET = import.meta.env.VITE_PI_PAYMENT_RECEIVER_WALLET ?? "GDSXE723WPHZ5RGIJCSYXTPKSOIGPTSXE4RF5U3JTNGTCHXON7ZVD4LJ";
 
-// PRODUCTION ONLY - Mainnet URLs (force HTTPS)
-const BASE_API_URL = "https://api.minepi.com";
-const HORIZON_URL = "https://api.minepi.com";
-const NETWORK_NAME = "mainnet";
-const NETWORK_PASSPHRASE = "Pi Mainnet";
+const BASE_API_URL = sandboxFlag ? "https://api.testnet.minepi.com" : "https://api.minepi.com";
+const HORIZON_URL = BASE_API_URL;
+const NETWORK_NAME = sandboxFlag ? "sandbox" : "mainnet";
+const NETWORK_PASSPHRASE = sandboxFlag ? "Pi Testnet" : "Pi Mainnet";
 
 export const PI_CONFIG = {
   API_KEY: PI_API_KEY,
@@ -43,7 +51,7 @@ export const PI_CONFIG = {
   // https://pi-apps.github.io/community-developer-guide/docs/gettingStarted/piAppPlatform/piAppPlatformSDK/
   SDK: {
     version: "2.0", // Latest SDK version as of August 2022
-    sandbox: false, // Mainnet production mode
+    sandbox: sandboxFlag,
   },
   
   // Official Documentation Links

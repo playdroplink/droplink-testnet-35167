@@ -45,7 +45,7 @@ export function isPiBrowserEnv(): boolean {
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { PI_CONFIG, isPiNetworkAvailable, validatePiConfig, validateMainnetConfig, getWalletTokens, getTokenBalance, createTokenTrustline } from "@/config/pi-config";
+import { PI_CONFIG, PI_USE_BACKEND, isPiNetworkAvailable, validatePiConfig, validateMainnetConfig, getWalletTokens, getTokenBalance, createTokenTrustline } from "@/config/pi-config";
 import { authenticatePiUser, verifyStoredPiToken } from "@/services/piMainnetAuthService";
 
 // Pi Network Types
@@ -1095,6 +1095,16 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
             }, 50000);
             
             try {
+              if (!PI_USE_BACKEND) {
+                clearTimeout(approvalTimeout);
+                console.log('[PAYMENT] ℹ️ Frontend-only mode: skipping backend approval');
+                toast.success('Payment approved (frontend-only mode)', {
+                  description: 'Proceeding to wallet confirmation...',
+                  duration: 3000
+                });
+                return;
+              }
+
               const { error, data } = await supabase.functions.invoke('pi-payment-approve', {
                 body: { paymentId, metadata },
                 headers: { 'Authorization': `Bearer ${accessToken}` }
@@ -1161,6 +1171,17 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
             }, 50000);
             
             try {
+              if (!PI_USE_BACKEND) {
+                clearTimeout(completionTimeout);
+                console.log('[PAYMENT] ℹ️ Frontend-only mode: skipping backend completion');
+                toast.success('Payment completed (frontend-only mode)', {
+                  description: `Transaction: ${txid.substring(0, 16)}...`,
+                  duration: 5000
+                });
+                resolve(txid);
+                return;
+              }
+
               const { error, data } = await supabase.functions.invoke('pi-payment-complete', {
                 body: { paymentId, txid, metadata },
                 headers: { 'Authorization': `Bearer ${accessToken}` }
