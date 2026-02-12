@@ -118,7 +118,99 @@ If you migrate to a Ruby backend, keep the same payload/response shape so `src/p
 - Ensure Pi SDK Ads API availability (`Pi.Ads`).
 - Gate rewards on verified ad result only.
 
-## 6) References
+
+## 7) A2U identifier rules (important)
+
+For A2U, your server must send the recipient **Pi UID** (the `uid` field), not username and not wallet address.
+
+- ✅ Supported for A2U create: `recipientUid` (Pi user UID)
+- ❌ Not supported directly in current flow: Pi username
+- ❌ Not supported directly in current flow: Pi wallet address
+
+Why:
+- In this repository, the A2U edge function sends `uid: recipientUid` to Pi `/v2/payments` create call.
+- The A2U page input is explicitly designed for recipient UID.
+
+If you only have username/wallet, first map it to UID in your own backend/user table, then call A2U create with that UID.
+
+## 8) Step-by-step tutorial (testnet, 10 wallets)
+
+Use this exact sequence to reliably complete testnet A2U runs.
+
+### Step 1: Configure server secrets (Supabase)
+
+```bash
+supabase secrets set PI_API_KEY=***
+supabase secrets set PI_VALIDATION_KEY=***
+supabase secrets set PI_SANDBOX_MODE=true
+```
+
+### Step 2: Frontend env for local testnet
+
+```env
+VITE_PI_SANDBOX_MODE=true
+VITE_PI_USE_BACKEND=true
+VITE_PI_APP_ID=your-testnet-app-id
+```
+
+### Step 3: Deploy/serve edge function
+
+```bash
+supabase functions deploy a2u-payment --no-verify-jwt
+# or local
+supabase functions serve a2u-payment
+```
+
+### Step 4: Prepare 10 recipient UIDs
+
+For each recipient wallet/user, collect their Pi UID (not username / not wallet address).
+Store as:
+
+- `uid_01`
+- `uid_02`
+- ...
+- `uid_10`
+
+### Step 5: Send A2U from A2U page
+
+For each UID:
+1. Open `/a2u-payment`
+2. Enter `Recipient Pi UID`
+3. Enter amount (e.g. `0.01` Pi for test)
+4. Enter memo (example: `testnet batch #01`)
+5. Click **Send Payment**
+
+### Step 6: Verify status after each send
+
+- Use page **History** + **Check Status**
+- Expected lifecycle in your DB:
+  - `a2u_created`
+  - `a2u_approved`
+  - (optionally) `a2u_completed` after completion step
+
+### Step 7: Complete payment when txid available
+
+Call complete action with paymentId + txid:
+
+```json
+{ "action": "complete", "paymentId": "...", "txid": "..." }
+```
+
+### Step 8: Batch checklist for 10 wallets
+
+- [ ] 10/10 sends returned `success: true`
+- [ ] 10/10 have `a2u_approved` (minimum)
+- [ ] 10/10 have `a2u_completed` (if completion step executed)
+- [ ] no API key exposure in client logs
+
+### Step 9: Common failures
+
+- `PI_API_KEY not configured` -> missing Supabase secret
+- `Unknown action` -> wrong body payload
+- `Failed to get payment status` -> wrong paymentId or network mismatch
+- payments not found -> check `PI_SANDBOX_MODE` and app env consistency
+
+## 9) References
 
 - Pi SDK docs: https://pi-apps.github.io/community-developer-guide/docs/gettingStarted/piAppPlatform/piAppPlatformSDK/
 - Pi payment docs: https://pi-apps.github.io/community-developer-guide/
