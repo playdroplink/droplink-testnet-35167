@@ -17,14 +17,14 @@ const sandboxFlag = import.meta.env.VITE_PI_SANDBOX_MODE
   ? import.meta.env.VITE_PI_SANDBOX_MODE === 'true'
   : isLocalhost;
 
-// When false, use Supabase edge functions for approval/completion.
-// For local testnet (default), run Pi payment flow directly from frontend.
-export const PI_USE_BACKEND = import.meta.env.VITE_PI_USE_BACKEND === 'true' && !isLocalhost;
+// Backend is REQUIRED for production-safe payment approval/completion and A2U.
+// You can disable only for local debugging with VITE_PI_USE_BACKEND=false.
+export const PI_USE_BACKEND = import.meta.env.VITE_PI_USE_BACKEND !== 'false';
 
 // Log configuration for debugging
 if (typeof window !== 'undefined') {
   console.log(`[PI CONFIG] 🌐 Network Mode: ${sandboxFlag ? 'TESTNET/SANDBOX' : 'MAINNET'}`);
-  console.log(`[PI CONFIG] Backend mode: ${PI_USE_BACKEND ? 'ENABLED' : 'DISABLED (frontend-only)'}`);
+  console.log(`[PI CONFIG] Backend mode: ${PI_USE_BACKEND ? 'ENABLED (recommended)' : 'DISABLED (debug only)'}`);
 }
 
 // Pi Network Credentials - From Pi Developer Portal

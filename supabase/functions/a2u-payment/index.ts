@@ -7,7 +7,8 @@ declare const Deno: any;
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const PI_API_BASE_URL = "https://api.minepi.com";
+const PI_SANDBOX_MODE = (Deno.env.get('PI_SANDBOX_MODE') || 'false') === 'true';
+const PI_API_BASE_URL = PI_SANDBOX_MODE ? "https://api.testnet.minepi.com" : "https://api.minepi.com";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,7 +24,7 @@ serve(async (req) => {
   const startTime = Date.now();
 
   try {
-    const PI_API_KEY = Deno.env.get('PI_API_KEY');
+    const PI_API_KEY = Deno.env.get('PI_API_KEY') || Deno.env.get('VITE_PI_API_KEY');
     if (!PI_API_KEY) {
       console.error('[A2U] ❌ PI_API_KEY not configured');
       throw new Error('PI_API_KEY not configured');
