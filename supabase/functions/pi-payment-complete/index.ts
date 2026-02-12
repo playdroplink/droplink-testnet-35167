@@ -8,7 +8,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Pi Network MAINNET API endpoint - PRODUCTION ONLY
-const PI_API_BASE_URL = "https://api.minepi.com";
+const PI_SANDBOX_MODE = (Deno.env.get('PI_SANDBOX_MODE') || 'false') === 'true';
+const PI_API_BASE_URL = PI_SANDBOX_MODE ? "https://api.testnet.minepi.com" : "https://api.minepi.com";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -36,7 +37,7 @@ serve(async (req) => {
     console.log('[COMPLETE] Client metadata:', JSON.stringify(metadata || {}));
 
     // Get Pi API Key from environment
-    const PI_API_KEY = Deno.env.get('PI_API_KEY');
+    const PI_API_KEY = Deno.env.get('PI_API_KEY') || Deno.env.get('VITE_PI_API_KEY');
     if (!PI_API_KEY) {
       console.error('[COMPLETE] ❌ PI_API_KEY not configured');
       throw new Error("PI_API_KEY not configured");
@@ -79,8 +80,8 @@ serve(async (req) => {
     console.log('[COMPLETE] Final metadata:', JSON.stringify(finalMetadata));
 
     // Step 1: Get payment details from Pi MAINNET API to verify
-    console.log('[COMPLETE] 📡 Fetching payment details from Pi MAINNET API...');
-    console.log('[COMPLETE] Network: MAINNET (Production Only)');
+    console.log('[COMPLETE] 📡 Fetching payment details from Pi API...');
+    console.log('[COMPLETE] Network:', PI_SANDBOX_MODE ? 'TESTNET/SANDBOX' : 'MAINNET');
     const getPaymentResponse = await fetch(`${PI_API_BASE_URL}/v2/payments/${paymentId}`, {
       method: 'GET',
       headers: {
@@ -99,7 +100,7 @@ serve(async (req) => {
     console.log('[COMPLETE] Payment details:', JSON.stringify(paymentDetails));
 
     // Step 2: Complete the payment with Pi MAINNET API
-    console.log('[COMPLETE] 📡 Completing payment with Pi MAINNET API...');
+    console.log('[COMPLETE] 📡 Completing payment with Pi API...');
     const completeResponse = await fetch(`${PI_API_BASE_URL}/v2/payments/${paymentId}/complete`, {
       method: 'POST',
       headers: {
