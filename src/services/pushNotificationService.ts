@@ -107,12 +107,12 @@ export const subscribeToPushNotifications = async (
   try {
     const registration = await navigator.serviceWorker.ready;
     
-    if (!registration.pushManager) {
+    if (!(registration as any).pushManager) {
       console.warn('[PUSH] Push Manager not available');
       return null;
     }
     
-    const subscription = await registration.pushManager.subscribe({
+    const subscription = await (registration as any).pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: vapidPublicKey,
     });
@@ -131,7 +131,7 @@ export const subscribeToPushNotifications = async (
 export const unsubscribeFromPushNotifications = async (): Promise<boolean> => {
   try {
     const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
+    const subscription = await (registration as any).pushManager.getSubscription();
     
     if (!subscription) {
       console.log('[PUSH] No active subscription');
