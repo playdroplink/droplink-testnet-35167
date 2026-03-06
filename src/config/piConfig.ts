@@ -5,7 +5,7 @@
  */
 
 // Pi Network Configuration from environment
-const PI_API_KEY = import.meta.env.VITE_PI_API_KEY || "ko9kwih4kcqm8kyolmvoqcerhzeoaheobd7evkdetjiuckaalmhw0ngh5ssxiyfq";
+const PI_API_KEY = import.meta.env.VITE_PI_API_KEY || "swtdemfxhnlujmvlhoasgxticnovzoyohxzltq7f0dvvcfibanqadhfiqod1jrtl";
 const PI_VALIDATION_KEY = import.meta.env.VITE_PI_VALIDATION_KEY || "26ec4458680b98edc16b18ed68c2fb7841ee2c9d3b9cfdcfa82de36bea71f64074a2ee5d1fbea04762df431edb1458b44a2ff50679b16d93935b0b645e98174a";
 const PAYMENT_RECEIVER_WALLET = import.meta.env.VITE_PI_PAYMENT_RECEIVER_WALLET || "GDSXE723WPHZ5RGIJCSYXTPKSOIGPTSXE4RF5U3JTNGTCHXON7ZVD4LJ";
 

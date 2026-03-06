@@ -1,20 +1,97 @@
 // A2U (App-to-User) Payment Edge Function
-// Allows the app to send Pi to users
-// Based on Pi Platform API: POST /v2/payments with direction "app_to_user"
+// Full flow: Create → Submit (Stellar blockchain) → Complete
+// Based on pi-backend SDK: https://github.com/pi-apps/pi-nodejs
 // Docs: https://pi-apps.github.io/community-developer-guide/
 
 declare const Deno: any;
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import * as StellarSdk from "https://esm.sh/stellar-sdk@11.3.0";
 
 const PI_SANDBOX_MODE = (Deno.env.get('PI_SANDBOX_MODE') || 'false') === 'true';
 const PI_API_BASE_URL = PI_SANDBOX_MODE ? "https://api.testnet.minepi.com" : "https://api.minepi.com";
+const PI_HORIZON_URL = PI_SANDBOX_MODE ? "https://api.testnet.minepi.com" : "https://api.minepi.com";
+const PI_NETWORK_PASSPHRASE = PI_SANDBOX_MODE ? "Pi Testnet" : "Pi Network";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
+
+// Helper: Pi API request
+async function piApiRequest(path: string, method: string, apiKey: string, body?: any) {
+  const opts: any = {
+    method,
+    headers: {
+      'Authorization': `Key ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+  };
+  if (body) opts.body = JSON.stringify(body);
+
+  const res = await fetch(`${PI_API_BASE_URL}${path}`, opts);
+  const text = await res.text();
+
+  if (!res.ok) {
+    console.error(`[A2U] Pi API ${method} ${path} failed:`, res.status, text);
+    throw new Error(`Pi API error (${res.status}): ${text}`);
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { raw: text };
+  }
+}
+
+// Build and submit Stellar transaction for A2U payment
+async function submitPaymentToBlockchain(
+  paymentId: string,
+  apiKey: string,
+  walletPrivateSeed: string
+): Promise<string> {
+  // 1. Get payment details from Pi API
+  const payment = await piApiRequest(`/v2/payments/${paymentId}`, 'GET', apiKey);
+  console.log('[A2U] Payment for submission:', JSON.stringify(payment));
+
+  const amount = payment.amount;
+  const toAddress = payment.to_address;
+  const fromAddress = payment.from_address;
+
+  if (!toAddress || !fromAddress) {
+    throw new Error('Payment missing to_address or from_address');
+  }
+
+  // 2. Load the sender account from Horizon
+  const server = new StellarSdk.Horizon.Server(PI_HORIZON_URL);
+  const keypair = StellarSdk.Keypair.fromSecret(walletPrivateSeed);
+  const sourceAccount = await server.loadAccount(keypair.publicKey());
+
+  // 3. Build the transaction
+  const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
+    fee: await server.fetchBaseFee(),
+    networkPassphrase: PI_NETWORK_PASSPHRASE,
+  })
+    .addOperation(
+      StellarSdk.Operation.payment({
+        destination: toAddress,
+        asset: StellarSdk.Asset.native(),
+        amount: amount.toString(),
+      })
+    )
+    .addMemo(StellarSdk.Memo.text(paymentId.substring(0, 28)))
+    .setTimeout(180)
+    .build();
+
+  // 4. Sign and submit
+  transaction.sign(keypair);
+  const result = await server.submitTransaction(transaction);
+  const txid = result.hash;
+
+  console.log('[A2U] ✅ Blockchain transaction submitted:', txid);
+  return txid;
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -25,215 +102,248 @@ serve(async (req) => {
 
   try {
     const PI_API_KEY = Deno.env.get('PI_API_KEY') || Deno.env.get('VITE_PI_API_KEY');
-    if (!PI_API_KEY) {
-      console.error('[A2U] ❌ PI_API_KEY not configured');
-      throw new Error('PI_API_KEY not configured');
-    }
+    if (!PI_API_KEY) throw new Error('PI_API_KEY not configured');
+
+    const WALLET_SEED = Deno.env.get('WALLET_PRIVATE_SEED');
+    if (!WALLET_SEED) throw new Error('WALLET_PRIVATE_SEED not configured');
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    if (!supabaseUrl || !serviceKey) {
-      throw new Error('Supabase configuration missing');
-    }
+    if (!supabaseUrl || !serviceKey) throw new Error('Supabase configuration missing');
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Parse body once
     const body = await req.json();
     const action = body.action || 'list';
-
     console.log('[A2U] Action:', action);
 
-    // ============ ACTION: CREATE A2U PAYMENT ============
+    // ============ CREATE: Full A2U flow (create → submit → complete) ============
     if (action === 'create') {
       const { amount, memo, metadata, recipientUid } = body;
 
-      if (!amount || amount <= 0) {
-        throw new Error('Amount must be greater than 0');
-      }
-      if (!recipientUid) {
-        throw new Error('Recipient UID is required');
-      }
-      if (!memo) {
-        throw new Error('Memo is required');
-      }
+      if (!amount || amount <= 0) throw new Error('Amount must be greater than 0');
+      if (!recipientUid) throw new Error('Recipient UID is required');
+      if (!memo) throw new Error('Memo is required');
 
       console.log('[A2U] 📤 Creating A2U payment:', { amount, memo, recipientUid });
 
       // Step 1: Create A2U payment via Pi API
-      const createResponse = await fetch(`${PI_API_BASE_URL}/v2/payments`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Key ${PI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          payment: {
-            amount: amount,
-            memo: memo,
-            metadata: metadata || {},
-            uid: recipientUid,
-          }
-        }),
+      const paymentData = await piApiRequest('/v2/payments', 'POST', PI_API_KEY, {
+        payment: {
+          amount,
+          memo,
+          metadata: metadata || {},
+          uid: recipientUid,
+        }
       });
 
-      if (!createResponse.ok) {
-        const errorText = await createResponse.text();
-        console.error('[A2U] ❌ Pi API create failed:', createResponse.status, errorText);
-        throw new Error(`Pi API create failed (${createResponse.status}): ${errorText}`);
-      }
-
-      const paymentData = await createResponse.json();
-      console.log('[A2U] ✅ A2U payment created:', JSON.stringify(paymentData));
-
       const paymentId = paymentData.identifier || paymentData.id;
+      console.log('[A2U] Payment created, id:', paymentId);
 
-      // Record in idempotency table
+      // Record in DB
       await supabase.from('payment_idempotency').upsert({
         payment_id: paymentId,
         status: 'a2u_created',
         metadata: {
           ...(metadata || {}),
           direction: 'app_to_user',
-          amount,
-          memo,
-          recipientUid,
+          amount, memo, recipientUid,
           createdAt: new Date().toISOString(),
         }
       }, { onConflict: 'payment_id' });
 
-      // Step 2: Approve the A2U payment
-      console.log('[A2U] 📡 Approving A2U payment:', paymentId);
-      const approveResponse = await fetch(`${PI_API_BASE_URL}/v2/payments/${paymentId}/approve`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Key ${PI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!approveResponse.ok) {
-        const errorText = await approveResponse.text();
-        console.error('[A2U] ❌ Pi API approve failed:', approveResponse.status, errorText);
-        throw new Error(`Pi API approve failed: ${errorText}`);
+      // Step 2: Submit to blockchain (this also auto-approves for A2U)
+      console.log('[A2U] 🔗 Submitting to blockchain...');
+      let txid: string;
+      try {
+        txid = await submitPaymentToBlockchain(paymentId, PI_API_KEY, WALLET_SEED);
+      } catch (blockchainError: any) {
+        console.error('[A2U] ❌ Blockchain submission failed:', blockchainError.message);
+        // Update status
+        await supabase.from('payment_idempotency').update({
+          status: 'a2u_blockchain_failed',
+          metadata: { direction: 'app_to_user', amount, memo, recipientUid, error: blockchainError.message }
+        }).eq('payment_id', paymentId);
+        throw new Error(`Blockchain submission failed: ${blockchainError.message}`);
       }
 
-      const approvalResult = await approveResponse.json();
-      console.log('[A2U] ✅ A2U payment approved:', JSON.stringify(approvalResult));
-
-      // Update idempotency
+      // Update with txid
       await supabase.from('payment_idempotency').update({
-        status: 'a2u_approved',
+        status: 'a2u_submitted',
+        txid,
+      }).eq('payment_id', paymentId);
+
+      // Step 3: Complete the payment
+      console.log('[A2U] ✅ Completing payment with txid:', txid);
+      const completedPayment = await piApiRequest(`/v2/payments/${paymentId}/complete`, 'POST', PI_API_KEY, { txid });
+
+      // Update final status
+      await supabase.from('payment_idempotency').update({
+        status: 'a2u_completed',
+        txid,
         metadata: {
           ...(metadata || {}),
           direction: 'app_to_user',
-          amount,
-          memo,
-          recipientUid,
-          approvedAt: new Date().toISOString(),
+          amount, memo, recipientUid,
+          completedAt: new Date().toISOString(),
         }
       }).eq('payment_id', paymentId);
 
       const totalTime = Date.now() - startTime;
-      console.log('[A2U] ✅ CREATE+APPROVE SUCCESS in', totalTime, 'ms');
+      console.log('[A2U] ✅ FULL A2U FLOW COMPLETE in', totalTime, 'ms');
 
       return new Response(
         JSON.stringify({
           success: true,
-          paymentId: paymentId,
-          payment: paymentData,
-          message: 'A2U payment created and approved. Awaiting blockchain transaction.',
+          paymentId,
+          txid,
+          payment: completedPayment,
+          message: 'A2U payment created, submitted, and completed successfully.',
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
     }
 
-    // ============ ACTION: COMPLETE A2U PAYMENT ============
-    if (action === 'complete') {
-      const { paymentId, txid } = body;
+    // ============ WITHDRAW: User-initiated withdrawal (A2U) ============
+    if (action === 'withdraw') {
+      const { amount, memo, recipientUid, profileId } = body;
 
-      if (!paymentId) throw new Error('Payment ID is required');
-      if (!txid) throw new Error('Transaction ID is required');
+      if (!amount || amount <= 0) throw new Error('Withdrawal amount must be greater than 0');
+      if (!recipientUid) throw new Error('User UID is required for withdrawal');
+      if (!profileId) throw new Error('Profile ID is required for withdrawal');
 
-      console.log('[A2U] 🔄 Completing A2U payment:', paymentId, 'txid:', txid);
+      console.log('[A2U] 💸 Processing withdrawal:', { amount, recipientUid, profileId });
 
-      const completeResponse = await fetch(`${PI_API_BASE_URL}/v2/payments/${paymentId}/complete`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Key ${PI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ txid }),
+      // Verify the profile exists
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, username, pi_wallet_address')
+        .eq('id', profileId)
+        .maybeSingle();
+
+      if (!profile) throw new Error('Profile not found');
+
+      const withdrawalMemo = memo || `Withdrawal for ${profile.username}`;
+
+      // Create A2U payment for withdrawal
+      const paymentData = await piApiRequest('/v2/payments', 'POST', PI_API_KEY, {
+        payment: {
+          amount,
+          memo: withdrawalMemo,
+          metadata: {
+            type: 'withdrawal',
+            profileId,
+            username: profile.username,
+          },
+          uid: recipientUid,
+        }
       });
 
-      if (!completeResponse.ok) {
-        const errorText = await completeResponse.text();
-        console.error('[A2U] ❌ Pi API complete failed:', completeResponse.status, errorText);
-        throw new Error(`Pi API complete failed: ${errorText}`);
+      const paymentId = paymentData.identifier || paymentData.id;
+
+      // Record
+      await supabase.from('payment_idempotency').upsert({
+        payment_id: paymentId,
+        profile_id: profileId,
+        status: 'withdrawal_created',
+        metadata: {
+          direction: 'app_to_user',
+          type: 'withdrawal',
+          amount,
+          memo: withdrawalMemo,
+          recipientUid,
+          profileId,
+          createdAt: new Date().toISOString(),
+        }
+      }, { onConflict: 'payment_id' });
+
+      // Submit to blockchain
+      let txid: string;
+      try {
+        txid = await submitPaymentToBlockchain(paymentId, PI_API_KEY, WALLET_SEED);
+      } catch (blockchainError: any) {
+        await supabase.from('payment_idempotency').update({
+          status: 'withdrawal_failed',
+        }).eq('payment_id', paymentId);
+        throw new Error(`Withdrawal blockchain submission failed: ${blockchainError.message}`);
       }
 
-      const completionResult = await completeResponse.json();
-      console.log('[A2U] ✅ A2U payment completed:', JSON.stringify(completionResult));
+      // Complete
+      const completedPayment = await piApiRequest(`/v2/payments/${paymentId}/complete`, 'POST', PI_API_KEY, { txid });
 
       await supabase.from('payment_idempotency').update({
-        status: 'a2u_completed',
-        txid: txid,
+        status: 'withdrawal_completed',
+        txid,
+        metadata: {
+          direction: 'app_to_user',
+          type: 'withdrawal',
+          amount,
+          memo: withdrawalMemo,
+          recipientUid,
+          profileId,
+          completedAt: new Date().toISOString(),
+        }
       }).eq('payment_id', paymentId);
 
       return new Response(
         JSON.stringify({
           success: true,
-          payment: completionResult,
-          message: 'A2U payment completed successfully',
+          paymentId,
+          txid,
+          payment: completedPayment,
+          message: `Successfully withdrew ${amount} Pi`,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
     }
 
-    // ============ ACTION: GET PAYMENT STATUS ============
+    // ============ STATUS ============
     if (action === 'status') {
       const { paymentId } = body;
-
       if (!paymentId) throw new Error('Payment ID is required');
 
-      console.log('[A2U] 📡 Checking payment status:', paymentId);
-
-      const statusResponse = await fetch(`${PI_API_BASE_URL}/v2/payments/${paymentId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Key ${PI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!statusResponse.ok) {
-        const errorText = await statusResponse.text();
-        throw new Error(`Failed to get payment status: ${errorText}`);
-      }
-
-      const statusData = await statusResponse.json();
-      console.log('[A2U] ✅ Payment status:', JSON.stringify(statusData));
-
+      const statusData = await piApiRequest(`/v2/payments/${paymentId}`, 'GET', PI_API_KEY);
       return new Response(
         JSON.stringify({ success: true, payment: statusData }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
     }
 
-    // ============ ACTION: LIST A2U PAYMENTS (default) ============
-    if (action === 'list') {
-      console.log('[A2U] 📋 Listing A2U payments');
+    // ============ INCOMPLETE: Get incomplete server payments ============
+    if (action === 'incomplete') {
+      const data = await piApiRequest('/v2/payments/incomplete_server_payments', 'GET', PI_API_KEY);
+      return new Response(
+        JSON.stringify({ success: true, payments: data.incomplete_server_payments || [] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
 
+    // ============ CANCEL ============
+    if (action === 'cancel') {
+      const { paymentId } = body;
+      if (!paymentId) throw new Error('Payment ID is required');
+
+      const cancelData = await piApiRequest(`/v2/payments/${paymentId}/cancel`, 'POST', PI_API_KEY);
+
+      await supabase.from('payment_idempotency').update({
+        status: 'a2u_cancelled',
+      }).eq('payment_id', paymentId);
+
+      return new Response(
+        JSON.stringify({ success: true, payment: cancelData, message: 'Payment cancelled' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
+
+    // ============ LIST (default) ============
+    if (action === 'list') {
       const { data: payments, error } = await supabase
         .from('payment_idempotency')
         .select('*')
-        .like('status', 'a2u_%')
+        .or('status.like.a2u_%,status.like.withdrawal_%')
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (error) {
-        console.error('[A2U] ❌ List query error:', error);
-        throw new Error('Failed to list payments');
-      }
+      if (error) throw new Error('Failed to list payments');
 
       return new Response(
         JSON.stringify({ success: true, payments: payments || [] }),
@@ -249,11 +359,7 @@ serve(async (req) => {
     console.error('[A2U] ❌ FAILED in', totalTime, 'ms:', errorMsg);
 
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: errorMsg,
-        timestamp: new Date().toISOString(),
-      }),
+      JSON.stringify({ success: false, error: errorMsg, timestamp: new Date().toISOString() }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }

@@ -11,17 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  ArrowLeft,
-  Send,
-  Wallet,
-  Users,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  Loader2,
-  Info,
-  ArrowUpRight,
-  RefreshCw,
+  ArrowLeft, Send, Wallet, Users, Clock, CheckCircle2, XCircle,
+  Loader2, Info, ArrowUpRight, RefreshCw, ArrowDownToLine,
 } from "lucide-react";
 
 interface A2UPaymentRecord {
@@ -35,142 +26,148 @@ interface A2UPaymentRecord {
 const A2UPayment = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("send");
-  
-  // Send form state
+
+  // Send form
   const [recipientUid, setRecipientUid] = useState("");
   const [amount, setAmount] = useState("");
   const [memo, setMemo] = useState("");
   const [sending, setSending] = useState(false);
-  const [lastPaymentResult, setLastPaymentResult] = useState<any>(null);
-  
-  // History state
+  const [lastResult, setLastResult] = useState<any>(null);
+
+  // Withdraw form
+  const [withdrawUid, setWithdrawUid] = useState("");
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [withdrawMemo, setWithdrawMemo] = useState("");
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [withdrawResult, setWithdrawResult] = useState<any>(null);
+
+  // History
   const [payments, setPayments] = useState<A2UPaymentRecord[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
-  // Load payment history
   const loadPayments = async () => {
     setLoadingHistory(true);
     try {
       const { data, error } = await supabase.functions.invoke('a2u-payment', {
         body: { action: 'list' },
       });
-
-      if (error) {
-        console.error('Failed to load A2U payment history:', error);
-        return;
-      }
-
-      if (data?.success) {
-        setPayments(data.payments || []);
-      }
-    } catch (error) {
-      console.error('Failed to load A2U payment history:', error);
+      if (!error && data?.success) setPayments(data.payments || []);
+    } catch (e) {
+      console.error('Failed to load history:', e);
     } finally {
       setLoadingHistory(false);
     }
   };
 
-  useEffect(() => {
-    loadPayments();
-  }, []);
+  useEffect(() => { loadPayments(); }, []);
 
-  // Send A2U payment
-  const handleSendPayment = async () => {
-    if (!recipientUid.trim()) {
-      toast.error("Please enter the recipient's Pi UID");
-      return;
-    }
-    if (!amount || parseFloat(amount) <= 0) {
-      toast.error("Please enter a valid amount");
-      return;
-    }
-    if (!memo.trim()) {
-      toast.error("Please enter a memo/description");
-      return;
-    }
+  // Send A2U
+  const handleSend = async () => {
+    if (!recipientUid.trim()) return toast.error("Enter recipient UID");
+    if (!amount || parseFloat(amount) <= 0) return toast.error("Enter valid amount");
+    if (!memo.trim()) return toast.error("Enter a memo");
 
     setSending(true);
-    setLastPaymentResult(null);
-
+    setLastResult(null);
     try {
-      console.log('[A2U] Initiating A2U payment...', { recipientUid, amount, memo });
-
       const { data, error } = await supabase.functions.invoke('a2u-payment', {
         body: {
           action: 'create',
           recipientUid: recipientUid.trim(),
           amount: parseFloat(amount),
           memo: memo.trim(),
-          metadata: {
-            source: 'droplink_a2u',
-            sentAt: new Date().toISOString(),
-          },
+          metadata: { source: 'droplink_a2u', sentAt: new Date().toISOString() },
         },
       });
+      if (error) throw new Error(error.message);
+      if (!data?.success) throw new Error(data?.error || 'Failed');
 
-      if (error) {
-        console.error('[A2U] Edge function error:', error);
-        throw new Error(error.message || 'Failed to create A2U payment');
-      }
-
-      if (!data?.success) {
-        throw new Error(data?.error || 'A2U payment failed');
-      }
-
-      console.log('[A2U] ✅ Payment created:', data);
-      setLastPaymentResult(data);
-      toast.success(`Successfully sent ${amount} Pi to user!`);
-      
-      // Reset form
-      setRecipientUid("");
-      setAmount("");
-      setMemo("");
-      
-      // Refresh history
+      setLastResult(data);
+      toast.success(`Sent ${amount} Pi successfully!`);
+      setRecipientUid(""); setAmount(""); setMemo("");
       loadPayments();
-    } catch (error: any) {
-      console.error('[A2U] Payment error:', error);
-      toast.error(error.message || 'Failed to send A2U payment');
-      setLastPaymentResult({ success: false, error: error.message });
+    } catch (e: any) {
+      toast.error(e.message || 'Payment failed');
+      setLastResult({ success: false, error: e.message });
     } finally {
       setSending(false);
     }
   };
 
-  // Check payment status
-  const handleCheckStatus = async (paymentId: string) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('a2u-payment', {
-        body: { action: 'status', paymentId },
-      });
+  // Withdraw A2U
+  const handleWithdraw = async () => {
+    if (!withdrawUid.trim()) return toast.error("Enter your Pi UID");
+    if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) return toast.error("Enter valid amount");
 
-      if (data?.success) {
-        toast.success(`Payment status: ${JSON.stringify(data.payment?.status || 'unknown')}`);
-        loadPayments();
-      } else {
-        toast.error(data?.error || 'Failed to check status');
+    setWithdrawing(true);
+    setWithdrawResult(null);
+    try {
+      // Get profile from localStorage
+      const storedAuth = localStorage.getItem('pi-auth-state');
+      const profileData = storedAuth ? JSON.parse(storedAuth) : null;
+      
+      // Try to find profileId
+      let profileId = profileData?.profile?.id;
+      if (!profileId) {
+        const { data: p } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', profileData?.user?.username || withdrawUid)
+          .maybeSingle();
+        profileId = p?.id;
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Status check failed');
+
+      if (!profileId) throw new Error('Could not find your profile. Please sign in first.');
+
+      const { data, error } = await supabase.functions.invoke('a2u-payment', {
+        body: {
+          action: 'withdraw',
+          recipientUid: withdrawUid.trim(),
+          amount: parseFloat(withdrawAmount),
+          memo: withdrawMemo.trim() || 'User withdrawal',
+          profileId,
+        },
+      });
+      if (error) throw new Error(error.message);
+      if (!data?.success) throw new Error(data?.error || 'Withdrawal failed');
+
+      setWithdrawResult(data);
+      toast.success(`Withdrew ${withdrawAmount} Pi successfully!`);
+      setWithdrawUid(""); setWithdrawAmount(""); setWithdrawMemo("");
+      loadPayments();
+    } catch (e: any) {
+      toast.error(e.message || 'Withdrawal failed');
+      setWithdrawResult({ success: false, error: e.message });
+    } finally {
+      setWithdrawing(false);
     }
   };
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'a2u_created':
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300"><Clock className="w-3 h-3 mr-1" /> Created</Badge>;
-      case 'a2u_approved':
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300"><ArrowUpRight className="w-3 h-3 mr-1" /> Approved</Badge>;
-      case 'a2u_completed':
-        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300"><CheckCircle2 className="w-3 h-3 mr-1" /> Completed</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
+    if (status.includes('completed')) return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300"><CheckCircle2 className="w-3 h-3 mr-1" /> Completed</Badge>;
+    if (status.includes('approved') || status.includes('submitted')) return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300"><ArrowUpRight className="w-3 h-3 mr-1" /> {status.includes('submitted') ? 'Submitted' : 'Approved'}</Badge>;
+    if (status.includes('failed') || status.includes('cancelled')) return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300"><XCircle className="w-3 h-3 mr-1" /> Failed</Badge>;
+    if (status.includes('created')) return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300"><Clock className="w-3 h-3 mr-1" /> Created</Badge>;
+    return <Badge variant="outline">{status}</Badge>;
   };
+
+  const ResultCard = ({ result }: { result: any }) => (
+    result && (
+      <div className={`mt-4 p-4 rounded-lg border ${result.success ? 'bg-green-50 border-green-200 dark:bg-green-950/20' : 'bg-red-50 border-red-200 dark:bg-red-950/20'}`}>
+        <div className="flex items-center gap-2 mb-2">
+          {result.success ? <CheckCircle2 className="w-5 h-5 text-green-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
+          <span className="font-semibold text-sm">{result.success ? 'Success!' : 'Failed'}</span>
+        </div>
+        {result.paymentId && <p className="text-xs text-muted-foreground font-mono">Payment ID: {result.paymentId}</p>}
+        {result.txid && <p className="text-xs text-muted-foreground font-mono">TX: {result.txid}</p>}
+        {result.error && <p className="text-xs text-red-600 mt-1">{result.error}</p>}
+        {result.message && <p className="text-xs text-muted-foreground mt-1">{result.message}</p>}
+      </div>
+    )
+  );
 
   return (
     <div className="min-h-screen bg-background p-4 max-w-2xl mx-auto">
-      {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
           <ArrowLeft className="w-5 h-5" />
@@ -180,24 +177,26 @@ const A2UPayment = () => {
             <Send className="w-5 h-5 text-primary" />
             A2U Payments
           </h1>
-          <p className="text-sm text-muted-foreground">App-to-User Pi Payments</p>
+          <p className="text-sm text-muted-foreground">App-to-User Pi Payments & Withdrawals</p>
         </div>
       </div>
 
-      {/* Info Alert */}
       <Alert className="mb-4 border-primary/30 bg-primary/5">
         <Info className="h-4 w-4 text-primary" />
         <AlertDescription className="text-sm">
-          A2U (App-to-User) payments let your app send Pi directly to users. This uses the Pi Platform API server-side to initiate payments from the app's wallet to a user's Pi wallet.
+          Send Pi to users or process withdrawals. Uses Pi Platform API with Stellar blockchain transactions.
         </AlertDescription>
       </Alert>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full mb-4">
-          <TabsTrigger value="send" className="flex-1 gap-2">
-            <Send className="w-4 h-4" /> Send Pi
+          <TabsTrigger value="send" className="flex-1 gap-1">
+            <Send className="w-4 h-4" /> Send
           </TabsTrigger>
-          <TabsTrigger value="history" className="flex-1 gap-2">
+          <TabsTrigger value="withdraw" className="flex-1 gap-1">
+            <ArrowDownToLine className="w-4 h-4" /> Withdraw
+          </TabsTrigger>
+          <TabsTrigger value="history" className="flex-1 gap-1">
             <Clock className="w-4 h-4" /> History
           </TabsTrigger>
         </TabsList>
@@ -209,129 +208,58 @@ const A2UPayment = () => {
               <Wallet className="w-5 h-5 text-primary" />
               <h2 className="font-semibold text-foreground">Send Pi to User</h2>
             </div>
-
             <div className="space-y-3">
               <div>
-                <Label htmlFor="recipientUid" className="text-sm font-medium">
-                  Recipient Pi UID <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="recipientUid"
-                  placeholder="Enter Pioneer's UID (e.g., abc123-def456...)"
-                  value={recipientUid}
-                  onChange={(e) => setRecipientUid(e.target.value)}
-                  className="mt-1"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  The unique identifier of the Pi user. Obtainable via Pi.authenticate().
-                </p>
+                <Label>Recipient Pi UID <span className="text-destructive">*</span></Label>
+                <Input placeholder="User's Pi UID from authenticate()" value={recipientUid} onChange={(e) => setRecipientUid(e.target.value)} className="mt-1" />
               </div>
-
               <div>
-                <Label htmlFor="amount" className="text-sm font-medium">
-                  Amount (Pi) <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  placeholder="0.00"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="mt-1"
-                />
+                <Label>Amount (Pi) <span className="text-destructive">*</span></Label>
+                <Input type="number" step="0.01" min="0.01" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} className="mt-1" />
               </div>
-
               <div>
-                <Label htmlFor="memo" className="text-sm font-medium">
-                  Memo / Description <span className="text-destructive">*</span>
-                </Label>
-                <Textarea
-                  id="memo"
-                  placeholder="e.g., Reward for completing task, Cashback, Referral bonus..."
-                  value={memo}
-                  onChange={(e) => setMemo(e.target.value)}
-                  className="mt-1"
-                  rows={3}
-                />
+                <Label>Memo <span className="text-destructive">*</span></Label>
+                <Textarea placeholder="e.g., Reward, Cashback, Referral bonus..." value={memo} onChange={(e) => setMemo(e.target.value)} className="mt-1" rows={2} />
               </div>
-
-              <Button
-                onClick={handleSendPayment}
-                disabled={sending || !recipientUid || !amount || !memo}
-                className="w-full h-12 text-base font-semibold gap-2"
-              >
-                {sending ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Sending Payment...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-5 h-5" />
-                    Send {amount ? `${amount} Pi` : 'Payment'}
-                  </>
-                )}
+              <Button onClick={handleSend} disabled={sending || !recipientUid || !amount || !memo} className="w-full h-12 text-base font-semibold gap-2">
+                {sending ? <><Loader2 className="w-5 h-5 animate-spin" /> Sending...</> : <><Send className="w-5 h-5" /> Send {amount ? `${amount} Pi` : ''}</>}
               </Button>
             </div>
-
-            {/* Last Payment Result */}
-            {lastPaymentResult && (
-              <div className={`mt-4 p-4 rounded-lg border ${
-                lastPaymentResult.success 
-                  ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800' 
-                  : 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'
-              }`}>
-                <div className="flex items-center gap-2 mb-2">
-                  {lastPaymentResult.success ? (
-                    <CheckCircle2 className="w-5 h-5 text-green-600" />
-                  ) : (
-                    <XCircle className="w-5 h-5 text-red-600" />
-                  )}
-                  <span className="font-semibold text-sm">
-                    {lastPaymentResult.success ? 'Payment Sent!' : 'Payment Failed'}
-                  </span>
-                </div>
-                {lastPaymentResult.paymentId && (
-                  <p className="text-xs text-muted-foreground font-mono">
-                    Payment ID: {lastPaymentResult.paymentId}
-                  </p>
-                )}
-                {lastPaymentResult.error && (
-                  <p className="text-xs text-red-600 mt-1">{lastPaymentResult.error}</p>
-                )}
-                {lastPaymentResult.message && (
-                  <p className="text-xs text-muted-foreground mt-1">{lastPaymentResult.message}</p>
-                )}
-              </div>
-            )}
+            <ResultCard result={lastResult} />
           </Card>
+        </TabsContent>
 
-          {/* How it Works */}
-          <Card className="p-4 mt-4">
-            <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
-              <Info className="w-4 h-4 text-primary" />
-              How A2U Payments Work
-            </h3>
-            <div className="space-y-2 text-xs text-muted-foreground">
-              <div className="flex gap-2">
-                <span className="font-bold text-primary">1.</span>
-                <span>Your server creates an A2U payment via Pi API with the recipient's UID</span>
-              </div>
-              <div className="flex gap-2">
-                <span className="font-bold text-primary">2.</span>
-                <span>Pi Network processes the payment and approves the blockchain transaction</span>
-              </div>
-              <div className="flex gap-2">
-                <span className="font-bold text-primary">3.</span>
-                <span>The Pi is transferred from the app wallet to the user's Pi wallet</span>
-              </div>
-              <div className="flex gap-2">
-                <span className="font-bold text-primary">4.</span>
-                <span>The server completes the payment and records the transaction</span>
-              </div>
+        {/* WITHDRAW TAB */}
+        <TabsContent value="withdraw">
+          <Card className="p-6 space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <ArrowDownToLine className="w-5 h-5 text-primary" />
+              <h2 className="font-semibold text-foreground">Withdraw Pi</h2>
             </div>
+            <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/20">
+              <Info className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-sm text-amber-800 dark:text-amber-200">
+                Withdraw Pi from the app wallet to your personal Pi wallet. Enter your Pi UID (obtained when you signed in).
+              </AlertDescription>
+            </Alert>
+            <div className="space-y-3">
+              <div>
+                <Label>Your Pi UID <span className="text-destructive">*</span></Label>
+                <Input placeholder="Your Pi user UID" value={withdrawUid} onChange={(e) => setWithdrawUid(e.target.value)} className="mt-1" />
+              </div>
+              <div>
+                <Label>Amount (Pi) <span className="text-destructive">*</span></Label>
+                <Input type="number" step="0.01" min="0.01" placeholder="0.00" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} className="mt-1" />
+              </div>
+              <div>
+                <Label>Memo (optional)</Label>
+                <Input placeholder="Withdrawal reason..." value={withdrawMemo} onChange={(e) => setWithdrawMemo(e.target.value)} className="mt-1" />
+              </div>
+              <Button onClick={handleWithdraw} disabled={withdrawing || !withdrawUid || !withdrawAmount} className="w-full h-12 text-base font-semibold gap-2" variant="default">
+                {withdrawing ? <><Loader2 className="w-5 h-5 animate-spin" /> Processing...</> : <><ArrowDownToLine className="w-5 h-5" /> Withdraw {withdrawAmount ? `${withdrawAmount} Pi` : ''}</>}
+              </Button>
+            </div>
+            <ResultCard result={withdrawResult} />
           </Card>
         </TabsContent>
 
@@ -340,67 +268,38 @@ const A2UPayment = () => {
           <Card className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-foreground flex items-center gap-2">
-                <Clock className="w-5 h-5 text-primary" />
-                Payment History
+                <Clock className="w-5 h-5 text-primary" /> Payment History
               </h2>
               <Button variant="outline" size="sm" onClick={loadPayments} disabled={loadingHistory}>
-                <RefreshCw className={`w-4 h-4 mr-1 ${loadingHistory ? 'animate-spin' : ''}`} />
-                Refresh
+                <RefreshCw className={`w-4 h-4 mr-1 ${loadingHistory ? 'animate-spin' : ''}`} /> Refresh
               </Button>
             </div>
 
             {loadingHistory ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
-              </div>
+              <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
             ) : payments.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Send className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                <p className="text-sm">No A2U payments yet</p>
-                <p className="text-xs">Send your first payment to see it here</p>
+                <p className="text-sm">No payments yet</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {payments.map((payment) => (
-                  <div
-                    key={payment.payment_id}
-                    className="p-3 border rounded-lg bg-card hover:bg-accent/5 transition-colors"
-                  >
+                {payments.map((p) => (
+                  <div key={p.payment_id} className="p-3 border rounded-lg bg-card hover:bg-accent/5 transition-colors">
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-primary" />
-                        <span className="text-sm font-medium">
-                          {payment.metadata?.amount ? `${payment.metadata.amount} Pi` : 'N/A'}
-                        </span>
+                        {p.status.includes('withdrawal') ? <ArrowDownToLine className="w-4 h-4 text-amber-500" /> : <Users className="w-4 h-4 text-primary" />}
+                        <span className="text-sm font-medium">{p.metadata?.amount ? `${p.metadata.amount} Pi` : 'N/A'}</span>
+                        {p.status.includes('withdrawal') && <Badge variant="outline" className="text-xs">Withdrawal</Badge>}
                       </div>
-                      {getStatusBadge(payment.status)}
+                      {getStatusBadge(p.status)}
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">
-                      To: {payment.metadata?.recipientUid || 'Unknown'}
-                    </p>
-                    {payment.metadata?.memo && (
-                      <p className="text-xs text-muted-foreground mt-1 italic">
-                        "{payment.metadata.memo}"
-                      </p>
-                    )}
+                    <p className="text-xs text-muted-foreground truncate">To: {p.metadata?.recipientUid || 'Unknown'}</p>
+                    {p.metadata?.memo && <p className="text-xs text-muted-foreground mt-1 italic">"{p.metadata.memo}"</p>}
                     <div className="flex items-center justify-between mt-2">
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(payment.created_at).toLocaleDateString()} {new Date(payment.created_at).toLocaleTimeString()}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 text-xs"
-                        onClick={() => handleCheckStatus(payment.payment_id)}
-                      >
-                        Check Status
-                      </Button>
+                      <span className="text-xs text-muted-foreground">{new Date(p.created_at).toLocaleString()}</span>
                     </div>
-                    {payment.txid && (
-                      <p className="text-xs text-muted-foreground font-mono mt-1">
-                        TX: {payment.txid.substring(0, 20)}...
-                      </p>
-                    )}
+                    {p.txid && <p className="text-xs text-muted-foreground font-mono mt-1">TX: {p.txid.substring(0, 24)}...</p>}
                   </div>
                 ))}
               </div>
