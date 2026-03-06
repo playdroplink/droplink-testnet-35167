@@ -5,8 +5,8 @@ Write-Host "🔧 Updating Supabase Edge Function Secrets..." -ForegroundColor Cy
 Write-Host ""
 
 # New Pi API Key
-$PI_API_KEY = "zmdsfbedi4idcsniyy7ee1twwulq2cbruighxqgtqozyk6ph1fjswft69cddgqwk"
-$PI_VALIDATION_KEY = "7511661aac4538b1832d2c9ba117f6d972b26a54640598d3fbb9824013c7079203f65b02d125be3f418605cfb89ba0e4443e3ec997e3800eb464df0bc5410d2a"
+$PI_API_KEY = "epbig4kjt1evsdir4jr5nzxsgxg4f8jhqsmeuf3ijo1bshis1qhq50irzx9wotzg"
+$PI_VALIDATION_KEY = "26ec4458680b98edc16b18ed68c2fb7841ee2c9d3b9cfdcfa82de36bea71f64074a2ee5d1fbea04762df431edb1458b44a2ff50679b16d93935b0b645e98174a"
 
 Write-Host "📋 Secrets to update:" -ForegroundColor Yellow
 Write-Host "  • PI_API_KEY: $($PI_API_KEY.Substring(0, 20))..." -ForegroundColor Gray

@@ -136,6 +136,9 @@ export const FooterNav: React.FC = () => {
                 <Button onClick={() => navigate('/subscription')} variant="outline" size="sm" className="w-full justify-start">
                   Subscriptions
                 </Button>
+                <Button onClick={() => navigate('/a2u-payment')} variant="outline" size="sm" className="w-full justify-start">
+                  A2U Payments
+                </Button>
                 <Button onClick={() => navigate('/domain')} variant="outline" size="sm" className="w-full justify-start">
                   Custom Domain
                 </Button>
