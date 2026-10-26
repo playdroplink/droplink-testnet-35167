@@ -4,12 +4,11 @@ import { usePi } from '@/contexts/PiContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, Image as ImageIcon, Loader2, X, ArrowLeft } from 'lucide-react';
+import { Send, Image as ImageIcon, Loader2, X, ArrowLeft, Mic, Video } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
-import { uploadMessageImage } from '@/lib/supabase-storage';
+import { uploadMessageImage, uploadMessageMedia } from '@/lib/supabase-storage';
 import { PageHeader } from '@/components/PageHeader';
 import { FooterNav } from '@/components/FooterNav';
 
@@ -19,6 +18,9 @@ interface Message {
   receiver_profile_id: string;
   content: string;
   image_url?: string;
+  media_url?: string;
+  media_type?: string;
+  duration_ms?: number;
   is_read: boolean;
   created_at: string;
   sender_username?: string;
@@ -41,6 +43,17 @@ export default function ChatPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mediaInputRef = useRef<HTMLInputElement>(null);
+  const [selectedMedia, setSelectedMedia] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<'image' | 'video' | 'audio' | null>(null);
+  const [recording, setRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const typingTimeoutRef = useRef<number | null>(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [showTyping, setShowTyping] = useState(false);
+  const typingChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   useEffect(() => {
     if (piUser?.username && username) {
@@ -53,7 +66,7 @@ export default function ChatPage() {
       loadMessages();
       markMessagesAsRead();
 
-      // Subscribe to new messages
+      // Subscribe to new messages (both sender and receiver)
       const channel = supabase
         .channel(`chat-${myProfileId}-${otherProfile.id}`)
         .on(
@@ -62,17 +75,35 @@ export default function ChatPage() {
             event: 'INSERT',
             schema: 'public',
             table: 'messages',
-            filter: `receiver_profile_id=eq.${myProfileId}`
           },
           (payload) => {
-            console.log('New message received:', payload);
-            loadMessages();
+            const msg: any = payload.new;
+            if (!msg) return;
+            const isInThread =
+              (msg.sender_profile_id === myProfileId && msg.receiver_profile_id === otherProfile.id) ||
+              (msg.sender_profile_id === otherProfile.id && msg.receiver_profile_id === myProfileId);
+            if (isInThread) {
+              loadMessages();
+            }
           }
         )
         .subscribe();
 
+      // Typing indicator channel
+      const typingChannel = supabase
+        .channel(`typing-${myProfileId}-${otherProfile.id}`)
+        .on('broadcast', { event: 'typing' }, (payload) => {
+          if (payload?.payload?.senderId === otherProfile.id) {
+            setShowTyping(payload.payload.isTyping === true);
+          }
+        })
+        .subscribe();
+      typingChannelRef.current = typingChannel;
+
       return () => {
         supabase.removeChannel(channel);
+        supabase.removeChannel(typingChannel);
+        typingChannelRef.current = null;
       };
     }
   }, [myProfileId, otherProfile]);
@@ -207,12 +238,100 @@ export default function ChatPage() {
     }
   };
 
+  const clearMedia = () => {
+    setSelectedMedia(null);
+    setMediaPreview(null);
+    setMediaType(null);
+    if (mediaInputRef.current) {
+      mediaInputRef.current.value = '';
+    }
+  };
+
+  const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const isImage = file.type.startsWith('image/');
+    const isVideo = file.type.startsWith('video/');
+    const isAudio = file.type.startsWith('audio/');
+
+    if (isImage && file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be less than 5MB');
+      return;
+    }
+    if (isVideo && file.size > 20 * 1024 * 1024) {
+      toast.error('Video must be less than 20MB');
+      return;
+    }
+    if (isAudio && file.size > 10 * 1024 * 1024) {
+      toast.error('Audio must be less than 10MB');
+      return;
+    }
+    if (!isImage && !isVideo && !isAudio) {
+      toast.error('Unsupported file type');
+      return;
+    }
+
+    setSelectedMedia(file);
+    setMediaType(isImage ? 'image' : isVideo ? 'video' : 'audio');
+    const previewUrl = URL.createObjectURL(file);
+    setMediaPreview(previewUrl);
+  };
+
+  const startRecording = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error('Voice recording not supported');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) audioChunksRef.current.push(event.data);
+      };
+      recorder.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const file = new File([blob], `voice-${Date.now()}.webm`, { type: 'audio/webm' });
+        setSelectedMedia(file);
+        setMediaType('audio');
+        setMediaPreview(URL.createObjectURL(blob));
+        stream.getTracks().forEach((track) => track.stop());
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setRecording(true);
+    } catch (error) {
+      console.error('Voice record error:', error);
+      toast.error('Unable to start recording');
+    }
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop();
+    setRecording(false);
+  };
+
+  const sendTypingStatus = async (typing: boolean) => {
+    if (!myProfileId || !otherProfile?.id) return;
+    setIsTyping(typing);
+    const channel = typingChannelRef.current;
+    if (!channel) return;
+    await channel.send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: { senderId: myProfileId, isTyping: typing },
+    });
+  };
+
   const sendMessage = async () => {
-    if ((!newMessage.trim() && !selectedImage) || !myProfileId || !otherProfile?.id) return;
+    if ((!newMessage.trim() && !selectedImage && !selectedMedia) || !myProfileId || !otherProfile?.id) return;
 
     setSending(true);
     try {
       let imageUrl = null;
+      let mediaUrl: string | null = null;
+      let mediaTypeToSave: string | null = null;
 
       // Upload image if selected
       if (selectedImage) {
@@ -229,6 +348,22 @@ export default function ChatPage() {
         setUploadingImage(false);
       }
 
+      if (selectedMedia) {
+        setUploadingImage(true);
+        try {
+          const uploaded = await uploadMessageMedia(selectedMedia, `chat/${myProfileId}`);
+          mediaUrl = uploaded?.url || null;
+          mediaTypeToSave = mediaType;
+        } catch (error) {
+          console.error('Failed to upload media:', error);
+          toast.error('Failed to upload media');
+          setUploadingImage(false);
+          setSending(false);
+          return;
+        }
+        setUploadingImage(false);
+      }
+
       // Send message
       const { error } = await supabase
         .from('messages' as any)
@@ -236,7 +371,9 @@ export default function ChatPage() {
           sender_profile_id: myProfileId,
           receiver_profile_id: otherProfile.id,
           content: newMessage.trim(),
-          image_url: imageUrl,
+          image_url: imageUrl || (mediaTypeToSave === 'image' ? mediaUrl : null),
+          media_url: mediaUrl,
+          media_type: mediaTypeToSave,
           is_read: false
         });
 
@@ -244,6 +381,8 @@ export default function ChatPage() {
 
       setNewMessage('');
       clearImage();
+      clearMedia();
+      setIsTyping(false);
       await loadMessages();
       toast.success('Message sent!');
     } catch (error) {
@@ -261,132 +400,216 @@ export default function ChatPage() {
     }
   };
 
-
-
   return (
-    <>
-      <PageHeader 
-        title="Chat" 
-        description="Send and receive messages"
-        icon={<Send />}
-      />
-      <div className="min-h-screen bg-sky-400 flex flex-col relative pb-24">
-      {/* Background decorative elements - Light Mode */}
-      <div className="dark:hidden absolute top-0 left-10 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob\"></div>
-      <div className="dark:hidden absolute bottom-0 right-10 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000\"></div>
-
-      {/* Background decorative elements - Dark Mode */}
-      <div className="hidden dark:block absolute top-0 left-10 w-80 h-80 bg-blue-900 rounded-full mix-blend-screen filter blur-3xl opacity-10 animate-blob\"></div>
-      <div className="hidden dark:block absolute bottom-0 right-10 w-80 h-80 bg-purple-900 rounded-full mix-blend-screen filter blur-3xl opacity-10 animate-blob animation-delay-2000\"></div>
-
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
       {/* Header */}
-      <div className="glass-container border-b rounded-b-3xl mx-3 sm:mx-4 mt-3 sm:mt-4 relative z-10">
-        <div className="max-w-4xl mx-auto px-3 sm:px-4 py-3 flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/inbox')}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <Avatar className="h-10 w-10">
+      <div className="sticky top-0 z-10 flex items-center px-4 py-3 bg-background/80 backdrop-blur-md border-b border-border/40">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="-ml-2 mr-2"
+          onClick={() => navigate('/inbox')}
+        >
+          <ArrowLeft className="h-6 w-6" />
+        </Button>
+        
+        <div
+          className="flex items-center gap-3 flex-1 cursor-pointer"
+          onClick={() => {
+            if (otherProfile?.username) {
+              navigate(`/@${otherProfile.username}`);
+            }
+          }}
+          title="View public bio"
+        >
+          <Avatar className="h-8 w-8">
             <AvatarImage src={otherProfile?.logo} />
             <AvatarFallback>
               {otherProfile?.username?.[0]?.toUpperCase() || '?'}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1">
-            <div className="font-semibold text-gray-900 dark:text-white">@{otherProfile?.username}</div>
-            <div className="text-xs text-gray-600 dark:text-gray-400">
-              {otherProfile?.business_name || 'User'}
-            </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold leading-none">
+              {otherProfile?.business_name || otherProfile?.username}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              @{otherProfile?.username}
+            </span>
           </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+           {/* Call/Video icons placeholder */}
+           <Button variant="ghost" size="icon" className="h-8 w-8">
+             <svg aria-label="Audio Call" className="x1lliihq x1n2onr6 x5n08af" fill="currentColor" height="24" role="img" viewBox="0 0 24 24" width="24"><path d="M18.227 22.138a1.26 1.26 0 0 1-.9-.37l-2.074-2.073a1.99 1.99 0 0 1-.585-1.413 2 2 0 0 1 .586-1.414l.823-.823a.355.355 0 0 0-.022-.522l-4.522-4.521a.355.355 0 0 0-.522.022l-.823.823a1.99 1.99 0 0 1-1.414.586 2 2 0 0 1-1.414-.586L5.297 9.773a1.26 1.26 0 0 1-.366-.893c0-.332.13-.65.366-.894L7.54 5.743a2.98 2.98 0 0 1 2.277-.992 15.65 15.65 0 0 1 7.234 3.033 15.66 15.66 0 0 1 3.033 7.233 2.98 2.98 0 0 1-.992 2.278l-2.247 2.246a1.26 1.26 0 0 1-.893.366l.006.23Zm-11.53-9.528 4.52 4.52a2.35 2.35 0 0 0 3.328 0l2.073 2.073c.473.472.473 1.238 0 1.71l-2.247 2.246a.98.98 0 0 1-.75.328 13.67 13.67 0 0 1-6.315-2.647 13.66 13.66 0 0 1-2.646-6.315.98.98 0 0 1 .328-.75l2.246-2.247a1.21 1.21 0 0 1 1.71 0l-2.247-2.914Z"></path></svg>
+           </Button>
+           <Button variant="ghost" size="icon" className="h-8 w-8">
+             <svg aria-label="Video Call" className="x1lliihq x1n2onr6 x5n08af" fill="currentColor" height="24" role="img" viewBox="0 0 24 24" width="24"><path d="M18.775 6.225 7.225 17.775a.75.75 0 0 1-1.06 0L4.12 15.73a.75.75 0 0 1 0-1.06l11.55-11.55a.75.75 0 0 1 1.06 0l2.045 2.045a.75.75 0 0 1 0 1.06ZM22.5 12c0 5.799-4.701 10.5-10.5 10.5S1.5 17.799 1.5 12 6.201 1.5 12 1.5 22.5 6.201 22.5 12Z"></path></svg>
+           </Button>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-4 relative z-10">
-        <div className="max-w-4xl mx-auto space-y-3">
-          {messages.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <p>No messages yet. Start the conversation!</p>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+            <Avatar className="h-24 w-24">
+              <AvatarImage src={otherProfile?.logo} />
+              <AvatarFallback className="text-4xl">
+                {otherProfile?.username?.[0]?.toUpperCase() || '?'}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="font-semibold text-xl">{otherProfile?.business_name || otherProfile?.username}</h3>
+              <p className="text-muted-foreground">@{otherProfile?.username}</p>
+              <p className="text-sm text-muted-foreground mt-2">You're friends on Droplink</p>
             </div>
-          ) : (
-            messages.map((message) => {
-              const isMyMessage = message.sender_profile_id === myProfileId;
-              return (
-                <div
-                  key={message.id}
-                  className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-[70%] ${
-                      isMyMessage
-                        ? 'glass-btn text-white rounded-tl-2xl rounded-tr-sm rounded-b-2xl'
-                        : 'glass-card rounded-tr-2xl rounded-tl-sm rounded-b-2xl'
-                    } p-3 shadow-sm`}
-                  >
-                    {!isMyMessage && (
-                      <div className="flex items-center gap-2 mb-1">
-                        <Avatar className="h-5 w-5">
-                          <AvatarImage src={message.sender_logo} />
-                          <AvatarFallback className="text-xs">
-                            {message.sender_username?.[0]?.toUpperCase() || '?'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-xs font-medium">
-                          @{message.sender_username}
-                        </span>
-                      </div>
-                    )}
-                    {message.content && (
-                      <p className="text-sm whitespace-pre-wrap break-words">
-                        {message.content}
-                      </p>
-                    )}
-                    {message.image_url && (
-                      <div className="mt-2">
-                        <img
-                          src={message.image_url}
-                          alt="Shared image"
-                          className="rounded-lg max-h-64 cursor-pointer hover:opacity-90 transition-opacity"
-                          onClick={() => window.open(message.image_url, '_blank')}
-                        />
-                      </div>
-                    )}
-                    <div className={`text-xs mt-1 ${isMyMessage ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                      {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                if (otherProfile?.username) {
+                  navigate(`/@${otherProfile.username}`);
+                }
+              }}
+            >
+              View Profile
+            </Button>
+          </div>
+        ) : (
+          messages.map((message, index) => {
+            const isMyMessage = message.sender_profile_id === myProfileId;
+            const showAvatar = !isMyMessage && (index === messages.length - 1 || messages[index + 1]?.sender_profile_id === myProfileId);
+            const isLastMyMessage =
+              isMyMessage &&
+              messages
+                .filter((m) => m.sender_profile_id === myProfileId)
+                .at(-1)?.id === message.id;
+            
+            return (
+              <div
+                key={message.id}
+                className={`flex w-full ${isMyMessage ? 'justify-end' : 'justify-start'}`}
+              >
+                <div className={`flex items-end max-w-[70%] gap-2 ${isMyMessage ? 'flex-row-reverse' : 'flex-row'}`}>
+                   {!isMyMessage && (
+                     <div className="w-7 flex-shrink-0">
+                       {showAvatar && (
+                         <Avatar className="h-7 w-7">
+                           <AvatarImage src={message.sender_logo} />
+                           <AvatarFallback className="text-[10px]">
+                             {message.sender_username?.[0]?.toUpperCase() || '?'}
+                           </AvatarFallback>
+                         </Avatar>
+                       )}
+                     </div>
+                   )}
+
+                   <div className="flex flex-col">
+                    <div
+                      className={`px-4 py-2 relative group ${
+                        isMyMessage
+                          ? 'bg-blue-500 text-white rounded-2xl rounded-br-sm'
+                          : 'bg-zinc-200 dark:bg-zinc-800 text-foreground rounded-2xl rounded-bl-sm'
+                      }`}
+                    >
+                      {message.content && (
+                        <p className="text-[15px] whitespace-pre-wrap break-words leading-relaxed">
+                          {message.content}
+                        </p>
+                      )}
+                      {(message.image_url || (message.media_type === 'image' && message.media_url)) && (
+                        <div className={`${message.content ? 'mt-2' : ''}`}>
+                          <img
+                            src={message.image_url || message.media_url || ''}
+                            alt="Shared image"
+                            className="rounded-lg max-h-64 w-full object-cover cursor-pointer hover:opacity-95 transition-opacity"
+                            onClick={() => window.open(message.image_url || message.media_url || '', '_blank')}
+                          />
+                        </div>
+                      )}
+                      {message.media_type === 'video' && message.media_url && (
+                        <div className={`${message.content ? 'mt-2' : ''}`}>
+                          <video
+                            src={message.media_url}
+                            controls
+                            className="rounded-lg max-h-64 w-full"
+                          />
+                        </div>
+                      )}
+                      {message.media_type === 'audio' && message.media_url && (
+                        <div className={`${message.content ? 'mt-2' : ''}`}>
+                          <audio src={message.media_url} controls className="w-full" />
+                        </div>
+                      )}
                     </div>
-                  </div>
+                    {isLastMyMessage && (
+                      <div className="mt-1 text-[10px] text-slate-500 dark:text-slate-400 text-right">
+                        {message.is_read ? 'Seen' : 'Delivered'}
+                      </div>
+                    )}
+                   </div>
+                  
+                  {/* Time tooltip on hover could go here, or simple timestamp */}
+                  {/* <span className="text-[10px] text-muted-foreground self-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    {formatDistanceToNow(new Date(message.created_at), { addSuffix: false })}
+                  </span> */}
                 </div>
-              );
-            })
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+              </div>
+            );
+          })
+        )}
+        {showTyping && (
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" />
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:150ms]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:300ms]" />
+            </div>
+            {otherProfile?.username || 'User'} is typing...
+          </div>
+        )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input Area */}
-      <div className="glass-container rounded-t-3xl border-t mx-3 sm:mx-4 mb-4 sticky bottom-0 relative z-10">
-        <div className="max-w-4xl mx-auto p-3 sm:p-4">
-          {imagePreview && (
-            <div className="mb-3 relative inline-block">
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="max-h-32 rounded-lg border"
-              />
-              <Button
-                variant="destructive"
-                size="sm"
-                className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
-                onClick={clearImage}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          )}
-          <div className="flex items-end gap-2">
+      <div className="p-4 bg-background">
+        <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-900 rounded-full px-1 py-1 pr-2 border border-border/50">
+           <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full text-blue-500 bg-blue-500/10 hover:bg-blue-500/20"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={sending || uploadingImage}
+            >
+              <div className="bg-blue-500 rounded-full p-1">
+                 <svg aria-label="Camera" className="x1lliihq x1n2onr6 x5n08af" fill="white" height="16" role="img" viewBox="0 0 24 24" width="16"><path d="M8.119 2.75a2.75 2.75 0 0 1 2.525-1.748h2.712a2.75 2.75 0 0 1 2.525 1.748l1.042 2.72a.75.75 0 0 0 .702.48h2.625A2.75 2.75 0 0 1 23 8.7v9.55A2.75 2.75 0 0 1 20.25 21H3.75A2.75 2.75 0 0 1 1 18.25V8.7a2.75 2.75 0 0 1 2.75-2.75h2.625a.75.75 0 0 0 .702-.48l1.042-2.72ZM12 7a6 6 0 1 0 0 12 6 6 0 0 0 0-12Zm0 1.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Z"></path></svg>
+              </div>
+            </Button>
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full text-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/20"
+              onClick={() => mediaInputRef.current?.click()}
+              disabled={sending || uploadingImage}
+            >
+              <Video className="w-4 h-4" />
+            </Button>
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className={`h-9 w-9 rounded-full ${recording ? 'text-red-600 bg-red-500/20' : 'text-emerald-500 bg-emerald-500/10'} hover:bg-emerald-500/20`}
+              onClick={() => (recording ? stopRecording() : startRecording())}
+              disabled={sending || uploadingImage}
+            >
+              <Mic className="w-4 h-4" />
+            </Button>
+            
             <input
               ref={fileInputRef}
               type="file"
@@ -394,39 +617,95 @@ export default function ChatPage() {
               className="hidden"
               onChange={handleImageSelect}
             />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={sending || uploadingImage}
-            >
-              <ImageIcon className="h-4 w-4" />
-            </Button>
+            <input
+              ref={mediaInputRef}
+              type="file"
+              accept="image/*,video/*,audio/*"
+              className="hidden"
+              onChange={handleMediaSelect}
+            />
+
+            {imagePreview && (
+            <div className="relative inline-block h-8 w-8 ml-1">
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="h-8 w-8 rounded object-cover border"
+              />
+              <button
+                className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"
+                onClick={clearImage}
+              >
+                <X className="h-2 w-2" />
+              </button>
+            </div>
+            )}
+
+            {mediaPreview && (
+              <div className="relative inline-block h-8 w-8 ml-1">
+                {mediaType === 'video' ? (
+                  <div className="h-8 w-8 rounded border bg-slate-100 flex items-center justify-center">
+                    <Video className="w-4 h-4 text-slate-500" />
+                  </div>
+                ) : mediaType === 'audio' ? (
+                  <div className="h-8 w-8 rounded border bg-slate-100 flex items-center justify-center">
+                    <Mic className="w-4 h-4 text-slate-500" />
+                  </div>
+                ) : (
+                  <img
+                    src={mediaPreview}
+                    alt="Preview"
+                    className="h-8 w-8 rounded object-cover border"
+                  />
+                )}
+                <button
+                  className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"
+                  onClick={clearMedia}
+                >
+                  <X className="h-2 w-2" />
+                </button>
+              </div>
+            )}
+
             <Input
               value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
+              onChange={(e) => {
+                setNewMessage(e.target.value);
+                if (typingTimeoutRef.current) {
+                  window.clearTimeout(typingTimeoutRef.current);
+                }
+                sendTypingStatus(true);
+                typingTimeoutRef.current = window.setTimeout(() => {
+                  sendTypingStatus(false);
+                }, 1200);
+              }}
               onKeyPress={handleKeyPress}
-              placeholder="Type a message..."
+              placeholder="Message..."
               disabled={sending || uploadingImage}
-              className="flex-1"
+              className="flex-1 border-none bg-transparent shadow-none focus-visible:ring-0 h-9 px-2"
             />
-            <Button
-              onClick={sendMessage}
-              disabled={(!newMessage.trim() && !selectedImage) || sending || uploadingImage}
-              size="icon"
-            >
-              {sending || uploadingImage ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
+            
+            {newMessage.trim() || selectedImage || selectedMedia ? (
+                <Button
+                  onClick={sendMessage}
+                  disabled={sending || uploadingImage}
+                  variant="ghost"
+                  className="h-auto px-3 font-semibold text-blue-500 hover:text-blue-600 hover:bg-transparent"
+                >
+                  Send
+                </Button>
+            ) : (
+                <div className="flex items-center gap-1 mr-1">
+                   <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                      <svg aria-label="Voice Clip" className="x1lliihq x1n2onr6 x5n08af" fill="currentColor" height="24" role="img" viewBox="0 0 24 24" width="24"><path d="M19.5 10.671v.897a7.5 7.5 0 0 1-15 0v-.897a.75.75 0 0 1 1.5 0v.897a6 6 0 0 0 12 0v-.897a.75.75 0 0 1 1.5 0ZM12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M12 19.25a.75.75 0 0 1 .75.75v1.25H16a.75.75 0 0 1 0 1.5H8a.75.75 0 0 1 0-1.5h3.25V20a.75.75 0 0 1 .75-.75Z"></path></svg>
+                   </Button>
+                   <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                      <ImageIcon className="h-6 w-6" />
+                   </Button>
+                </div>
+            )}
         </div>
       </div>
-      </div>
-      <FooterNav />
-    </>
+    </div>
   );
 }

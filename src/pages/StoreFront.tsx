@@ -40,6 +40,9 @@ const StoreFront: React.FC = () => {
   const [showShareDialog, setShowShareDialog] = useState(false);
   // Wallet QR dialog state
   const [showWalletQRDialog, setShowWalletQRDialog] = useState(false);
+  
+  // Products state for preview
+  const [previewProducts, setPreviewProducts] = useState<any[]>([]);
 
   // Get store username from URL
   let storeUsername = "";
@@ -48,6 +51,30 @@ const StoreFront: React.FC = () => {
     storeUsername = match ? match[1] : "";
   }
   useStoreProfile(storeUsername, setWalletAddress, setTipText);
+
+  // Fetch products for preview
+  useEffect(() => {
+    const fetchPreviewProducts = async () => {
+      if (!storeUsername) return;
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', storeUsername)
+        .maybeSingle();
+        
+      if (profile) {
+        const { data: products } = await supabase
+          .from('products')
+          .select('*')
+          .eq('profile_id', profile.id)
+          .order('created_at', { ascending: false });
+          
+        if (products) setPreviewProducts(products);
+      }
+    };
+    fetchPreviewProducts();
+  }, [storeUsername]);
 
   // Example: Send Supabase JWT to your backend
   const sendJwtToBackend = async () => {
@@ -224,6 +251,31 @@ const StoreFront: React.FC = () => {
                   onChange={e => setTipText(e.target.value)}
                 />
               </div>
+
+              {/* Product Grid Preview */}
+              <div className="w-full mt-6 max-w-sm overflow-y-auto max-h-[300px]">
+                <h4 className="text-sm font-semibold mb-3 text-slate-800">Products</h4>
+                {previewProducts.length === 0 ? (
+                    <p className="text-xs text-slate-500 text-center italic">No products found</p>
+                ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                        {previewProducts.map(p => (
+                            <div key={p.id} className="bg-slate-50 p-3 rounded border border-slate-100 flex flex-col gap-2">
+                                <div className="aspect-square bg-slate-200 rounded flex items-center justify-center overflow-hidden">
+                                    {p.image_url ? (
+                                        <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-xs text-slate-400">No Img</span>
+                                    )}
+                                </div>
+                                <div className="text-xs font-medium truncate text-slate-900">{p.title}</div>
+                                <div className="text-xs text-blue-600 font-bold">{p.price} Pi</div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+              </div>
+
                             {/* Wallet QR Dialog */}
                             <Dialog open={showWalletQRDialog} onOpenChange={setShowWalletQRDialog}>
                               <DialogContent className="sm:max-w-md">

@@ -66,7 +66,7 @@ const Dropmate = () => {
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-sky-400">
       <PageHeader 
         title="Dropmate" 
         description="View your chat history"
@@ -106,7 +106,7 @@ const Dropmate = () => {
         </CardContent>
       </Card>
       </div>
-    </>
+    </div>
   );
 };
 

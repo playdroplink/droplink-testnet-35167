@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import ReactPlayer from 'react-player';
 import { usePublicSubscription } from "@/hooks/usePublicSubscription";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PiPaymentDialog } from "@/components/PiPaymentDialog";
 import { toast } from "sonner";
-import { Info, Flag } from "lucide-react";
+import { Info, Flag, VolumeX, Volume2, Play, Pause } from "lucide-react";
 import { FollowersSection } from "@/components/FollowersSection";
 import { GiftDialog } from "@/components/GiftDialog";
 import { AIChatWidget } from "@/components/AIChatWidget";
@@ -24,6 +25,7 @@ import { EmailCaptureDisplay } from "@/components/EmailCaptureDisplay";
 import { ProductDisplay } from "@/components/ProductDisplay";
 import { MembershipGate } from "@/components/MembershipGate";
 import { isVerifiedUser, getVerifiedBadgeUrl } from "@/utils/verifiedUsers";
+import { getSocialIcon as getSocialIconBase, getSocialLabel, extractSocialUsername, isDisplayableSocialUrl } from "@/utils/social-utils";
 import type { UserPreferences } from "@/contexts/UserPreferencesContext";
 import { defaultPreferences } from "@/contexts/UserPreferencesContext";
 import {
@@ -51,22 +53,33 @@ import {
   Eye,
 } from "lucide-react";
 
-// Use react-icons for all major social platforms for reliability
-import { 
-  FaInstagram, FaFacebook, FaYoutube, FaGlobe, FaLinkedin, FaTiktok, FaTwitch, FaXTwitter,
-  FaSnapchat, FaDiscord, FaTelegram, FaWhatsapp, FaReddit, FaPinterest, FaGithub,
-  FaSpotify, FaSoundcloud, FaPatreon, FaMedium, FaBehance, FaDribbble, FaEtsy,
-  FaAmazon, FaShopify, FaStackOverflow, FaBandcamp, FaKickstarter, FaApple, FaVimeo
-} from "react-icons/fa6";
-import { 
-  SiThreads, SiBluesky, SiMastodon, SiKick, SiGitlab, SiDeviantart, 
-  SiSubstack, SiOnlyfans, SiClubhouse, SiLinktree, SiSlack
-} from "react-icons/si";
-
-import type { ProfileData, SocialEmbedItem } from "@/types/profile";
+import type { ProfileData, SocialEmbedItem, SocialLink } from "@/types/profile";
 import { BioTemplate, DEFAULT_TEMPLATE } from "@/config/bioTemplates";
 
 const PREFERENCES_STORAGE_KEY = 'droplink_user_preferences';
+const AFFILIATE_SHARE_IMAGE_PATH = "/affiliate-share.jpg";
+
+const upsertMetaTag = (attribute: "name" | "property", key: string, content: string) => {
+  if (typeof document === "undefined") return;
+  let tag = document.querySelector(`meta[${attribute}="${key}"]`) as HTMLMetaElement | null;
+  if (!tag) {
+    tag = document.createElement("meta");
+    tag.setAttribute(attribute, key);
+    document.head.appendChild(tag);
+  }
+  tag.setAttribute("content", content);
+};
+
+const upsertCanonicalLink = (href: string) => {
+  if (typeof document === "undefined") return;
+  let linkTag = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+  if (!linkTag) {
+    linkTag = document.createElement("link");
+    linkTag.setAttribute("rel", "canonical");
+    document.head.appendChild(linkTag);
+  }
+  linkTag.setAttribute("href", href);
+};
 
 const PublicBio = () => {
   // Pi Payment Dialog state
@@ -99,6 +112,9 @@ const PublicBio = () => {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [showGiftDialog, setShowGiftDialog] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [isVideoMuted, setIsVideoMuted] = useState(true);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(true);
   const [showPiWalletTip, setShowPiWalletTip] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [piAdsOpen, setPiAdsOpen] = useState(false);
@@ -111,6 +127,9 @@ const PublicBio = () => {
   const [connectEmail, setConnectEmail] = useState("");
   const [connectSubmitting, setConnectSubmitting] = useState(false);
   const [socialFeedItems, setSocialFeedItems] = useState<SocialEmbedItem[]>([]);
+  const [showSocialFollowersModal, setShowSocialFollowersModal] = useState(false);
+  const [socialFollowersLoading, setSocialFollowersLoading] = useState(false);
+  const [socialFollowersLinks, setSocialFollowersLinks] = useState<SocialLink[]>([]);
   // State to trigger auto-refresh after Pi Auth if Profile Not Found
   const [shouldAutoRefresh, setShouldAutoRefresh] = useState(false);
 
@@ -142,6 +161,21 @@ const PublicBio = () => {
     if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
     if (value >= 1_000) return `${(value / 1_000).toFixed(1).replace(/\.0$/, '')}K`;
     return value.toLocaleString();
+  };
+
+  const getSocialFollowerValue = (link: SocialLink) => {
+    const verified = Number(link.verified_followers);
+    if (Number.isFinite(verified) && verified > 0) return verified;
+    const followers = Number(link.followers);
+    if (Number.isFinite(followers)) return followers;
+    return 0;
+  };
+
+  const formatPlatformLabel = (platform: string) => {
+    const normalized = platform.toLowerCase();
+    if (normalized === "x" || normalized === "twitter") return "X";
+    if (normalized === "dropshare") return "DropShare";
+    return platform.replace(/[-_]/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
   };
 
   // Monetization features
@@ -237,6 +271,35 @@ const PublicBio = () => {
       navigate("/");
     }
   }, [profile, currentUserProfileId, profileId, navigate]);
+
+  useEffect(() => {
+    if (!profile || typeof window === "undefined") return;
+    const baseUrl = window.location.origin;
+    const canonicalUrl = `${baseUrl}/u/${profile.username}`;
+    const shareImage = `${baseUrl}${AFFILIATE_SHARE_IMAGE_PATH}`;
+    const usernameTag = `@${profile.username}`;
+    const profileDescription = (profile.description || profile.appDescription || "Claim 1 Pi on Droplink Affiliate")
+      .replace(/\s+/g, " ")
+      .trim();
+    const shareTitle = `${usernameTag} | Droplink Affiliate`;
+    const shareDescription = `${profileDescription} | ${usernameTag} on Droplink Affiliate`;
+
+    document.title = shareTitle;
+    upsertCanonicalLink(canonicalUrl);
+    upsertMetaTag("name", "title", shareTitle);
+    upsertMetaTag("name", "description", shareDescription);
+    upsertMetaTag("property", "og:type", "profile");
+    upsertMetaTag("property", "og:url", canonicalUrl);
+    upsertMetaTag("property", "og:title", shareTitle);
+    upsertMetaTag("property", "og:description", shareDescription);
+    upsertMetaTag("property", "og:image", shareImage);
+    upsertMetaTag("property", "og:image:alt", `${usernameTag} Droplink Affiliate`);
+    upsertMetaTag("name", "twitter:card", "summary_large_image");
+    upsertMetaTag("name", "twitter:url", canonicalUrl);
+    upsertMetaTag("name", "twitter:title", shareTitle);
+    upsertMetaTag("name", "twitter:description", shareDescription);
+    upsertMetaTag("name", "twitter:image", shareImage);
+  }, [profile]);
 
   const loadCurrentUserProfile = async () => {
     try {
@@ -622,13 +685,19 @@ const PublicBio = () => {
           .filter((link: any) => link.url && link.url.trim())
           .map((link: any) => ({
             platform: link.type || link.platform,
+            type: link.type || link.platform,
             url: link.url,
             icon: link.icon,
+            label: link.label,
+            followers: link.followers,
+            verified_followers: link.verified_followers,
+            last_verified: link.last_verified,
+            is_verified: link.is_verified,
           }));
       } else if (profileData.social_links && typeof profileData.social_links === 'object') {
         socialLinksArr = Object.entries(profileData.social_links)
           .filter(([_, url]) => url && String(url).trim())
-          .map(([platform, url]) => ({ platform, url }));
+          .map(([platform, url]) => ({ platform, type: platform, url: String(url) }));
       }
 
       // Custom links: only if present and array (fallback to empty array)
@@ -699,6 +768,11 @@ const PublicBio = () => {
         email: "", // email column doesn't exist in profiles table
         logo: profileData.logo || "",
         businessName: profileData.business_name || "",
+        appLink: (profileData as any).app_link || "",
+        appTitle: (profileData as any).app_title || "",
+        appLogo: (profileData as any).app_logo || "",
+        appDescription: (profileData as any).app_description || "",
+        appLinks: (themeSettingsObj as any).appLinks || [],
         description: profileData.description || "",
         youtubeVideoUrl: profileData.youtube_video_url || "",
         backgroundMusicUrl: (profileData as any).background_music_url || "",
@@ -781,6 +855,33 @@ const PublicBio = () => {
     }
   };
 
+  const handleOpenSocialFollowersModal = async () => {
+    if (!profile) return;
+    const validLinks = Array.isArray(profile.socialLinks)
+      ? profile.socialLinks.filter((link) => link.url && isValidSocialUrl(link.url))
+      : [];
+    setSocialFollowersLinks(validLinks);
+    setShowSocialFollowersModal(true);
+    if (!profileId || validLinks.length === 0) return;
+    setSocialFollowersLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("verify-social-followers", {
+        body: { socialLinks: validLinks, profileId }
+      });
+      if (error) {
+        toast.error("Failed to verify social followers");
+      } else if (data?.verifiedLinks) {
+        const verifiedLinks = data.verifiedLinks as SocialLink[];
+        setSocialFollowersLinks(verifiedLinks);
+        setProfile((prev) => prev ? { ...prev, socialLinks: verifiedLinks } : prev);
+      }
+    } catch (fetchError) {
+      toast.error("Failed to verify social followers");
+    } finally {
+      setSocialFollowersLoading(false);
+    }
+  };
+
   const sendMessage = async () => {
     if (!message.trim() || !profileId) return;
 
@@ -804,72 +905,7 @@ const PublicBio = () => {
     }
   };
 
-  const getSocialIcon = (platform: string) => {
-    if (!platform) return <LinkIcon className="w-5 h-5" />;
-    const p = platform.toLowerCase();
-    
-    // Social Networks
-    if (["twitter", "x", "x.com"].includes(p)) return <FaXTwitter className="w-5 h-5" />;
-    if (["instagram", "insta", "instagram.com"].includes(p)) return <FaInstagram className="w-5 h-5" />;
-    if (["facebook", "fb", "facebook.com"].includes(p)) return <FaFacebook className="w-5 h-5" />;
-    if (["snapchat", "snap"].includes(p)) return <FaSnapchat className="w-5 h-5" />;
-    if (["threads"].includes(p)) return <SiThreads className="w-5 h-5" />;
-    if (["bluesky", "bsky"].includes(p)) return <SiBluesky className="w-5 h-5" />;
-    if (["mastodon"].includes(p)) return <SiMastodon className="w-5 h-5" />;
-    if (["reddit"].includes(p)) return <FaReddit className="w-5 h-5" />;
-    if (["clubhouse"].includes(p)) return <SiClubhouse className="w-5 h-5" />;
-    
-    // Professional
-    if (["linkedin", "li", "linkedin.com", "linkedin.com/in/"].includes(p)) return <FaLinkedin className="w-5 h-5" />;
-    if (["github"].includes(p)) return <FaGithub className="w-5 h-5" />;
-    if (["gitlab"].includes(p)) return <SiGitlab className="w-5 h-5" />;
-    if (["stackoverflow", "stack overflow"].includes(p)) return <FaStackOverflow className="w-5 h-5" />;
-    
-    // Content Platforms
-    if (["youtube", "yt", "youtube.com", "youtube.com/@"].includes(p)) return <FaYoutube className="w-5 h-5" />;
-    if (["tiktok", "tiktok.com", "tiktok.com/@"].includes(p)) return <FaTiktok className="w-5 h-5" />;
-    if (["twitch", "twitch.tv"].includes(p)) return <FaTwitch className="w-5 h-5" />;
-    if (["kick"].includes(p)) return <SiKick className="w-5 h-5" />;
-    if (["vimeo"].includes(p)) return <FaVimeo className="w-5 h-5" />;
-    if (["pinterest"].includes(p)) return <FaPinterest className="w-5 h-5" />;
-    
-    // Messaging
-    if (["whatsapp", "wa"].includes(p)) return <FaWhatsapp className="w-5 h-5" />;
-    if (["telegram"].includes(p)) return <FaTelegram className="w-5 h-5" />;
-    if (["discord"].includes(p)) return <FaDiscord className="w-5 h-5" />;
-    if (["slack"].includes(p)) return <SiSlack className="w-5 h-5" />;
-    
-    // Creative & Design
-    if (["behance"].includes(p)) return <FaBehance className="w-5 h-5" />;
-    if (["dribbble"].includes(p)) return <FaDribbble className="w-5 h-5" />;
-    if (["deviantart"].includes(p)) return <SiDeviantart className="w-5 h-5" />;
-    
-    // Music
-    if (["spotify"].includes(p)) return <FaSpotify className="w-5 h-5" />;
-    if (["soundcloud"].includes(p)) return <FaSoundcloud className="w-5 h-5" />;
-    if (["applemusic", "apple music"].includes(p)) return <FaApple className="w-5 h-5" />;
-    if (["bandcamp"].includes(p)) return <FaBandcamp className="w-5 h-5" />;
-    
-    // Content Creation & Monetization
-    if (["patreon"].includes(p)) return <FaPatreon className="w-5 h-5" />;
-    if (["onlyfans"].includes(p)) return <SiOnlyfans className="w-5 h-5" />;
-    if (["substack"].includes(p)) return <SiSubstack className="w-5 h-5" />;
-    if (["medium"].includes(p)) return <FaMedium className="w-5 h-5" />;
-    
-    // Business & Shopping
-    if (["etsy"].includes(p)) return <FaEtsy className="w-5 h-5" />;
-    if (["shopify"].includes(p)) return <FaShopify className="w-5 h-5" />;
-    if (["amazon"].includes(p)) return <FaAmazon className="w-5 h-5" />;
-    
-    // Other
-    if (["linktree"].includes(p)) return <SiLinktree className="w-5 h-5" />;
-    if (["website", "web", "site", "homepage", "home", "globe"].includes(p)) return <FaGlobe className="w-5 h-5" />;
-    if (["email", "mail"].includes(p)) return <Mail className="w-5 h-5" />;
-    if (["phone", "tel"].includes(p)) return <Phone className="w-5 h-5" />;
-    
-    // Fallback
-    return <LinkIcon className="w-5 h-5" />;
-  };
+  const getSocialIcon = (platform: string) => getSocialIconBase(platform);
 
   const getIconStyle = (style: string) => {
     switch (style) {
@@ -940,6 +976,11 @@ const PublicBio = () => {
     return null;
   };
 
+  const isDirectVideoFileUrl = (url?: string | null) => {
+    if (!url) return false;
+    return /\.(mp4|webm|ogg|m4v|mov)(?:$|[?#])/i.test(url);
+  };
+
   useEffect(() => {
     if (notFound || !profile) {
       if (typeof window !== 'undefined') {
@@ -957,6 +998,14 @@ const PublicBio = () => {
       window.location.reload();
     }
   }, [shouldAutoRefresh]);
+
+  useEffect(() => {
+    if (!videoRef.current) return;
+    videoRef.current.muted = isVideoMuted;
+    if (!isVideoMuted) {
+      videoRef.current.volume = 0.5;
+    }
+  }, [isVideoMuted]);
 
   if (loading) {
     return (
@@ -999,14 +1048,16 @@ const PublicBio = () => {
   };
 
   const socialLinksArray = Array.isArray(profile.socialLinks)
-    ? profile.socialLinks.filter(link => isValidSocialUrl(link?.url))
+    ? profile.socialLinks.filter(link => isDisplayableSocialUrl(link?.url))
     : [];
   const totalSocialFollowers = Array.isArray(profile.socialLinks)
-    ? profile.socialLinks.reduce((sum, link) => {
-        const followers = Number(link.followers);
-        return sum + (Number.isFinite(followers) ? followers : 0);
-      }, 0)
+    ? profile.socialLinks.reduce((sum, link) => sum + getSocialFollowerValue(link), 0)
     : 0;
+  const displayFollowerCount = totalSocialFollowers > 0 ? totalSocialFollowers : followerCount;
+  const shouldUseNativeBackgroundVideo =
+    profile.theme.backgroundType === 'video' &&
+    !!profile.theme.backgroundVideo &&
+    isDirectVideoFileUrl(profile.theme.backgroundVideo);
 
   return (
     <div 
@@ -1042,26 +1093,92 @@ const PublicBio = () => {
       {/* Video Background - lock if expired */}
       {profile.theme.backgroundType === 'video' && profile.theme.backgroundVideo && !isPlanExpired && (
         <div className="fixed inset-0 z-0 w-full max-w-full overflow-hidden">
-          <video
-            src={profile.theme.backgroundVideo}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover"
-            style={{ minHeight: '100vh' }}
-            onError={(e) => {
-              console.log('Video background failed to load in PublicBio:', profile.theme.backgroundVideo);
-              (e.target as HTMLVideoElement).style.display = 'none';
-              const parent = e.currentTarget.parentElement;
-              if (parent && parent.parentElement) {
-                parent.parentElement.style.backgroundColor = profile.theme.backgroundColor || '#000000';
-              }
-            }}
-            onLoadedData={() => {
-              console.log('Video background loaded successfully in PublicBio:', profile.theme.backgroundVideo);
-            }}
-          />
+          <div className="absolute inset-0 w-full h-full">
+            {shouldUseNativeBackgroundVideo ? (
+              <video
+                ref={videoRef}
+                src={profile.theme.backgroundVideo}
+                autoPlay
+                loop
+                muted={isVideoMuted}
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover"
+                onLoadedData={() => setIsVideoPlaying(true)}
+                onPlay={() => setIsVideoPlaying(true)}
+                onPause={() => setIsVideoPlaying(false)}
+                onError={(e) => {
+                  console.log('Native background video error', e);
+                }}
+              />
+            ) : (
+              <ReactPlayer
+                url={profile.theme.backgroundVideo}
+                playing={isVideoPlaying}
+                loop={true}
+                muted={isVideoMuted}
+                volume={isVideoMuted ? 0 : 0.6}
+                width="100%"
+                height="100%"
+                className="react-player"
+                style={{ position: 'absolute', top: 0, left: 0 }}
+                config={{
+                  youtube: {
+                    playerVars: { showinfo: 0, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, rel: 0, modestbranding: 1 }
+                  },
+                  vimeo: {
+                    playerOptions: { background: 1, controls: false, title: false, byline: false, portrait: false }
+                  },
+                  file: {
+                    attributes: {
+                      style: { width: '100%', height: '100%', objectFit: 'cover' },
+                      playsInline: true,
+                      crossOrigin: 'anonymous',
+                    }
+                  }
+                }}
+                onReady={() => console.log('Video background ready')}
+                onError={(e) => console.log('Video background error', e)}
+              />
+            )}
+          </div>
+          <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                const nextMuted = !isVideoMuted;
+                setIsVideoMuted(nextMuted);
+                if (shouldUseNativeBackgroundVideo && videoRef.current) {
+                  videoRef.current.muted = nextMuted;
+                  videoRef.current.volume = nextMuted ? 0 : 0.6;
+                  if (!nextMuted && isVideoPlaying && videoRef.current.paused) {
+                    void videoRef.current.play().catch(() => {});
+                  }
+                }
+              }}
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm transition-all"
+              title={isVideoMuted ? "Unmute background video" : "Mute background video"}
+            >
+              {isVideoMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (shouldUseNativeBackgroundVideo && videoRef.current) {
+                  if (isVideoPlaying) {
+                    videoRef.current.pause();
+                  } else {
+                    void videoRef.current.play().catch(() => {});
+                  }
+                  return;
+                }
+                setIsVideoPlaying(!isVideoPlaying);
+              }}
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 text-white border border-white/20 backdrop-blur-sm transition-all"
+              title={isVideoPlaying ? "Pause background video" : "Play background video"}
+            >
+              {isVideoPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            </button>
+          </div>
           <div className="absolute inset-0 bg-black/30" />
         </div>
       )}
@@ -1209,9 +1326,19 @@ const PublicBio = () => {
             
             {/* Follower and View Count */}
             <div className="flex items-center justify-center gap-4 pt-2 text-white/70 text-sm">
-              <div className="flex items-center gap-1.5">
+              <div
+                className="flex items-center gap-1.5 cursor-pointer hover:text-white transition-colors"
+                onClick={handleOpenSocialFollowersModal}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    handleOpenSocialFollowersModal();
+                  }
+                }}
+              >
                 <UserPlus className="w-4 h-4" />
-                <span>{formatCompactNumber(followerCount)} Followers</span>
+                <span>{formatCompactNumber(displayFollowerCount)} Followers</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Eye className="w-4 h-4" />
@@ -1224,6 +1351,10 @@ const PublicBio = () => {
           {Array.isArray(socialLinksArray) && socialLinksArray.length > 0 && (
             <div className="flex flex-wrap justify-center gap-3 pt-3">
               {socialLinksArray.map((link) => {
+                const platformId = link.platform || link.type || link.icon || "";
+                const username = extractSocialUsername(platformId, link.url);
+                const followers = Number(link.verified_followers ?? link.followers ?? 0);
+                const label = getSocialLabel(platformId);
                 const glassMode = profile.theme?.glassMode;
                 const bgStyle = glassMode
                   ? {
@@ -1235,46 +1366,69 @@ const PublicBio = () => {
 
                 return (
                   <a
-                    key={link.platform}
+                    key={platformId || link.url}
                     href={typeof link.url === 'string' ? link.url : ''}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={() => profileId && handleSocialClick(link.platform, profileId)}
-                    className="w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-lg"
-                    style={bgStyle}
-                    title={link.platform}
+                    onClick={() => profileId && handleSocialClick(platformId, profileId)}
+                    className="flex flex-col items-center gap-1.5"
+                    title={label}
                   >
-                    <span className="text-white text-xl">
-                      {getSocialIcon(link.platform)}
+                    <span
+                      className="w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-lg"
+                      style={bgStyle}
+                    >
+                      <span className="text-white text-xl">
+                        {getSocialIcon(platformId)}
+                      </span>
                     </span>
+                    <span className="text-[11px] text-white/85 max-w-[90px] truncate">
+                      {username ? `@${username}` : label}
+                    </span>
+                    {followers > 0 && (
+                      <span className="text-[10px] text-white/60">
+                        {formatCompactNumber(followers)} followers
+                      </span>
+                    )}
                   </a>
                 );
               })}
             </div>
           )}
           
-          {/* Quick Feed Access CTA */}
-          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4 px-4">
+          {/* Quick Feed & Message CTA */}
+          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4 px-4 max-w-full sm:max-w-md mx-auto">
             <Button
               onClick={() => {
-                const feedUrl = profile.storeUrl ? `${window.location.origin}/${profile.storeUrl}/feed` : profile.username ? `${window.location.origin}/@${profile.username}/feed` : undefined;
+                const feedUrl = profile.storeUrl
+                  ? `${window.location.origin}/${profile.storeUrl}/feed`
+                  : profile.username
+                    ? `${window.location.origin}/@${profile.username}/feed`
+                    : undefined;
                 if (feedUrl) {
-                  window.open(feedUrl, '_blank', 'noopener,noreferrer');
+                  window.open(feedUrl, "_blank", "noopener,noreferrer");
                 }
               }}
+              type="button"
               variant="ghost"
-              className={`gap-2 w-full sm:w-auto text-white/90 hover:text-white ${getIconStyle(profile.theme.iconStyle)} border border-white/20 bg-white/5 hover:bg-white/10`}
+              className="gap-2 w-full sm:w-auto text-white/80 hover:text-white border border-white/20 bg-white/0 hover:bg-white/10"
+              aria-label="Open profile feed"
+              title="Open profile feed"
             >
               <Share2 className="w-4 h-4" />
-              Profile Feed
+              Open Feed
             </Button>
             <Button
               variant="ghost"
-              onClick={() => document.getElementById('social-feed')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() =>
+                document
+                  .getElementById("social-feed")
+                  ?.scrollIntoView({ behavior: "smooth" })
+              }
               className="gap-2 w-full sm:w-auto text-white/80 hover:text-white border border-white/20 bg-white/0 hover:bg-white/10"
             >
               <ExternalLink className="w-4 h-4" />
-              View Pins
+              Jump to Pins
             </Button>
           </div>
 
@@ -1284,6 +1438,55 @@ const PublicBio = () => {
               {profile.description}
             </p>
           )}
+
+          {(() => {
+            const appLinks = Array.isArray(profile.appLinks) && profile.appLinks.length > 0
+              ? profile.appLinks
+              : profile.appLink
+                ? [{
+                    id: "primary",
+                    title: profile.appTitle || "Check out my App",
+                    url: profile.appLink,
+                    logo: profile.appLogo,
+                    description: profile.appDescription
+                  }]
+                : [];
+            if (appLinks.length === 0) return null;
+            return (
+              <div className="max-w-full sm:max-w-2xl mx-auto mt-6 px-4 w-full space-y-4">
+                {appLinks.map((link: any) => (
+                  <a
+                    key={link.id || link.url}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-5 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 rounded-3xl p-5 sm:p-6 transition-all hover:scale-[1.02]"
+                  >
+                    {link.logo ? (
+                      <img
+                        src={link.logo}
+                        alt={link.title || "App"}
+                        className="w-20 h-20 rounded-2xl object-cover shadow-lg"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center">
+                        <Zap className="w-9 h-9 text-white" />
+                      </div>
+                    )}
+                    <div className="flex-1 text-left min-w-0">
+                      <h3 className="text-white font-bold text-xl mb-1 truncate">{link.title || "Check out my App"}</h3>
+                      {link.description && (
+                        <p className="text-white/80 text-sm mb-2 line-clamp-2">{link.description}</p>
+                      )}
+                      <span className="text-white/90 text-sm flex items-center gap-1">
+                        Open App <ExternalLink className="w-4 h-4" />
+                      </span>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            );
+          })()}
           
           {/* Email Capture / Connect Section */}
           {userPreferences?.store_settings?.showEmailCapture !== false && (
@@ -1298,19 +1501,12 @@ const PublicBio = () => {
                 
                 setConnectSubmitting(true);
                 try {
-                  // Store connection as analytics event instead of email_captures
-                  const { error } = await supabase
-                    .from('analytics')
-                    .insert({
-                      profile_id: profileId,
-                      event_type: 'email_connect',
-                      event_data: { email: connectEmail, source: 'connect_button' }
-                    });
-                  
-                  if (error) {
-                    console.error('Analytics error:', error);
-                  }
-                  
+                  await captureLead({
+                    profile_id: profileId,
+                    email: connectEmail,
+                    source: 'public_bio',
+                    metadata: { source: 'connect_button', captured_from_page: 'public_bio' }
+                  });
                   toast.success('✅ Thanks for connecting!');
                   setConnectEmail('');
                 } catch (error) {
@@ -1341,6 +1537,9 @@ const PublicBio = () => {
                   </div>
                 </button>
               </form>
+              <p className="text-[11px] sm:text-xs text-white/70 mt-2 text-center">
+                By connecting, you agree to receive newsletters and updates from creators you follow.
+              </p>
             </div>
           )}
 
@@ -1527,8 +1726,17 @@ const PublicBio = () => {
                   ) : (
                     <div className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
                       {item.thumbnail && (
-                        <img src={item.thumbnail} alt={item.title || 'Pinned post'} className="w-full h-48 object-cover" />
-                      )}
+                         <img
+                           src={item.thumbnail}
+                           alt={item.title || 'Pinned post'}
+                           className="w-full h-48 object-cover cursor-pointer"
+                           onClick={() => {
+                             if (item.url) {
+                               window.open(item.url, '_blank', 'noopener,noreferrer');
+                             }
+                           }}
+                         />
+                       )}
                       <div className="p-3 flex items-center justify-between gap-3">
                         <div className="text-white/80 text-sm truncate">
                           {item.url || 'No link available'}
@@ -2017,6 +2225,62 @@ const PublicBio = () => {
         </div>
       </div>
 
+      <Dialog open={showSocialFollowersModal} onOpenChange={setShowSocialFollowersModal}>
+        <DialogContent className="sm:max-w-[540px]">
+          <DialogHeader>
+            <DialogTitle>Social Followers</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {socialFollowersLoading && (
+              <div className="text-sm text-muted-foreground">Fetching verified follower counts...</div>
+            )}
+            {socialFollowersLinks.length === 0 ? (
+              <div className="text-sm text-muted-foreground">No social profiles connected.</div>
+            ) : (
+              <div className="space-y-2">
+                {socialFollowersLinks.map((link, index) => {
+                  const platform = link.platform || link.type || "social";
+                  const followerValue = getSocialFollowerValue(link);
+                  return (
+                    <div
+                      key={`${platform}-${index}`}
+                      className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card p-3"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                          {getSocialIcon(platform)}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-sm font-semibold text-foreground truncate">
+                            {formatPlatformLabel(platform)}
+                          </div>
+                          <a
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-sky-600 truncate block"
+                          >
+                            {link.url}
+                          </a>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-semibold text-foreground">
+                          {formatCompactNumber(followerValue)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {link.is_verified ? "Verified" : "Estimated"}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Wallet Details Dialog */}
       <Dialog open={showWalletDialog} onOpenChange={setShowWalletDialog}>
         <DialogContent className="sm:max-w-md">
@@ -2221,3 +2485,7 @@ const PublicBio = () => {
 };
 
 export default PublicBio;
+
+
+
+

@@ -16,6 +16,7 @@ export const STORAGE_BUCKETS = {
   THUMBNAILS: 'thumbnails',
   BACKGROUNDS: 'backgrounds',
   MESSAGE_IMAGES: 'message-images',
+  MESSAGE_MEDIA: 'message-media',
 } as const;
 
 // Maximum file sizes (in bytes)
@@ -122,6 +123,17 @@ export async function uploadImage(
   }
 
   return uploadFile(file, bucket, folder);
+}
+
+/**
+ * Upload any message media (image, video, audio) without strict type validation.
+ * Validate type/size before calling this.
+ */
+export async function uploadMessageMedia(
+  file: File,
+  folder: string = ''
+): Promise<{ url: string; path: string } | null> {
+  return uploadFile(file, STORAGE_BUCKETS.MESSAGE_MEDIA, folder);
 }
 
 /**

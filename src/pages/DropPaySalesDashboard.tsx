@@ -75,7 +75,7 @@ export default function DropPaySalesDashboard() {
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-sky-400">
       <PageHeader 
         title="Sales & Balance" 
         description="View your DropPay sales"
@@ -106,6 +106,6 @@ export default function DropPaySalesDashboard() {
         </CardContent>
       </Card>
       </div>
-    </>
+    </div>
   );
 }

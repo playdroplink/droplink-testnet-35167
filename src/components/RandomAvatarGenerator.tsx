@@ -57,6 +57,9 @@ function generatePrompt() {
   };
 }
 
+const buildPollinationsUrl = (prompt: string, size = 512) =>
+  `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${size}&height=${size}&nologo=true&seed=${Date.now()}`;
+
 export const RandomAvatarGenerator: React.FC<{
   onAvatarGenerated?: (url: string) => void;
 }> = ({ onAvatarGenerated }) => {
@@ -76,11 +79,19 @@ export const RandomAvatarGenerator: React.FC<{
     setBg(typeof bg === 'string' ? bg : BG_GRADIENTS[0]);
     setFallback(fallback);
     try {
-      const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
+      const url = buildPollinationsUrl(prompt, 512);
       // Preload image to check for errors
-      const img = new window.Image();
+      const img = new Image();
       img.crossOrigin = "anonymous";
       img.onload = () => {
+        const isValidSize = img.naturalWidth >= 128 && img.naturalHeight >= 128;
+        if (!isValidSize) {
+          setError("Avatar image was too small. Showing fallback avatar.");
+          setAvatarUrl(FALLBACK_IMAGE);
+          setLoading(false);
+          if (onAvatarGenerated) onAvatarGenerated(FALLBACK_IMAGE);
+          return;
+        }
         setAvatarUrl(url);
         setLoading(false);
         if (onAvatarGenerated) onAvatarGenerated(url);
@@ -111,7 +122,7 @@ export const RandomAvatarGenerator: React.FC<{
         ) : (
           <Avatar className="w-24 h-24">
             {avatarUrl ? (
-              <AvatarImage src={avatarUrl} alt="Avatar" />
+              <AvatarImage src={avatarUrl} alt="Avatar" referrerPolicy="no-referrer" />
             ) : (
               <AvatarFallback>{fallback}</AvatarFallback>
             )}

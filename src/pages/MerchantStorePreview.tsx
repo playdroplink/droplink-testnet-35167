@@ -6,6 +6,8 @@ import { Store } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { FooterNav } from "@/components/FooterNav";
 import type { ProductItem, CartItem, Order } from "@/types/profile";
+import { createDroppayPaymentViaApi } from "@/lib/droppay";
+import { toast } from "sonner";
 
 const MerchantStorePreview: React.FC = () => {
   const { merchantId } = useParams();
@@ -22,6 +24,7 @@ const MerchantStorePreview: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
@@ -42,7 +45,7 @@ const MerchantStorePreview: React.FC = () => {
       // Fetch products using the correct table
       const { data: products, error: prodError } = await supabase
         .from("products")
-        .select("id, title, price, description, file_url")
+        .select("id, title, price, description, image_url, file_url")
         .eq("profile_id", merchantId)
         .order("created_at", { ascending: false });
         
@@ -79,7 +82,8 @@ const MerchantStorePreview: React.FC = () => {
           name: p.title,
           price: parseFloat(p.price) || 0,
           description: p.description || "",
-          image: p.file_url || undefined,
+          image: p.image_url || undefined,
+          file_url: p.file_url || undefined,
         })),
       });
       setLoading(false);
@@ -108,18 +112,54 @@ const MerchantStorePreview: React.FC = () => {
     setCart((prev) => prev.map((item) => item.id === id ? { ...item, cartQuantity: qty } : item));
   };
 
-  const handleCheckout = () => {
-    const total = cart.reduce((sum, item) => sum + item.price * item.cartQuantity, 0);
-    setOrder({
-      id: Date.now().toString(),
-      items: cart,
-      total,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-      paymentLink: window.location.href + "?pay=1",
-    });
-    setCart([]);
-    setShowCart(false);
+  const handleCheckout = async () => {
+    if (cart.length === 0) return;
+    setProcessingPayment(true);
+    
+    try {
+      const total = cart.reduce((sum, item) => sum + item.price * item.cartQuantity, 0);
+      
+      // Prepare metadata with all purchased items
+      const itemsMetadata = cart.map(item => ({
+        id: item.id,
+        title: item.name,
+        price: item.price,
+        quantity: item.cartQuantity,
+        file_url: item.file_url
+      }));
+
+      const resp = await createDroppayPaymentViaApi({
+        amount: total,
+        currency: 'PI',
+        description: `Order from ${store.name}`,
+        metadata: {
+          profile_id: merchantId,
+          payment_type: 'cart_purchase',
+          items: itemsMetadata,
+          cart_count: cart.length
+        },
+      });
+
+      if (!resp.success) {
+        toast.error(resp.error || 'Payment initialization failed');
+        setProcessingPayment(false);
+        return;
+      }
+
+      const p = resp.payment;
+      const url = p?.checkout_url || p?.url || p?.payment_url || p?.payment?.checkout_url;
+      
+      if (url) {
+        window.location.href = url;
+      } else {
+        toast.error('Missing checkout URL in response');
+        setProcessingPayment(false);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to process checkout');
+      setProcessingPayment(false);
+    }
   };
 
   if (loading) {
@@ -141,7 +181,7 @@ const MerchantStorePreview: React.FC = () => {
         className="min-h-screen flex flex-col items-center justify-start p-4 md:p-8 pb-24"
         style={{ background: store.backgroundColor, color: store.textColor }}
       >
-      <div className="w-full max-w-4xl bg-white/80 rounded-xl shadow-lg p-6 mb-8">
+      <div className="w-full max-w-full bg-white/80 rounded-xl shadow-lg p-6 mb-8">
         {username && (
           <div className="flex justify-end mb-4">
             <Button onClick={() => navigate(`/u/${username}`)}>
@@ -208,8 +248,8 @@ const MerchantStorePreview: React.FC = () => {
                   <span>Total:</span>
                   <span>{cart.reduce((sum, i) => sum + i.price * i.cartQuantity, 0)} Pi</span>
                 </div>
-                <Button className="w-full mt-4" onClick={handleCheckout}>
-                  Checkout & Pay
+                <Button className="w-full mt-4" onClick={handleCheckout} disabled={processingPayment}>
+                  {processingPayment ? "Initializing..." : "Checkout & Pay"}
                 </Button>
               </>
             )}

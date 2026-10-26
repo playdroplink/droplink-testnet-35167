@@ -22,21 +22,13 @@ import {
   Image as ImageIcon
 } from "lucide-react";
 import { getVerifiedBadgeUrl } from "@/utils/verifiedUsers";
-import { 
-  FaTwitter, 
-  FaInstagram, 
-  FaYoutube, 
-  FaSpotify, 
-  FaFacebook, 
-  FaLinkedin, 
-  FaTwitch
-} from "react-icons/fa";
+import { getSocialIcon, getSocialLabel, extractSocialUsername, isDisplayableSocialUrl } from "@/utils/social-utils";
 import { Badge } from "@/components/ui/badge";
 import { QRCodeDisplay } from "./QRCodeDisplay";
 import { BackgroundMusicPlayer } from "./BackgroundMusicPlayer";
 import { toast } from "sonner";
 import { ProfileData } from "@/types/profile";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Flag } from "lucide-react";
 
 import type { ThemeData } from "@/types/profile";
@@ -49,6 +41,9 @@ interface PhonePreviewProps {
 
 export const PhonePreview = ({ profile, bioTemplate = 'cards' }: PhonePreviewProps) => {
   const [showReportModal, setShowReportModal] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [isVideoMuted, setIsVideoMuted] = useState(true);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(true);
   const iconRadius = profile.theme?.iconStyle === 'circle' ? 'rounded-full' : 
                      profile.theme?.iconStyle === 'square' ? 'rounded-lg' : 'rounded-2xl';
   
@@ -98,16 +93,22 @@ export const PhonePreview = ({ profile, bioTemplate = 'cards' }: PhonePreviewPro
     return value.toLocaleString();
   };
 
-  const socialLinkData = [
-    { key: 'twitter', icon: FaTwitter, url: Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === 'twitter')?.url : undefined },
-    { key: 'instagram', icon: FaInstagram, url: Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === 'instagram')?.url : undefined },
-    { key: 'youtube', icon: FaYoutube, url: Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === 'youtube')?.url : undefined },
-    { key: 'tiktok', icon: FaSpotify, url: Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === 'tiktok')?.url : undefined },
-    { key: 'facebook', icon: FaFacebook, url: Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === 'facebook')?.url : undefined },
-    { key: 'linkedin', icon: FaLinkedin, url: Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === 'linkedin')?.url : undefined },
-    { key: 'twitch', icon: FaTwitch, url: Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === 'twitch')?.url : undefined },
-    { key: 'website', icon: Globe, url: Array.isArray(profile.socialLinks) ? profile.socialLinks.find(l => l.type === 'website')?.url : undefined },
-  ].filter(link => link.url);
+  const socialLinkData = Array.isArray(profile.socialLinks)
+  ? profile.socialLinks
+      .filter((link) => isDisplayableSocialUrl(link?.url))
+      .map((link) => {
+        const platformId = link.platform || link.type || link.icon || "website";
+        const username = extractSocialUsername(platformId, link.url);
+        const followers = Number(link.verified_followers ?? link.followers ?? 0);
+        return {
+          platformId,
+          url: link.url,
+          username,
+          followers,
+          label: getSocialLabel(platformId),
+        };
+      })
+  : [];
 
   const getButtonStyles = () => {
     const baseStyles = "w-full py-3 px-4 rounded-xl font-medium text-sm transition-all";
@@ -175,8 +176,16 @@ export const PhonePreview = ({ profile, bioTemplate = 'cards' }: PhonePreviewPro
     return null;
   };
 
+  useEffect(() => {
+    if (!videoRef.current) return;
+    videoRef.current.muted = isVideoMuted;
+    if (!isVideoMuted) {
+      videoRef.current.volume = 0.5;
+    }
+  }, [isVideoMuted]);
+
   return (
-    <div className="relative w-full max-w-[280px] sm:max-w-[320px] md:max-w-[340px] lg:max-w-[360px] h-[580px] sm:h-[640px] md:h-[700px] lg:h-[720px] rounded-[2.5rem] sm:rounded-[3rem] border-[8px] sm:border-[10px] border-foreground/20 shadow-2xl overflow-hidden flex flex-col mx-auto"
+    <div className="relative w-full h-full min-h-[600px] rounded-[2.5rem] sm:rounded-[3rem] border-[8px] sm:border-[10px] border-foreground/20 shadow-2xl overflow-hidden flex flex-col mx-auto"
          style={
            (profile.theme?.backgroundType === 'gif' && profile.theme?.backgroundGif) || (profile.theme?.backgroundType === 'video' && profile.theme?.backgroundVideo)
              ? {}
@@ -192,10 +201,13 @@ export const PhonePreview = ({ profile, bioTemplate = 'cards' }: PhonePreviewPro
             src={profile.theme.backgroundVideo}
             autoPlay
             loop
-            muted
+            muted={isVideoMuted}
             playsInline
             className="w-full h-full object-cover"
             style={{ objectFit: 'cover' }}
+            ref={videoRef}
+            onPlay={() => setIsVideoPlaying(true)}
+            onPause={() => setIsVideoPlaying(false)}
             onError={(e) => {
               console.log('Video background failed to load:', profile.theme?.backgroundVideo);
               (e.target as HTMLVideoElement).style.display = 'none';
@@ -209,6 +221,40 @@ export const PhonePreview = ({ profile, bioTemplate = 'cards' }: PhonePreviewPro
             }}
           />
           <div className="absolute inset-0 bg-black/20"></div>
+          <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                const next = !isVideoMuted;
+                setIsVideoMuted(next);
+                if (videoRef.current) {
+                  videoRef.current.muted = next;
+                  if (!next) {
+                    videoRef.current.volume = 0.5;
+                  }
+                }
+              }}
+              className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 text-white border border-white/20"
+              title={isVideoMuted ? "Unmute background video" : "Mute background video"}
+            >
+              {isVideoMuted ? <span className="text-xs">🔇</span> : <span className="text-xs">🔊</span>}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!videoRef.current) return;
+                if (isVideoPlaying) {
+                  videoRef.current.pause();
+                } else {
+                  void videoRef.current.play();
+                }
+              }}
+              className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 text-white border border-white/20"
+              title={isVideoPlaying ? "Pause background video" : "Play background video"}
+            >
+              {isVideoPlaying ? <span className="text-xs">⏸</span> : <span className="text-xs">▶</span>}
+            </button>
+          </div>
         </div>
       )}
 
@@ -220,6 +266,7 @@ export const PhonePreview = ({ profile, bioTemplate = 'cards' }: PhonePreviewPro
             alt="Background"
             className="w-full h-full object-cover"
             style={{ objectFit: 'cover' }}
+            referrerPolicy="no-referrer"
             onError={(e) => {
               console.log('GIF background failed to load:', profile.theme?.backgroundGif);
               (e.target as HTMLImageElement).style.display = 'none';
@@ -227,11 +274,6 @@ export const PhonePreview = ({ profile, bioTemplate = 'cards' }: PhonePreviewPro
               if (parent) {
                 parent.style.backgroundColor = profile.theme?.backgroundColor || '#000000';
               }
-              // Show fallback message
-              const fallback = document.createElement('div');
-              fallback.className = 'absolute inset-0 flex items-center justify-center text-white bg-black/60';
-              fallback.innerText = 'Failed to load GIF';
-              parent?.appendChild(fallback);
             }}
             onLoad={() => {
               console.log('GIF background loaded successfully:', profile.theme?.backgroundGif);
@@ -247,25 +289,40 @@ export const PhonePreview = ({ profile, bioTemplate = 'cards' }: PhonePreviewPro
       {/* Phone Screen Content - Scrollable with proper flex layout */}
       <div className="flex-1 overflow-y-auto pt-6 sm:pt-8 px-3 sm:px-4 md:px-6 pb-4 sm:pb-6 relative z-10 w-full flex flex-col scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent" data-template={bioTemplate}>
         <div className="flex flex-col items-center text-center space-y-4 sm:space-y-5 md:space-y-6 w-full min-w-0">
-          {/* Cover Image */}
-          {profile.theme?.coverImage && (
-            <div className="relative w-full rounded-2xl overflow-hidden border border-white/15 shadow-xl">
-              <img
-                src={profile.theme.coverImage}
-                alt="Profile cover"
-                className="w-full h-24 sm:h-28 md:h-32 object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/30 to-black/60" />
+          {/* Cover + Portrait (match Public Bio look) */}
+          {profile.theme?.coverImage ? (
+            <div className="relative w-full pb-10">
+              <div className="relative w-full rounded-2xl overflow-hidden border border-white/15 shadow-xl">
+                <img
+                  src={profile.theme.coverImage}
+                  alt="Profile cover"
+                  className="w-full h-24 sm:h-28 md:h-32 object-cover"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/30 to-black/60" />
+              </div>
+              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2">
+                <div
+                  className={`relative w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 ${iconRadius} overflow-hidden shadow-2xl ring-4 ring-white/30`}
+                  style={{ backgroundColor: profile.theme?.primaryColor || '#3b82f6' }}
+                >
+                  {profile.logo ? (
+                    <img src={profile.logo} alt="Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  ) : (
+                    <User className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white/80" />
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className={`w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 ${iconRadius} bg-muted border border-border flex items-center justify-center overflow-hidden shadow-lg`}>
+              {profile.logo ? (
+                <img src={profile.logo} alt="Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              ) : (
+                <User className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white/70" />
+              )}
             </div>
           )}
-          {/* Logo */}
-          <div className={`w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 ${iconRadius} bg-muted border border-border flex items-center justify-center overflow-hidden shadow-lg`}>
-            {profile.logo ? (
-              <img src={profile.logo} alt="Logo" className="w-full h-full object-cover" />
-            ) : (
-              <User className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white/70" />
-            )}
-          </div>
 
           {/* Business Name + Verified Badge */}
           <div className="flex items-center justify-center gap-2">
@@ -299,6 +356,53 @@ export const PhonePreview = ({ profile, bioTemplate = 'cards' }: PhonePreviewPro
             </p>
           )}
 
+          {(() => {
+            const appLinks = Array.isArray(profile.appLinks) && profile.appLinks.length > 0
+              ? profile.appLinks
+              : profile.appLink
+                ? [{
+                    id: "primary",
+                    title: profile.appTitle || "Check out my App",
+                    url: profile.appLink,
+                    logo: profile.appLogo,
+                    description: profile.appDescription
+                  }]
+                : [];
+            if (appLinks.length === 0) return null;
+            return (
+              <div className="w-full px-3 sm:px-4 space-y-3">
+                {appLinks.map((link: any) => (
+                  <a
+                    key={link.id || link.url}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-4 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 rounded-2xl p-4 transition-all"
+                  >
+                    {link.logo ? (
+                      <img
+                        src={link.logo}
+                        alt={link.title || "App"}
+                        className="w-12 h-12 rounded-xl object-cover shadow-md"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-white text-base">
+                        ⚡
+                      </div>
+                    )}
+                    <div className="flex-1 text-left min-w-0">
+                      <div className="text-white font-semibold text-sm truncate">{link.title || "Check out my App"}</div>
+                      {link.description && (
+                        <div className="text-white/70 text-[11px] line-clamp-2">{link.description}</div>
+                      )}
+                      <div className="text-white/80 text-[11px]">Open App ↗</div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            );
+          })()}
+
           {/* Background Music Player */}
           {profile.backgroundMusicUrl && (
             <div className="px-4 w-full">
@@ -315,7 +419,7 @@ export const PhonePreview = ({ profile, bioTemplate = 'cards' }: PhonePreviewPro
             <div className="w-full">
               <div className="relative pb-[56.25%] h-0 overflow-hidden rounded-lg bg-muted">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <FaYoutube className="w-8 h-8 text-white/50" />
+                  {getSocialIcon("youtube", "w-8 h-8 text-white/50")}
                 </div>
               </div>
             </div>
@@ -356,23 +460,41 @@ export const PhonePreview = ({ profile, bioTemplate = 'cards' }: PhonePreviewPro
             )}
 
 
-          {/* Social Links - Enhanced */}
+                    {/* Social Links - Enhanced */}
           {socialLinkData.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-2 sm:gap-2.5 md:gap-3 pt-4 px-2">
-              <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-2"></div>
-              {socialLinkData.map(({ key, icon: Icon }, idx) => (
-                <div
-                  key={key}
-                  className={`w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 ${iconRadius} flex items-center justify-center transition-all duration-300 cursor-pointer shadow-lg hover:shadow-2xl hover:scale-110 active:scale-95 transform`}
-                  style={{ 
-                    backgroundColor: profile.theme?.primaryColor || '#3b82f6',
-                    border: '2px solid rgba(255,255,255,0.15)',
-                    animation: `slideUp 0.4s ease-out ${idx * 0.05}s both`
-                  }}
-                >
-                  <Icon className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5 text-white transition-transform duration-300 hover:rotate-12" />
-                </div>
-              ))}
+            <div className="w-full pt-4 px-2">
+              <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-3"></div>
+              <div className="flex flex-wrap justify-center gap-3">
+                {socialLinkData.map((link, idx) => (
+                  <a
+                    key={`${link.platformId}-${idx}`}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Open ${link.label}`}
+                    className="flex flex-col items-center gap-1 w-16 sm:w-20"
+                  >
+                    <span
+                      className={`w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 ${iconRadius} flex items-center justify-center transition-all duration-300 cursor-pointer shadow-lg hover:shadow-2xl hover:scale-110 active:scale-95 transform focus:outline-none focus:ring-2 focus:ring-white/60`}
+                      style={{
+                        backgroundColor: profile.theme?.primaryColor || '#3b82f6',
+                        border: '2px solid rgba(255,255,255,0.15)',
+                        animation: `slideUp 0.4s ease-out ${idx * 0.05}s both`
+                      }}
+                    >
+                      {getSocialIcon(link.platformId, "w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5 text-white transition-transform duration-300 hover:rotate-12")}
+                    </span>
+                    <span className="text-[10px] sm:text-[11px] text-white/85 truncate w-full text-center">
+                      {link.username ? `@${link.username}` : link.label}
+                    </span>
+                    {link.followers > 0 && (
+                      <span className="text-[9px] sm:text-[10px] text-white/60">
+                        {formatCompactNumber(link.followers)} followers
+                      </span>
+                    )}
+                  </a>
+                ))}
+              </div>
             </div>
           )}
 
@@ -814,3 +936,9 @@ if (typeof document !== 'undefined') {
   styleElement.textContent = animationStyles;
   document.head.appendChild(styleElement);
 }
+
+
+
+
+
+

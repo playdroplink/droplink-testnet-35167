@@ -24,6 +24,9 @@ interface PublicBioHeaderProps {
     username: string;
     description?: string;
     hasPremium?: boolean;
+    appLink?: string;
+    appTitle?: string;
+    appLogo?: string;
   };
   theme: {
     primaryColor: string;
@@ -133,6 +136,36 @@ export const PublicBioHeader = ({ profile, theme, stats, actions }: PublicBioHea
         <p className="text-white/80 max-w-md mx-auto text-base leading-relaxed">
           {profile.description}
         </p>
+      )}
+
+      {/* App Link Section */}
+      {profile.appLink && (
+        <div className="flex justify-center pt-4 pb-2">
+          <a 
+            href={profile.appLink}
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 rounded-xl p-3 transition-all hover:scale-105 max-w-sm w-full"
+          >
+            {profile.appLogo ? (
+              <img 
+                src={profile.appLogo} 
+                alt={profile.appTitle || "App"} 
+                className="w-12 h-12 rounded-lg object-cover shadow-md"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center">
+                <span className="text-xl">⚡</span>
+              </div>
+            )}
+            <div className="flex-1 text-left min-w-0">
+              <h3 className="text-white font-bold text-base truncate">{profile.appTitle || "Check out my App"}</h3>
+              <div className="text-white/70 text-xs flex items-center gap-1">
+                Open App ↗
+              </div>
+            </div>
+          </a>
+        </div>
       )}
 
       {/* Action Buttons */}

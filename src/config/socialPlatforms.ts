@@ -16,6 +16,15 @@ export interface SocialPlatform {
 export const SOCIAL_PLATFORMS: SocialPlatform[] = [
   // Social Networks
   {
+    id: 'dropshare',
+    name: 'DropShare',
+    icon: '🔗',
+    placeholder: 'https://dropshare.space/username',
+    urlPrefix: 'dropshare.space/',
+    color: '#38bdf8',
+    category: 'social'
+  },
+  {
     id: 'instagram',
     name: 'Instagram',
     icon: '📸',

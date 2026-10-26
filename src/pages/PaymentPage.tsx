@@ -114,7 +114,7 @@ const PaymentPage: React.FC = () => {
         status: 'active',
         pi_amount: paymentLink.amount,
         auto_renew: false,
-        txid,
+        pi_transaction_id: txid,
       };
 
       const { error: insertError } = await supabase

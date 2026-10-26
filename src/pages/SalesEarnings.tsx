@@ -96,10 +96,35 @@ const SalesEarnings: React.FC = () => {
       
       if (subError) throw subError;
 
+      // Fetch referral code for affiliate earnings
+      const { data: referralCode, error: refError } = await supabase
+        .from("referral_codes")
+        .select("*")
+        .eq("profile_id", profileId)
+        .maybeSingle();
+
+      if (refError && refError.code !== 'PGRST116') {
+        console.warn("Error fetching referral code:", refError);
+      }
+
       // Process sales data
       const allSales: Sale[] = [];
       let totalRevenue = 0;
       const productStats: { [key: string]: Product } = {};
+
+      // Process affiliate earnings
+      if (referralCode && referralCode.uses_count > 0 && referralCode.reward_type === 'pi_coins') {
+        const affiliateRevenue = referralCode.uses_count * referralCode.reward_value;
+        totalRevenue += affiliateRevenue;
+
+        productStats["affiliate"] = {
+          id: "affiliate",
+          title: "Affiliate Program",
+          total_sales: referralCode.uses_count,
+          sale_count: referralCode.uses_count,
+          revenue: affiliateRevenue,
+        };
+      }
 
       // Process product sales
       if (transactions) {
@@ -202,7 +227,6 @@ const SalesEarnings: React.FC = () => {
         profile_id: profileId,
         amount: withdrawalAmount,
         status: "pending",
-        requested_at: new Date().toISOString(),
       });
 
       if (error) throw error;
@@ -252,7 +276,7 @@ const SalesEarnings: React.FC = () => {
         icon={<DollarSign />}
       />
       <div className="min-h-screen bg-sky-400 px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 pb-24">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full mx-auto">
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -373,7 +397,7 @@ const SalesEarnings: React.FC = () => {
                         <div className="w-full bg-slate-200 rounded-full h-2">
                           <div 
                             className="bg-green-500 h-2 rounded-full" 
-                            style={{ width: `${Math.min((product.revenue / totalEarnings) * 100, 100)}%` }}
+                            style={{ width: `${totalEarnings > 0 ? Math.min((product.revenue / totalEarnings) * 100, 100) : 0}%` }}
                           ></div>
                         </div>
                         <p className="text-slate-600 text-xs mt-2">

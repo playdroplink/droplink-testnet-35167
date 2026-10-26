@@ -78,6 +78,13 @@ export function useSubscriptionPayment(): UseSubscriptionPaymentResult {
       const callbacks: PaymentCallbacks = {
         onReadyForServerApproval: (paymentId: string) => {
           console.log(`[SUBSCRIPTION] Payment ${paymentId} ready for server approval`);
+          // Save pending payment ID for failsafe recovery
+          try {
+            localStorage.setItem('pending_pi_payment_id', paymentId);
+            localStorage.setItem('pending_pi_plan_type', plan.name.toLowerCase());
+          } catch (e) {
+            console.error('Failed to save payment ID', e);
+          }
           setCurrentPhase('server_approval');
         },
         
@@ -86,14 +93,23 @@ export function useSubscriptionPayment(): UseSubscriptionPaymentResult {
           setCurrentPhase('server_completion');
           
           try {
-            // Store the successful payment in database
+            // Store the successful payment in database (client-side redundancy)
             await updateSubscriptionInDatabase(plan, userProfile.id, paymentId, txid, plan.price);
+            
+            // Force refresh user session and profile to reflect new subscription
+            await supabase.auth.refreshSession();
+            // Invalidate/refetch profile data if using React Query or similar
+            // For now, we rely on the realtime subscription in useActiveSubscription hook
             
             toast.success(`${plan.name} subscription activated! 🎉`, { 
               id: toastId,
               description: `Your ${plan.billingPeriod} subscription is now active`,
               duration: 5000
             });
+            
+            // Clear pending payment from storage
+            localStorage.removeItem('pending_pi_payment_id');
+            localStorage.removeItem('pending_pi_plan_type');
             
             setCurrentPhase('completed');
             setPaymentProgress({ 
@@ -224,11 +240,13 @@ async function updateSubscriptionInDatabase(
     endDate: endDate.toISOString()
   });
 
+  const planType = plan.name.toLowerCase();
+
   const { error } = await supabase
     .from('subscriptions')
     .upsert({
       profile_id: profileId,
-      plan_type: plan.name.toLowerCase(),
+      plan_type: planType,
       status: 'active',
       start_date: startDate.toISOString(),
       end_date: endDate.toISOString(),
@@ -245,8 +263,33 @@ async function updateSubscriptionInDatabase(
     });
 
   if (error) {
-    console.error('[SUBSCRIPTION] Database error:', error);
-    throw new Error(`Failed to update subscription: ${error.message}`);
+    console.error('[SUBSCRIPTION] Database upsert error, trying fallback insert:', error);
+    
+    // Fallback: Try to delete duplicates and insert fresh
+    // This handles cases where unique constraint might be missing
+    await supabase.from('subscriptions').delete().eq('profile_id', profileId);
+    
+    const { error: insertError } = await supabase
+      .from('subscriptions')
+      .insert({
+        profile_id: profileId,
+        plan_type: planType,
+        status: 'active',
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
+        pi_amount: amount,
+        billing_period: plan.billingPeriod,
+        auto_renew: true,
+        payment_id: paymentId,
+        transaction_id: txid,
+        payment_method: 'pi_network',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+      
+    if (insertError) {
+      throw new Error(`Failed to update subscription: ${insertError.message}`);
+    }
   }
 
   console.log('[SUBSCRIPTION] Database updated successfully');

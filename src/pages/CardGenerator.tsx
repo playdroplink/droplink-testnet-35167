@@ -578,7 +578,7 @@ export default function CardGenerator() {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full mx-auto">
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 text-white">
             Virtual Card Generator

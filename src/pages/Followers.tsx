@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, UserCheck, UserPlus, ExternalLink } from "lucide-react";
+import { Users, UserCheck, UserPlus, ExternalLink, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/PageHeader";
@@ -226,7 +226,12 @@ const Followers = () => {
     return following.some(f => f.following_profile.id === profileId);
   };
 
-  const renderProfileCard = (profile: FollowerProfile, showUnfollow?: string, isFollowerCard?: boolean) => (
+  const renderProfileCard = (
+    profile: FollowerProfile,
+    showUnfollow?: string,
+    isFollowerCard?: boolean,
+    showChat?: boolean
+  ) => (
     <Card key={profile.id} className="hover:shadow-lg transition-shadow">
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
@@ -265,6 +270,17 @@ const Followers = () => {
             >
               <ExternalLink className="w-4 h-4" />
             </Button>
+
+            {showChat && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/chat/${profile.username}`)}
+                title="Chat"
+              >
+                <MessageSquare className="w-4 h-4" />
+              </Button>
+            )}
             
             {isFollowerCard && !isCurrentlyFollowing(profile.id) && (
               <Button
@@ -296,7 +312,7 @@ const Followers = () => {
 
 
   return (
-    <div>
+    <div className="min-h-screen bg-sky-400">
       <PageHeader 
         title="Community" 
         description="Manage your followers and following"
@@ -378,7 +394,12 @@ const Followers = () => {
                 </div>
               ) : (
                 following.map((follow) =>
-                  renderProfileCard(follow.following_profile as FollowerProfile, follow.id)
+                  renderProfileCard(
+                    follow.following_profile as FollowerProfile,
+                    follow.id,
+                    false,
+                    true
+                  )
                 )
               )}
             </TabsContent>

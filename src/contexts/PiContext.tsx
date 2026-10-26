@@ -42,10 +42,10 @@ export function isPiBrowserEnv(): boolean {
   console.log('[PI DETECTION] Pi Browser not detected. UA:', ua.substring(0, 150));
   return false;
 }
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { PI_CONFIG, PI_USE_BACKEND, isPiNetworkAvailable, validatePiConfig, validateMainnetConfig, getWalletTokens, getTokenBalance, createTokenTrustline } from "@/config/pi-config";
+import { PI_CONFIG, isPiNetworkAvailable, validatePiConfig, validateMainnetConfig, getWalletTokens, getTokenBalance, createTokenTrustline } from "@/config/pi-config";
 import { authenticatePiUser, verifyStoredPiToken } from "@/services/piMainnetAuthService";
 
 // Pi Network Types
@@ -206,10 +206,116 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
   const [currentAccount, setCurrentAccount] = useState<PiAccount | null>(null);
   const [availableAccounts, setAvailableAccounts] = useState<PiAccount[]>([]);
   const [currentProfile, setCurrentProfile] = useState<any | null>(null);
+  const presenceChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const presenceProfileIdRef = useRef<string | null>(null);
+  const lastActiveUpdateRef = useRef<number>(0);
   
   // Set isAuthenticated based on real authentication state
   const isAuthenticated = !!(piUser && accessToken);
   const networkLabel = 'Mainnet';
+
+  useEffect(() => {
+    if (!isAuthenticated || !piUser?.username) return;
+
+    let isMounted = true;
+
+    const updateLastActive = async (profileId: string) => {
+      const now = Date.now();
+      if (now - lastActiveUpdateRef.current < 60_000) return;
+      lastActiveUpdateRef.current = now;
+
+      try {
+        await supabase
+          .from('profiles')
+          .update({ last_active_at: new Date().toISOString() })
+          .eq('id', profileId);
+      } catch (error) {
+        console.warn('[PRESENCE] Failed to update last_active_at:', error);
+      }
+    };
+
+    const setupPresence = async () => {
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', piUser.username)
+          .maybeSingle();
+
+        if (!isMounted) return;
+        if (error || !profile?.id) {
+          console.warn('[PRESENCE] No profile found for presence tracking');
+          return;
+        }
+
+        presenceProfileIdRef.current = profile.id;
+
+        const channel = supabase.channel('presence-global', {
+          config: {
+            presence: { key: profile.id }
+          }
+        });
+
+        presenceChannelRef.current = channel;
+
+        channel.subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            await channel.track({
+              profile_id: profile.id,
+              username: piUser.username,
+              online_at: new Date().toISOString()
+            });
+            await updateLastActive(profile.id);
+          }
+        });
+
+        const heartbeat = window.setInterval(async () => {
+          if (!presenceProfileIdRef.current) return;
+          await channel.track({
+            profile_id: presenceProfileIdRef.current,
+            username: piUser.username,
+            online_at: new Date().toISOString()
+          });
+          await updateLastActive(presenceProfileIdRef.current);
+        }, 60_000);
+
+        const handleVisibility = async () => {
+          if (document.visibilityState !== 'visible') return;
+          if (!presenceProfileIdRef.current) return;
+          await channel.track({
+            profile_id: presenceProfileIdRef.current,
+            username: piUser.username,
+            online_at: new Date().toISOString()
+          });
+          await updateLastActive(presenceProfileIdRef.current);
+        };
+
+        document.addEventListener('visibilitychange', handleVisibility);
+
+        return () => {
+          window.clearInterval(heartbeat);
+          document.removeEventListener('visibilitychange', handleVisibility);
+        };
+      } catch (error) {
+        console.warn('[PRESENCE] Setup failed:', error);
+      }
+    };
+
+    let cleanup: (() => void) | undefined;
+    setupPresence().then((fn) => {
+      cleanup = fn;
+    });
+
+    return () => {
+      isMounted = false;
+      if (cleanup) cleanup();
+      if (presenceChannelRef.current) {
+        supabase.removeChannel(presenceChannelRef.current);
+        presenceChannelRef.current = null;
+      }
+      presenceProfileIdRef.current = null;
+    };
+  }, [isAuthenticated, piUser?.username]);
 
   useEffect(() => {
     const initializePi = async () => {
@@ -248,7 +354,10 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
 
           // Check for ad network support
           try {
-            console.log('[AD NETWORK] Detecting ad network support...');
+            const debugAd = import.meta.env.VITE_DEBUG_MODE === 'true';
+            if (debugAd) {
+              console.log('[AD NETWORK] Detecting ad network support...');
+            }
             let adSupported = false;
             let features: string[] = [];
 
@@ -257,7 +366,9 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
               try {
                 features = await (window as any).Pi.nativeFeaturesList();
                 adSupported = features.includes('ad_network') || features.includes('ads');
-                console.log('[AD NETWORK] Native features:', features);
+                if (debugAd) {
+                  console.log('[AD NETWORK] Native features:', features);
+                }
               } catch (featureErr) {
                 console.warn('[AD NETWORK] nativeFeaturesList failed:', featureErr);
               }
@@ -267,24 +378,34 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
             let hasAdAPI = adSupported;
             if (!hasAdAPI && (window as any).Pi?.Ads) {
               hasAdAPI = true;
-              console.log('[AD NETWORK] ✅ Pi.Ads API detected');
+              if (debugAd) {
+                console.log('[AD NETWORK] Pi.Ads API detected');
+              }
             }
             if (!hasAdAPI && (window as any).Pi?.showRewardedAd) {
               hasAdAPI = true;
-              console.log('[AD NETWORK] ✅ Pi.showRewardedAd detected');
+              if (debugAd) {
+                console.log('[AD NETWORK] Pi.showRewardedAd detected');
+              }
             }
             if (!hasAdAPI && (window as any).Pi?.showInterstitialAd) {
               hasAdAPI = true;
-              console.log('[AD NETWORK] ✅ Pi.showInterstitialAd detected');
+              if (debugAd) {
+                console.log('[AD NETWORK] Pi.showInterstitialAd detected');
+              }
             }
 
-            console.log('[AD NETWORK] Ad network supported:', hasAdAPI);
+            if (debugAd) {
+              console.log('[AD NETWORK] Ad network supported:', hasAdAPI);
+            }
             setAdNetworkSupported(hasAdAPI);
           } catch (err) {
             console.error('[AD NETWORK] Error detecting ad network:', err);
             // Fallback detection
             if ((window as any).Pi?.Ads || (window as any).Pi?.showRewardedAd) {
-              console.log('[AD NETWORK] ✅ Fallback detection successful');
+              if (import.meta.env.VITE_DEBUG_MODE === 'true') {
+                console.log('[AD NETWORK] Fallback detection successful');
+              }
               setAdNetworkSupported(true);
             } else {
               setAdNetworkSupported(false);
@@ -339,6 +460,66 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
     };
     
     initializePi();
+
+    // Listen for Supabase Auth changes (e.g. Email/Gmail login)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[AUTH] Supabase auth state change:', event, session?.user?.email);
+      
+      if (session?.user) {
+        // If user is logged in via Supabase (e.g. Gmail), ensure PiContext knows about it
+        // This allows admin/email users to bypass Pi-specific auth if needed
+        
+        // Check if we already have this user set
+        if (piUser?.uid === session.user.id) return;
+
+        try {
+          // Fetch profile to get username
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single();
+
+          if (profile) {
+            console.log('[AUTH] Found existing profile for Supabase user:', profile.username);
+            const user: PiUser = {
+              uid: session.user.id,
+              username: profile.username || session.user.email?.split('@')[0] || 'admin',
+              wallet_address: profile.pi_wallet_address
+            };
+            
+            setAccessToken(session.access_token);
+            setPiUser(user);
+            setCurrentProfile(profile);
+            setLoading(false);
+          } else {
+             // Create a temporary profile object if none exists (fallback)
+             // Real profile creation should happen on sign-up, but this handles edge cases
+             console.log('[AUTH] No profile found, using session data');
+             const fallbackUser: PiUser = {
+                uid: session.user.id,
+                username: session.user.email?.split('@')[0] || 'admin'
+             };
+             setPiUser(fallbackUser);
+             setAccessToken(session.access_token);
+             setLoading(false);
+          }
+        } catch (err) {
+          console.error('[AUTH] Error syncing Supabase session to PiContext:', err);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        // Handle sign out if it wasn't triggered by our signOut function
+        if (piUser) {
+           // We don't call signOut() here to avoid loops if signOut() calls supabase.auth.signOut()
+           // Just clear state if needed, or let signOut() handle it.
+           // For now, we rely on the manual signOut to clear local state.
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Sign In with Pi Network (mainnet)
@@ -1095,16 +1276,6 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
             }, 50000);
             
             try {
-              if (!PI_USE_BACKEND) {
-                clearTimeout(approvalTimeout);
-                console.log('[PAYMENT] ℹ️ Frontend-only mode: skipping backend approval');
-                toast.success('Payment approved (frontend-only mode)', {
-                  description: 'Proceeding to wallet confirmation...',
-                  duration: 3000
-                });
-                return;
-              }
-
               const { error, data } = await supabase.functions.invoke('pi-payment-approve', {
                 body: { paymentId, metadata },
                 headers: { 'Authorization': `Bearer ${accessToken}` }
@@ -1171,17 +1342,6 @@ export const PiProvider = ({ children }: { children: ReactNode }) => {
             }, 50000);
             
             try {
-              if (!PI_USE_BACKEND) {
-                clearTimeout(completionTimeout);
-                console.log('[PAYMENT] ℹ️ Frontend-only mode: skipping backend completion');
-                toast.success('Payment completed (frontend-only mode)', {
-                  description: `Transaction: ${txid.substring(0, 16)}...`,
-                  duration: 5000
-                });
-                resolve(txid);
-                return;
-              }
-
               const { error, data } = await supabase.functions.invoke('pi-payment-complete', {
                 body: { paymentId, txid, metadata },
                 headers: { 'Authorization': `Bearer ${accessToken}` }
@@ -1687,3 +1847,4 @@ export const usePi = () => {
   }
   return context;
 };
+

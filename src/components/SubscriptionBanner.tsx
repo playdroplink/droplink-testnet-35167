@@ -29,7 +29,8 @@ export const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({
     isExpired, 
     isExpiringSoon, 
     daysLeft, 
-    loading 
+    loading,
+    expiresAt
   } = useActiveSubscription();
   
   if (loading) return null;
@@ -71,7 +72,7 @@ export const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({
         <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="text-amber-800 dark:text-amber-200">
             <span className="font-semibold">
-              Your {planName} plan expires in {daysLeft} day{daysLeft !== 1 ? 's' : ''}.
+              Your {planName} plan expires on {expiresAt ? new Date(expiresAt).toLocaleDateString() : ''} ({daysLeft} day{daysLeft !== 1 ? 's' : ''} left).
             </span>
             <span className="hidden sm:inline"> Renew to keep your premium features.</span>
           </div>
@@ -148,7 +149,7 @@ export const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({
             </div>
             {daysLeft !== null && (
               <p className="text-xs text-green-600 dark:text-green-400">
-                {daysLeft} days remaining
+                Expires: {expiresAt ? new Date(expiresAt).toLocaleDateString() : ''} ({daysLeft} days left)
               </p>
             )}
           </div>

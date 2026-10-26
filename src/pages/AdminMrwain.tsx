@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Mail, Lock, User, Shield, LogOut, Upload, Image as ImageIcon, Trash2 } from "lucide-react";
+import { Loader2, Mail, Lock, User, Shield, LogOut, Upload, Image as ImageIcon, Trash2, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import droplinkLogo from "@/assets/droplink-logo.png";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,7 @@ const AdminMrwain = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingBackground, setUploadingBackground] = useState(false);
   const [profileData, setProfileData] = useState<any>(null);
+  const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const backgroundInputRef = useRef<HTMLInputElement>(null);
@@ -35,7 +36,20 @@ const AdminMrwain = () => {
     const checkAuth = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        setCurrentUser(user);
+        if (user) {
+          setCurrentUser(user);
+          await loadProfileData(user.id);
+          await loadWithdrawals();
+          return;
+        }
+
+        // Fallback: check session directly in case getUser is unavailable
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setCurrentUser(session.user);
+          await loadProfileData(session.user.id);
+          await loadWithdrawals();
+        }
       } catch (error) {
         console.error("Auth check error:", error);
       } finally {
@@ -52,6 +66,7 @@ const AdminMrwain = () => {
       // Load profile data when user is authenticated
       if (session?.user) {
         await loadProfileData(session.user.id);
+        await loadWithdrawals();
       }
     });
 
@@ -78,6 +93,45 @@ const AdminMrwain = () => {
       console.log('[Admin] Profile data loaded:', data);
     } catch (error) {
       console.error('[Admin] Unexpected error loading profile:', error);
+    }
+  };
+
+  const loadWithdrawals = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('withdrawals')
+        .select('*, profiles(username, business_name, email)')
+        .order('requested_at', { ascending: false });
+
+      if (error) {
+        console.error('[Admin] Error loading withdrawals:', error);
+        return;
+      }
+
+      setWithdrawals(data || []);
+    } catch (error) {
+      console.error('[Admin] Error loading withdrawals:', error);
+    }
+  };
+
+
+  const handleUpdateWithdrawalStatus = async (id: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('withdrawals')
+        .update({ 
+          status, 
+          processed_at: new Date().toISOString() 
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast.success(`Withdrawal ${status}`);
+      await loadWithdrawals();
+    } catch (error) {
+      console.error('[Admin] Error updating withdrawal:', error);
+      toast.error('Failed to update withdrawal status');
     }
   };
 
@@ -1094,6 +1148,86 @@ const AdminMrwain = () => {
                   Current: <strong>{profileData?.category ? profileData.category.replace('_', ' ').toUpperCase() : 'OTHER'}</strong>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Withdrawal Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="w-5 h-5" />
+                Withdrawal Requests
+              </CardTitle>
+              <CardDescription>Manage user withdrawal requests</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {withdrawals.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">No withdrawal requests found.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2">User</th>
+                        <th className="text-left py-2">Amount</th>
+                        <th className="text-left py-2">Type</th>
+                        <th className="text-left py-2">Status</th>
+                        <th className="text-left py-2">Date</th>
+                        <th className="text-right py-2">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {withdrawals.map((withdrawal) => (
+                        <tr key={withdrawal.id} className="border-b last:border-0">
+                          <td className="py-3">
+                            <div>
+                              <p className="font-medium">{withdrawal.profiles?.username || 'Unknown'}</p>
+                              <p className="text-xs text-muted-foreground">{withdrawal.profiles?.email}</p>
+                            </div>
+                          </td>
+                          <td className="py-3 font-mono">{withdrawal.amount} Pi</td>
+                          <td className="py-3 text-xs uppercase text-muted-foreground">
+                            {withdrawal.withdrawal_type || "general"}
+                          </td>
+                          <td className="py-3">
+                            <Badge variant={
+                              withdrawal.status === 'completed' ? 'default' : 
+                              withdrawal.status === 'rejected' ? 'destructive' : 'secondary'
+                            } className={withdrawal.status === 'completed' ? 'bg-green-500' : ''}>
+                              {withdrawal.status.toUpperCase()}
+                            </Badge>
+                          </td>
+                          <td className="py-3 text-muted-foreground">
+                            {new Date(withdrawal.requested_at).toLocaleDateString()}
+                          </td>
+                          <td className="py-3 text-right">
+                            {withdrawal.status === 'pending' && (
+                              <div className="flex justify-end gap-2">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  className="text-green-600 border-green-200 hover:bg-green-50"
+                                  onClick={() => handleUpdateWithdrawalStatus(withdrawal.id, 'completed')}
+                                >
+                                  Approve
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  className="text-red-600 border-red-200 hover:bg-red-50"
+                                  onClick={() => handleUpdateWithdrawalStatus(withdrawal.id, 'rejected')}
+                                >
+                                  Reject
+                                </Button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </CardContent>
           </Card>
 

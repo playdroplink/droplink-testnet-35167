@@ -3,6 +3,9 @@ import { PhonePreview } from "@/components/PhonePreview";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { usePi } from "@/contexts/PiContext";
 import { User } from "lucide-react";
@@ -218,10 +221,73 @@ const Profile = () => {
         description="Edit your profile and settings"
         icon={<User />}
       />
-      <div className="min-h-screen bg-sky-400 flex flex-col items-center justify-center pb-24">
-      <div className="py-8">
-        <PhonePreview profile={profileData} />
-      </div>
+      <div className="min-h-screen bg-sky-400 pb-24 px-4 py-6">
+        <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8 items-start justify-center">
+          
+          {/* Edit Form */}
+          <Card className="flex-1 w-full bg-white shadow-xl border-slate-200">
+            <CardHeader>
+              <CardTitle>Edit Profile</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Business / Display Name</label>
+                <Input
+                  value={profileData.businessName}
+                  onChange={(e) => setProfileData({ ...profileData, businessName: e.target.value })}
+                  placeholder="e.g. My Awesome Store"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Username (Unique)</label>
+                <Input
+                  value={profileData.username}
+                  onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
+                  placeholder="username"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Bio / Description</label>
+                <Textarea
+                  value={profileData.description}
+                  onChange={(e) => setProfileData({ ...profileData, description: e.target.value })}
+                  placeholder="Tell us about yourself or your business..."
+                  className="min-h-[100px]"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Logo URL</label>
+                <Input
+                  value={profileData.logo}
+                  onChange={(e) => setProfileData({ ...profileData, logo: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="pt-4">
+                <Button 
+                  onClick={handleSave} 
+                  disabled={saving}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                >
+                  {saving ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Preview */}
+          <div className="flex-shrink-0 mx-auto">
+             <div className="sticky top-6">
+               <h3 className="text-white text-center mb-4 font-semibold">Live Preview</h3>
+               <PhonePreview profile={profileData} />
+             </div>
+          </div>
+
+        </div>
       </div>
       <FooterNav />
     </>

@@ -1,6 +1,3 @@
-import.meta.env.VITE_SUPABASE_URL = 'https://jzzbmoopwnvgxxirulga.supabase.co';
-import.meta.env.VITE_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6emJtb29wd252Z3h4aXJ1bGdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyMDMxMjUsImV4cCI6MjA3NDc3OTEyNX0.5DqetNG0bvN620X8t5QP-sGEInb17ZCgY0Jfp7_qZWU';
-
 // Test Supabase connection
 async function testSupabaseConnection() {
   const { createClient } = await import('@supabase/supabase-js');

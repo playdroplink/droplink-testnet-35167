@@ -82,7 +82,7 @@ const Purchases: React.FC = () => {
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-sky-400">
       <PageHeader 
         title="Purchases" 
         description="View your purchase history"
@@ -139,7 +139,7 @@ const Purchases: React.FC = () => {
       </Card>
       </div>
       <FooterNav />
-    </>
+    </div>
   );
 };
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ interface InboxMessagesProps {
 
 export default function InboxMessages({ receiverUsername }: InboxMessagesProps) {
   const { isAuthenticated, piUser } = usePi();
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export default function InboxMessages({ receiverUsername }: InboxMessagesProps) 
       loadMessages();
       // Subscribe to new messages
       const channel = supabase
-        .channel('inbox-messages')
+        .channel(`inbox-messages-${profileId}-${Date.now()}`)
         .on(
           'postgres_changes',
           {
@@ -234,7 +236,14 @@ export default function InboxMessages({ receiverUsername }: InboxMessagesProps) 
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <Avatar className="h-10 w-10">
+                  <Avatar
+                    className="h-10 w-10 cursor-pointer"
+                    onClick={() => {
+                      if (message.sender_username) {
+                        navigate(`/@${message.sender_username}`);
+                      }
+                    }}
+                  >
                     <AvatarImage src={message.sender_logo} />
                     <AvatarFallback>
                       {message.sender_username?.[0]?.toUpperCase() || '?'}
@@ -242,7 +251,14 @@ export default function InboxMessages({ receiverUsername }: InboxMessagesProps) 
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium">
+                      <span
+                        className="font-medium cursor-pointer"
+                        onClick={() => {
+                          if (message.sender_username) {
+                            navigate(`/@${message.sender_username}`);
+                          }
+                        }}
+                      >
                         @{message.sender_username || 'Anonymous'}
                       </span>
                       {!message.is_read && (
