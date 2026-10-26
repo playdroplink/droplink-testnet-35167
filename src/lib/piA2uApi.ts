@@ -169,7 +169,7 @@ async function invokePiA2U<T>(body: Record<string, unknown>): Promise<T> {
 
   // If we reach here, all attempts failed
   const finalMsg = lastError?.message || "All connection attempts failed";
-  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || "jzzbmoopwnvgxxirulga";
+  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || import.meta.env.VITE_SUPABASE_PROJECT_ID;
   
   if (isEdgeUnavailable(finalMsg)) {
     throw new Error(

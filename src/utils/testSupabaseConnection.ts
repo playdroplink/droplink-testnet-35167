@@ -12,7 +12,7 @@ async function testSupabaseConnection() {
   // Test 1: Check URL
   console.log('✅ Test 1: Project URL');
   console.log(`   URL: ${import.meta.env.VITE_SUPABASE_URL}`);
-  console.log(`   Project ID: jzzbmoopwnvgxxirulga\n`);
+  console.log(`   Project ID: ${import.meta.env.VITE_SUPABASE_PROJECT_ID}\n`);
 
   // Test 2: Check Auth Key
   console.log('✅ Test 2: Authentication Key');
@@ -51,7 +51,7 @@ async function testSupabaseConnection() {
   console.log(`   VITE_SUPABASE_URL: ✅ ${import.meta.env.VITE_SUPABASE_URL ? 'SET' : 'MISSING'}`);
   console.log(`   VITE_SUPABASE_ANON_KEY: ✅ ${anonKey ? 'SET' : 'MISSING'}`);
   console.log(`   SUPABASE_SERVICE_ROLE_KEY: ✅ SET (server-side)`);
-  console.log(`   VITE_SUPABASE_PROJECT_ID: ✅ jzzbmoopwnvgxxirulga\n`);
+  console.log(`   VITE_SUPABASE_PROJECT_ID: ✅ ${import.meta.env.VITE_SUPABASE_PROJECT_ID}\n`);
 
   console.log('🎉 Supabase Connection Status: ✅ FULLY CONNECTED');
   console.log('═══════════════════════════════════════════');
