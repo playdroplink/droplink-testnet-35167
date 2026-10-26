@@ -9,7 +9,7 @@ declare const Deno: {
 };
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { A2U_ACTIONS, handlePiA2uRequest } from "../pi-a2u/handler.ts";
+import { A2U_ACTIONS, handlePiA2uRequest } from "./handler.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
