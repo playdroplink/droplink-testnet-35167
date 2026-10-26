@@ -242,7 +242,6 @@ export type Database = {
           drop_tokens_spent: number
           gift_id: string
           id: string
-          pi_amount: number
           receiver_profile_id: string
           sender_profile_id: string
         }
@@ -251,7 +250,6 @@ export type Database = {
           drop_tokens_spent: number
           gift_id: string
           id?: string
-          pi_amount?: number
           receiver_profile_id: string
           sender_profile_id: string
         }
@@ -260,7 +258,6 @@ export type Database = {
           drop_tokens_spent?: number
           gift_id?: string
           id?: string
-          pi_amount?: number
           receiver_profile_id?: string
           sender_profile_id?: string
         }
@@ -290,40 +287,25 @@ export type Database = {
       }
       gifts: {
         Row: {
-          category: string
           created_at: string
-          description: string
           drop_token_cost: number
           icon: string
           id: string
-          is_active: boolean
           name: string
-          pi_amount: number
-          sort_order: number
         }
         Insert: {
-          category?: string
           created_at?: string
-          description?: string
           drop_token_cost: number
           icon: string
           id?: string
-          is_active?: boolean
           name: string
-          pi_amount?: number
-          sort_order?: number
         }
         Update: {
-          category?: string
           created_at?: string
-          description?: string
           drop_token_cost?: number
           icon?: string
           id?: string
-          is_active?: boolean
           name?: string
-          pi_amount?: number
-          sort_order?: number
         }
         Relationships: []
       }
@@ -331,33 +313,30 @@ export type Database = {
         Row: {
           content: string
           created_at: string
-          group_id: string | null
           id: string
           image_url: string | null
           is_read: boolean | null
-          receiver_profile_id: string | null
+          receiver_profile_id: string
           sender_profile_id: string | null
           updated_at: string
         }
         Insert: {
           content: string
           created_at?: string
-          group_id?: string | null
           id?: string
           image_url?: string | null
           is_read?: boolean | null
-          receiver_profile_id?: string | null
+          receiver_profile_id: string
           sender_profile_id?: string | null
           updated_at?: string
         }
         Update: {
           content?: string
           created_at?: string
-          group_id?: string | null
           id?: string
           image_url?: string | null
           is_read?: boolean | null
-          receiver_profile_id?: string | null
+          receiver_profile_id?: string
           sender_profile_id?: string | null
           updated_at?: string
         }
@@ -472,7 +451,6 @@ export type Database = {
           description: string | null
           has_premium: boolean | null
           id: string
-          last_active_at: string | null
           logo: string | null
           pi_donation_message: string | null
           pi_wallet_address: string | null
@@ -492,7 +470,6 @@ export type Database = {
           description?: string | null
           has_premium?: boolean | null
           id?: string
-          last_active_at?: string | null
           logo?: string | null
           pi_donation_message?: string | null
           pi_wallet_address?: string | null
@@ -512,7 +489,6 @@ export type Database = {
           description?: string | null
           has_premium?: boolean | null
           id?: string
-          last_active_at?: string | null
           logo?: string | null
           pi_donation_message?: string | null
           pi_wallet_address?: string | null
@@ -616,7 +592,7 @@ export type Database = {
           notes: string | null
           processed_at: string | null
           profile_id: string
-          requested_at: string
+          requested_at: string | null
           status: string
           updated_at: string | null
         }
@@ -627,8 +603,8 @@ export type Database = {
           notes?: string | null
           processed_at?: string | null
           profile_id: string
-          requested_at: string
-          status: string
+          requested_at?: string | null
+          status?: string
           updated_at?: string | null
         }
         Update: {
@@ -638,7 +614,7 @@ export type Database = {
           notes?: string | null
           processed_at?: string | null
           profile_id?: string
-          requested_at?: string
+          requested_at?: string | null
           status?: string
           updated_at?: string | null
         }
@@ -685,12 +661,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -714,11 +690,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -739,11 +715,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -764,11 +740,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -781,11 +757,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
