@@ -89,9 +89,6 @@ export default function PublicBioMessageForm({
 
     setSending(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const hasSupabaseSession = !!sessionData.session?.user;
-
       let imageUrl: string | null = null;
       if (imageFile) {
         imageUrl = await uploadImage(imageFile);
@@ -103,7 +100,7 @@ export default function PublicBioMessageForm({
       const { error } = await (supabase
         .from('messages' as any)
         .insert({
-          sender_profile_id: hasSupabaseSession ? senderProfileId || null : null,
+          sender_profile_id: senderProfileId || null,
           receiver_profile_id: receiverProfileId,
           content: message.trim() || (imageUrl ? '[Image]' : ''),
           image_url: imageUrl,
@@ -125,27 +122,6 @@ export default function PublicBioMessageForm({
       setSending(false);
     }
   };
-
-  if (!isAuthenticated) {
-    return (
-      <Card className="bg-white/8 dark:bg-white/5 backdrop-blur-2xl border border-white/12 dark:border-white/10 shadow-2xl shadow-sky-500/15 dark:shadow-sky-900/35 rounded-2xl">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white drop-shadow-sm">
-            <MessageSquare className="h-5 w-5" />
-            Send a Message
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Alert className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-            <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            <AlertDescription className="text-blue-800 dark:text-blue-200 ml-2">
-              Please sign in with Pi Network to send messages to @{receiverUsername}
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card className="bg-white/8 dark:bg-white/5 backdrop-blur-2xl border border-white/12 dark:border-white/10 shadow-2xl shadow-sky-500/15 dark:shadow-sky-900/35 rounded-2xl">

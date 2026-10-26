@@ -220,6 +220,12 @@ const Subscription = () => {
           status: 'active',
           end_date: endDate.toISOString()
         });
+
+        // Set activation flag for dashboard auto-refresh
+        sessionStorage.setItem('subscription_activated', JSON.stringify({
+          plan: planName.toLowerCase(),
+          billing: isYearly ? 'yearly' : 'monthly'
+        }));
         
         // Redirect after delay
         setTimeout(() => navigate('/'), 2000);
@@ -299,6 +305,17 @@ const Subscription = () => {
         }
         
         // Save subscription to database (may already be saved by backend)
+        // First try to clean up any existing active subscriptions to ensure clean state
+        try {
+          await supabase
+            .from('subscriptions')
+            .delete()
+            .eq('profile_id', profileId);
+        } catch (err) {
+          console.warn('[SUBSCRIPTION] Cleanup failed, proceeding with upsert', err);
+        }
+
+        // Try upsert first
         const { error: subError } = await supabase
           .from('subscriptions')
           .upsert({
@@ -315,11 +332,35 @@ const Subscription = () => {
           });
         
         if (subError) {
-          console.error('[SUBSCRIPTION] Database error:', subError);
-          toast.dismiss(toastId);
-          toast.success('Payment successful!', {
-            description: 'Subscription may take a moment to activate. Please refresh if needed.'
-          });
+          console.error('[SUBSCRIPTION] Upsert failed, trying fallback insert:', subError);
+          
+          // Fallback: If upsert failed (e.g. missing constraint), try plain insert since we deleted above
+          const { error: insertError } = await supabase
+            .from('subscriptions')
+            .insert({
+              profile_id: profileId,
+              plan_type: planName.toLowerCase(),
+              status: 'active',
+              start_date: startDate.toISOString(),
+              end_date: endDate.toISOString(),
+              pi_amount: price,
+              billing_period: isYearly ? 'yearly' : 'monthly',
+              auto_renew: true,
+            });
+
+          if (insertError) {
+             console.error('[SUBSCRIPTION] Fallback insert failed:', insertError);
+             toast.dismiss(toastId);
+             toast.success('Payment successful!', {
+               description: 'Subscription may take a moment to activate. Please refresh if needed.'
+             });
+          } else {
+             toast.dismiss(toastId);
+             toast.success(`Successfully subscribed to ${planName} plan! 🎉`, {
+               description: `Your subscription is now active`,
+               duration: 5000
+             });
+          }
         } else {
           toast.dismiss(toastId);
           toast.success(`Successfully subscribed to ${planName} plan! 🎉`, {
@@ -334,6 +375,12 @@ const Subscription = () => {
           status: 'active',
           end_date: endDate.toISOString()
         });
+        
+        // Set activation flag for dashboard auto-refresh
+        sessionStorage.setItem('subscription_activated', JSON.stringify({
+          plan: planName.toLowerCase(),
+          billing: isYearly ? 'yearly' : 'monthly'
+        }));
         
         // Redirect after delay
         setTimeout(() => navigate('/'), 2000);
@@ -476,6 +523,12 @@ const Subscription = () => {
           status: 'active',
           end_date: new Date(Date.now() + (billingPeriod === 'yearly' ? 365 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000)).toISOString()
         });
+        
+        // Set activation flag for dashboard auto-refresh
+        sessionStorage.setItem('subscription_activated', JSON.stringify({
+          plan: planName.toLowerCase(),
+          billing: billingPeriod
+        }));
         
         // Redirect after delay
         setTimeout(() => navigate('/'), 3000);
@@ -734,7 +787,7 @@ const Subscription = () => {
   };
 
   return (
-    <div>
+    <div className="min-h-screen bg-sky-400">
       <PageHeader 
         title="Subscriptions" 
         description="Choose your plan"

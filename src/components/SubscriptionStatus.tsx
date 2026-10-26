@@ -30,7 +30,7 @@ const SubscriptionStatus: React.FC = () => {
   const { isAuthenticated, piUser, signIn } = usePi();
   const navigate = useNavigate();
   const [isSigningIn, setIsSigningIn] = useState(false);
-  const { subscription, isLoading, isActive } = useActiveSubscription();
+  const { subscription, plan, isLoading, isActive } = useActiveSubscription();
   const [lastGiftCode, setLastGiftCode] = useState<string | null>(null);
   const [isGiftCard, setIsGiftCard] = useState(false);
 
@@ -257,7 +257,7 @@ const SubscriptionStatus: React.FC = () => {
     );
   }
 
-  const planInfo = getPlanFeatures(subscription?.plan_type || 'free');
+  const planInfo = getPlanFeatures(plan || 'free');
   const daysLeft = subscription?.end_date ? calculateDaysLeft(subscription.end_date) : null;
   const isExpiringSoon = daysLeft !== null && daysLeft <= 7;
   const isExpired = daysLeft !== null && daysLeft <= 0;

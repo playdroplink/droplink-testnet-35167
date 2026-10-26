@@ -5,13 +5,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Palette, Sparkles, Upload, Image, Monitor, X, Settings, Sliders, Link } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
-// Giphy API key from environment (fallback to public beta key for demo)
-const GIPHY_API_KEY = import.meta.env.VITE_GIPHY_API_KEY || "dc6zaTOxFJmzC";
 import { supabase } from "@/integrations/supabase/client";
 import { PlanGate } from "@/components/PlanGate";
 import ReadyThemeSelector from "./ReadyThemeSelector";
-import AdvancedCustomizer from "./AdvancedCustomizer";
-import LinkCustomizer from "./LinkCustomizer";
+import AdvancedCustomizer, { CustomizationSettings } from "./AdvancedCustomizer";
+import LinkCustomizer, { LinkMetadata } from "./LinkCustomizer";
+
+// Giphy API key from environment (fallback to public beta key for demo)
+const GIPHY_API_KEY = import.meta.env.VITE_GIPHY_API_KEY || "dc6zaTOxFJmzC";
 
 interface ThemeTemplate {
   id: string;
@@ -145,9 +146,9 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
   const [uploadingGif, setUploadingGif] = useState(false);
   const [customizationMode, setCustomizationMode] = useState<'simple' | 'advanced'>('simple');
   const [showLinkCustomizer, setShowLinkCustomizer] = useState(false);
-  const [customLinks, setCustomLinks] = useState<any[]>([]);
+  const [customLinks, setCustomLinks] = useState<LinkMetadata[]>([]);
   // Use a type that matches CustomizationSettings, or cast as needed
-  const [advancedSettings, setAdvancedSettings] = useState<any>({
+  const [advancedSettings, setAdvancedSettings] = useState<CustomizationSettings>({
     header: {
       layout: 'centered', // allow any valid layout string
       showProfileImage: true,
@@ -698,22 +699,27 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
                 {/* URL Input Section */}
                 <div className="space-y-2">
                   <Label htmlFor="video-url" className="text-sm text-muted-foreground">
-                    Enter Video URL
+                    Enter Video URL (YouTube, Pinterest, MP4, etc.)
                   </Label>
                   <div className="flex gap-2">
                     <Input
                       id="video-url"
                       type="url"
-                      value={theme.backgroundGif?.startsWith('data:') ? '' : theme.backgroundGif || ''}
-                      onChange={(e) => onThemeChange({ ...theme, backgroundGif: e.target.value })}
-                      placeholder="https://example.com/background.mp4"
+                      value={theme.backgroundVideo || ''}
+                      onChange={(e) => onThemeChange({ 
+                        ...theme, 
+                        backgroundVideo: e.target.value,
+                        backgroundType: 'video',
+                        backgroundGif: '' 
+                      })}
+                      placeholder="https://pinterest.com/pin/..., https://youtube.com/..."
                       className="flex-1"
                     />
-                    {theme.backgroundGif && !theme.backgroundGif.startsWith('data:') && (
+                    {theme.backgroundVideo && (
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        onClick={() => onThemeChange({ ...theme, backgroundGif: "" })}
+                        onClick={() => onThemeChange({ ...theme, backgroundVideo: "" })}
                       >
                         Clear
                       </Button>
@@ -733,7 +739,12 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
                         variant="outline"
                         size="sm"
                         className="text-xs h-8 px-2"
-                        onClick={() => onThemeChange({ ...theme, backgroundGif: sample.url })}
+                        onClick={() => onThemeChange({ 
+                          ...theme, 
+                          backgroundVideo: sample.url,
+                          backgroundType: 'video',
+                          backgroundGif: ''
+                        })}
                       >
                         {sample.name}
                       </Button>
@@ -741,17 +752,17 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
                   </div>
                 </div>
                 {/* Video Preview */}
-                {theme.backgroundGif && (
+                {theme.backgroundVideo && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label className="text-xs text-muted-foreground">Preview</Label>
                       <span className="text-xs text-muted-foreground">
-                        {theme.backgroundGif.startsWith('data:') ? '📁 Uploaded File' : '🔗 URL'}
+                        {theme.backgroundVideo.startsWith('blob:') ? '📁 Uploaded File' : '🔗 URL'}
                       </span>
                     </div>
                     <div className="relative w-full h-32 border rounded-lg overflow-hidden bg-black">
                       <video
-                        src={theme.backgroundGif}
+                        src={theme.backgroundVideo}
                         className="w-full h-full object-cover"
                         autoPlay
                         loop
@@ -759,7 +770,7 @@ export const DesignCustomizer = ({ theme, onThemeChange }: DesignCustomizerProps
                         playsInline
                         controls={false}
                         onError={(e) => {
-                          console.error('Video preview failed to load:', theme.backgroundGif?.substring(0, 100) + '...');
+                          console.error('Video preview failed to load:', theme.backgroundVideo?.substring(0, 100) + '...');
                           (e.currentTarget as HTMLVideoElement).style.display = 'none';
                           const errorDiv = (e.currentTarget.nextElementSibling as HTMLElement);
                           errorDiv?.classList.remove('hidden');

@@ -1,106 +1,225 @@
-// Pi Payment Approve Edge Function
-// Phase I of User-to-App payment: Developer approves the payment
-// Docs: https://pi-apps.github.io/community-developer-guide/
-
+// Pi Payment Approve Edge Function - MAINNET
+// This function handles Phase I of the Pi Network 3-phase payment flow
+// @ts-ignore: Deno global is available at runtime in Supabase Edge Functions
 declare const Deno: any;
+// @ts-ignore - Deno runtime types (available at runtime)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @ts-ignore - ESM module (available at runtime)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const PI_SANDBOX_MODE = (Deno.env.get('PI_SANDBOX_MODE') || 'false') === 'true';
-const PI_API_BASE_URL = PI_SANDBOX_MODE ? "https://api.testnet.minepi.com" : "https://api.minepi.com";
+// Pi Network API endpoint - Dynamic based on environment
+const PI_NETWORK = Deno.env.get('PI_NETWORK') || 'testnet';
+const PI_API_BASE_URL = PI_NETWORK === 'testnet' ? "https://api.testnet.minepi.com" : "https://api.minepi.com";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
+
+  const startTime = Date.now();
 
   try {
     const { paymentId, metadata } = await req.json();
-    if (!paymentId) throw new Error("Payment ID is required");
 
-    console.log('[APPROVE] Approving payment:', paymentId);
+    if (!paymentId) {
+      throw new Error("Payment ID is required");
+    }
 
-    const PI_API_KEY = Deno.env.get('PI_API_KEY') || Deno.env.get('VITE_PI_API_KEY');
-    if (!PI_API_KEY) throw new Error("PI_API_KEY not configured");
+    console.log('[APPROVAL] 🔄 Starting approval for paymentId:', paymentId);
+    console.log('[APPROVAL] Client metadata:', JSON.stringify(metadata || {}));
 
+    // Get Pi API Key from environment
+    const PI_API_KEY = Deno.env.get('VITE_PI_API_KEY') || Deno.env.get('PI_API_KEY');
+    if (!PI_API_KEY) {
+      console.error('[APPROVAL] ❌ PI_API_KEY not configured in environment');
+      console.error('[APPROVAL] Available env vars:', Object.keys(Deno.env.toObject()).filter(k => k.includes('PI')));
+      throw new Error("PI_API_KEY not configured - check environment variables");
+    }
+
+    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    if (!supabaseUrl || !serviceKey) throw new Error('Supabase configuration missing');
+
+    if (!supabaseUrl || !serviceKey) {
+      console.error('[APPROVAL] ❌ Supabase env missing', { hasUrl: !!supabaseUrl, hasServiceKey: !!serviceKey });
+      throw new Error('Supabase configuration missing (SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY)');
+    }
+
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Check idempotency
-    const { data: existing } = await supabase
+    // Check idempotency - prevent duplicate approvals
+    const { data: existingPayment } = await supabase
       .from('payment_idempotency')
       .select('*')
       .eq('payment_id', paymentId)
       .maybeSingle();
 
-    if (existing && (existing.status === 'completed' || existing.status === 'approved')) {
+    if (existingPayment && (existingPayment.status === 'completed' || existingPayment.status === 'approved')) {
+      console.log('[APPROVAL] ✅ Payment already processed:', paymentId, existingPayment.status);
       return new Response(
-        JSON.stringify({ success: true, message: 'Payment already processed', payment: { id: paymentId, status: existing.status } }),
+        JSON.stringify({ 
+          success: true, 
+          message: 'Payment already processed',
+          payment: { id: paymentId, status: existingPayment.status }
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
     }
 
-    // Get payment from Pi API
-    const getRes = await fetch(`${PI_API_BASE_URL}/v2/payments/${paymentId}`, {
-      headers: { 'Authorization': `Key ${PI_API_KEY}` },
+    // Step 1: Get payment details from Pi API
+    console.log(`[APPROVAL] \u{1F4E1} Fetching payment details from Pi ${PI_NETWORK.toUpperCase()} API...`);
+    console.log(`[APPROVAL] Network: ${PI_NETWORK.toUpperCase()}`);
+    const getPaymentResponse = await fetch(`${PI_API_BASE_URL}/v2/payments/${paymentId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Key ${PI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
     });
-    if (!getRes.ok) {
-      const err = await getRes.text();
-      throw new Error(`Failed to fetch payment: ${err}`);
-    }
-    const paymentDetails = await getRes.json();
 
-    // Resolve profile
-    let profileId = metadata?.profileId || null;
-    if (!profileId && metadata?.username) {
-      const { data: p } = await supabase.from('profiles').select('id').eq('username', metadata.username).maybeSingle();
-      if (p) profileId = p.id;
+    if (!getPaymentResponse.ok) {
+      const errorText = await getPaymentResponse.text();
+      console.error('[APPROVAL] ❌ Failed to get payment from Pi API:', getPaymentResponse.status, errorText);
+      throw new Error(`Failed to fetch payment: ${errorText}`);
     }
 
-    // Record for idempotency
-    await supabase.from('payment_idempotency').upsert({
-      payment_id: paymentId,
-      profile_id: profileId,
-      status: 'pending',
-      metadata: { ...paymentDetails.metadata, ...metadata, amount: paymentDetails.amount },
-    }, { onConflict: 'payment_id' });
+    const paymentDetails = await getPaymentResponse.json();
+    console.log('[APPROVAL] Payment details:', JSON.stringify(paymentDetails));
 
-    // Approve via Pi API
-    const approveRes = await fetch(`${PI_API_BASE_URL}/v2/payments/${paymentId}/approve`, {
+    // Extract status properly - handle both string and object status
+    const paymentStatus = typeof paymentDetails.status === 'object' 
+      ? paymentDetails.status?.developer_approved === false ? 'pending' : paymentDetails.status
+      : paymentDetails.status;
+    
+    console.log('[APPROVAL] Payment status:', paymentStatus);
+
+    // Check if payment can be approved (should be in a state where developer hasn't approved yet)
+    const canApprove = 
+      paymentStatus === 'pending' || 
+      paymentStatus === 'created' ||
+      (typeof paymentDetails.status === 'object' && paymentDetails.status?.developer_approved === false);
+
+    if (!canApprove) {
+      console.error('[APPROVAL] ❌ Payment not in approvable state:', paymentStatus);
+      throw new Error(`Payment cannot be approved. Status: ${JSON.stringify(paymentStatus)}`);
+    }
+
+    // Merge metadata from Pi API and client
+    const piMetadata = paymentDetails.metadata || {};
+    const finalMetadata = { ...piMetadata, ...metadata };
+
+    // Try to resolve profileId from metadata or username
+    let profileId = finalMetadata.profileId || null;
+    
+    if (!profileId && finalMetadata.username) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', finalMetadata.username)
+        .maybeSingle();
+      
+      if (profile) {
+        profileId = profile.id;
+        console.log('[APPROVAL] Resolved profileId from username:', profileId);
+      }
+    }
+
+    // Record payment for idempotency
+    try {
+      await supabase
+        .from('payment_idempotency')
+        .upsert({
+          payment_id: paymentId,
+          profile_id: profileId,
+          status: 'pending',
+          metadata: {
+            ...finalMetadata,
+            amount: paymentDetails.amount,
+            approvalStartedAt: new Date().toISOString()
+          },
+        }, { onConflict: 'payment_id' });
+      console.log('[APPROVAL] Idempotency record created');
+    } catch (err) {
+      console.warn('[APPROVAL] Idempotency record error:', err);
+    }
+
+    // Step 2: Approve the payment with Pi API
+    console.log(`[APPROVAL] \u{1F4E1} Approving payment with Pi ${PI_NETWORK.toUpperCase()} API...`);
+    const approveResponse = await fetch(`${PI_API_BASE_URL}/v2/payments/${paymentId}/approve`, {
       method: 'POST',
-      headers: { 'Authorization': `Key ${PI_API_KEY}`, 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': `Key ${PI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
     });
-    if (!approveRes.ok) {
-      const err = await approveRes.text();
-      await supabase.from('payment_idempotency').update({ status: 'failed' }).eq('payment_id', paymentId);
-      throw new Error(`Approval failed: ${err}`);
+
+    if (!approveResponse.ok) {
+      const errorText = await approveResponse.text();
+      console.error('[APPROVAL] ❌ Pi API approval failed:', approveResponse.status, errorText);
+      
+      // Update idempotency record to failed
+      await supabase
+        .from('payment_idempotency')
+        .update({ status: 'failed' })
+        .eq('payment_id', paymentId);
+      
+      throw new Error(`Pi API approval failed: ${errorText}`);
     }
-    const approvalResult = await approveRes.json();
 
-    await supabase.from('payment_idempotency').update({
-      status: 'approved',
-      metadata: { ...paymentDetails.metadata, ...metadata, amount: paymentDetails.amount, approvedAt: new Date().toISOString() },
-    }).eq('payment_id', paymentId);
+    const approvalResult = await approveResponse.json();
+    console.log('[APPROVAL] ✅ Pi API approval result:', JSON.stringify(approvalResult));
 
-    console.log('[APPROVE] ✅ Payment approved:', paymentId);
+    // Update idempotency record to approved
+    await supabase
+      .from('payment_idempotency')
+      .update({ 
+        status: 'approved',
+        metadata: {
+          ...finalMetadata,
+          amount: paymentDetails.amount,
+          approvedAt: new Date().toISOString(),
+          approvalResult
+        }
+      })
+      .eq('payment_id', paymentId);
+
+    const totalTime = Date.now() - startTime;
+    console.log('[APPROVAL] ✅ SUCCESS in', totalTime, 'ms:', {
+      paymentId,
+      profileId,
+      amount: paymentDetails.amount
+    });
+
     return new Response(
-      JSON.stringify({ success: true, payment: approvalResult, message: 'Payment approved' }),
+      JSON.stringify({ 
+        success: true, 
+        payment: approvalResult,
+        message: 'Payment approved successfully'
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
 
   } catch (error) {
-    const msg = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[APPROVE] ❌', msg);
+    const totalTime = Date.now() - startTime;
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : '';
+    console.error('[APPROVAL] ❌ FAILED in', totalTime, 'ms:', errorMsg);
+    console.error('[APPROVAL] Stack trace:', errorStack);
+    
     return new Response(
-      JSON.stringify({ success: false, error: msg }),
+      JSON.stringify({ 
+        success: false, 
+        error: errorMsg,
+        details: 'Payment approval failed. Please ensure PI_API_KEY is configured correctly in Supabase Edge Functions.',
+        timestamp: new Date().toISOString()
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }

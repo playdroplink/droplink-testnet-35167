@@ -103,10 +103,6 @@ export default function PublicBioMessageForm({
 
     setSending(true);
     try {
-      // Check if we have a Supabase session; fall back to anonymous insert when absent
-      const { data: sessionData } = await supabase.auth.getSession();
-      const hasSupabaseSession = !!sessionData.session?.user;
-
       let imageUrl: string | null = null;
       
       // Upload image if selected
@@ -121,7 +117,7 @@ export default function PublicBioMessageForm({
       const { error } = await (supabase
         .from('messages' as any)
         .insert({
-          sender_profile_id: hasSupabaseSession ? senderProfileId || null : null,
+          sender_profile_id: senderProfileId || null,
           receiver_profile_id: receiverProfileId,
           content: message.trim() || (imageUrl ? '[Image]' : ''),
           image_url: imageUrl,

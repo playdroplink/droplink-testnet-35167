@@ -11,6 +11,7 @@ interface Gift {
   name: string;
   icon: string;
   drop_token_cost: number;
+  pi_amount?: number;
 }
 
 
@@ -37,6 +38,36 @@ export const GiftDialog = ({
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(false);
 
+  const ensureWalletRow = async () => {
+    if (!senderProfileId) return null;
+    const { data: wallet } = await supabase
+      .from("user_wallets")
+      .select("drop_tokens")
+      .eq("profile_id", senderProfileId)
+      .maybeSingle();
+
+    if (!wallet) {
+      const { error: createError } = await supabase
+        .from("user_wallets")
+        .upsert(
+          {
+            profile_id: senderProfileId,
+            drop_tokens: 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "profile_id" }
+        );
+      if (createError) {
+        console.error("Error creating wallet:", createError);
+        return null;
+      }
+      return { drop_tokens: 0 };
+    }
+
+    return wallet;
+  };
+
   useEffect(() => {
     if (open) {
       loadGifts();
@@ -48,7 +79,7 @@ export const GiftDialog = ({
     const { data, error } = await supabase
       .from("gifts")
       .select("*")
-      .order("drop_token_cost", { ascending: true });
+      .order("pi_amount", { ascending: true });
 
     if (error) {
       console.error("Error loading gifts:", error);
@@ -61,18 +92,8 @@ export const GiftDialog = ({
   const loadBalance = async () => {
     if (!senderProfileId) return;
 
-    const { data, error } = await supabase
-      .from("user_wallets")
-      .select("drop_tokens")
-      .eq("profile_id", senderProfileId)
-      .single();
-
-    if (error) {
-      console.error("Error loading balance:", error);
-      return;
-    }
-
-    setBalance(data?.drop_tokens || 0);
+    const wallet = await ensureWalletRow();
+    setBalance(wallet?.drop_tokens || 0);
   };
 
   const sendGift = async (gift: Gift) => {
@@ -81,17 +102,28 @@ export const GiftDialog = ({
       return;
     }
 
-    if (balance < gift.drop_token_cost) {
-      toast.error("Insufficient DropTokens. Please buy more!");
+    const giftPrice = gift.pi_amount ?? gift.drop_token_cost;
+
+    if (balance < giftPrice) {
+      toast.error("Insufficient balance. Please buy more stickers!");
       return;
     }
 
     setLoading(true);
     try {
+      // Ensure wallet row exists for sender
+      const wallet = await ensureWalletRow();
+      const currentBalance = wallet?.drop_tokens ?? balance;
+      if (currentBalance < giftPrice) {
+        toast.error("Insufficient balance. Please buy more stickers!");
+        setLoading(false);
+        return;
+      }
+
       // Deduct tokens from sender
       const { error: walletError } = await supabase
         .from("user_wallets")
-        .update({ drop_tokens: balance - gift.drop_token_cost })
+        .update({ drop_tokens: currentBalance - giftPrice, updated_at: new Date().toISOString() })
         .eq("profile_id", senderProfileId);
 
       if (walletError) throw walletError;
@@ -103,13 +135,14 @@ export const GiftDialog = ({
           sender_profile_id: senderProfileId,
           receiver_profile_id: receiverProfileId,
           gift_id: gift.id,
-          drop_tokens_spent: gift.drop_token_cost,
+          drop_tokens_spent: giftPrice,
+          pi_amount: giftPrice,
         });
 
       if (transactionError) throw transactionError;
 
       toast.success(`Sent ${gift.icon} ${gift.name} to ${receiverName}!`);
-      setBalance(balance - gift.drop_token_cost);
+      setBalance(currentBalance - giftPrice);
       onOpenChange(false);
     } catch (error) {
       console.error("Error sending gift:", error);
@@ -137,30 +170,33 @@ export const GiftDialog = ({
         )}
 
         <div className="flex items-center justify-between p-3 bg-muted rounded-lg mb-4">
-          <span className="text-sm font-medium">Your Balance</span>
+          <span className="text-sm font-medium">Sticker Balance</span>
           <span className="flex items-center gap-1 font-bold">
             <Droplets className="w-4 h-4" />
-            {balance} DropTokens
+            {balance} Pi
           </span>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          {gifts.map((gift) => (
-            <Button
-              key={gift.id}
-              variant="outline"
-              className="h-24 flex flex-col items-center justify-center gap-2"
-              onClick={() => sendGift(gift)}
-              disabled={loading || balance < gift.drop_token_cost}
-            >
-              <span className="text-3xl">{gift.icon}</span>
-              <span className="text-xs font-medium">{gift.name}</span>
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <Droplets className="w-3 h-3" />
-                {gift.drop_token_cost}
-              </span>
-            </Button>
-          ))}
+          {gifts.map((gift) => {
+            const giftPrice = gift.pi_amount ?? gift.drop_token_cost;
+            return (
+              <Button
+                key={gift.id}
+                variant="outline"
+                className="h-24 flex flex-col items-center justify-center gap-2"
+                onClick={() => sendGift(gift)}
+                disabled={loading || balance < giftPrice}
+              >
+                <span className="text-3xl">{gift.icon}</span>
+                <span className="text-xs font-medium">{gift.name}</span>
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Droplets className="w-3 h-3" />
+                  {giftPrice} Pi
+                </span>
+              </Button>
+            );
+          })}
         </div>
 
         <Button
@@ -171,7 +207,7 @@ export const GiftDialog = ({
             window.location.href = "/wallet";
           }}
         >
-          Buy More DropTokens
+          Buy Stickers
         </Button>
       </DialogContent>
     </Dialog>

@@ -9,35 +9,31 @@
 
 import { isPiBrowserEnv } from "@/contexts/PiContext";
 
-const isLocalhost = typeof window !== 'undefined' &&
-  ['localhost', '127.0.0.1'].includes(window.location.hostname);
+// Detect environment mode
+const isTestnetMode = 
+  import.meta.env.VITE_PI_NETWORK === 'testnet' || 
+  window.location.hostname.includes('testnet') || 
+  window.location.hostname.includes('localhost');
 
-// In local/testnet work, default to sandbox unless explicitly disabled.
-const sandboxFlag = import.meta.env.VITE_PI_SANDBOX_MODE
-  ? import.meta.env.VITE_PI_SANDBOX_MODE === 'true'
-  : isLocalhost;
-
-// Backend is REQUIRED for production-safe payment approval/completion and A2U.
-// You can disable only for local debugging with VITE_PI_USE_BACKEND=false.
-export const PI_USE_BACKEND = import.meta.env.VITE_PI_USE_BACKEND !== 'false';
+const sandboxFlag = isTestnetMode;
 
 // Log configuration for debugging
 if (typeof window !== 'undefined') {
-  console.log(`[PI CONFIG] 🌐 Network Mode: ${sandboxFlag ? 'TESTNET/SANDBOX' : 'MAINNET'}`);
-  console.log(`[PI CONFIG] Backend mode: ${PI_USE_BACKEND ? 'ENABLED (recommended)' : 'DISABLED (debug only)'}`);
+  console.log(`[PI CONFIG] \u{1F310} Network Mode: ${isTestnetMode ? 'TESTNET (Sandbox)' : 'MAINNET (Production)'}`);
 }
 
 // Pi Network Credentials - From Pi Developer Portal
 const PI_APP_ID = import.meta.env.VITE_PI_APP_ID ?? "droplink-317d26f51b67e992";
-const PI_API_KEY = import.meta.env.VITE_PI_API_KEY ?? "";
-const PI_VALIDATION_KEY = import.meta.env.VITE_PI_VALIDATION_KEY ?? "";
+const PI_API_KEY = "x62ea5gjqi4fv1x5cojbi84al9zzdstehnnm3tfzjlt4bol8pq1eohej2udoelhw";
+const PI_VALIDATION_KEY = "c8c119ed9f09ef7bfbca58a9874950d4dc305b14be8b7d680b3fb52002a51e3b8e0e0602fe7bc25d7e775548bd860a771dfff8261b67f0b328be5f91c348fe12";
 const PLATFORM_URL = import.meta.env.VITE_PLATFORM_URL ?? "https://droplink.space";
 const PAYMENT_RECEIVER_WALLET = import.meta.env.VITE_PI_PAYMENT_RECEIVER_WALLET ?? "GDSXE723WPHZ5RGIJCSYXTPKSOIGPTSXE4RF5U3JTNGTCHXON7ZVD4LJ";
 
-const BASE_API_URL = sandboxFlag ? "https://api.testnet.minepi.com" : "https://api.minepi.com";
-const HORIZON_URL = BASE_API_URL;
-const NETWORK_NAME = sandboxFlag ? "sandbox" : "mainnet";
-const NETWORK_PASSPHRASE = sandboxFlag ? "Pi Testnet" : "Pi Mainnet";
+// Base URLs based on network
+const BASE_API_URL = isTestnetMode ? "https://api.testnet.minepi.com" : "https://api.minepi.com";
+const HORIZON_URL = isTestnetMode ? "https://api.testnet.minepi.com" : "https://api.minepi.com";
+const NETWORK_NAME = isTestnetMode ? "testnet" : "mainnet";
+const NETWORK_PASSPHRASE = isTestnetMode ? "Pi Testnet" : "Pi Mainnet";
 
 export const PI_CONFIG = {
   API_KEY: PI_API_KEY,
@@ -48,9 +44,8 @@ export const PI_CONFIG = {
   ALLOW_MULTIPLE_ACCOUNTS: true,
 
   // Pi SDK Configuration - Following official guide
-  // https://pi-apps.github.io/community-developer-guide/docs/gettingStarted/piAppPlatform/piAppPlatformSDK/
   SDK: {
-    version: "2.0", // Latest SDK version as of August 2022
+    version: "2.0",
     sandbox: sandboxFlag,
   },
   
@@ -151,10 +146,14 @@ export const validatePiConfig = (): boolean => {
 
 // Network-aware validation to ensure SDK/base URL align with sandbox flag
 export const validateMainnetConfig = (): boolean => {
-  const networkMatches = PI_CONFIG.SANDBOX_MODE ? PI_CONFIG.NETWORK === "sandbox" : PI_CONFIG.NETWORK === "mainnet";
-  const sdkMatches = PI_CONFIG.SDK.sandbox === PI_CONFIG.SANDBOX_MODE;
-  const baseUrlMatches = PI_CONFIG.SANDBOX_MODE
-    ? PI_CONFIG.BASE_URL.includes("sandbox") || PI_CONFIG.BASE_URL.includes("testnet")
+  const isTestnet = PI_CONFIG.SANDBOX_MODE;
+  const networkMatches = isTestnet 
+    ? (PI_CONFIG.NETWORK === "testnet" || PI_CONFIG.NETWORK === "sandbox")
+    : PI_CONFIG.NETWORK === "mainnet";
+  
+  const sdkMatches = PI_CONFIG.SDK.sandbox === isTestnet;
+  const baseUrlMatches = isTestnet
+    ? (PI_CONFIG.BASE_URL.includes("sandbox") || PI_CONFIG.BASE_URL.includes("testnet"))
     : PI_CONFIG.BASE_URL.includes("minepi.com");
 
   return validatePiConfig() && networkMatches && sdkMatches && baseUrlMatches;

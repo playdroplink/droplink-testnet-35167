@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,10 +11,20 @@ import droplinkLogo from "@/assets/droplink-logo.png";
 
 const EmailAuth = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [refInput, setRefInput] = useState("");
+
+  useEffect(() => {
+    const refCode = searchParams.get("ref");
+    if (refCode) {
+      localStorage.setItem("referral_code", refCode);
+      setRefInput(refCode);
+    }
+  }, [searchParams]);
 
 
 
@@ -141,6 +151,42 @@ const EmailAuth = () => {
       }
 
       // Create profile if none exists
+      
+      // Resolve referral code if present
+      let referredBy = null;
+      let referralCodeId = null;
+      let referredByUsername = null;
+      let referredByCode = null;
+      const savedRefCode = localStorage.getItem("referral_code");
+      if (savedRefCode) {
+        try {
+          const { data: refData } = await supabase
+            .from("referral_codes")
+            .select("profile_id, uses_count, max_uses, id")
+            .eq("code", savedRefCode)
+            .maybeSingle();
+
+          if (refData && (!refData.max_uses || refData.uses_count < refData.max_uses)) {
+            referredBy = refData.profile_id;
+            referralCodeId = refData.id;
+            referredByCode = savedRefCode;
+          } else {
+            const { data: profileRef } = await supabase
+              .from("profiles")
+              .select("id, username")
+              .eq("username", savedRefCode)
+              .maybeSingle();
+            if (profileRef?.id) {
+              referredBy = profileRef.id;
+              referredByUsername = profileRef.username;
+              referredByCode = savedRefCode;
+            }
+          }
+        } catch (e) {
+          console.error("Error resolving referral code:", e);
+        }
+      }
+
       const { data: newProfile, error: insertError } = await supabase
         .from("profiles")
         .insert({
@@ -148,6 +194,10 @@ const EmailAuth = () => {
           username: sanitizedUsername,
           business_name: sanitizedUsername,
           description: "",
+          referred_by: referredBy,
+          referred_by_code_id: referralCodeId,
+          referred_by_username: referredByUsername,
+          referred_by_code: referredByCode,
         })
         .select("id,user_id,username,business_name")
         .single();
@@ -155,6 +205,35 @@ const EmailAuth = () => {
       if (insertError) {
         console.error("Profile creation error:", insertError);
         return { profile: null, isNew: true };
+      }
+
+      // Update referral stats
+      if (newProfile && referralCodeId) {
+        try {
+          await supabase.rpc('increment_referral_uses', { code_id: referralCodeId });
+          localStorage.removeItem("referral_code");
+        } catch (e) {
+          console.error("Error updating referral stats:", e);
+        }
+      }
+
+      // Track affiliate invite (pending) on signup
+      if (newProfile?.id && referredBy) {
+        try {
+          await supabase
+            .from("affiliate_invites")
+            .insert({
+              referral_code_id: referralCodeId,
+              referrer_profile_id: referredBy,
+              referred_profile_id: newProfile.id,
+              referred_username: newProfile.username || null,
+              plan_type: "free",
+              reward_pi: 0,
+              status: "pending"
+            });
+        } catch (e) {
+          console.warn("Affiliate invite insert failed:", e);
+        }
       }
 
       return { profile: newProfile, isNew: true };
@@ -200,6 +279,22 @@ const EmailAuth = () => {
                 onChange={e => setPassword(e.target.value)}
                 required
                 minLength={6}
+              />
+            </div>
+            <div>
+              <Label htmlFor="referral">Referral code or username (optional)</Label>
+              <Input
+                id="referral"
+                type="text"
+                value={refInput}
+                onChange={(e) => {
+                  const value = e.target.value.trim();
+                  setRefInput(value);
+                  if (value) {
+                    localStorage.setItem("referral_code", value);
+                  }
+                }}
+                placeholder="Enter referral code or Pi username"
               />
             </div>
             <Button type="submit" className="w-full" size="lg" disabled={loading}>

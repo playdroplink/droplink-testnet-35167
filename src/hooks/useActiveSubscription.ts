@@ -31,18 +31,6 @@ interface ActiveSubscription {
   refetch: () => Promise<void>;
 }
 
-// VIP team members who get full access
-const VIP_TEAM_MEMBERS = [
-  'jomarikun',
-  'airdropio2024',
-  'flappypi_fun',
-  'Wain2020',
-  'wainfoundation',
-  'dropshare',
-  'flappypiofficial',
-  'openapp'
-];
-
 export const useActiveSubscription = (): ActiveSubscription => {
   const { piUser } = usePi();
   const [plan, setPlan] = useState<PlanType>("free");
@@ -56,43 +44,26 @@ export const useActiveSubscription = (): ActiveSubscription => {
     try {
       setLoading(true);
       
-      // If no Pi user, always set to free
-      if (!piUser?.username) {
-        setPlan("free");
-        setExpiresAt(null);
-        setStatus(null);
-        setSubscription(null);
-        setProfileId(null);
-        setLoading(false);
-        return;
+      // Resolve profile by Pi username or Supabase user_id (email users)
+      let profileQuery = supabase.from("profiles").select("id, username, has_premium");
+      if (piUser?.username) {
+        profileQuery = profileQuery.eq("username", piUser.username);
+      } else {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const supabaseUserId = sessionData?.session?.user?.id || null;
+        if (!supabaseUserId) {
+          setPlan("free");
+          setExpiresAt(null);
+          setStatus(null);
+          setSubscription(null);
+          setProfileId(null);
+          setLoading(false);
+          return;
+        }
+        profileQuery = profileQuery.eq("user_id", supabaseUserId);
       }
 
-      // Check if user is VIP team member - they get lifetime pro access
-      if (VIP_TEAM_MEMBERS.includes(piUser.username)) {
-        setPlan("pro");
-        setExpiresAt(null); // No expiration for VIP team
-        setStatus("active");
-        setSubscription({
-          id: 'vip',
-          profile_id: '',
-          plan_type: 'pro',
-          billing_period: 'lifetime',
-          end_date: '',
-          start_date: new Date().toISOString(),
-          status: 'active',
-          pi_amount: 0,
-          auto_renew: false
-        });
-        setLoading(false);
-        return;
-      }
-
-      // Get profile
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, username, has_premium")
-        .eq("username", piUser.username)
-        .maybeSingle();
+      const { data: profile } = await profileQuery.maybeSingle();
 
       if (!profile?.id) {
         setPlan("free");
@@ -112,9 +83,9 @@ export const useActiveSubscription = (): ActiveSubscription => {
         .maybeSingle();
 
       if (sub) {
-        const endDate = new Date(sub.end_date);
+        const endDate = sub.end_date ? new Date(sub.end_date) : null;
         const now = new Date();
-        const isExpired = endDate < now;
+        const isExpired = endDate ? endDate < now : false;
         
         if (isExpired) {
           // Subscription expired - downgrade to free
@@ -127,9 +98,20 @@ export const useActiveSubscription = (): ActiveSubscription => {
           } as Subscription);
         } else {
           // Active subscription
-          setPlan((sub.plan_type as PlanType) || "free");
+          let normalizedPlan = (sub.plan_type || "free").toLowerCase();
+          let normalizedStatus = (sub.status || "active").toLowerCase();
+          
+          // Map legacy/alternative plan names
+          if (normalizedPlan === "unli" || normalizedPlan === "unlimited" || normalizedPlan === "lifetime") {
+            normalizedPlan = "pro";
+          }
+          if (normalizedStatus === "paid" || normalizedStatus === "completed") {
+            normalizedStatus = "active";
+          }
+          
+          setPlan(normalizedPlan as PlanType);
           setExpiresAt(endDate);
-          setStatus(sub.status || "active");
+          setStatus(normalizedStatus || "active");
           setSubscription(sub as Subscription);
         }
       } else {
@@ -148,8 +130,34 @@ export const useActiveSubscription = (): ActiveSubscription => {
   }, [piUser?.username]);
 
   useEffect(() => {
+    if (!profileId) return;
+
     load();
-  }, [load]);
+
+    // Use a unique channel name to avoid "cannot add callbacks after subscribe" error
+    // when the effect re-runs or when multiple components use this hook.
+    const channelName = `subscription_changes_${profileId}_${Date.now()}`;
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'subscriptions',
+          filter: `profile_id=eq.${profileId}`
+        },
+        (payload) => {
+          console.log('[ActiveSubscription] Subscription changed, reloading...');
+          load();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [load, profileId]);
 
   // Calculate derived states
   const now = new Date();

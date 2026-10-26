@@ -65,6 +65,7 @@ export interface ProductItem {
   image?: string;
   quantity?: number;
   details?: string;
+  file_url?: string;
 }
 
 export interface CartItem extends ProductItem {
@@ -127,6 +128,14 @@ export interface ImageLinkCard {
   title: string;
 }
 
+export interface AppLinkItem {
+  id: string;
+  title: string;
+  url: string;
+  logo?: string;
+  description?: string;
+}
+
 export interface SocialEmbedItem {
   id: string;
   platform?: string;
@@ -143,6 +152,11 @@ export interface ProfileData {
   email: string;
   logo?: string;
   businessName?: string;
+  appLink?: string;
+  appTitle?: string;
+  appLogo?: string;
+  appDescription?: string;
+  appLinks?: AppLinkItem[];
   description?: string;
   youtubeVideoUrl?: string;
   backgroundMusicUrl?: string;
@@ -170,4 +184,5 @@ export interface ProfileData {
   card_accent_color?: string;
   isVerified?: boolean;
   isAdmin?: boolean;
+  customDomain?: string;
 }

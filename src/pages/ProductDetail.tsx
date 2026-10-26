@@ -17,6 +17,7 @@ interface Product {
   price: string;
   description: string | null;
   image_url: string | null;
+  file_url?: string | null;
   download_url?: string | null;
   profile_id: string;
   created_at: string;
@@ -51,7 +52,7 @@ const ProductDetail: React.FC = () => {
       // Fetch product
       const { data: prod, error: prodError } = await supabase
         .from("products")
-        .select("id, title, price, description, image_url, profile_id, created_at")
+        .select("id, title, price, description, image_url, file_url, profile_id, created_at")
         .eq("id", productId)
         .maybeSingle();
 
@@ -182,7 +183,7 @@ const ProductDetail: React.FC = () => {
                     productId={product.id}
                     profileId={profileId}
                     productTitle={product.title}
-                    downloadUrl={product.download_url || undefined}
+                    downloadUrl={product.file_url || product.download_url || undefined}
                     description={product.description || `Purchase: ${product.title}`}
                   />
                 </>

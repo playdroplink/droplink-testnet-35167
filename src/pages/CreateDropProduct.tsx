@@ -70,7 +70,7 @@ export default function CreateDropProduct() {
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-sky-400">
       <PageHeader 
         title="Create Product" 
         description="Create a new DropPay product"
@@ -98,6 +98,6 @@ export default function CreateDropProduct() {
         </CardContent>
       </Card>
       </div>
-    </>
+    </div>
   );
 }

@@ -12,7 +12,6 @@ export const VERIFIED_USERNAMES = [
   'dropstore',
   'flappypi',
   'flappypiofficial',
-  'airdropio2024',
   'flappypi_fun',
   'dropshare',
   'openapp',

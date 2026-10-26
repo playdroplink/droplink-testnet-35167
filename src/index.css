@@ -235,10 +235,9 @@ All colors MUST be HSL.
     .safe-area-top {
       padding-top: env(safe-area-inset-top);
     }
-    /* Ensure images and videos don't overflow */
+    /* Prevent media overflow without breaking explicit h-full/object-cover layouts */
     img, video {
       max-width: 100% !important;
-      height: auto !important;
     }
     /* Prevent grids from squeezing too tight */
     .grid-auto-fill-min {

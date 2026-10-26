@@ -3,8 +3,17 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { PiAuthProvider } from "@/contexts/PiAuthContext";
 import Dashboard from "./pages/Dashboard";
+import DashboardProfilePage from "./pages/dashboard/DashboardProfilePage";
+import DashboardDesignPage from "./pages/dashboard/DashboardDesignPage";
+import DashboardAnalyticsPage from "./pages/dashboard/DashboardAnalyticsPage";
+import DashboardAdNetworkPage from "./pages/dashboard/DashboardAdNetworkPage";
+import DashboardMonetizationPage from "./pages/dashboard/DashboardMonetizationPage";
+import DashboardMembershipsPage from "./pages/dashboard/DashboardMembershipsPage";
+import DashboardSubscriptionPage from "./pages/dashboard/DashboardSubscriptionPage";
+import DashboardPreferencesPage from "./pages/dashboard/DashboardPreferencesPage";
 import UserSearchPage from "./pages/UserSearchPage";
 import SwitchToMerchant from "./pages/SwitchToMerchant";
 import MerchantStoreSetup from "./pages/MerchantStoreSetup";
@@ -32,27 +41,68 @@ import Home from "./pages/Home";
 import SplashScreen from "./components/SplashScreen";
 import InboxPage from "./pages/Inbox";
 import Chat from "./pages/Chat";
+import GroupChatPage from "./pages/GroupChatPage";
 import AdminMrwain from "./pages/AdminMrwain";
+import EmailAuth from "./pages/EmailAuth";
 import Purchases from "./pages/Purchases";
+import AffiliateProgram from "./pages/AffiliateProgram";
 import ProductDetail from "./pages/ProductDetail";
 import SalesEarnings from "./pages/SalesEarnings";
 import CardGenerator from "./pages/CardGenerator";
-import A2UPayment from "./pages/A2UPayment";
 import PageLayout from "./components/PageLayout";
+import CommunityProgram from "./pages/CommunityProgram";
 
 const queryClient = new QueryClient();
 
 // Inner component that can use useLocation hook
 const AppRoutes = ({ showSplash, setShowSplash }: { showSplash: boolean; setShowSplash: (value: boolean) => void }) => {
   const location = useLocation();
+  const previousPathRef = useRef<string | null>(null);
 
   useEffect(() => {
+    const previousPath = previousPathRef.current;
+    const currentPath = location.pathname;
+    const isDashboardRoute = (path: string | null) =>
+      Boolean(path && (path === "/" || path.startsWith("/dashboard")));
+    const getPublicProfileKey = (path: string | null) => {
+      if (!path) return null;
+      const uMatch = path.match(/^\/u\/([^/]+)(\/feed)?$/);
+      if (uMatch) return `u:${uMatch[1]}`;
+      const profileMatch = path.match(/^\/profile\/([^/]+)(\/feed)?$/);
+      if (profileMatch) return `profile:${profileMatch[1]}`;
+      const atMatch = path.match(/^\/@([^/]+)(\/feed)?$/);
+      if (atMatch) return `at:${atMatch[1]}`;
+      return null;
+    };
+
+    if (previousPath && isDashboardRoute(previousPath) && isDashboardRoute(currentPath)) {
+      setShowSplash(false);
+      previousPathRef.current = currentPath;
+      return;
+    }
+
+    if (!previousPath && isDashboardRoute(currentPath)) {
+      setShowSplash(false);
+      previousPathRef.current = currentPath;
+      return;
+    }
+
+    const previousProfileKey = getPublicProfileKey(previousPath);
+    const currentProfileKey = getPublicProfileKey(currentPath);
+    if (previousProfileKey && currentProfileKey && previousProfileKey === currentProfileKey) {
+      setShowSplash(false);
+      previousPathRef.current = currentPath;
+      return;
+    }
+
     // Show splash when route changes
     setShowSplash(true);
     // Hide splash after short delay to show content
     const timer = setTimeout(() => {
       setShowSplash(false);
     }, 1500);
+
+    previousPathRef.current = currentPath;
 
     return () => clearTimeout(timer);
   }, [location.pathname, setShowSplash]);
@@ -65,9 +115,18 @@ const AppRoutes = ({ showSplash, setShowSplash }: { showSplash: boolean; setShow
     <Routes>
       {/* Global layout applying Dashboard background */}
       <Route element={<PageLayout />}>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<DashboardProfilePage />} />
+        <Route path="/dashboard" element={<DashboardProfilePage />} />
+        <Route path="/dashboard/profile" element={<DashboardProfilePage />} />
+        <Route path="/dashboard/design" element={<DashboardDesignPage />} />
+        <Route path="/dashboard/analytics" element={<DashboardAnalyticsPage />} />
+        <Route path="/dashboard/ad-network" element={<DashboardAdNetworkPage />} />
+        <Route path="/dashboard/monetization" element={<DashboardMonetizationPage />} />
+        <Route path="/dashboard/memberships" element={<DashboardMembershipsPage />} />
+        <Route path="/dashboard/subscription" element={<DashboardSubscriptionPage />} />
+        <Route path="/dashboard/preferences" element={<DashboardPreferencesPage />} />
+        <Route path="/dashboard/payments" element={<Dashboard initialTab="payments" hideTabNavigation />} />
         <Route path="/home" element={<Home />} />
-        <Route path="/auth" element={<PiAuth />} />
         <Route path="/subscription" element={<Subscription />} />
         <Route path="/voting" element={<VotingPage />} />
         <Route path="/followers" element={<Followers />} />
@@ -92,13 +151,19 @@ const AppRoutes = ({ showSplash, setShowSplash }: { showSplash: boolean; setShow
         <Route path="/storefront/:storeId" element={<StoreFront />} />
         <Route path="/inbox" element={<InboxPage />} />
         <Route path="/chat/:username" element={<Chat />} />
+        <Route path="/chat/g/:groupId" element={<GroupChatPage />} />
         <Route path="/purchases" element={<Purchases />} />
+        <Route path="/affiliate-program" element={<AffiliateProgram />} />
+        <Route path="/ambassador-program" element={<CommunityProgram role="ambassador" />} />
+        <Route path="/moderator-program" element={<CommunityProgram role="moderator" />} />
         <Route path="/sales-earnings" element={<SalesEarnings />} />
-        <Route path="/a2u-payment" element={<A2UPayment />} />
         <Route path="/product/:productId" element={<ProductDetail />} />
         <Route path="*" element={<NotFound />} />
       </Route>
       {/* Public Bio routes excluded from global layout */}
+      <Route path="/auth" element={<PiAuth />} />
+      <Route path="/login" element={<EmailAuth />} />
+      <Route path="/email-auth" element={<EmailAuth />} />
       {/* Public bio + feed routes */}
       <Route path="/u/:username" element={<PublicBio />} />
       <Route path="/profile/:username" element={<PublicBio />} />
@@ -127,16 +192,22 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter
-          future={{
-            v7_startTransition: true,
-            v7_relativeSplatPath: true
-          }}
-        >
-          <AppRoutes showSplash={showSplash} setShowSplash={setShowSplash} />
-        </BrowserRouter>
+        <PiAuthProvider>
+          <BrowserRouter
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true
+            }}
+          >
+            <div className="min-h-screen bg-gray-100 dark:bg-neutral-900">
+              <div className="w-full min-h-screen bg-background relative overflow-x-hidden">
+                <Toaster />
+                <Sonner />
+                <AppRoutes showSplash={showSplash} setShowSplash={setShowSplash} />
+              </div>
+            </div>
+          </BrowserRouter>
+        </PiAuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

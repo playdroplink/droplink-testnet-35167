@@ -13,31 +13,21 @@
   // Override postMessage to handle origin mismatches
   window.postMessage = function(message, targetOrigin, transfer) {
     try {
-      // If it's a Pi SDK message and we're on localhost, be more permissive
+      // If it's a Pi SDK message and we're on localhost, avoid origin mismatch errors
       if (targetOrigin && targetOrigin.includes('minepi.com') && window.location.hostname === 'localhost') {
-        console.log('[PI CORS FIX] 📤 Intercepting Pi SDK postMessage for localhost compatibility');
-        
-        // Try the original call first
-        try {
-          return originalPostMessage.call(this, message, targetOrigin, transfer);
-        } catch (error) {
-          console.log('[PI CORS FIX] 🔄 Origin mismatch detected, using fallback approach');
-          
-          // Create a custom event instead
-          const event = new CustomEvent('pi-message', {
-            detail: { message, targetOrigin, transfer }
-          });
-          window.dispatchEvent(event);
-          return;
-        }
+        const safeOrigin = window.location.origin;
+        return originalPostMessage.call(this, message, safeOrigin, transfer);
       }
-      
+
       // For all other cases, use original postMessage
       return originalPostMessage.call(this, message, targetOrigin, transfer);
     } catch (error) {
-      console.error('[PI CORS FIX] ❌ PostMessage error:', error.message);
-      // Fallback to original behavior
-      return originalPostMessage.call(this, message, targetOrigin, transfer);
+      // Fallback to a safe same-origin target
+      try {
+        return originalPostMessage.call(this, message, window.location.origin, transfer);
+      } catch (fallbackError) {
+        return;
+      }
     }
   };
   
@@ -99,3 +89,4 @@
   
   console.log('[PI CORS FIX] ✅ Pi SDK CORS patches applied successfully');
 })();
+

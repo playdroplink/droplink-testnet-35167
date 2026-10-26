@@ -20,7 +20,7 @@ interface AdvancedCustomizerProps {
   currentSettings: CustomizationSettings;
 }
 
-interface CustomizationSettings {
+export interface CustomizationSettings {
   header: {
     layout: 'centered' | 'left' | 'split';
     showProfileImage: boolean;

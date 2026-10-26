@@ -20,7 +20,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
   return (
     <div className="sticky top-0 z-40 bg-sky-400 border-b border-sky-500/30 px-3 sm:px-4 md:px-6 py-3 sm:py-4">
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full mx-auto">
         <div className="flex items-center gap-3">
           {showBackButton && (
             <Button

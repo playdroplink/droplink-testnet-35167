@@ -55,14 +55,14 @@ const isGoldBadgeUser = (username?: string | null): boolean => {
 // Helper function to check if a user has blue badge (verified but not VIP)
 const isBlueBadgeUser = (username?: string | null): boolean => {
   if (!username) return false;
-  const blueBadgeMembers = ['droplink', 'droppay', 'dropstore', 'flappypi', 'airdropio2024', 'flappypi_fun', 'dropshare', 'openapp'];
+  const blueBadgeMembers = ['droplink', 'droppay', 'dropstore', 'flappypi', 'flappypi_fun', 'dropshare', 'openapp'];
   return blueBadgeMembers.some(v => v.toLowerCase() === username.toLowerCase());
 };
 
 // Helper function to check if a user is VIP
 const isUserVip = (username?: string | null): boolean => {
   if (!username) return false;
-  const vipTeamMembers = ['wain2020', 'wainfoundation', 'flappypiofficial', 'droplink', 'droppay', 'flappypi', 'dropstore', 'dropshare', 'openapp', 'airdropio2024', 'flappypi_fun'];
+  const vipTeamMembers = ['wain2020', 'wainfoundation', 'flappypiofficial', 'droplink', 'droppay', 'flappypi', 'dropstore', 'dropshare', 'openapp', 'flappypi_fun'];
   return vipTeamMembers.some(v => v.toLowerCase() === username.toLowerCase());
 };
 
@@ -201,7 +201,7 @@ const UserSearchPage = () => {
     fetchCount();
     // Real-time subscription for new/deleted users
     subscription = supabase
-      .channel('public:profiles')
+      .channel(`public-profiles-${Date.now()}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
         fetchCount();
       })
@@ -298,6 +298,12 @@ const UserSearchPage = () => {
     setLoading(false);
   };
 
+  // Always show all users on initial load
+  useEffect(() => {
+    handleViewAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const stored = localStorage.getItem("droplink_recent_searches");
     if (stored) setRecentSearches(JSON.parse(stored));
@@ -314,98 +320,51 @@ const UserSearchPage = () => {
     setHighlight(query.replace(/^@/, ""));
     try {
       let data = null;
-      // If query starts with @, fetch from droplink.space
-      if (query.trim().startsWith("@")) {
-        const username = query.trim().replace(/^@/, "");
-        const resp = await fetch(`https://droplink.space/@${username}`);
-        if (resp.ok) {
-          let profile: ProfileResult;
-          try {
-            const json = await resp.json();
-            // If we have a profile id, fetch full profile from Supabase
-            let fullProfile = null;
-            if (json.id) {
-              const { data: supaProfile, error: supaError } = await supabase
-                .from("profiles")
-                  .select("id, username, created_at, logo, business_name")
-                .eq("id", json.id)
-                .maybeSingle();
-              if (!supaError && supaProfile) fullProfile = supaProfile;
-            }
-            profile = {
-              id: json.id || username,
-              username: json.username || username,
-              follower_count: json.follower_count,
-              created_at: json.created_at,
-              avatar_url: json.avatar_url,
-              bio: json.bio,
-              display_name: json.display_name,
-              ...json,
-              ...fullProfile
-            };
-          } catch {
-            profile = { id: username, username };
-          }
-          // Fetch follower count from Supabase if we have an id
-          if (profile.id) {
-            const { count } = await (supabase
-              .from("followers" as any)
-              .select("*", { count: "exact", head: true })
-                .eq("following_profile_id", profile.id)) as any;
-            if (count !== null) {
-              profile.follower_count = count;
-            }
-          }
-          data = [profile];
-        } else {
-          throw new Error("User not found");
-        }
+      const cleanQuery = query.trim().replace(/^@/, "");
+      let search = supabase
+        .from("profiles")
+        .select("id, username, logo, created_at, category, is_admin, bio, description, business_name")
+        .ilike("username", `%${cleanQuery}%`) as any;
+      
+      // Category filter
+      if (selectedCategory !== "all" && selectedCategory !== "vip") {
+        search = search.eq("category", selectedCategory);
+      }
+      
+      const result = await search;
+      if (result.error) throw result.error;
+      data = result.data;
+      
+      // Manually fetch follower counts for each profile
+      if (data && data.length > 0) {
+        data = await Promise.all(data.map(async (profile: any) => {
+          const { count } = await (supabase
+            .from('followers' as any)
+            .select('id', { count: 'exact', head: true })
+            .eq('following_profile_id', profile.id)) as any;
+          return { ...profile, follower_count: count || 0 };
+        }));
+      }
+      // Sorting (with VIPs always on top)
+      if (sortBy === "vip") {
+        // VIP filter: show only admins and VIP team members
+        const vipTeamMembers = ['droplink', 'droppay', 'flappypi', 'Wain2020', 'wainfoundation', 'wainfoundation', 'dropstore', 'dropshare', 'flappypiofficial', 'openapp'];
+        data = data.filter((profile: any) => {
+          const isVipTeamMember = vipTeamMembers.includes(profile.username);
+          const isGmailAdmin = profile.username?.endsWith('@gmail.com');
+          return profile.is_admin === true || isGmailAdmin || isVipTeamMember;
+        }).sort((a: any, b: any) => a.username.localeCompare(b.username));
       } else {
-        let search = supabase
-          .from("profiles")
-          .select("id, username, logo, created_at, category, is_admin, bio, description, business_name")
-          .ilike("username", `%${query.replace(/^@/, "")}%`) as any;
-        
-        // Category filter
-        if (selectedCategory !== "all" && selectedCategory !== "vip") {
-          search = search.eq("category", selectedCategory);
-        }
-        
-        let result = await search;
-        if (result.error) throw result.error;
-        data = result.data;
-        
-        // Manually fetch follower counts for each profile
-        if (data && data.length > 0) {
-          data = await Promise.all(data.map(async (profile: any) => {
-            const { count } = await (supabase
-              .from('followers' as any)
-              .select('id', { count: 'exact', head: true })
-              .eq('following_profile_id', profile.id)) as any;
-            return { ...profile, follower_count: count || 0 };
-          }));
-        }
-        // Sorting (with VIPs always on top)
-        if (sortBy === "vip") {
-          // VIP filter: show only admins and VIP team members
-          const vipTeamMembers = ['droplink', 'droppay', 'flappypi', 'Wain2020', 'wainfoundation', 'wainfoundation', 'dropstore', 'dropshare', 'flappypiofficial', 'openapp'];
-          data = data.filter((profile: any) => {
-            const isVipTeamMember = vipTeamMembers.includes(profile.username);
-            const isGmailAdmin = profile.username?.endsWith('@gmail.com');
-            return profile.is_admin === true || isGmailAdmin || isVipTeamMember;
-          }).sort((a: any, b: any) => a.username.localeCompare(b.username));
-        } else {
-          data = sortWithBadgesOnTop(data, sortBy);
-        }
-        
-        // Apply category filter for VIP
-        if (selectedCategory === "vip") {
-          data = data.filter((profile: any) => {
-            const vipTeamMembers = ['wain2020', 'wainfoundation', 'flappypiofficial', 'droplink', 'droppay', 'flappypi', 'dropstore', 'dropshare', 'openapp', 'airdropio2024', 'flappypi_fun'];
-            const isVipUser = vipTeamMembers.some(v => v.toLowerCase() === (profile.username || '').toLowerCase());
-            return isVipUser || profile.is_admin === true;
-          });
-        }
+        data = sortWithBadgesOnTop(data, sortBy);
+      }
+      
+      // Apply category filter for VIP
+      if (selectedCategory === "vip") {
+        data = data.filter((profile: any) => {
+          const vipTeamMembers = ['wain2020', 'wainfoundation', 'flappypiofficial', 'droplink', 'droppay', 'flappypi', 'dropstore', 'dropshare', 'openapp', 'airdropio2024', 'flappypi_fun'];
+          const isVipUser = vipTeamMembers.some(v => v.toLowerCase() === (profile.username || '').toLowerCase());
+          return isVipUser || profile.is_admin === true;
+        });
       }
       setResults(data || []);
       // Save to recent searches
@@ -506,6 +465,55 @@ const UserSearchPage = () => {
     } finally {
       setFollowLoading(null);
     }
+  };
+
+  const handleUnfollow = async (profile: any) => {
+    if (!isAuthenticated || !piUser) {
+      setShowPiAuthModal(true);
+      return;
+    }
+    setFollowLoading(profile.id);
+    try {
+      const { data: currentProfile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", piUser?.username)
+        .maybeSingle();
+
+      if (profileError || !currentProfile?.id || !profile.id) {
+        setFollowLoading(null);
+        return;
+      }
+
+      const { error: deleteError } = await supabase
+        .from("followers")
+        .delete()
+        .eq("follower_profile_id", currentProfile.id)
+        .eq("following_profile_id", profile.id);
+
+      if (deleteError) {
+        console.error('Unfollow delete error:', deleteError);
+        setFollowLoading(null);
+        return;
+      }
+
+      if (profile.id) {
+        setFollowingIds(prev => {
+          const next = new Set(prev);
+          next.delete(profile.id);
+          return next;
+        });
+      }
+    } catch (err) {
+      console.error('Unfollow error:', err);
+    } finally {
+      setFollowLoading(null);
+    }
+  };
+
+  const openChatWithUser = (username?: string | null) => {
+    if (!username) return;
+    navigate(`/chat/${username}`);
   };
 
   const handleViewProfile = async (profile: ProfileResult) => {
@@ -851,13 +859,40 @@ const UserSearchPage = () => {
                     </Button>
                     <Button
                       size="sm"
-                      className="bg-sky-500 hover:bg-sky-600 text-white min-w-[60px] sm:min-w-[72px]"
+                      className={`min-w-[60px] sm:min-w-[72px] ${
+                        profile.id && followingIds.has(profile.id)
+                          ? "bg-white text-red-600 border border-red-200 hover:bg-red-50"
+                          : "bg-sky-500 hover:bg-sky-600 text-white"
+                      }`}
                       style={{height: 32, minWidth: 60}}
-                      disabled={followLoading === profile.id || (profile.id ? followingIds.has(profile.id) : false)}
-                      onClick={e => { e.stopPropagation(); handleFollow(profile); }}
+                      disabled={followLoading === profile.id}
+                      onClick={e => {
+                        e.stopPropagation();
+                        if (profile.id && followingIds.has(profile.id)) {
+                          handleUnfollow(profile);
+                        } else {
+                          handleFollow(profile);
+                        }
+                      }}
                     >
-                      {profile.id && followingIds.has(profile.id) ? "Followed" : (followLoading === profile.id ? "Following..." : "Follow")}
+                      {profile.id && followingIds.has(profile.id)
+                        ? "Unfollow"
+                        : (followLoading === profile.id ? "Following..." : "Follow")}
                     </Button>
+                    {profile.id && followingIds.has(profile.id) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="min-w-[60px] sm:min-w-[72px]"
+                        style={{ height: 32, minWidth: 60 }}
+                        onClick={e => { 
+                          e.stopPropagation(); 
+                          openChatWithUser(profile.username); 
+                        }}
+                      >
+                        Chat
+                      </Button>
+                    )}
                   </div>
                 </Card>
               );
@@ -912,6 +947,15 @@ const UserSearchPage = () => {
                 </div>
 
                 <Button className="w-full bg-sky-500 hover:bg-sky-600 text-white" onClick={() => handleViewProfile(selectedProfile)}>View Full Profile</Button>
+                {selectedProfile.id && followingIds.has(selectedProfile.id) && (
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => openChatWithUser(selectedProfile.username)}
+                  >
+                    Chat
+                  </Button>
+                )}
 
                 {/* Products Section */}
                 {profileProducts.length > 0 && (
@@ -965,9 +1009,24 @@ const UserSearchPage = () => {
           </DialogHeader>
           <div className="py-4 text-center">
             <p className="mb-2">You have followed <span className="font-semibold text-sky-600">@{followedUsername}</span>!</p>
-            <Button className="w-full bg-sky-500 hover:bg-sky-600 text-white" onClick={() => setShowFollowedModal(false)}>
-              Close
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                className="w-full bg-sky-500 hover:bg-sky-600 text-white"
+                onClick={() => setShowFollowedModal(false)}
+              >
+                Close
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setShowFollowedModal(false);
+                  openChatWithUser(followedUsername);
+                }}
+              >
+                Message
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

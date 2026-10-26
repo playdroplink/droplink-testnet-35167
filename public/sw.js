@@ -83,6 +83,11 @@ self.addEventListener('notificationclose', (event) => {
 // ============================================
 
 self.addEventListener('fetch', event => {
+  // Ignore chrome-extension requests to prevent "unsupported scheme" errors
+  if (event.request.url.startsWith('chrome-extension://')) {
+    return;
+  }
+
   // Only handle requests to same-origin or allowlist
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin && url.hostname !== 'sdk.minepi.com') {

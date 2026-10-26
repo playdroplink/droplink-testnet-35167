@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { Eye, Trash2, Edit2, TrendingUp } from "lucide-react";
@@ -16,15 +17,21 @@ interface Product {
   title: string;
   price: string;
   description: string | null;
+  file_url?: string | null;
 }
 
 const MerchantProductManager: React.FC = () => {
   const { piUser, isAuthenticated, signIn, loading: piLoading } = usePi();
   const [products, setProducts] = useState<Product[]>([]);
-  const [form, setForm] = useState({ title: "", price: "", description: "" });
+  const [form, setForm] = useState({ title: "", price: "", description: "", file_url: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
+  
+  // Edit State
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editForm, setEditForm] = useState({ title: "", price: "", description: "", file_url: "" });
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handlePiAuth = async () => {
     try {
@@ -64,7 +71,7 @@ const MerchantProductManager: React.FC = () => {
     
     const { data, error } = await supabase
       .from("products")
-      .select("id, title, price, description")
+      .select("id, title, price, description, file_url")
       .eq("profile_id", profileId)
       .order("created_at", { ascending: false });
       
@@ -78,6 +85,41 @@ const MerchantProductManager: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleEditClick = (product: Product) => {
+    setEditingProduct(product);
+    setEditForm({
+      title: product.title,
+      price: product.price,
+      description: product.description || "",
+      file_url: product.file_url || ""
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateProduct = async () => {
+    if (!editingProduct) return;
+    setLoading(true);
+    
+    const { error } = await supabase
+      .from("products")
+      .update({
+        title: editForm.title,
+        price: editForm.price,
+        description: editForm.description,
+        file_url: editForm.file_url
+      })
+      .eq("id", editingProduct.id);
+
+    if (error) {
+      toast.error("Failed to update product");
+    } else {
+      toast.success("Product updated successfully");
+      setIsEditDialogOpen(false);
+      fetchProducts();
+    }
+    setLoading(false);
   };
 
   const handleAddProduct = async (e: React.FormEvent) => {
@@ -94,6 +136,7 @@ const MerchantProductManager: React.FC = () => {
       title: form.title,
       price: form.price,
       description: form.description,
+      file_url: form.file_url,
       profile_id: profileId,
     });
     
@@ -102,7 +145,7 @@ const MerchantProductManager: React.FC = () => {
       toast.error("Failed to add product");
     } else {
       toast.success("Product added successfully!");
-      setForm({ title: "", price: "", description: "" });
+      setForm({ title: "", price: "", description: "", file_url: "" });
       fetchProducts();
     }
     setLoading(false);
@@ -156,13 +199,21 @@ const MerchantProductManager: React.FC = () => {
         icon={<TrendingUp />}
       />
       <div className="min-h-screen bg-sky-400 p-6 pb-24">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full mx-auto flex flex-wrap gap-4 mb-6">
           <Link to="/sales-earnings">
             <Button className="bg-green-600 hover:bg-green-700 flex items-center gap-2">
               <TrendingUp size={18} />
               View Sales & Earnings
             </Button>
           </Link>
+          {profileId && (
+            <Link to={`/store/${profileId}`}>
+              <Button className="bg-purple-600 hover:bg-purple-700 flex items-center gap-2">
+                <Eye size={18} />
+                View Public Store
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* Add Product Form */}
@@ -188,6 +239,14 @@ const MerchantProductManager: React.FC = () => {
                 value={form.price}
                 onChange={handleChange}
                 required
+                className="bg-slate-100 border-slate-300 text-slate-900 placeholder:text-slate-500"
+              />
+              <Input
+                type="text"
+                name="file_url"
+                placeholder="Download URL (e.g. Dropbox/Drive link)"
+                value={form.file_url}
+                onChange={handleChange}
                 className="bg-slate-100 border-slate-300 text-slate-900 placeholder:text-slate-500"
               />
               <Textarea
@@ -250,6 +309,7 @@ const MerchantProductManager: React.FC = () => {
                       <Button 
                         className="flex-1 bg-slate-300 hover:bg-slate-400 flex items-center justify-center gap-2"
                         disabled={loading}
+                        onClick={() => handleEditClick(product)}
                       >
                         <Edit2 size={16} />
                         Edit
@@ -269,6 +329,54 @@ const MerchantProductManager: React.FC = () => {
           )}
         </div>
       </div>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Product</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label htmlFor="title" className="text-sm font-medium">Title</label>
+              <Input
+                id="title"
+                value={editForm.title}
+                onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="price" className="text-sm font-medium">Price (Pi)</label>
+              <Input
+                id="price"
+                value={editForm.price}
+                onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="file_url" className="text-sm font-medium">Download URL</label>
+              <Input
+                id="file_url"
+                value={editForm.file_url}
+                onChange={(e) => setEditForm({ ...editForm, file_url: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="description" className="text-sm font-medium">Description</label>
+              <Textarea
+                id="description"
+                value={editForm.description}
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleUpdateProduct} disabled={loading}>
+              {loading ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

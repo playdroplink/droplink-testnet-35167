@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { usePi } from "@/contexts/PiContext";
@@ -6,36 +6,36 @@ import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { GiftDialog } from "@/components/GiftDialog";
-import { ExternalLink, Share2, Eye, UserPlus, UserMinus, Zap, Copy, Flag, Gift } from "lucide-react";
-import { FaXTwitter, FaInstagram, FaFacebook, FaYoutube, FaTiktok, FaTwitch, FaLinkedin, FaSnapchat, FaReddit, FaTelegram, FaWhatsapp, FaDiscord, FaPinterest, FaGithub, FaVimeo, FaGlobe } from "react-icons/fa6";
-import { SiThreads, SiBluesky, SiMastodon, SiKick } from "react-icons/si";
+import { ExternalLink, Share2, Eye, UserPlus, UserMinus, Zap, Copy, Flag, Gift, VolumeX, Volume2, Play, Pause } from "lucide-react";
+import { getSocialIcon as getSocialIconBase, getSocialLabel, extractSocialUsername, isDisplayableSocialUrl } from "@/utils/social-utils";
 import type { ProfileData, SocialEmbedItem } from "@/types/profile";
 import { toast } from "sonner";
 import { isVerifiedUser, getVerifiedBadgeUrl } from "@/utils/verifiedUsers";
+import ReactPlayer from "react-player";
 
-const getSocialIcon = (platform?: string) => {
-  const p = (platform || "link").toLowerCase();
-  if (["twitter", "x", "x.com"].includes(p)) return <FaXTwitter className="w-5 h-5" />;
-  if (["instagram", "insta"].includes(p)) return <FaInstagram className="w-5 h-5" />;
-  if (["facebook", "fb"].includes(p)) return <FaFacebook className="w-5 h-5" />;
-  if (["youtube", "yt"].includes(p)) return <FaYoutube className="w-5 h-5" />;
-  if (["tiktok"].includes(p)) return <FaTiktok className="w-5 h-5" />;
-  if (["twitch"].includes(p)) return <FaTwitch className="w-5 h-5" />;
-  if (["kick"].includes(p)) return <SiKick className="w-5 h-5" />;
-  if (["linkedin"].includes(p)) return <FaLinkedin className="w-5 h-5" />;
-  if (["threads"].includes(p)) return <SiThreads className="w-5 h-5" />;
-  if (["bluesky", "bsky"].includes(p)) return <SiBluesky className="w-5 h-5" />;
-  if (["mastodon"].includes(p)) return <SiMastodon className="w-5 h-5" />;
-  if (["snapchat", "snap"].includes(p)) return <FaSnapchat className="w-5 h-5" />;
-  if (["reddit"].includes(p)) return <FaReddit className="w-5 h-5" />;
-  if (["telegram"].includes(p)) return <FaTelegram className="w-5 h-5" />;
-  if (["whatsapp", "wa"].includes(p)) return <FaWhatsapp className="w-5 h-5" />;
-  if (["discord"].includes(p)) return <FaDiscord className="w-5 h-5" />;
-  if (["pinterest"].includes(p)) return <FaPinterest className="w-5 h-5" />;
-  if (["github"].includes(p)) return <FaGithub className="w-5 h-5" />;
-  if (["vimeo"].includes(p)) return <FaVimeo className="w-5 h-5" />;
-  if (["website", "site", "web"].includes(p)) return <FaGlobe className="w-5 h-5" />;
-  return <ExternalLink className="w-5 h-5" />;
+const getSocialIcon = (platform?: string) => getSocialIconBase(platform);
+const AFFILIATE_SHARE_IMAGE_PATH = "/affiliate-share.jpg";
+
+const upsertMetaTag = (attribute: "name" | "property", key: string, content: string) => {
+  if (typeof document === "undefined") return;
+  let tag = document.querySelector(`meta[${attribute}="${key}"]`) as HTMLMetaElement | null;
+  if (!tag) {
+    tag = document.createElement("meta");
+    tag.setAttribute(attribute, key);
+    document.head.appendChild(tag);
+  }
+  tag.setAttribute("content", content);
+};
+
+const upsertCanonicalLink = (href: string) => {
+  if (typeof document === "undefined") return;
+  let linkTag = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+  if (!linkTag) {
+    linkTag = document.createElement("link");
+    linkTag.setAttribute("rel", "canonical");
+    document.head.appendChild(linkTag);
+  }
+  linkTag.setAttribute("href", href);
 };
 
 const normalizeSocialFeed = (feed: any): SocialEmbedItem[] => {
@@ -70,6 +70,14 @@ const ProfileFeed = () => {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showGiftDialog, setShowGiftDialog] = useState(false);
+  const [isVideoMuted, setIsVideoMuted] = useState(true);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(true);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  const isDirectVideoFileUrl = (url?: string | null) => {
+    if (!url) return false;
+    return /\.(mp4|webm|ogg|m4v|mov)(?:$|[?#])/i.test(url);
+  };
 
   const getCachedProfileFromStorage = () => {
     if (typeof window === "undefined") return null;
@@ -165,6 +173,11 @@ const ProfileFeed = () => {
         email: "",
         logo: profileData.logo,
         businessName: profileData.business_name,
+        appLink: (profileData as any).app_link,
+        appTitle: (profileData as any).app_title,
+        appLogo: (profileData as any).app_logo,
+        appDescription: (profileData as any).app_description || "",
+        appLinks: (themeSettings as any).appLinks || [],
         description: profileData.description,
         youtubeVideoUrl: profileData.youtube_video_url,
         backgroundMusicUrl: (profileData as any).background_music_url,
@@ -313,6 +326,43 @@ const ProfileFeed = () => {
     }
   }, [profileId, currentUserProfileId]);
 
+  useEffect(() => {
+    if (!videoRef.current) return;
+    videoRef.current.muted = isVideoMuted;
+    videoRef.current.volume = isVideoMuted ? 0 : 0.6;
+  }, [isVideoMuted]);
+
+  useEffect(() => {
+    if (!profile || typeof window === "undefined") return;
+    const baseUrl = window.location.origin;
+    const feedUrl = `${baseUrl}/@${profile.username}/feed`;
+    const shareImage = `${baseUrl}${AFFILIATE_SHARE_IMAGE_PATH}`;
+    const usernameTag = `@${profile.username}`;
+    const profileDescription = (profile.description || profile.appDescription || "Affiliate feed on Droplink")
+      .replace(/\s+/g, " ")
+      .trim();
+    const shareTitle = `${usernameTag} Feed | Droplink Affiliate`;
+    const shareDescription = `${profileDescription} | Feed by ${usernameTag} on Droplink`;
+
+    document.title = shareTitle;
+    upsertCanonicalLink(feedUrl);
+    upsertMetaTag("name", "title", shareTitle);
+    upsertMetaTag("name", "description", shareDescription);
+    upsertMetaTag("property", "og:type", "website");
+    upsertMetaTag("property", "og:url", feedUrl);
+    upsertMetaTag("property", "og:title", shareTitle);
+    upsertMetaTag("property", "og:description", shareDescription);
+    upsertMetaTag("property", "og:image", shareImage);
+    upsertMetaTag("property", "og:image:alt", `${usernameTag} Droplink Affiliate Feed`);
+    upsertMetaTag("name", "twitter:card", "summary_large_image");
+    upsertMetaTag("name", "twitter:url", feedUrl);
+    upsertMetaTag("name", "twitter:title", shareTitle);
+    upsertMetaTag("name", "twitter:description", shareDescription);
+    upsertMetaTag("name", "twitter:image", shareImage);
+  }, [profile]);
+
+  const videoVolume = isVideoMuted ? 0 : 0.5;
+
   const bgStyle = useMemo(() => {
     if (!profile) return {};
     if (profile.theme?.backgroundType === "gif" && profile.theme.backgroundGif) {
@@ -326,18 +376,102 @@ const ProfileFeed = () => {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-white">Loading feed...</div>;
   if (notFound || !profile) return <div className="min-h-screen flex items-center justify-center text-white">Profile not found</div>;
+  const shouldUseNativeBackgroundVideo =
+    profile.theme?.backgroundType === "video" &&
+    !!profile.theme.backgroundVideo &&
+    isDirectVideoFileUrl(profile.theme.backgroundVideo);
 
   return (
     <div className="min-h-screen text-white" style={bgStyle}>
       {profile.theme?.backgroundType === "video" && profile.theme.backgroundVideo && (
-        <video
-          src={profile.theme.backgroundVideo}
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="fixed inset-0 w-full h-full object-cover"
-        />
+        <div className="fixed inset-0 w-full h-full">
+          {shouldUseNativeBackgroundVideo ? (
+            <video
+              ref={videoRef}
+              src={profile.theme.backgroundVideo}
+              autoPlay
+              loop
+              muted={isVideoMuted}
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover"
+              onLoadedData={() => setIsVideoPlaying(true)}
+              onPlay={() => setIsVideoPlaying(true)}
+              onPause={() => setIsVideoPlaying(false)}
+              onError={(e) => console.log('Native video background error', e)}
+            />
+          ) : (
+            <ReactPlayer
+              url={profile.theme.backgroundVideo}
+              playing={isVideoPlaying}
+              loop={true}
+              muted={isVideoMuted}
+              volume={videoVolume}
+              width="100%"
+              height="100%"
+              className="react-player"
+              style={{ position: 'absolute', top: 0, left: 0 }}
+              config={{
+                youtube: {
+                  playerVars: { showinfo: 0, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, rel: 0, modestbranding: 1 }
+                },
+                vimeo: {
+                  playerOptions: { background: 1, controls: false, title: false, byline: false, portrait: false }
+                },
+                file: {
+                  attributes: {
+                    style: { width: '100%', height: '100%', objectFit: 'cover' },
+                    playsInline: true,
+                    crossOrigin: 'anonymous'
+                  }
+                }
+              }}
+              onReady={() => setIsVideoPlaying(true)}
+              onError={(e) => console.log('Video background error', e)}
+            />
+          )}
+          <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                const next = !isVideoMuted;
+                setIsVideoMuted(next);
+                if (shouldUseNativeBackgroundVideo && videoRef.current) {
+                  videoRef.current.muted = next;
+                  videoRef.current.volume = next ? 0 : 0.6;
+                  if (!next && isVideoPlaying && videoRef.current.paused) {
+                    void videoRef.current.play().catch(() => {});
+                  }
+                }
+              }}
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 text-white border border-white/20"
+              title={isVideoMuted ? "Unmute background video" : "Mute background video"}
+            >
+              {isVideoMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (shouldUseNativeBackgroundVideo && videoRef.current) {
+                  if (isVideoPlaying) {
+                    videoRef.current.pause();
+                  } else {
+                    void videoRef.current.play().catch(() => {});
+                  }
+                } else {
+                  if (isVideoPlaying) {
+                    setIsVideoPlaying(false);
+                  } else {
+                    setIsVideoPlaying(true);
+                  }
+                }
+              }}
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 text-white border border-white/20"
+              title={isVideoPlaying ? "Pause background video" : "Play background video"}
+            >
+              {isVideoPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
       )}
       <div className="relative z-10 flex flex-col items-center px-4 pb-16" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.85) 40%, rgba(0,0,0,0.9) 100%)" }}>
         {/* Share and Watch Ads Icons */}
@@ -484,21 +618,88 @@ const ProfileFeed = () => {
               )}
             </div>
           </div>
+
+          {(() => {
+            const appLinks = Array.isArray(profile.appLinks) && profile.appLinks.length > 0
+              ? profile.appLinks
+              : profile.appLink
+                ? [{
+                    id: "primary",
+                    title: profile.appTitle || "Check out my App",
+                    url: profile.appLink,
+                    logo: profile.appLogo,
+                    description: profile.appDescription
+                  }]
+                : [];
+            if (appLinks.length === 0) return null;
+            return (
+              <div className="w-full max-w-xl mx-auto pt-4 pb-2 space-y-4">
+                {appLinks.map((link: any) => (
+                  <a
+                    key={link.id || link.url}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-5 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 rounded-3xl p-5 sm:p-6 transition-all hover:scale-[1.02]"
+                  >
+                    {link.logo ? (
+                      <img
+                        src={link.logo}
+                        alt={link.title || "App"}
+                        className="w-20 h-20 rounded-2xl object-cover shadow-lg"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center">
+                        <Zap className="w-9 h-9 text-white" />
+                      </div>
+                    )}
+                    <div className="flex-1 text-left min-w-0">
+                      <h3 className="text-white font-bold text-xl mb-1 truncate">{link.title || "Check out my App"}</h3>
+                      {link.description && (
+                        <p className="text-white/80 text-sm mb-2 line-clamp-2">{link.description}</p>
+                      )}
+                      <span className="text-white/90 text-sm flex items-center gap-1">
+                        Open App <ExternalLink className="w-4 h-4" />
+                      </span>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            );
+          })()}
+
           <div className="flex flex-wrap justify-center gap-3">
-            {(profile.socialLinks || [])
-              .filter((link) => link?.url && /^https?:\/\//i.test(String(link.url).trim()))
-              .map((link) => (
-                <a
-                  key={link.platform || link.type || link.url}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-11 h-11 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition"
-                >
-                  <span className="text-white text-lg">{getSocialIcon(link.platform || link.type)}</span>
-                </a>
-              ))}
-          </div>
+  {(profile.socialLinks || [])
+    .filter((link) => isDisplayableSocialUrl(link?.url))
+    .map((link) => {
+      const platformId = link.platform || link.type || link.icon || "";
+      const username = extractSocialUsername(platformId, link.url);
+      const followers = Number(link.verified_followers ?? link.followers ?? 0);
+      const label = getSocialLabel(platformId);
+      return (
+        <a
+          key={platformId || link.url}
+          href={link.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex flex-col items-center gap-1"
+          title={label}
+        >
+          <span className="w-11 h-11 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition">
+            <span className="text-white text-lg">{getSocialIcon(platformId)}</span>
+          </span>
+          <span className="text-[11px] text-white/85 max-w-[88px] truncate">
+            {username ? `@${username}` : label}
+          </span>
+          {followers > 0 && (
+            <span className="text-[10px] text-white/60">
+              {formatCompactNumber(followers)} followers
+            </span>
+          )}
+        </a>
+      );
+    })}
+</div>
           <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
             <Button
               variant="ghost"
@@ -731,3 +932,9 @@ const ProfileFeed = () => {
 };
 
 export default ProfileFeed;
+
+
+
+
+
+

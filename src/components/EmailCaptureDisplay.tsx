@@ -51,19 +51,22 @@ export const EmailCaptureDisplay = ({
           <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{description}</p>
         </div>
       </div>
-      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2">
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col sm:flex-row sm:items-stretch gap-2 w-full"
+      >
         <Input
           type="email"
           placeholder={placeholder}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={submitting || isLoading}
-          className="flex-1"
+          className="flex-1 w-full min-w-0"
         />
         <Button
           type="submit"
           disabled={submitting || isLoading}
-          className="bg-sky-500 hover:bg-sky-600 text-white"
+          className="bg-sky-500 hover:bg-sky-600 text-white w-full sm:w-auto shrink-0"
         >
           {submitting ? 'Subscribing...' : button_text}
         </Button>

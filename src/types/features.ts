@@ -83,7 +83,7 @@ export interface EmailLead {
   profile_id: string;
   email: string;
   source_link_id?: string;
-  source: 'capture_block' | 'popup' | 'checkout';
+  source: 'capture_block' | 'popup' | 'checkout' | 'public_bio';
   metadata: Record<string, any>;
   created_at: string;
 }
